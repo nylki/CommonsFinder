@@ -1,0 +1,13 @@
+{
+    "version": 1,
+    "indentation": {
+        "spaces": 4
+    },
+    "maximumBlankLines": 2,
+    "respectsExistingLineBreaks": true,
+    "lineLength": 200,
+    "lineBreakAroundMultilineExpressionChainComponents": true,
+    "tabWidth": 4,
+    "NoBlockComments": false,
+    "ValidateDocumentationComments": true
+}

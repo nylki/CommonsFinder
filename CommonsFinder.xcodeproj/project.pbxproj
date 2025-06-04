@@ -1,0 +1,1143 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 77;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		E2035C452D52544D0079235B /* CommonsAPI in Frameworks */ = {isa = PBXBuildFile; productRef = E2035C442D52544D0079235B /* CommonsAPI */; };
+		E20A8A642D75F24F00EA79C5 /* H3kit in Frameworks */ = {isa = PBXBuildFile; productRef = E20A8A632D75F24F00EA79C5 /* H3kit */; };
+		E22A913C2CF8B1AA00D3B8F9 /* Nuke in Frameworks */ = {isa = PBXBuildFile; productRef = E22A913B2CF8B1AA00D3B8F9 /* Nuke */; };
+		E22A913E2CF8B1AA00D3B8F9 /* NukeUI in Frameworks */ = {isa = PBXBuildFile; productRef = E22A913D2CF8B1AA00D3B8F9 /* NukeUI */; };
+		E24D3BFD2CF3ACDC003484CC /* FrameUp in Frameworks */ = {isa = PBXBuildFile; productRef = E24D3BFC2CF3ACDC003484CC /* FrameUp */; };
+		E252D5592D50DFF0002056B3 /* CommonsFinderShareExtension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = E252D54F2D50DFF0002056B3 /* CommonsFinderShareExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		E2549B232CBD6886005DFE14 /* AsyncAlgorithms in Frameworks */ = {isa = PBXBuildFile; productRef = E2549B222CBD6886005DFE14 /* AsyncAlgorithms */; };
+		E2549B262CBD68B9005DFE14 /* Algorithms in Frameworks */ = {isa = PBXBuildFile; productRef = E2549B252CBD68B9005DFE14 /* Algorithms */; };
+		E2549B2D2CBD69C7005DFE14 /* OrderedCollections in Frameworks */ = {isa = PBXBuildFile; productRef = E2549B2C2CBD69C7005DFE14 /* OrderedCollections */; };
+		E257E6BF2D2038F90049FFE8 /* Lock in Frameworks */ = {isa = PBXBuildFile; productRef = E257E6BE2D2038F90049FFE8 /* Lock */; };
+		E26D503C2DA5A75F00621D1C /* CommonsAPI in Frameworks */ = {isa = PBXBuildFile; productRef = E26D503B2DA5A75F00621D1C /* CommonsAPI */; };
+		E28B17662CB03CBB00D6FEA0 /* GRDBQuery in Frameworks */ = {isa = PBXBuildFile; productRef = E28B17652CB03CBB00D6FEA0 /* GRDBQuery */; };
+		E290323A2D9EA52000A0CD8F /* Pulse in Frameworks */ = {isa = PBXBuildFile; productRef = E29032392D9EA52000A0CD8F /* Pulse */; settings = {ATTRIBUTES = (Required, ); }; };
+		E290323C2D9EA52000A0CD8F /* PulseUI in Frameworks */ = {isa = PBXBuildFile; productRef = E290323B2D9EA52000A0CD8F /* PulseUI */; settings = {ATTRIBUTES = (Required, ); }; };
+		E290323F2D9EA84700A0CD8F /* GRDBQuery in Frameworks */ = {isa = PBXBuildFile; productRef = E290323E2D9EA84700A0CD8F /* GRDBQuery */; };
+		E2E2BFD52D8718AE00751949 /* Algorithms in Frameworks */ = {isa = PBXBuildFile; productRef = E2E2BFD42D8718AE00751949 /* Algorithms */; };
+		E2F19BC62CA43C6400E19DCD /* SwiftSecurity in Frameworks */ = {isa = PBXBuildFile; productRef = E2F19BC52CA43C6400E19DCD /* SwiftSecurity */; };
+		E2F1B9D52CD006C700410991 /* GRDB in Frameworks */ = {isa = PBXBuildFile; productRef = E2F1B9D42CD006C700410991 /* GRDB */; };
+		E2FF0A2E2D9EAA29008F915C /* GRDB in Frameworks */ = {isa = PBXBuildFile; productRef = E25278722CB03FAF00D00640 /* GRDB */; };
+		E2FF0A2F2D9EAA29008F915C /* GRDBQuery in Frameworks */ = {isa = PBXBuildFile; productRef = E25278752CB03FBB00D00640 /* GRDBQuery */; };
+		E2FF0A302D9EAA29008F915C /* H3kit in Frameworks */ = {isa = PBXBuildFile; productRef = E20A8A5D2D75F1D200EA79C5 /* H3kit */; };
+		E2FF0A312D9EAA29008F915C /* H3kit in Frameworks */ = {isa = PBXBuildFile; productRef = E2F979202D81D01D0088062F /* H3kit */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		E252D5572D50DFF0002056B3 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = E2839FDF2CA2DD900053C312 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = E252D54E2D50DFF0002056B3;
+			remoteInfo = CommonsFinderShareExtension;
+		};
+		E2839FF92CA2DD910053C312 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = E2839FDF2CA2DD900053C312 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = E2839FE62CA2DD900053C312;
+			remoteInfo = CommonsFinder;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		E252D55E2D50DFF0002056B3 /* Embed Foundation Extensions */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 13;
+			files = (
+				E252D5592D50DFF0002056B3 /* CommonsFinderShareExtension.appex in Embed Foundation Extensions */,
+			);
+			name = "Embed Foundation Extensions";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		E28C389B2CD3DFCB00DDE0BB /* Embed ExtensionKit Extensions */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "$(EXTENSIONS_FOLDER_PATH)";
+			dstSubfolderSpec = 16;
+			files = (
+			);
+			name = "Embed ExtensionKit Extensions";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
+
+/* Begin PBXFileReference section */
+		E252D54F2D50DFF0002056B3 /* CommonsFinderShareExtension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = CommonsFinderShareExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
+		E2839FE72CA2DD900053C312 /* CommonsFinder.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = CommonsFinder.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		E2839FF82CA2DD910053C312 /* CommonsFinderTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = CommonsFinderTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		E2F19BC72CA45AF600E19DCD /* CommonsAPI */ = {isa = PBXFileReference; lastKnownFileType = wrapper; path = CommonsAPI; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		E2035C412D5253900079235B /* Exceptions for "CommonsFinderShareExtension" folder in "CommonsFinderTests" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				ShareView.swift,
+				ShareViewController.swift,
+				"URL+AppGroupContainer.swift",
+			);
+			target = E2839FF72CA2DD910053C312 /* CommonsFinderTests */;
+		};
+		E252D55D2D50DFF0002056B3 /* Exceptions for "CommonsFinderShareExtension" folder in "CommonsFinderShareExtension" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = E252D54E2D50DFF0002056B3 /* CommonsFinderShareExtension */;
+		};
+		E252D5672D513904002056B3 /* Exceptions for "CommonsFinderShareExtension" folder in "CommonsFinder" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				"URL+AppGroupContainer.swift",
+			);
+			target = E2839FE62CA2DD900053C312 /* CommonsFinder */;
+		};
+		E27850F12CB0381D0053C6D5 /* Exceptions for "CommonsFinder" folder in "CommonsFinderTests" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				"App Intents/InAppSearchIntent.swift",
+				"App Intents/MediaFileEntity.swift",
+				"App Intents/MediaFileEntity+PropertyQuery.swift",
+				"App Intents/Shortcuts.swift",
+				Assets.xcassets,
+				CommonsFinderApp.swift,
+				ContentView.swift,
+				Database/AppDatabase.swift,
+				"Database/AppDatabase+Repositories.swift",
+				"Database/AppDatabase+SwiftUI.swift",
+				Database/DatabaseTests.swift,
+				Database/FTS5Tokenizer.swift,
+				"Database/Model/Extensions/MediaFile+createAttributedStringDescription.swift",
+				"Database/Model/Extensions/MediaFile+InitFromAPI.swift",
+				"Database/Model/Extensions/MediaFile+makeRandomUploaded.swift",
+				"Database/Model/Extensions/MediaFileDraft+DebugDraft.swift",
+				"Database/Model/Extensions/MediaFileInfo+ImageRequest.swift",
+				"Database/Model/Extensions/MediaFileInfo+sortedByLastViewed.swift",
+				"Database/Model/Extensions/MediaFileInfo+Tags.swift",
+				"Database/Model/Extensions/WikidataItem+InitFromAPI.swift",
+				"Database/Model/Extensions/WikidataItem+Thumbnail.swift",
+				Database/Model/ItemInteraction.swift,
+				Database/Model/MediaFile.swift,
+				Database/Model/MediaFileDraft.swift,
+				Database/Model/MediaFileInfo.swift,
+				Database/Model/WikidataItem.swift,
+				Database/Model/WikidataItemInfo.swift,
+				"Generic Extensions/CLLocation+generateHumanReadableString.swift",
+				"Generic Extensions/Date+dateOnlyWikidataCompatibleISOString.swift",
+				"Generic Extensions/FileNameType+generateFilename.swift",
+				"Generic Extensions/Locale+languageCode.swift",
+				"Generic Extensions/Sequence+sortedByKeyPath.swift",
+				"Generic Extensions/String+CapitalizedFirstLetter.swift",
+				"Generic Extensions/String+FileExtension.swift",
+				"Generic Extensions/Uint64+Identifiable.swift",
+				"Generic Extensions/URL+resizedCommonsImageURL.swift",
+				"Generic Extensions/URL+staticUrls.swift",
+				"Observable Models/AccountModel.swift",
+				"Observable Models/LocationManager.swift",
+				"Observable Models/Navigation.swift",
+				"Observable Models/PaginatableMediaFiles.swift",
+				"Observable Models/UploadManager/MediaFileUploadable+initWithDraft.swift",
+				"Observable Models/UploadManager/MockUploadManager.swift",
+				"Observable Models/UploadManager/UploadManager.swift",
+				"Observable Models/WikidataCache.swift",
+				"Preview Content/Preview Assets.xcassets",
+				Types/DraftMediaLicense.swift,
+				"Types/DraftMediaLicense+CommonsAPI.swift",
+				Types/FileNameType.swift,
+				Types/TagItem.swift,
+				Types/WikidataStatement.swift,
+				Types/WikimediaLanguage.swift,
+				Utilities/Authentication.swift,
+				"Utilities/CLLocation+gpsDictionary.swift",
+				Utilities/ExifData.swift,
+				Utilities/GeoPlacemarkCache.swift,
+				Utilities/Logging.swift,
+				Utilities/OverWriteExifLocation.swift,
+				Utilities/ValidationUtils.swift,
+				Views/AuthView/AuthView.swift,
+				Views/AuthView/LoginView.swift,
+				Views/AuthView/Model/AuthNavigation.swift,
+				Views/AuthView/OnboardingView.swift,
+				Views/AuthView/RegisterView.swift,
+				Views/ContextMenus/MediaFileContextMenu.swift,
+				Views/ContextMenus/WikiCategoryContextMenu.swift,
+				Views/FileCreateView/FileCreateView.swift,
+				Views/FileCreateView/FilenameTip.swift,
+				Views/FileCreateView/LicensePicker.swift,
+				Views/FileCreateView/MetadataEditForm.swift,
+				Views/FileCreateView/Model/FileCreateViewModel.swift,
+				Views/FileCreateView/Model/FileItem.swift,
+				Views/FileCreateView/Model/MediaFileDraftModel.swift,
+				Views/FileCreateView/TimezonePicker.swift,
+				Views/FileEditView/FileEditView.swift,
+				Views/FileShowView/FileLoadView.swift,
+				Views/FileShowView/FileShowView.swift,
+				Views/FileShowView/InlineMap.swift,
+				Views/FileShowView/TagsContainerView.swift,
+				Views/Home/DraftsSection.swift,
+				Views/Home/HomeView.swift,
+				Views/Home/HorizontalFileListSection.swift,
+				Views/Home/HorizontalUploadsSection.swift,
+				Views/Home/WelcomeTip.swift,
+				Views/Map/ClusterAnnotation.swift,
+				Views/Map/GeoClustering/GeoClustering.swift,
+				"Views/Map/GeoClustering/H3+Convenience.swift",
+				Views/Map/MapModel.swift,
+				Views/Map/MapPopup/MapPopup.swift,
+				Views/Map/MapPopup/MapPopupMediaItem.swift,
+				Views/Map/MapPopup/MapPopupWikiItem.swift,
+				Views/Map/MapPopup/PseudoSheet.swift,
+				Views/Map/MapView.swift,
+				Views/PreviewUtils/Lorem.swift,
+				Views/PreviewUtils/PreviewEnvironment.swift,
+				Views/RecentlyViewedView/RecentlyViewedView.swift,
+				"Views/Reusable Views/CameraImagePicker.swift",
+				"Views/Reusable Views/FileListItems/DraftFileListItem.swift",
+				"Views/Reusable Views/FileListItems/MediaFileListItem.swift",
+				"Views/Reusable Views/PaginatableMediaList.swift",
+				"Views/Reusable Views/SearchBar.swift",
+				Views/Search/Model/PaginatableSearchMediaFiles.swift,
+				Views/Search/Model/SearchModel.swift,
+				Views/Search/Model/SearchOrder.swift,
+				Views/Search/SearchView.swift,
+				Views/Settings/AccountTip.swift,
+				Views/Settings/SettingsView.swift,
+				Views/Styles/CapsuleLinkButtonStyle.swift,
+				Views/Styles/ExpandingButtonStyle.swift,
+				Views/Styles/IconTrailingLabelStyle.swift,
+				Views/Styles/ImageButtonStyle.swift,
+				Views/Styles/OutlinedTextFieldStyle.swift,
+				Views/Styles/TagButtonStyle.swift,
+				Views/TagPicker/TagButton.swift,
+				Views/TagPicker/TagLabel.swift,
+				Views/TagPicker/TagModel.swift,
+				Views/TagPicker/TagPicker.swift,
+				Views/TagPicker/TagPickerModel.swift,
+				Views/UploadsView/UploadsView.swift,
+				Views/WikiCategoryView/PaginatableCategoryFiles.swift,
+				Views/WikiCategoryView/PaginatableWikiCategoryFiles.swift,
+				Views/WikiCategoryView/RelatedCategoryView.swift,
+				Views/WikiCategoryView/WikiCategoryLinkSection.swift,
+				Views/WikiCategoryView/WikiCategoryView.swift,
+			);
+			target = E2839FF72CA2DD910053C312 /* CommonsFinderTests */;
+		};
+		E2DC53012D146B78009EF370 /* Exceptions for "CommonsFinder" folder in "CommonsFinder" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Database/DatabaseTests.swift,
+				Info.plist,
+			);
+			target = E2839FE62CA2DD900053C312 /* CommonsFinder */;
+		};
+/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
+
+/* Begin PBXFileSystemSynchronizedRootGroup section */
+		E252D5502D50DFF0002056B3 /* CommonsFinderShareExtension */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				E252D5672D513904002056B3 /* Exceptions for "CommonsFinderShareExtension" folder in "CommonsFinder" target */,
+				E2035C412D5253900079235B /* Exceptions for "CommonsFinderShareExtension" folder in "CommonsFinderTests" target */,
+				E252D55D2D50DFF0002056B3 /* Exceptions for "CommonsFinderShareExtension" folder in "CommonsFinderShareExtension" target */,
+			);
+			path = CommonsFinderShareExtension;
+			sourceTree = "<group>";
+		};
+		E2839FE92CA2DD900053C312 /* CommonsFinder */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				E2DC53012D146B78009EF370 /* Exceptions for "CommonsFinder" folder in "CommonsFinder" target */,
+				E27850F12CB0381D0053C6D5 /* Exceptions for "CommonsFinder" folder in "CommonsFinderTests" target */,
+			);
+			path = CommonsFinder;
+			sourceTree = "<group>";
+		};
+/* End PBXFileSystemSynchronizedRootGroup section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		E252D54C2D50DFF0002056B3 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		E2839FE42CA2DD900053C312 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				E2FF0A312D9EAA29008F915C /* H3kit in Frameworks */,
+				E2FF0A302D9EAA29008F915C /* H3kit in Frameworks */,
+				E2FF0A2F2D9EAA29008F915C /* GRDBQuery in Frameworks */,
+				E2FF0A2E2D9EAA29008F915C /* GRDB in Frameworks */,
+				E290323A2D9EA52000A0CD8F /* Pulse in Frameworks */,
+				E2549B2D2CBD69C7005DFE14 /* OrderedCollections in Frameworks */,
+				E2F1B9D52CD006C700410991 /* GRDB in Frameworks */,
+				E290323C2D9EA52000A0CD8F /* PulseUI in Frameworks */,
+				E26D503C2DA5A75F00621D1C /* CommonsAPI in Frameworks */,
+				E2549B262CBD68B9005DFE14 /* Algorithms in Frameworks */,
+				E20A8A642D75F24F00EA79C5 /* H3kit in Frameworks */,
+				E22A913E2CF8B1AA00D3B8F9 /* NukeUI in Frameworks */,
+				E290323F2D9EA84700A0CD8F /* GRDBQuery in Frameworks */,
+				E22A913C2CF8B1AA00D3B8F9 /* Nuke in Frameworks */,
+				E2F19BC62CA43C6400E19DCD /* SwiftSecurity in Frameworks */,
+				E257E6BF2D2038F90049FFE8 /* Lock in Frameworks */,
+				E28B17662CB03CBB00D6FEA0 /* GRDBQuery in Frameworks */,
+				E24D3BFD2CF3ACDC003484CC /* FrameUp in Frameworks */,
+				E2549B232CBD6886005DFE14 /* AsyncAlgorithms in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		E2839FF52CA2DD910053C312 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				E2E2BFD52D8718AE00751949 /* Algorithms in Frameworks */,
+				E2035C452D52544D0079235B /* CommonsAPI in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		E2035C432D52544D0079235B /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Frameworks;
+			sourceTree = "<group>";
+		};
+		E2839FDE2CA2DD900053C312 = {
+			isa = PBXGroup;
+			children = (
+				E2839FE92CA2DD900053C312 /* CommonsFinder */,
+				E252D5502D50DFF0002056B3 /* CommonsFinderShareExtension */,
+				E2839FE82CA2DD900053C312 /* Products */,
+				E2F19BC72CA45AF600E19DCD /* CommonsAPI */,
+				E2035C432D52544D0079235B /* Frameworks */,
+			);
+			sourceTree = "<group>";
+		};
+		E2839FE82CA2DD900053C312 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				E2839FE72CA2DD900053C312 /* CommonsFinder.app */,
+				E2839FF82CA2DD910053C312 /* CommonsFinderTests.xctest */,
+				E252D54F2D50DFF0002056B3 /* CommonsFinderShareExtension.appex */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		E252D54E2D50DFF0002056B3 /* CommonsFinderShareExtension */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = E252D55A2D50DFF0002056B3 /* Build configuration list for PBXNativeTarget "CommonsFinderShareExtension" */;
+			buildPhases = (
+				E252D54B2D50DFF0002056B3 /* Sources */,
+				E252D54C2D50DFF0002056B3 /* Frameworks */,
+				E252D54D2D50DFF0002056B3 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			fileSystemSynchronizedGroups = (
+				E252D5502D50DFF0002056B3 /* CommonsFinderShareExtension */,
+			);
+			name = CommonsFinderShareExtension;
+			packageProductDependencies = (
+			);
+			productName = CommonsFinderShareExtension;
+			productReference = E252D54F2D50DFF0002056B3 /* CommonsFinderShareExtension.appex */;
+			productType = "com.apple.product-type.app-extension";
+		};
+		E2839FE62CA2DD900053C312 /* CommonsFinder */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = E283A00C2CA2DD910053C312 /* Build configuration list for PBXNativeTarget "CommonsFinder" */;
+			buildPhases = (
+				E2839FE32CA2DD900053C312 /* Sources */,
+				E2839FE42CA2DD900053C312 /* Frameworks */,
+				E2839FE52CA2DD900053C312 /* Resources */,
+				E28C389B2CD3DFCB00DDE0BB /* Embed ExtensionKit Extensions */,
+				E252D55E2D50DFF0002056B3 /* Embed Foundation Extensions */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				E252D5582D50DFF0002056B3 /* PBXTargetDependency */,
+			);
+			fileSystemSynchronizedGroups = (
+				E2839FE92CA2DD900053C312 /* CommonsFinder */,
+			);
+			name = CommonsFinder;
+			packageProductDependencies = (
+				E2F19BC52CA43C6400E19DCD /* SwiftSecurity */,
+				E28B17652CB03CBB00D6FEA0 /* GRDBQuery */,
+				E25278722CB03FAF00D00640 /* GRDB */,
+				E25278752CB03FBB00D00640 /* GRDBQuery */,
+				E2549B222CBD6886005DFE14 /* AsyncAlgorithms */,
+				E2549B252CBD68B9005DFE14 /* Algorithms */,
+				E2549B2C2CBD69C7005DFE14 /* OrderedCollections */,
+				E2F1B9D42CD006C700410991 /* GRDB */,
+				E24D3BFC2CF3ACDC003484CC /* FrameUp */,
+				E22A913B2CF8B1AA00D3B8F9 /* Nuke */,
+				E22A913D2CF8B1AA00D3B8F9 /* NukeUI */,
+				E257E6BE2D2038F90049FFE8 /* Lock */,
+				E20A8A5D2D75F1D200EA79C5 /* H3kit */,
+				E20A8A632D75F24F00EA79C5 /* H3kit */,
+				E2F979202D81D01D0088062F /* H3kit */,
+				E29032392D9EA52000A0CD8F /* Pulse */,
+				E290323B2D9EA52000A0CD8F /* PulseUI */,
+				E290323E2D9EA84700A0CD8F /* GRDBQuery */,
+				E26D503B2DA5A75F00621D1C /* CommonsAPI */,
+			);
+			productName = CommonsFinder;
+			productReference = E2839FE72CA2DD900053C312 /* CommonsFinder.app */;
+			productType = "com.apple.product-type.application";
+		};
+		E2839FF72CA2DD910053C312 /* CommonsFinderTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = E283A00F2CA2DD910053C312 /* Build configuration list for PBXNativeTarget "CommonsFinderTests" */;
+			buildPhases = (
+				E2839FF42CA2DD910053C312 /* Sources */,
+				E2839FF52CA2DD910053C312 /* Frameworks */,
+				E2839FF62CA2DD910053C312 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				E2839FFA2CA2DD910053C312 /* PBXTargetDependency */,
+			);
+			name = CommonsFinderTests;
+			packageProductDependencies = (
+				E2035C442D52544D0079235B /* CommonsAPI */,
+				E2E2BFD42D8718AE00751949 /* Algorithms */,
+			);
+			productName = CommonsFinderTests;
+			productReference = E2839FF82CA2DD910053C312 /* CommonsFinderTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		E2839FDF2CA2DD900053C312 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = 1;
+				LastSwiftUpdateCheck = 1620;
+				LastUpgradeCheck = 1630;
+				TargetAttributes = {
+					E252D54E2D50DFF0002056B3 = {
+						CreatedOnToolsVersion = 16.2;
+					};
+					E2839FE62CA2DD900053C312 = {
+						CreatedOnToolsVersion = 16.1;
+					};
+					E2839FF72CA2DD910053C312 = {
+						CreatedOnToolsVersion = 16.1;
+						TestTargetID = E2839FE62CA2DD900053C312;
+					};
+				};
+			};
+			buildConfigurationList = E2839FE22CA2DD900053C312 /* Build configuration list for PBXProject "CommonsFinder" */;
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+				Base,
+				de,
+			);
+			mainGroup = E2839FDE2CA2DD900053C312;
+			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				E2F19BC42CA43C6400E19DCD /* XCRemoteSwiftPackageReference "swift-security" */,
+				E2549B212CBD6886005DFE14 /* XCRemoteSwiftPackageReference "swift-async-algorithms" */,
+				E2549B242CBD68B9005DFE14 /* XCRemoteSwiftPackageReference "swift-algorithms" */,
+				E2549B272CBD69C7005DFE14 /* XCRemoteSwiftPackageReference "swift-collections" */,
+				E2F1B9D32CD006C700410991 /* XCRemoteSwiftPackageReference "GRDB.swift" */,
+				E24D3BFB2CF3ACDC003484CC /* XCRemoteSwiftPackageReference "FrameUp" */,
+				E22A913A2CF8B1AA00D3B8F9 /* XCRemoteSwiftPackageReference "Nuke" */,
+				E257E6BD2D2038F90049FFE8 /* XCRemoteSwiftPackageReference "Lock" */,
+				E2F9791F2D81D01D0088062F /* XCRemoteSwiftPackageReference "h3kit-ios" */,
+				E29032382D9EA52000A0CD8F /* XCRemoteSwiftPackageReference "Pulse" */,
+				E290323D2D9EA84700A0CD8F /* XCRemoteSwiftPackageReference "GRDBQuery" */,
+				E26D503A2DA5A75F00621D1C /* XCLocalSwiftPackageReference "CommonsAPI" */,
+			);
+			preferredProjectObjectVersion = 77;
+			productRefGroup = E2839FE82CA2DD900053C312 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				E2839FE62CA2DD900053C312 /* CommonsFinder */,
+				E2839FF72CA2DD910053C312 /* CommonsFinderTests */,
+				E252D54E2D50DFF0002056B3 /* CommonsFinderShareExtension */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		E252D54D2D50DFF0002056B3 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		E2839FE52CA2DD900053C312 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		E2839FF62CA2DD910053C312 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		E252D54B2D50DFF0002056B3 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		E2839FE32CA2DD900053C312 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		E2839FF42CA2DD910053C312 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		E252D5582D50DFF0002056B3 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = E252D54E2D50DFF0002056B3 /* CommonsFinderShareExtension */;
+			targetProxy = E252D5572D50DFF0002056B3 /* PBXContainerItemProxy */;
+		};
+		E2839FFA2CA2DD910053C312 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = E2839FE62CA2DD900053C312 /* CommonsFinder */;
+			targetProxy = E2839FF92CA2DD910053C312 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
+/* Begin XCBuildConfiguration section */
+		E252D55B2D50DFF0002056B3 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_ENTITLEMENTS = CommonsFinderShareExtension/CommonsFinderShareExtension.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = CommonsFinderShareExtension/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = CommonsFinderShareExtension;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				IPHONEOS_DEPLOYMENT_TARGET = 18.2;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = app.CommonsFinder.ShareExtension;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SKIP_INSTALL = YES;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SUPPORTS_MACCATALYST = NO;
+				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = NO;
+				SUPPORTS_XR_DESIGNED_FOR_IPHONE_IPAD = NO;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 6.0;
+				TARGETED_DEVICE_FAMILY = 1;
+			};
+			name = Debug;
+		};
+		E252D55C2D50DFF0002056B3 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_ENTITLEMENTS = CommonsFinderShareExtension/CommonsFinderShareExtension.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = CommonsFinderShareExtension/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = CommonsFinderShareExtension;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				IPHONEOS_DEPLOYMENT_TARGET = 18.2;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = app.CommonsFinder.ShareExtension;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SKIP_INSTALL = YES;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SUPPORTS_MACCATALYST = NO;
+				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = NO;
+				SUPPORTS_XR_DESIGNED_FOR_IPHONE_IPAD = NO;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 6.0;
+				TARGETED_DEVICE_FAMILY = 1;
+				VALIDATE_PRODUCT = YES;
+			};
+			name = Release;
+		};
+		E283A00A2CA2DD910053C312 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_LOCALIZABILITY_NONLOCALIZED = YES;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				DEAD_CODE_STRIPPING = YES;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				DEVELOPMENT_TEAM = H7B58R89U5;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 18.0;
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_STRICT_CONCURRENCY = complete;
+				SWIFT_UPCOMING_FEATURE_GLOBAL_CONCURRENCY = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_UPCOMING_FEATURE_REGION_BASED_ISOLATION = YES;
+				SWIFT_VERSION = 6.0;
+				_EXPERIMENTAL_SWIFT_EXPLICIT_MODULES = YES;
+			};
+			name = Debug;
+		};
+		E283A00B2CA2DD910053C312 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_LOCALIZABILITY_NONLOCALIZED = YES;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				DEAD_CODE_STRIPPING = YES;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				DEVELOPMENT_TEAM = H7B58R89U5;
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 18.0;
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_STRICT_CONCURRENCY = complete;
+				SWIFT_UPCOMING_FEATURE_GLOBAL_CONCURRENCY = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_UPCOMING_FEATURE_REGION_BASED_ISOLATION = YES;
+				SWIFT_VERSION = 6.0;
+				_EXPERIMENTAL_SWIFT_EXPLICIT_MODULES = YES;
+			};
+			name = Release;
+		};
+		E283A00D2CA2DD910053C312 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GENERATE_ASSET_SYMBOL_FRAMEWORKS = "SwiftUI UIKit";
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CLANG_TIDY_BUGPRONE_REDUNDANT_BRANCH_CONDITION = YES;
+				CLANG_TIDY_MISC_REDUNDANT_EXPRESSION = YES;
+				CODE_SIGN_ENTITLEMENTS = CommonsFinder/CommonsFinder.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEAD_CODE_STRIPPING = YES;
+				DEVELOPMENT_ASSET_PATHS = "\"CommonsFinder/Preview Content\"";
+				ENABLE_HARDENED_RUNTIME = YES;
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = CommonsFinder/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = CommonsFinder;
+				INFOPLIST_KEY_ITSAppUsesNonExemptEncryption = NO;
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.reference";
+				INFOPLIST_KEY_NSCameraUsageDescription = "Camera access is needed to take new photos to upload from within the app";
+				INFOPLIST_KEY_NSLocalNetworkUsageDescription = "Local network usage is enabled and required only for development purposes when building the app locally with XCode. It should not be prompted in TestFlight or AppStore releases.";
+				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "Location is used to position the user on the map and show nearby points-of-interests and other images by querying the wikimedia servers with a given radius around the location. The location is also used when taking a photo in-app to add useful GPS metadata to the draft.";
+				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphoneos*]" = YES;
+				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphonesimulator*]" = YES;
+				"INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents[sdk=iphoneos*]" = YES;
+				"INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents[sdk=iphonesimulator*]" = YES;
+				"INFOPLIST_KEY_UILaunchScreen_Generation[sdk=iphoneos*]" = YES;
+				"INFOPLIST_KEY_UILaunchScreen_Generation[sdk=iphonesimulator*]" = YES;
+				"INFOPLIST_KEY_UIStatusBarStyle[sdk=iphoneos*]" = UIStatusBarStyleDefault;
+				"INFOPLIST_KEY_UIStatusBarStyle[sdk=iphonesimulator*]" = UIStatusBarStyleDefault;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				IPHONEOS_DEPLOYMENT_TARGET = 18.0;
+				LD_RUNPATH_SEARCH_PATHS = "@executable_path/Frameworks";
+				"LD_RUNPATH_SEARCH_PATHS[sdk=macosx*]" = "@executable_path/../Frameworks";
+				MACOSX_DEPLOYMENT_TARGET = 15.0;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = app.CommonsFinder;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = auto;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SUPPORTS_MACCATALYST = NO;
+				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = NO;
+				SUPPORTS_XR_DESIGNED_FOR_IPHONE_IPAD = NO;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				TARGETED_DEVICE_FAMILY = 1;
+				XROS_DEPLOYMENT_TARGET = 2.1;
+				_EXPERIMENTAL_SWIFT_EXPLICIT_MODULES = YES;
+			};
+			name = Debug;
+		};
+		E283A00E2CA2DD910053C312 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GENERATE_ASSET_SYMBOL_FRAMEWORKS = "SwiftUI UIKit";
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CLANG_TIDY_BUGPRONE_REDUNDANT_BRANCH_CONDITION = YES;
+				CLANG_TIDY_MISC_REDUNDANT_EXPRESSION = YES;
+				CODE_SIGN_ENTITLEMENTS = CommonsFinder/CommonsFinder.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEAD_CODE_STRIPPING = YES;
+				DEVELOPMENT_ASSET_PATHS = "\"CommonsFinder/Preview Content\"";
+				ENABLE_HARDENED_RUNTIME = YES;
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = CommonsFinder/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = CommonsFinder;
+				INFOPLIST_KEY_ITSAppUsesNonExemptEncryption = NO;
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.reference";
+				INFOPLIST_KEY_NSCameraUsageDescription = "Camera access is needed to take new photos to upload from within the app";
+				INFOPLIST_KEY_NSLocalNetworkUsageDescription = "Local network usage is enabled and required only for development purposes when building the app locally with XCode. It should not be prompted in TestFlight or AppStore releases.";
+				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "Location is used to position the user on the map and show nearby points-of-interests and other images by querying the wikimedia servers with a given radius around the location. The location is also used when taking a photo in-app to add useful GPS metadata to the draft.";
+				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphoneos*]" = YES;
+				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphonesimulator*]" = YES;
+				"INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents[sdk=iphoneos*]" = YES;
+				"INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents[sdk=iphonesimulator*]" = YES;
+				"INFOPLIST_KEY_UILaunchScreen_Generation[sdk=iphoneos*]" = YES;
+				"INFOPLIST_KEY_UILaunchScreen_Generation[sdk=iphonesimulator*]" = YES;
+				"INFOPLIST_KEY_UIStatusBarStyle[sdk=iphoneos*]" = UIStatusBarStyleDefault;
+				"INFOPLIST_KEY_UIStatusBarStyle[sdk=iphonesimulator*]" = UIStatusBarStyleDefault;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				IPHONEOS_DEPLOYMENT_TARGET = 18.0;
+				LD_RUNPATH_SEARCH_PATHS = "@executable_path/Frameworks";
+				"LD_RUNPATH_SEARCH_PATHS[sdk=macosx*]" = "@executable_path/../Frameworks";
+				MACOSX_DEPLOYMENT_TARGET = 15.0;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = app.CommonsFinder;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = auto;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SUPPORTS_MACCATALYST = NO;
+				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = NO;
+				SUPPORTS_XR_DESIGNED_FOR_IPHONE_IPAD = NO;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				TARGETED_DEVICE_FAMILY = 1;
+				XROS_DEPLOYMENT_TARGET = 2.1;
+				_EXPERIMENTAL_SWIFT_EXPLICIT_MODULES = YES;
+			};
+			name = Release;
+		};
+		E283A0102CA2DD910053C312 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEAD_CODE_STRIPPING = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 18.0;
+				MACOSX_DEPLOYMENT_TARGET = 15.0;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = org.nylkiway.CommonsFinderTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = auto;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SUPPORTS_MACCATALYST = NO;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 6.0;
+				TARGETED_DEVICE_FAMILY = 1;
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/CommonsFinder.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/CommonsFinder";
+				XROS_DEPLOYMENT_TARGET = 2.1;
+			};
+			name = Debug;
+		};
+		E283A0112CA2DD910053C312 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEAD_CODE_STRIPPING = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 18.0;
+				MACOSX_DEPLOYMENT_TARGET = 15.0;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = org.nylkiway.CommonsFinderTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = auto;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SUPPORTS_MACCATALYST = NO;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 6.0;
+				TARGETED_DEVICE_FAMILY = 1;
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/CommonsFinder.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/CommonsFinder";
+				XROS_DEPLOYMENT_TARGET = 2.1;
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		E252D55A2D50DFF0002056B3 /* Build configuration list for PBXNativeTarget "CommonsFinderShareExtension" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				E252D55B2D50DFF0002056B3 /* Debug */,
+				E252D55C2D50DFF0002056B3 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		E2839FE22CA2DD900053C312 /* Build configuration list for PBXProject "CommonsFinder" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				E283A00A2CA2DD910053C312 /* Debug */,
+				E283A00B2CA2DD910053C312 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		E283A00C2CA2DD910053C312 /* Build configuration list for PBXNativeTarget "CommonsFinder" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				E283A00D2CA2DD910053C312 /* Debug */,
+				E283A00E2CA2DD910053C312 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		E283A00F2CA2DD910053C312 /* Build configuration list for PBXNativeTarget "CommonsFinderTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				E283A0102CA2DD910053C312 /* Debug */,
+				E283A0112CA2DD910053C312 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+
+/* Begin XCLocalSwiftPackageReference section */
+		E26D503A2DA5A75F00621D1C /* XCLocalSwiftPackageReference "CommonsAPI" */ = {
+			isa = XCLocalSwiftPackageReference;
+			relativePath = CommonsAPI;
+		};
+/* End XCLocalSwiftPackageReference section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		E22A913A2CF8B1AA00D3B8F9 /* XCRemoteSwiftPackageReference "Nuke" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/kean/Nuke";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 12.8.0;
+			};
+		};
+		E24D3BFB2CF3ACDC003484CC /* XCRemoteSwiftPackageReference "FrameUp" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/ryanlintott/FrameUp";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 0.9.9;
+			};
+		};
+		E2549B212CBD6886005DFE14 /* XCRemoteSwiftPackageReference "swift-async-algorithms" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/apple/swift-async-algorithms.git";
+			requirement = {
+				branch = 1.0.0;
+				kind = branch;
+			};
+		};
+		E2549B242CBD68B9005DFE14 /* XCRemoteSwiftPackageReference "swift-algorithms" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/apple/swift-algorithms.git";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 1.2.1;
+			};
+		};
+		E2549B272CBD69C7005DFE14 /* XCRemoteSwiftPackageReference "swift-collections" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/apple/swift-collections.git";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 1.2.0;
+			};
+		};
+		E257E6BD2D2038F90049FFE8 /* XCRemoteSwiftPackageReference "Lock" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/mattmassicotte/Lock";
+			requirement = {
+				kind = exactVersion;
+				version = 0.1.1;
+			};
+		};
+		E29032382D9EA52000A0CD8F /* XCRemoteSwiftPackageReference "Pulse" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/kean/Pulse";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 5.1.4;
+			};
+		};
+		E290323D2D9EA84700A0CD8F /* XCRemoteSwiftPackageReference "GRDBQuery" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/groue/GRDBQuery";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 0.11.0;
+			};
+		};
+		E2F19BC42CA43C6400E19DCD /* XCRemoteSwiftPackageReference "swift-security" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/dm-zharov/swift-security";
+			requirement = {
+				kind = exactVersion;
+				version = 2.4.0;
+			};
+		};
+		E2F1B9D32CD006C700410991 /* XCRemoteSwiftPackageReference "GRDB.swift" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/groue/GRDB.swift.git";
+			requirement = {
+				kind = upToNextMinorVersion;
+				minimumVersion = 7.5.0;
+			};
+		};
+		E2F9791F2D81D01D0088062F /* XCRemoteSwiftPackageReference "h3kit-ios" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/nylki/h3kit-ios";
+			requirement = {
+				branch = main;
+				kind = branch;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		E2035C442D52544D0079235B /* CommonsAPI */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = CommonsAPI;
+		};
+		E20A8A5D2D75F1D200EA79C5 /* H3kit */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = H3kit;
+		};
+		E20A8A632D75F24F00EA79C5 /* H3kit */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = H3kit;
+		};
+		E22A913B2CF8B1AA00D3B8F9 /* Nuke */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = E22A913A2CF8B1AA00D3B8F9 /* XCRemoteSwiftPackageReference "Nuke" */;
+			productName = Nuke;
+		};
+		E22A913D2CF8B1AA00D3B8F9 /* NukeUI */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = E22A913A2CF8B1AA00D3B8F9 /* XCRemoteSwiftPackageReference "Nuke" */;
+			productName = NukeUI;
+		};
+		E24D3BFC2CF3ACDC003484CC /* FrameUp */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = E24D3BFB2CF3ACDC003484CC /* XCRemoteSwiftPackageReference "FrameUp" */;
+			productName = FrameUp;
+		};
+		E25278722CB03FAF00D00640 /* GRDB */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = GRDB;
+		};
+		E25278752CB03FBB00D00640 /* GRDBQuery */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = GRDBQuery;
+		};
+		E2549B222CBD6886005DFE14 /* AsyncAlgorithms */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = E2549B212CBD6886005DFE14 /* XCRemoteSwiftPackageReference "swift-async-algorithms" */;
+			productName = AsyncAlgorithms;
+		};
+		E2549B252CBD68B9005DFE14 /* Algorithms */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = E2549B242CBD68B9005DFE14 /* XCRemoteSwiftPackageReference "swift-algorithms" */;
+			productName = Algorithms;
+		};
+		E2549B2C2CBD69C7005DFE14 /* OrderedCollections */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = E2549B272CBD69C7005DFE14 /* XCRemoteSwiftPackageReference "swift-collections" */;
+			productName = OrderedCollections;
+		};
+		E257E6BE2D2038F90049FFE8 /* Lock */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = E257E6BD2D2038F90049FFE8 /* XCRemoteSwiftPackageReference "Lock" */;
+			productName = Lock;
+		};
+		E26D503B2DA5A75F00621D1C /* CommonsAPI */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = CommonsAPI;
+		};
+		E28B17652CB03CBB00D6FEA0 /* GRDBQuery */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = GRDBQuery;
+		};
+		E29032392D9EA52000A0CD8F /* Pulse */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = E29032382D9EA52000A0CD8F /* XCRemoteSwiftPackageReference "Pulse" */;
+			productName = Pulse;
+		};
+		E290323B2D9EA52000A0CD8F /* PulseUI */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = E29032382D9EA52000A0CD8F /* XCRemoteSwiftPackageReference "Pulse" */;
+			productName = PulseUI;
+		};
+		E290323E2D9EA84700A0CD8F /* GRDBQuery */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = E290323D2D9EA84700A0CD8F /* XCRemoteSwiftPackageReference "GRDBQuery" */;
+			productName = GRDBQuery;
+		};
+		E2E2BFD42D8718AE00751949 /* Algorithms */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = E2549B242CBD68B9005DFE14 /* XCRemoteSwiftPackageReference "swift-algorithms" */;
+			productName = Algorithms;
+		};
+		E2F19BC52CA43C6400E19DCD /* SwiftSecurity */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = E2F19BC42CA43C6400E19DCD /* XCRemoteSwiftPackageReference "swift-security" */;
+			productName = SwiftSecurity;
+		};
+		E2F1B9D42CD006C700410991 /* GRDB */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = E2F1B9D32CD006C700410991 /* XCRemoteSwiftPackageReference "GRDB.swift" */;
+			productName = GRDB;
+		};
+		E2F979202D81D01D0088062F /* H3kit */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = E2F9791F2D81D01D0088062F /* XCRemoteSwiftPackageReference "h3kit-ios" */;
+			productName = H3kit;
+		};
+/* End XCSwiftPackageProductDependency section */
+	};
+	rootObject = E2839FDF2CA2DD900053C312 /* Project object */;
+}
