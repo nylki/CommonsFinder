@@ -22,6 +22,8 @@
 		E290323A2D9EA52000A0CD8F /* Pulse in Frameworks */ = {isa = PBXBuildFile; productRef = E29032392D9EA52000A0CD8F /* Pulse */; settings = {ATTRIBUTES = (Required, ); }; };
 		E290323C2D9EA52000A0CD8F /* PulseUI in Frameworks */ = {isa = PBXBuildFile; productRef = E290323B2D9EA52000A0CD8F /* PulseUI */; settings = {ATTRIBUTES = (Required, ); }; };
 		E290323F2D9EA84700A0CD8F /* GRDBQuery in Frameworks */ = {isa = PBXBuildFile; productRef = E290323E2D9EA84700A0CD8F /* GRDBQuery */; };
+		E29112B62DF34733007A3998 /* WhatToTest.de-DE.txt in Resources */ = {isa = PBXBuildFile; fileRef = E29112B52DF3463E007A3998 /* WhatToTest.de-DE.txt */; };
+		E29112B72DF34733007A3998 /* WhatToTest.en-US.txt in Resources */ = {isa = PBXBuildFile; fileRef = E29112B42DF344F0007A3998 /* WhatToTest.en-US.txt */; };
 		E2E2BFD52D8718AE00751949 /* Algorithms in Frameworks */ = {isa = PBXBuildFile; productRef = E2E2BFD42D8718AE00751949 /* Algorithms */; };
 		E2F19BC62CA43C6400E19DCD /* SwiftSecurity in Frameworks */ = {isa = PBXBuildFile; productRef = E2F19BC52CA43C6400E19DCD /* SwiftSecurity */; };
 		E2F1B9D52CD006C700410991 /* GRDB in Frameworks */ = {isa = PBXBuildFile; productRef = E2F1B9D42CD006C700410991 /* GRDB */; };
@@ -76,6 +78,8 @@
 		E252D54F2D50DFF0002056B3 /* CommonsFinderShareExtension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = CommonsFinderShareExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		E2839FE72CA2DD900053C312 /* CommonsFinder.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = CommonsFinder.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		E2839FF82CA2DD910053C312 /* CommonsFinderTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = CommonsFinderTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		E29112B42DF344F0007A3998 /* WhatToTest.en-US.txt */ = {isa = PBXFileReference; lastKnownFileType = text; path = "WhatToTest.en-US.txt"; sourceTree = "<group>"; };
+		E29112B52DF3463E007A3998 /* WhatToTest.de-DE.txt */ = {isa = PBXFileReference; lastKnownFileType = text; path = "WhatToTest.de-DE.txt"; sourceTree = "<group>"; };
 		E2F19BC72CA45AF600E19DCD /* CommonsAPI */ = {isa = PBXFileReference; lastKnownFileType = wrapper; path = CommonsAPI; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -321,6 +325,7 @@
 		E2839FDE2CA2DD900053C312 = {
 			isa = PBXGroup;
 			children = (
+				E29112B32DF344C9007A3998 /* TestFlight */,
 				E2839FE92CA2DD900053C312 /* CommonsFinder */,
 				E252D5502D50DFF0002056B3 /* CommonsFinderShareExtension */,
 				E2839FE82CA2DD900053C312 /* Products */,
@@ -337,6 +342,15 @@
 				E252D54F2D50DFF0002056B3 /* CommonsFinderShareExtension.appex */,
 			);
 			name = Products;
+			sourceTree = "<group>";
+		};
+		E29112B32DF344C9007A3998 /* TestFlight */ = {
+			isa = PBXGroup;
+			children = (
+				E29112B52DF3463E007A3998 /* WhatToTest.de-DE.txt */,
+				E29112B42DF344F0007A3998 /* WhatToTest.en-US.txt */,
+			);
+			path = TestFlight;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -500,6 +514,8 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				E29112B62DF34733007A3998 /* WhatToTest.de-DE.txt in Resources */,
+				E29112B72DF34733007A3998 /* WhatToTest.en-US.txt in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

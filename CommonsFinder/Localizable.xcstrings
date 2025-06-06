@@ -790,7 +790,14 @@
       }
     },
     "Logout User" : {
-
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "User ausloggen"
+          }
+        }
+      }
     },
     "Look Around" : {
       "localizations" : {
@@ -903,7 +910,14 @@
       }
     },
     "No recently viewed images" : {
-
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Keine kürzlich aufgerufenen Bilder"
+          }
+        }
+      }
     },
     "no rights reserved – public domain or waiver if the PD release is invalidated" : {
 
@@ -939,7 +953,14 @@
       }
     },
     "Open in Map App" : {
-
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "In Karten-App öffnen"
+          }
+        }
+      }
     },
     "Open Kartographer Map" : {
       "localizations" : {
@@ -947,17 +968,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Kartographer-Karte öffnen"
-          }
-        }
-      }
-    },
-    "Open Map" : {
-      "extractionState" : "stale",
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Karte öffnen"
           }
         }
       }

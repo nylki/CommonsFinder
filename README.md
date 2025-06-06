@@ -15,6 +15,7 @@ The project is **currently work-in-progress**, but several core features already
 - view a list of images per category + depicted item
 - history of previously viewed images
 - works well with increased font sizes and other accessibility system features
+- dark and light color schemes
 
 
 ## Demo videos and screenshots
@@ -50,6 +51,7 @@ Those above have priority, but there are many more things planned. Here is a rou
 - multi-image/batch uploads
 - dedicated panorama viewer for wide-aspect/panorama images
 - supporting sending wiki-love
+- visible qualifiers for depict items etc.
 - privacy features: eg. support face and number plate detection, to allow the user to blur face and number plates without using an external image editor
 - investigate how to allow users to contribute to recurring events and contests like "wiki loves earth" without manually editing wikitext (if thats possible)
 - explore if OAuth is feasible. It would be great, because log-in would be easier when the user already has the credentials stored in the keychain for the wikimedia domains. Technically, it should be possible but there is conflicting information regarding security, eg. if it's ok to use inside an app or if it should only be used in hosted applications. This topic needs more investigation and communication with other people from the Wikimedia Foundation

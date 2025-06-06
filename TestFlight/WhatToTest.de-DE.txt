@@ -1,0 +1,13 @@
+Dies ist der erste öffentliche Alpha-Release.
+
+Es können folgende Funktionen genutzt und getestet werden:
+
+- login (Wikimedia account)
+- Registrierung eines neuen User-Accounts
+- Bilder nach Wikimedia Commons hochladen und mit Kategorien und Motiven taggen
+- Durchsuchen von Bilder (Suche-Tab)
+- Explorieren von Bildern und Orten auf der Karte
+- Auflistung aller deiner Uploads
+- Auflistung von kürzlich aufgerufenen Bildern (die innerhalb der App geöffnet wurden), im Übersicht/Home-Tab
+
+Viel Spaß!
