@@ -8,7 +8,7 @@
 import AppIntents
 import Foundation
 
-class shortcuts: AppShortcutsProvider {
+struct CommonsFinderShortcuts: AppShortcutsProvider {
     static var appShortcuts: [AppShortcut] {
         AppShortcut(
             intent: InAppSearchIntent(),

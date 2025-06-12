@@ -11,7 +11,7 @@ import Lock
 import os.log
 
 actor GeoPlacemarkCache {
-    static var shared = GeoPlacemarkCache()
+    static let shared = GeoPlacemarkCache()
 
     private let lock = AsyncLock()
     private var cache: [CLLocation: CLPlacemark] = [:]
