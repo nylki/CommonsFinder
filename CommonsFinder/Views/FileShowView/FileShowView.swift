@@ -165,6 +165,9 @@ private struct MainFileShowView: View {
                 ToolbarItem(placement: .automatic) {
                     Menu {
                         ShareLink(item: mediaFileInfo.mediaFile.descriptionURL)
+                        Link(destination: mediaFileInfo.mediaFile.descriptionURL) {
+                            Label("Open in Browser", systemImage: "globe")
+                        }
                     } label: {
                         if titleAreaHidden {
                             Image(systemName: "ellipsis.circle")
