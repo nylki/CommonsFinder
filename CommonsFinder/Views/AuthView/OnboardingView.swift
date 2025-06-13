@@ -46,7 +46,7 @@ struct OnboardingView: View {
         .scenePadding(.horizontal)
         .navigationTitle("Wikimedia Account")
         .navigationBarTitleDisplayMode(.inline)
-        .presentationDetents([.fraction(0.33), .large])
+        .presentationDetents([.fraction(0.4), .large])
     }
 }
 

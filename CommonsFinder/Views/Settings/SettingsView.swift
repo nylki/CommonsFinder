@@ -40,7 +40,7 @@ struct SettingsView: View {
                             )
                         }
                         .buttonStyle(ExpandingButtonStyle())
-                        .confirmationDialog("Are you sure you want to log-out the user \"\(activeUser.username)\"?", isPresented: $isShowingLogoutDialog, titleVisibility: .visible) {
+                        .confirmationDialog("Are you sure you want to log-out ?", isPresented: $isShowingLogoutDialog, titleVisibility: .visible) {
                             Button("Logout User", systemImage: "square.and.arrow.up", role: .destructive, action: logout)
 
                             Button("Cancel", role: .cancel) {

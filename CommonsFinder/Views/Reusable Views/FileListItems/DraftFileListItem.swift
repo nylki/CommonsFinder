@@ -203,6 +203,33 @@ struct DraftFileListItem: View {
                     }
                     .font(.title3)
                     .transition(.blurReplace.animation(.bouncy))
+                case .twoFactorCodeRequired, .emailCodeRequired:
+                    Label {
+                        Text("Verification Code required")
+                    } icon: {
+                        Image(systemName: "exclamationmark.triangle")
+                            .contentTransition(.symbolEffect)
+                    }
+                    .font(.title3)
+                    .transition(.blurReplace.animation(.bouncy))
+                case .authenticationError(let error):
+                    Label {
+                        Text("Authentication Error")
+                    } icon: {
+                        Image(systemName: "exclamationmark.triangle")
+                            .contentTransition(.symbolEffect)
+                    }
+                    .font(.title3)
+                    .transition(.blurReplace.animation(.bouncy))
+                case .error(let error):
+                    Label {
+                        Text(error.errorDescription ?? error.localizedDescription)
+                    } icon: {
+                        Image(systemName: "exclamationmark.triangle")
+                            .contentTransition(.symbolEffect)
+                    }
+                    .font(.title3)
+                    .transition(.blurReplace.animation(.bouncy))
                 }
             }
         }

@@ -174,8 +174,15 @@
         }
       }
     },
-    "Are you sure you want to log-out the user \"%@\"?" : {
-
+    "Are you sure you want to log-out ?" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bist du dir sicher, dass du dich ausloggen möchtest?"
+          }
+        }
+      }
     },
     "Asia" : {
       "localizations" : {
@@ -226,6 +233,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Australien"
+          }
+        }
+      }
+    },
+    "Authentication Error" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Authentifizierungsfehler"
           }
         }
       }
@@ -382,6 +399,16 @@
         }
       }
     },
+    "Continue" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Weiter"
+          }
+        }
+      }
+    },
     "Copy Coordinates" : {
       "localizations" : {
         "de" : {
@@ -485,6 +512,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Bearbeiten"
+          }
+        }
+      }
+    },
+    "Email-Code" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Email-Code"
           }
         }
       }
@@ -1082,6 +1119,26 @@
         }
       }
     },
+    "Please enter a code from your two-factor authentication application to continue." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bitte gib einen Code aus deiner Zwei-Faktor-App (2FA) um fortzufahren."
+          }
+        }
+      }
+    },
+    "Please enter the one-time verification code sent by email to continue." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bitte gib zur Verifizierung den Code ein, der dir eben per Mail gesendet wurde."
+          }
+        }
+      }
+    },
     "Please enter the text seen above" : {
       "localizations" : {
         "de" : {
@@ -1093,10 +1150,24 @@
       }
     },
     "public domain" : {
-
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "Gemeinfrei"
+          }
+        }
+      }
     },
     "Public Domain" : {
-
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "Gemeinfrei"
+          }
+        }
+      }
     },
     "Publish" : {
       "localizations" : {
@@ -1259,10 +1330,24 @@
       }
     },
     "some rights reserved – attribution and sharing alike required" : {
-
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "some rights reserved – attribution and sharing alike required"
+          }
+        }
+      }
     },
     "some rights reserved – attribution required" : {
-
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "some rights reserved – attribution required"
+          }
+        }
+      }
     },
     "Source" : {
       "localizations" : {
@@ -1285,7 +1370,14 @@
       }
     },
     "Tags" : {
-
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tags"
+          }
+        }
+      }
     },
     "Take new Photo" : {
       "localizations" : {
@@ -1353,6 +1445,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Zeitzone"
+          }
+        }
+      }
+    },
+    "Two-factor token or recovery code" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zwei-Faktor-Code oder Wiederherstellungscode"
           }
         }
       }
@@ -1457,6 +1559,16 @@
         }
       }
     },
+    "Verification Code required" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bestätigungscode erforderlich"
+          }
+        }
+      }
+    },
     "Video" : {
       "localizations" : {
         "de" : {
@@ -1534,7 +1646,14 @@
       }
     },
     "You will find a history of your previously viewed images here." : {
-
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hier wirst du einen Verlauf deiner im Laufe der Zeit angeschauten Bilder finden."
+          }
+        }
+      }
     },
     "Zero Public Domain, \"No Rights Reserved\"" : {
 

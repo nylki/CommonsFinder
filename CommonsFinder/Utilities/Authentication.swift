@@ -41,6 +41,24 @@ extension SecItemQuery<InternetPassword> {
     }
 }
 
+struct OneTimeCode: Hashable, Equatable {
+    var baseValue: String
+    var type: CodeType
+
+    static var empty: Self {
+        .init(baseValue: "", type: .twoFactor)
+    }
+
+    var isEmpty: Bool {
+        baseValue.isEmpty
+    }
+
+    enum CodeType: Hashable, Equatable {
+        case twoFactor
+        case email
+    }
+}
+
 extension Authentication {
 
     static func clearKeychain() throws {
@@ -68,7 +86,7 @@ extension Authentication {
         return username
     }
 
-    static func loginUsingKeychain(forUsername username: String) async throws(AuthError) {
+    static func loginUsingKeychain(forUsername username: String) async throws(AuthError) -> AuthSuccess {
         let password: String?
 
         do {
@@ -81,29 +99,69 @@ extension Authentication {
             throw .keychainPasswordMissing(username: username)
         }
         // We don't want to store the password again, as we just succesfully retrieved it.
-        try await Authentication.login(username: username, password: password, storingCredentials: false)
+        return try await Authentication.login(
+            username: username,
+            password: password,
+            oneTimeCode: nil,
+            storingCredentials: false
+        )
     }
 
     /// Authenticates with the API and if succeeded will securely store the credentials in the keychain
     /// for future authentications without user interaction.
-    static func login(username: String, password: String, storingCredentials: Bool = true) async throws(AuthError) {
+    static func login(
+        username: String,
+        password: String,
+        oneTimeCode: OneTimeCode?,
+        storingCredentials: Bool = true
+    ) async throws(AuthError) -> AuthSuccess {
         let response: LoginResponse
         do {
-            response = try await API.shared.login(username: username, password: password)
+            if let oneTimeCode, !oneTimeCode.isEmpty {
+                switch oneTimeCode.type {
+                case .twoFactor:
+                    response = try await API.shared.continueLogin(twoFactorCode: oneTimeCode.baseValue)
+                case .email:
+                    response = try await API.shared.continueLogin(emailCode: oneTimeCode.baseValue)
+                }
+            } else {
+                response = try await API.shared.login(username: username, password: password)
+            }
+
         } catch {
+            // TODO: can we do better here and provide better Localized Errors to the user?
             throw .network(error)
         }
 
         switch response.status {
         case .fail:
-            throw .authenticationFailedOther(response.messagecode)
-        case .ui, .redirect, .restart:
+            if response.messagecode == "wrongpassword" {
+                throw .wrongPassword
+            } else {
+                throw .authenticationFailedOther(response.messagecode)
+            }
+        case .ui:
+            if response.messagecode == "oathauth-login-failed" {
+                throw .twoFactorCodeFailed
+            }
+
+            if let requestID = response.requests?.first?.id {
+                if requestID.hasSuffix("TOTPAuthenticationRequest") {
+                    return .twoFactorCodeRequired
+                } else if requestID.hasSuffix("EmailAuthAuthenticationRequest") {
+                    return .emailCodeRequired
+                } else {
+                    throw .authenticationAdditionalSteps(response.status.rawValue)
+                }
+            } else {
+                throw .authenticationAdditionalSteps(response.status.rawValue)
+            }
+        case .redirect, .restart:
             throw .authenticationAdditionalSteps(response.status.rawValue)
         case .pass:
             let keychain = Keychain.default
 
             do {
-
                 // Remove creds if they already exist and log it for debgging
                 let activeUserWasAlreadyStored = try keychain.remove(.activeUser)
                 let passwordWasAlreadyStored = try keychain.remove(.password(forUser: username))
@@ -115,16 +173,15 @@ extension Authentication {
                     logger.debug("duplicate key found during login: password for \(username, privacy: .private)")
                 }
 
-
                 try keychain.store(password, query: .password(forUser: username))
                 try keychain.store(username, query: .activeUser)
+
+                return .authenticationComplete
             } catch let error as SwiftSecurityError {
                 switch error {
-
                 default:
                     throw .keychainOther(error)
                 }
-
             } catch {
                 throw .keychainOther(error)
             }
@@ -207,12 +264,7 @@ extension Authentication {
                 try keychain.store(password, query: .password(forUser: username))
                 try keychain.store(username, query: .activeUser)
             } catch let error as SwiftSecurityError {
-                switch error {
-
-                default:
-                    throw .keychainOther(error)
-                }
-
+                throw .keychainOther(error)
             } catch {
                 throw .keychainOther(error)
             }
@@ -221,18 +273,18 @@ extension Authentication {
 
     /// Fetches the CSRF-token from the API for edit/upload actions
     /// Will re-login with keychain credentials if necessary.
-
-    static func fetchCSRFToken() async throws(AuthError) -> String {
+    static func fetchCSRFToken() async throws(AuthError) -> TokenRequestSuccess {
         do {
-            return try await API.shared.fetchCSRFToken()
+            let token = try await API.shared.fetchCSRFToken()
+            return .tokenReceived(token: token)
         } catch {
             return try await retryFetchingCSRFToken()
         }
     }
 
-    static private func retryFetchingCSRFToken() async throws(AuthError) -> String {
-        // Check keychain and retry by logging in again
-        // We expect to find credentials as they are securely stored on a succesful login.
+    /// Retries getting a CSRF-token by attempting to login with the keychain-stored credentials.
+    /// We expect to find credentials as they are securely stored on a succesful login.
+    static private func retryFetchingCSRFToken() async throws(AuthError) -> TokenRequestSuccess {
         let activeUsername: String
 
         do {
@@ -244,18 +296,40 @@ extension Authentication {
             throw AuthError.keychainOther(error)
         }
 
-        try await loginUsingKeychain(forUsername: activeUsername)
-        return try await fetchCSRFToken()
+        let authResult = try await loginUsingKeychain(forUsername: activeUsername)
+        switch authResult {
+        case .twoFactorCodeRequired:
+            return .twoFactorCodeRequired
+        case .emailCodeRequired:
+            return .emailCodeRequired
+        case .authenticationComplete:
+            return try await fetchCSRFToken()
+        }
+
     }
 }
 
 extension Authentication {
+    enum AuthSuccess {
+        case twoFactorCodeRequired
+        case emailCodeRequired
+        case authenticationComplete
+    }
+
+    enum TokenRequestSuccess {
+        case twoFactorCodeRequired
+        case emailCodeRequired
+        case tokenReceived(token: String)
+    }
+
     // TODO: maybe differentiate between Login and Create Errors?
     enum AuthError: LocalizedError {
+        case existingUserLogin
         /// lower level network error (timeout, bad gateway etc.)
         case network(Error)
         case captchaFailed
-        /// credentials are not valid
+        case wrongPassword
+        case twoFactorCodeFailed
         case accountCreationThrottleLimit
         case authenticationFailedOther(String?)
         /// auth requires addition steps (redirect, ui, restart)
@@ -267,10 +341,14 @@ extension Authentication {
 
         var errorDescription: String? {
             switch self {
+            case .existingUserLogin:
+                "A user is already logged."
             case .network(let error):
                 "Network error during authentication: \(error.localizedDescription)"
             case .captchaFailed:
                 "The provided captcha was not accepted"
+            case .wrongPassword:
+                "username or password is incorrect"
             case .accountCreationThrottleLimit:
                 "Too many accounts registered in the last 24h via your current IP address."
             case .authenticationFailedOther(let string):
@@ -283,6 +361,8 @@ extension Authentication {
                 "The password associated with user \(username) was not found"
             case .keychainOther(let error):
                 "keychain error: \(error.localizedDescription)"
+            case .twoFactorCodeFailed:
+                "The login with the two-factor code (2FA) failed."
             }
         }
 
@@ -292,6 +372,10 @@ extension Authentication {
                 "Try again later or from a different network."
             case .captchaFailed:
                 "Try again."
+            case .wrongPassword:
+                "Check your spelling and make sure you entered the correct password."
+            case .twoFactorCodeFailed:
+                "The entered code might have expired or was incorrect, please retry and enter a new code."
             default:
                 "Try again later."
             }

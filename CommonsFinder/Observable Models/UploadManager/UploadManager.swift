@@ -14,19 +14,54 @@ import UIKit
 import UniformTypeIdentifiers
 import os.log
 
-enum UploadManagerStatus: Equatable, Hashable {
+enum UploadManagerStatus: Equatable {
     case uploading(_ fractionCompleted: Double)
+    case twoFactorCodeRequired
+    case emailCodeRequired
     case creatingWikidataClaims
     case unstashingFile
     case published
     case uploadWarnings([FileUploadResponse.Warning])
     case unspecifiedError(String)
+    case authenticationError(Error?)
+    case error(LocalizedError)
 
     var uploadProgress: Double? {
         if case let .uploading(fractionCompleted) = self {
             fractionCompleted
         } else {
             nil
+        }
+    }
+
+    static func == (lhs: UploadManagerStatus, rhs: UploadManagerStatus) -> Bool {
+        return switch lhs {
+        case .twoFactorCodeRequired, .emailCodeRequired, .authenticationError, .creatingWikidataClaims, .unstashingFile, .published:
+            lhs == rhs
+        case .uploading(let lhsCompleted):
+            if case .uploading(let rhsCompleted) = rhs {
+                lhsCompleted == rhsCompleted
+            } else {
+                false
+            }
+        case .uploadWarnings(let lhsArray):
+            if case .uploadWarnings(let rhsArray) = rhs {
+                lhsArray == rhsArray
+            } else {
+                false
+            }
+        case .error(let lhsError):
+            if case .error(let rhsError) = rhs {
+                lhsError.errorDescription == rhsError.errorDescription
+            } else {
+                false
+            }
+        case .unspecifiedError(let lhsError):
+            if case .unspecifiedError(let rhsError) = rhs {
+                lhsError == rhsError
+            } else {
+                false
+            }
         }
     }
 }
@@ -67,9 +102,11 @@ class UploadManager {
         }
     }
 
-    func upload(_ draft: MediaFileDraft, username: String) {
-        do {
 
+    func upload(_ draft: MediaFileDraft, username: String) {
+        // TODO: check auth here instead of failing later, so the upload isn't officially started yet
+        // .... try ensureUserIsLoggedIn() // throwing re-auth required
+        do {
             try draft.updateExifLocation()
             let finalDraft = try updateDraftWithFinalFilename(draft: draft)
 
@@ -98,15 +135,31 @@ class UploadManager {
 
     func performUpload(_ uploadable: MediaFileUploadable) async {
         let csrfToken: String
+
         do {
-            csrfToken = try await Authentication.fetchCSRFToken()
+            let tokenAuthResult = try await Authentication.fetchCSRFToken()
+            switch tokenAuthResult {
+            case .twoFactorCodeRequired:
+                // FIXME: actual trigger a re-login when auth failed (eg. due to 2fa, or password change)
+                // and ability to retry/resume
+                uploadStatus[uploadable.id] = .twoFactorCodeRequired
+                return
+            case .emailCodeRequired:
+                // FIXME: actual trigger a re-login when auth failed (eg. due to 2fa, or password change)
+                // and ability to retry/resume
+                uploadStatus[uploadable.id] = .emailCodeRequired
+                return
+            case .tokenReceived(let token):
+                csrfToken = token
+            }
         } catch {
             logger.error("failed to fetch CSRF token for upload: \(error)")
-            uploadStatus[uploadable.id] = .unspecifiedError(error.localizedDescription)
+            uploadStatus[uploadable.id] = .authenticationError(error)
             return
         }
 
         let request = await API.shared.publish(file: uploadable, csrfToken: csrfToken)
+
         for await status in request {
             switch status {
             case .uploadingFile(let progress):
@@ -124,7 +177,6 @@ class UploadManager {
                 uploadStatus[uploadable.id] = .unspecifiedError(errorMessage)
             }
         }
-
     }
 }
 

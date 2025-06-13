@@ -25,15 +25,11 @@ struct User: Sendable, Codable, Hashable, Equatable {
     }
 }
 
-enum LoginFailure: LocalizedError {
-    case mustLogoutFirst
-    /// failed wrong credentials or other authentication problem
-    case authenticationFailed
-    /// failed due to network issues or response decoding issues
-    case networkAPIError(Error)
-    case other(String)
+enum LoginSuccess {
+    case loggedIn(User)
+    case twoFactorCodeRequired
+    case emailCodeRequired
 }
-
 
 // UserManager is designed to be lean and does not hold any data unrelated to authentication
 // and basic profile data (username, profile image, preferences?)
@@ -76,24 +72,30 @@ final class AccountModel {
         try Authentication.clearKeychain()
     }
 
+
     @discardableResult
-    func login(username: String, password: String) async throws(LoginFailure) -> User {
+    func login(username: String, password: String, oneTimeCode: OneTimeCode?) async throws(Authentication.AuthError) -> LoginSuccess {
         guard activeUser == nil else {
-            throw LoginFailure.mustLogoutFirst
+            throw .existingUserLogin
         }
 
         // see uppercasing: https://en.wikipedia.org/wiki/Wikipedia:Username_policy
         let username = username.capitalizingFirstLetter()
+        let result = try await Authentication.login(username: username, password: password, oneTimeCode: oneTimeCode)
 
-        do {
-            try await Authentication.login(username: username, password: password)
+        switch result {
+        case .twoFactorCodeRequired: return .twoFactorCodeRequired
+        case .emailCodeRequired: return .emailCodeRequired
+        case .authenticationComplete:
             let user = User(username: username)
             activeUser = user
             schedulePostLoginTasks(forUser: user)
-            return user
-        } catch {
-            throw LoginFailure.networkAPIError(error)
+            return .loggedIn(user)
         }
+    }
+
+    func ensureUserIsAuthenticated() {
+
     }
 
     func createAccount(username: String, password: String, email: String, captchaWord: String, captchaID: String, token: String) async throws(Authentication.AuthError) -> User {
