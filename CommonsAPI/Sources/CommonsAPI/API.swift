@@ -73,7 +73,36 @@ public actor API {
 
     public init() {
         let configuration = URLSessionConfiguration.af.default
+
         configuration.headers.update(name: "User-Agent", value: userAgent)
+        
+
+ // Un-Comment the following code block to test EmailAuth via email-code (https://www.mediawiki.org/wiki/Help:Extension:EmailAuth)
+//#if DEBUG
+//        let c1 = HTTPCookie(properties: [
+//            .domain: "auth.wikimedia.org",
+//            .name: "forceEmailAuth",
+//            .path: "/",
+//            .value: "1",
+//            .expires: Date().addingTimeInterval(600)
+//        ])
+//        
+//        let c2 = HTTPCookie(properties: [
+//            .domain: "commons.wikimedia.org",
+//            .name: "forceEmailAuth",
+//            .path: "/",
+//            .value: "1",
+//            .expires: Date().addingTimeInterval(600)
+//        ])
+//        
+//        if let c1, let c2 {
+//            configuration.httpCookieStorage?.setCookie(c1)
+//            configuration.httpCookieStorage?.setCookie(c2)
+//
+//        } else {
+//            assertionFailure()
+//        }
+// #endif
         
         var eventMonitors: [any EventMonitor] = [AlamofireNotifications()]
         
