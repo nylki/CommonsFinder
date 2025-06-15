@@ -1,13 +1,4 @@
-# This is the first public alpha release.
+In this version, login with two-factor codes as well as email codes is now supported!
+Additionally, the image detail view has received an “Open in Browser” button.
 
-You can use and test:
-
-- login to existing Wikimedia account
-- Wikimedia account registration
-- upload images to Wikimedia Commons and tag them with categories and depict-items
-- search WikimediaCommons images (Search-Tab) and browse their tags to discover more images
-- explore images and locations on the map
-- see all your previous uploads in the Home-Tab
-- see all your recently viewed images (that you viewed in the app) in the Home-Tab
-
-Have fun!
+Have fun testing :)
