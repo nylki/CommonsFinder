@@ -527,6 +527,7 @@
       }
     },
     "empty" : {
+      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -1440,6 +1441,7 @@
       }
     },
     "Timezone" : {
+      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {

@@ -99,17 +99,17 @@ struct SearchView: View {
 
             Spacer()
 
-            Button {
-
-            } label: {
-                Image(systemName: "square.grid.2x2")
-                    .padding(.horizontal, 9)
-                    .padding(.vertical, 9)
-                    .background(.regularMaterial, in: .capsule)
-                    .font(.footnote)
-
-            }
-            .disabled(true)
+            //            Button {
+            //
+            //            } label: {
+            //                Image(systemName: "square.grid.2x2")
+            //                    .padding(.horizontal, 9)
+            //                    .padding(.vertical, 9)
+            //                    .background(.regularMaterial, in: .capsule)
+            //                    .font(.footnote)
+            //
+            //            }
+            //            .disabled(true)
 
         }
         .buttonStyle(.plain)
