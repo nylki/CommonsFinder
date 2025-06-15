@@ -308,33 +308,33 @@ struct MetadataEditForm: View {
             )
             .datePickerStyle(.compact)
 
-            HStack {
-                // TODO: extend this, atleast with a helper text
-                // about what is ok to upload and what not.
-
-                Text("Timezone")
-                Spacer()
-
-                Button {
-                    isTimezonePickerShowning = true
-                } label: {
-                    if let timezoneId = model.draft.timezone,
-                        let timezone = TimeZone(identifier: timezoneId)
-                    {
-                        VStack {
-                            Text(timezone.identifier)
-
-                            if let tzName = timezone.localizedName(for: .standard, locale: .autoupdatingCurrent) {
-                                Text(tzName)
-                                    .font(.footnote)
-                            }
-                        }
-                    } else {
-                        Label("empty", systemImage: "pencil")
-                    }
-                }
-
-            }
+            //            HStack {
+            //                // TODO: extend this, atleast with a helper text
+            //                // about what is ok to upload and what not.
+            //
+            //                Text("Timezone")
+            //                Spacer()
+            //
+            //                Button {
+            //                    isTimezonePickerShowning = true
+            //                } label: {
+            //                    if let timezoneId = model.draft.timezone,
+            //                        let timezone = TimeZone(identifier: timezoneId)
+            //                    {
+            //                        VStack {
+            //                            Text(timezone.identifier)
+            //
+            //                            if let tzName = timezone.localizedName(for: .standard, locale: .autoupdatingCurrent) {
+            //                                Text(tzName)
+            //                                    .font(.footnote)
+            //                            }
+            //                        }
+            //                    } else {
+            //                        Label("empty", systemImage: "pencil")
+            //                    }
+            //                }
+            //
+            //            }
 
             if let exifDate = model.draft.exifData?.dateOriginal,
                 model.draft.inceptionDate != exifDate

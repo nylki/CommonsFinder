@@ -72,7 +72,7 @@ struct CommonsFinderApp: App {
          the app's intent parameters. The app needs to call this function during its launch, in addition to any time the parameter values for
          the shortcut phrases change.
          */
-        shortcuts.updateAppShortcutParameters()
+        CommonsFinderShortcuts.updateAppShortcutParameters()
     }
 
     var body: some Scene {

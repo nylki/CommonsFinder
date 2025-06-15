@@ -73,7 +73,36 @@ public actor API {
 
     public init() {
         let configuration = URLSessionConfiguration.af.default
+
         configuration.headers.update(name: "User-Agent", value: userAgent)
+        
+
+ // Un-Comment the following code block to test EmailAuth via email-code (https://www.mediawiki.org/wiki/Help:Extension:EmailAuth)
+//#if DEBUG
+//        let c1 = HTTPCookie(properties: [
+//            .domain: "auth.wikimedia.org",
+//            .name: "forceEmailAuth",
+//            .path: "/",
+//            .value: "1",
+//            .expires: Date().addingTimeInterval(600)
+//        ])
+//        
+//        let c2 = HTTPCookie(properties: [
+//            .domain: "commons.wikimedia.org",
+//            .name: "forceEmailAuth",
+//            .path: "/",
+//            .value: "1",
+//            .expires: Date().addingTimeInterval(600)
+//        ])
+//        
+//        if let c1, let c2 {
+//            configuration.httpCookieStorage?.setCookie(c1)
+//            configuration.httpCookieStorage?.setCookie(c2)
+//
+//        } else {
+//            assertionFailure()
+//        }
+// #endif
         
         var eventMonitors: [any EventMonitor] = [AlamofireNotifications()]
         
@@ -257,13 +286,67 @@ public actor API {
         }
     }
     
-    
-
     /// Login to Wikimedia user-account (sign-in)
     public func login(username: String, password: String) async throws -> LoginResponse {
         let loginToken = try await fetchToken(type: .login).token
-        let status = try await login(usingLoginToken: loginToken, username: username, password: password)
+        let status = try await login(
+            usingLoginToken: loginToken,
+            username: username,
+            password: password
+        )
         return status
+    }
+    
+    public func continueLogin(emailCode: String) async throws -> LoginResponse {
+        let loginToken = try await fetchToken(type: .login).token
+        
+        let parameters: Parameters = [
+            "action": "clientlogin",
+            "curtimestamp": 1,
+            "format": "json",
+            "loginreturnurl": wikipediaHomepage.absoluteString,
+            "logintoken": loginToken,
+            "rememberMe": "1",
+            "token": emailCode,
+            "logincontinue": 1
+        ]
+        
+        let request = session
+            .request(commonsEndpoint, method: .post, parameters: parameters)
+            .serializingDecodable(LoginResponseWrapped.self, decoder: jsonDecoder)
+        
+        do {
+            let value = try await request.value
+            return value.clientlogin
+        } catch {
+            throw error
+        }
+    }
+    
+    public func continueLogin(twoFactorCode: String) async throws -> LoginResponse {
+        let loginToken = try await fetchToken(type: .login).token
+        
+        let parameters: Parameters = [
+            "action": "clientlogin",
+            "curtimestamp": 1,
+            "format": "json",
+            "loginreturnurl": wikipediaHomepage.absoluteString,
+            "logintoken": loginToken,
+            "rememberMe": "1",
+            "OATHToken": twoFactorCode,
+            "logincontinue": 1
+        ]
+        
+        let request = session
+            .request(commonsEndpoint, method: .post, parameters: parameters)
+            .serializingDecodable(LoginResponseWrapped.self, decoder: jsonDecoder)
+        
+        do {
+            let value = try await request.value
+            return value.clientlogin
+        } catch {
+            throw error
+        }
     }
     
     /// Create new Wikimedia user-account (register/sign-up)
@@ -1126,7 +1209,6 @@ LIMIT \(limit)
                         comment: nil
                     )
 
-                    
                     continuation.yield(.published)
                     continuation.finish()
                 } catch {
@@ -1201,7 +1283,7 @@ LIMIT \(limit)
         
         
         let responseValue = await request.response
-        
+        // FIXME: make this function throw if response is unexpected
         logger.debug("wbeditentity: \(responseValue.value ?? "")\n\n \(responseValue.debugDescription)")
     }
 

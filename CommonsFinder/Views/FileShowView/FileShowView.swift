@@ -136,6 +136,11 @@ private struct MainFileShowView: View {
     var body: some View {
         lazy var languageIdentifier = locale.wikiLanguageCodeIdentifier
         let navTitle = mediaFileInfo.mediaFile.localizedDisplayCaption ?? mediaFileInfo.mediaFile.displayName
+
+
+        // Check view updates.
+        // let _ = Self._printChanges()
+
         main
             .animation(.default, value: titleAreaHidden)
             .navigationTitle(navTitle)
@@ -165,6 +170,9 @@ private struct MainFileShowView: View {
                 ToolbarItem(placement: .automatic) {
                     Menu {
                         ShareLink(item: mediaFileInfo.mediaFile.descriptionURL)
+                        Link(destination: mediaFileInfo.mediaFile.descriptionURL) {
+                            Label("Open in Browser", systemImage: "globe")
+                        }
                     } label: {
                         if titleAreaHidden {
                             Image(systemName: "ellipsis.circle")
