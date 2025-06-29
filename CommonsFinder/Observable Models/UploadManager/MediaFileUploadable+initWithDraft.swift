@@ -80,10 +80,10 @@ extension MediaFileUploadable {
         case .own:
             statements.append(.source(.originalCreationByUploader))
             wikitextSource = "{{own}}"
-        case let .fileFromTheWeb(url):
+        case .fileFromTheWeb(let url):
             statements.append(.source(url.absoluteString))
             wikitextSource = "\(url.absoluteString)"
-        case let .book(WikidataItemID, page):
+        case .book(let WikidataItemID, let page):
             // TODO: add page number, low prio
             statements.append(.source(WikidataItemID))
             // https://commons.wikimedia.org/wiki/Template:Scan
@@ -97,7 +97,7 @@ extension MediaFileUploadable {
             statements.append(.creator(wikimediaUsername: appWikimediaUsername, authorNameString: appWikimediaUsername, url: usernameURL))
             wikitextAuthor = "[[User:\(appWikimediaUsername)|\(appWikimediaUsername)]]"
 
-        case let .custom(name, wikimediaUsername, url):
+        case .custom(let name, let wikimediaUsername, let url):
             statements.append(.creator(wikimediaUsername: wikimediaUsername, authorNameString: name, url: url?.absoluteString))
             if let wikimediaUsername {
                 wikitextAuthor = "[[User:\(wikimediaUsername)|\(name)]]"
@@ -106,7 +106,7 @@ extension MediaFileUploadable {
             } else {
                 wikitextAuthor = "\(name)"
             }
-        case let .wikidataId(wikidataItem):
+        case .wikidataId(let wikidataItem):
             // FIXME: correct wikdatatext for wikidata author
             wikitextAuthor = "\(wikidataItem)"
             statements.append(.creator(wikidataItem))
