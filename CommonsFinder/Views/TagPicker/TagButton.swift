@@ -35,7 +35,7 @@ struct TagButton: View {
             VStack {
                 if canUseAsCategory {
                     VStack {
-                        if case let .category(category) = tag.baseItem {
+                        if case .category(let category) = tag.baseItem {
                             Text(category)
                         }
                         Toggle(isOn: $tag.tagItem.pickedUsages[contains: .category]) {

@@ -31,7 +31,7 @@ extension MediaFile {
             depictionTags
             .filter { $0.pickedUsages.contains(.category) }
             .compactMap { depictItem in
-                if case let .wikidataItem(wikidataItem) = depictItem.baseItem {
+                if case .wikidataItem(let wikidataItem) = depictItem.baseItem {
                     return wikidataItem.commonsCategory
                 }
                 return nil

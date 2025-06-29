@@ -219,7 +219,7 @@ extension MediaFile {
 
     var inceptionDate: Date? {
         if let statement = statements.first(where: \.isInception),
-            case let .time(dateValue) = statement.mainsnak.datavalue
+            case .time(let dateValue) = statement.mainsnak.datavalue
         {
             dateValue.date
         } else {

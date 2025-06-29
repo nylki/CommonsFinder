@@ -14,7 +14,7 @@ import UIKit
 import UniformTypeIdentifiers
 import os.log
 
-enum UploadManagerStatus: Equatable {
+enum UploadManagerStatus: Equatable, Sendable, CustomStringConvertible {
     case uploading(_ fractionCompleted: Double)
     case twoFactorCodeRequired
     case emailCodeRequired
@@ -27,42 +27,44 @@ enum UploadManagerStatus: Equatable {
     case error(LocalizedError)
 
     var uploadProgress: Double? {
-        if case let .uploading(fractionCompleted) = self {
+        if case .uploading(let fractionCompleted) = self {
             fractionCompleted
         } else {
             nil
         }
     }
 
-    static func == (lhs: UploadManagerStatus, rhs: UploadManagerStatus) -> Bool {
-        return switch lhs {
-        case .twoFactorCodeRequired, .emailCodeRequired, .authenticationError, .creatingWikidataClaims, .unstashingFile, .published:
-            lhs == rhs
-        case .uploading(let lhsCompleted):
-            if case .uploading(let rhsCompleted) = rhs {
-                lhsCompleted == rhsCompleted
+    var description: String {
+        switch self {
+        case .uploading(let fractionCompleted):
+            "uploading \(fractionCompleted)"
+        case .twoFactorCodeRequired:
+            "twoFactorCodeRequired"
+        case .emailCodeRequired:
+            "emailCodeRequired"
+        case .creatingWikidataClaims:
+            "creatingWikidataClaims"
+        case .unstashingFile:
+            "unstashingFile"
+        case .published:
+            "published"
+        case .uploadWarnings(let array):
+            "uploadWarnings \(array.description)"
+        case .unspecifiedError(let string):
+            "unspecifiedError \(string)"
+        case .authenticationError(let error):
+            if let error {
+                "authenticationError \(error)"
             } else {
-                false
+                "authenticationError"
             }
-        case .uploadWarnings(let lhsArray):
-            if case .uploadWarnings(let rhsArray) = rhs {
-                lhsArray == rhsArray
-            } else {
-                false
-            }
-        case .error(let lhsError):
-            if case .error(let rhsError) = rhs {
-                lhsError.errorDescription == rhsError.errorDescription
-            } else {
-                false
-            }
-        case .unspecifiedError(let lhsError):
-            if case .unspecifiedError(let rhsError) = rhs {
-                lhsError == rhsError
-            } else {
-                false
-            }
+        case .error(let localizedError):
+            "error \(localizedError)"
         }
+    }
+
+    static func == (lhs: UploadManagerStatus, rhs: UploadManagerStatus) -> Bool {
+        lhs.description == rhs.description
     }
 }
 
