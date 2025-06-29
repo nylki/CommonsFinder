@@ -1,4 +1,1 @@
-In dieser Version wird nun der Login mit Zwei-Faktor-Code sowie Email-Code unterstützt!
-Außerdem hat die Bild-Detailseite einen "Im Browser öffnen"-Button erhalten.
-
-Viel Spaß beim testen :)
+Dieser Release behebt einen Crash, der während des Hochladens eines Bildes auftrat.

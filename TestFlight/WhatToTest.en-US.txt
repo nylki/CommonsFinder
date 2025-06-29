@@ -1,4 +1,1 @@
-In this version, login with two-factor codes as well as email codes is now supported!
-Additionally, the image detail view has received an “Open in Browser” button.
-
-Have fun testing :)
+This release fixes a crash that occurred while uploading an image.
