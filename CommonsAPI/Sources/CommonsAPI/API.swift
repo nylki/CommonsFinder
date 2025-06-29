@@ -1174,6 +1174,13 @@ LIMIT \(limit)
                         logger.debug("Upload progress: \(progress.fractionCompleted)")
                         continuation.yield(.uploadingFile(progress))
                     }
+                    
+                    if let error = request.error {
+                        logger.error("AF error: \(error)")
+                        
+                    }
+                    
+                    
 
                     let responseValue = try await request
                         .validate()
