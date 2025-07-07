@@ -27,5 +27,7 @@
 	<array>
 		<string>_pulse._tcp</string>
 	</array>
+	<key>UIDesignRequiresCompatibility</key>
+	<true/>
 </dict>
 </plist>

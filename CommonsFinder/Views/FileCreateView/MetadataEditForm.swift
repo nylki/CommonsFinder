@@ -67,10 +67,13 @@ struct MetadataEditForm: View {
             generateFilename()
         }
         .onChange(of: selectedFilenameType) { oldValue, newValue in
+            filenameSelection = .none
             if newValue == .custom, oldValue != .custom {
                 focus = .filename
                 let currentName = model.draft.name
-                filenameSelection = .init(range: currentName.startIndex..<currentName.endIndex)
+                let startIdx = currentName.startIndex
+                let endIdx = currentName.endIndex
+                filenameSelection = .init(range: startIdx..<endIdx)
             } else {
                 generateFilename()
             }
