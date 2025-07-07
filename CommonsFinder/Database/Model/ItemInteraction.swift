@@ -8,60 +8,26 @@
 import Foundation
 import GRDB
 
-/// `ItemInteraction` stores interaction metada for MediaFile and WikidataItem
+/// `ItemInteraction` stores interaction metada for MediaFile and Category
 ///  eg. `lastViewed` or `viewCount`, `isBookmarked`
-struct ItemInteraction: Equatable, Hashable, Sendable {
-
-    /// used for SQL relation to MediaFile
-    var mediaFileId: String?
-    /// used for SQL relation to WikidataItem
-    var wikidataItemId: String?
+struct ItemInteraction: Equatable, Hashable, Sendable, Identifiable {
+    var id: Int64?
 
     var lastViewed: Date?
     var viewCount: UInt
     var isBookmarked: Bool
+    //    var bookmarkDate: Date?
 
-    /// init for MediaFile
     init(
-        mediaFileId: String,
         lastViewed: Date? = nil,
         viewCount: UInt = 0,
         isBookmarked: Bool = false
     ) {
-        self.mediaFileId = mediaFileId
         self.lastViewed = lastViewed
         self.viewCount = viewCount
         self.isBookmarked = isBookmarked
     }
 
-    /// init for WikidataItem
-    init(
-        wikidataItemId: String,
-        lastViewed: Date? = nil,
-        viewCount: UInt = 0,
-        isBookmarked: Bool = false
-    ) {
-        self.wikidataItemId = wikidataItemId
-        self.lastViewed = lastViewed
-        self.viewCount = viewCount
-        self.isBookmarked = isBookmarked
-    }
-}
-
-extension ItemInteraction: Identifiable {
-    var id: String {
-        if mediaFileId == nil && wikidataItemId == nil {
-            assertionFailure("Atleast one id must be present for this type to be valid!")
-
-        }
-
-        if mediaFileId != nil && wikidataItemId != nil {
-            assertionFailure("Exactly one id must be present, but more ids are non-null!")
-        }
-
-        // Unsafe unwrapping is acceptable here
-        return (mediaFileId ?? wikidataItemId)!
-    }
 }
 
 // MARK: - Database
@@ -69,20 +35,24 @@ extension ItemInteraction: Identifiable {
 /// See <https://github.com/groue/GRDB.swift/blob/master/README.md#records>
 extension ItemInteraction: Codable, FetchableRecord, MutablePersistableRecord {
     enum Columns {
-        static let mediaFileId = Column(CodingKeys.mediaFileId)
-        static let wikidataItemId = Column(CodingKeys.wikidataItemId)
+        static let id = Column(CodingKeys.id)
         static let lastViewed = Column(CodingKeys.lastViewed)
         static let viewCount = Column(CodingKeys.viewCount)
         static let isBookmarked = Column(CodingKeys.isBookmarked)
     }
 
-    static let mediaFile = belongsTo(MediaFile.self)
-    static let wikidataItem = belongsTo(WikidataItem.self)
+    /// Updates the id after it has been inserted in the database.
+    mutating func didInsert(_ inserted: InsertionSuccess) {
+        id = inserted.rowID
+    }
 
+    static let wikidataItem = hasOne(Category.self)
+    static let mediaFile = hasOne(MediaFile.self)
+
+    var wikidataItem: QueryInterfaceRequest<Category> {
+        request(for: ItemInteraction.wikidataItem)
+    }
     var mediaFile: QueryInterfaceRequest<MediaFile> {
         request(for: ItemInteraction.mediaFile)
-    }
-    var wikidataItem: QueryInterfaceRequest<WikidataItem> {
-        request(for: ItemInteraction.wikidataItem)
     }
 }

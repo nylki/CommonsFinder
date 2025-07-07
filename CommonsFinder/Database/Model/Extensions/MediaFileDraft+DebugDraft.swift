@@ -49,8 +49,8 @@ extension MediaFileDraft {
             timezone: "+01:00",
             locationHandling: .exifLocation,
             tags: [
-                .init(category: "Lorem Ipsum", isPicked: true),
-                .init(wikidataItem: .earth, pickedUsages: [.depict]),
+                .init(.init(commonsCategory: "Lorem Ipsum"), pickedUsages: [.category]),
+                .init(.earth, pickedUsages: [.depict]),
             ],
             license: DraftMediaLicense.CC0,
             author: .appUser,

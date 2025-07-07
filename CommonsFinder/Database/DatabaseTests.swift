@@ -12,34 +12,64 @@ import Testing
 
 @Suite("Database Tests")
 struct DatabaseTests {
-    @Test("MediaFile insert")
-    func mediaFileInsert() async throws {
+
+    static var fileA: MediaFile {
+        MediaFile(
+            id: UUID().uuidString,
+            name: "test title",
+            url: .init(string: "https://upload.wikimedia.org/wikipedia/commons/testimage.jpg")!,
+            descriptionURL: .init(string: "https://upload.wikimedia.org/wikipedia/commons/testimage.jpg")!,
+            thumbURL: nil,
+            uploadDate: .init(timeIntervalSince1970: 3600 * 12345),
+            caption: [.init("test caption without any latin-you-know-which-words to test search", languageCode: "en")],
+            fullDescription: [.init("Full description Lorem Ipsum Dolor sitit", languageCode: "en")],
+            rawAttribution: nil,
+            categories: ["Sample Image 2024", "Random Image", "Developer Test"],
+            statements: [.depicts(.universe)],
+            mimeType: "image/jpeg",
+            username: "DBTester",
+            fetchDate: Date.distantPast
+        )
+    }
+
+    static var fileB: MediaFile {
+        MediaFile(
+            id: UUID().uuidString,
+            name: "test title",
+            url: .init(string: "https://upload.wikimedia.org/wikipedia/commons/testimage2.jpg")!,
+            descriptionURL: .init(string: "https://upload.wikimedia.org/wikipedia/commons/testimage2.jpg")!,
+            thumbURL: nil,
+            uploadDate: .init(timeIntervalSince1970: 3600 * 54323),
+            caption: [],
+            fullDescription: [],
+            rawAttribution: "Some custom license",
+            categories: ["Sample Image 2024", "Random Image", "Developer Test"],
+            statements: [.depicts(.universe), .depicts(.earth), .dataSize(12_345_678)],
+            mimeType: "image/jpeg",
+            username: "DBTester",
+            fetchDate: Date.distantPast
+        )
+    }
+
+    @Test(
+        "MediaFile insert and delete",
+        arguments: [
+            fileA,
+            fileB,
+            .makeRandomUploaded(id: UUID().uuidString, .horizontalImage),
+            .makeRandomUploaded(id: UUID().uuidString, .squareImage),
+            .makeRandomUploaded(id: UUID().uuidString, .verticalImage),
+        ])
+    func mediaFileInsert(_ mediaFile: MediaFile) async throws {
         // Given a properly configured and empty in-memory repo
         let dbQueue = try DatabaseQueue(configuration: AppDatabase.makeConfiguration())
         let repo = try AppDatabase(dbQueue)
 
         // When we insert an image model
-        let insertedItem = try repo.insert(
-            MediaFile(
-                id: UUID().uuidString,
-                name: "test title",
-                url: .init(string: "https://upload.wikimedia.org/wikipedia/commons/testimage.jpg")!,
-                descriptionURL: .init(string: "https://upload.wikimedia.org/wikipedia/commons/testimage.jpg")!,
-                thumbURL: nil,
-                uploadDate: .init(timeIntervalSince1970: 3600 * 12345),
-                caption: [.init("test caption without any latin-you-know-which-words to test search", languageCode: "en")],
-                fullDescription: [.init("Full description Lorem Ipsum Dolor sitit", languageCode: "en")],
-                rawAttribution: nil,
-                categories: ["Sample Image 2024", "Random Image", "Developer Test"],
-                statements: [.depicts(.universe)],
-                mimeType: "image/jpeg",
-                username: "DBTester",
-                fetchDate: Date.distantPast
-            )
-        )
+        let insertedItem = try repo.insert(mediaFile)
 
         // Then the inserted MediaFile has the defined id
-        #expect(insertedItem.name == "test title")
+        #expect(insertedItem.name == mediaFile.name)
 
         // Then the inserted player exists in the database
         let fetchedMediaFile = try await repo.reader.read { db in
@@ -51,6 +81,9 @@ struct DatabaseTests {
         // included.
         let fetchedMediaFileInfo = try repo.fetchMediaFileInfo(id: insertedItem.id)
         #expect(fetchedMediaFileInfo?.mediaFile == insertedItem)
+
+        let wasDeleted = try repo.delete(insertedItem)
+        #expect(wasDeleted)
     }
 
     @Test("Full-Text-Search (FTS5)")
@@ -73,7 +106,6 @@ struct DatabaseTests {
             mimeType: "image/jpeg",
             username: "DBTester",
             fetchDate: Date.distantPast
-
         )
 
         let germanItem = MediaFile(
@@ -119,19 +151,21 @@ struct DatabaseTests {
         )
     }
 
-    @Test("MediaFileDraft insert")
-    func mediaFileDraftInsert() async throws {
+    @Test(
+        "MediaFileDraft insert",
+        arguments: [
+            MediaFileDraft.makeRandomDraft(id: "test draft", named: "Test draft \(Int.random(in: 1..<99999))", date: .init(timeIntervalSince1970: 3600 * 12345))
+        ])
+    func mediaFileDraftInsert(_ draft: MediaFileDraft) async throws {
         // Given a properly configured and empty in-memory repo
         let dbQueue = try DatabaseQueue(configuration: AppDatabase.makeConfiguration())
         let repo = try AppDatabase(dbQueue)
 
         // When we insert an image model
-        let testName = "Test draft \(Int.random(in: 1..<99999))"
-        let draft = MediaFileDraft.makeRandomDraft(id: "test draft", named: testName, date: .init(timeIntervalSince1970: 3600 * 12345))
-        let insertedItem = try repo.upsertAndFetch(draft)
+        let inserted = try repo.upsertAndFetch(draft)
 
         // Then the inserted player has the defined id
-        #expect(insertedItem.name == draft.name)
+        #expect(inserted.name == draft.name)
 
         // Then the inserted player exists in the database
         let fetchedItem = try await repo.reader.read { db in
@@ -139,7 +173,164 @@ struct DatabaseTests {
         }
 
         #expect(fetchedItem != nil)
-        #expect(fetchedItem == insertedItem)
+        #expect(fetchedItem == inserted)
     }
 
+    @Test("Category upsert and delete", arguments: [Category.earth, .earthExtraLongLabel, .testItemNoDesc, .testItemNoLabel])
+    func testCategoryUpsertAndDelete(_ category: Category) async throws {
+        try #require(category.id == nil, "We require categories that do not come from the DB yet, ie. freshly network fetched.")
+        let dbQueue = try DatabaseQueue(configuration: AppDatabase.makeConfiguration())
+        let repo = try AppDatabase(dbQueue)
+
+        let inserted = try #require(
+            try repo.upsert(category),
+            "We expect to get a category back after inserting."
+        )
+
+        #expect(inserted.id != nil)
+        // Testing a selection of the most important arguments
+        #expect(category.commonsCategory == inserted.commonsCategory)
+        #expect(category.wikidataId == inserted.wikidataId)
+        #expect(category.label == inserted.label)
+        #expect(category.description == inserted.description)
+        #expect(category.latitude == inserted.latitude)
+        #expect(category.longitude == inserted.longitude)
+        // NOTE: date tests when initialized with .now are for some reason unreliable
+        // with Swift testing.
+
+        let wasDeleted = try repo.delete(inserted)
+        #expect(wasDeleted)
+    }
+
+    @Test(
+        "Category upsert with conflict resolution, due to uniqueness constraints on `wikidataId` and `commonsCategory`",
+        arguments: [
+            // Consider the following possible scenario:
+            // A. At commons.wikimedia.org, the category "Earth" exists (catA)
+            // B. At wikidata.org, the item "Q1" (with label "The Earth") exists (catB).
+            //    However, catB has no connection to catA yet (no "commonsCategory" linked in wikidata item).
+            // C. the user views and interactions with A and B individually, creating two different entries in the appDatabase and corresponding views.
+            // D. In the future, wikidata.org is updated, so that category "Earth" is finally linked in Q1.
+            //    When the user would now fetch for either A or B, a combined item from wikidata would be returned.
+            //    However the app already has two different entries and must now merge the new info with
+            //    the interaction data (bookmarks, etc.) of both A and B.
+            (
+                // A:
+                Category(commonsCategory: "Earth"),
+                // B:
+                Category(wikidataId: "Q1", label: "The Earth"),
+                // C:
+                Category(wikidataId: "Q1", commonsCategory: "Earth")
+            )
+        ])
+    func testConflictingUpsert(catA: Category, catB: Category, catC: Category) throws {
+        let dbQueue = try DatabaseQueue(configuration: AppDatabase.makeConfiguration())
+        let repo = try AppDatabase(dbQueue)
+
+        // To start off, we insert some unrelated Categories for better test robustness
+        let catUnrelatedA = try #require(
+            try repo.upsert(Category.randomItem(id: UUID().uuidString))
+        )
+        let catUnrelatedB = try #require(
+            try repo.upsert(Category.randomItem(id: UUID().uuidString))
+        )
+
+        // At some point the user visits a category that has _only_ a commonsCategory:
+        let insertedA = try #require(
+            try repo.upsert(catA)
+        )
+
+        // The user also visited and bookmarked catA:
+        var catAInfo = try repo.updateLastViewed(.init(insertedA))
+        catAInfo = try repo.updateBookmark(catAInfo, bookmark: true)
+        #expect(catAInfo.isBookmarked)
+        let catALastViewed = try #require(catAInfo.lastViewed)
+        #expect(
+            Date.now.timeIntervalSince(catALastViewed) < 0.1,
+            "We expect catA to have been last viewed in the last 100ms."
+        )
+
+
+        // At a later time, the user visits a category
+        // that is _only_ a wikidata item without a linked commonsCategory:
+        _ = try repo.upsert(catB)
+
+        // The user views catB (but does not bookmark it):
+        let catBInfo = try repo.updateLastViewed(.init(catB))
+        let catBLastViewed = try #require(catBInfo.lastViewed)
+        #expect(
+            Date.now.timeIntervalSince(catBLastViewed) < 0.1,
+            "We expect catB to have been last viewed in the last 100ms and to have been last viewed after catA"
+        )
+
+        #expect(
+            Date.now.timeIntervalSince(catBLastViewed) < 0.1,
+            "We expect catB to have been last viewed after catA"
+        )
+
+        let categories = try dbQueue.read(Category.fetchSet)
+        print(categories.compactMap { $0.wikidataId ?? $0.commonsCategory })
+
+        #expect(categories.contains(catUnrelatedA))
+        #expect(categories.contains(catUnrelatedB))
+        #expect(categories.contains { $0.commonsCategory == catA.commonsCategory })
+        #expect(categories.contains { $0.wikidataId == catB.wikidataId })
+
+        let count = try dbQueue.read(Category.fetchCount)
+        #expect(
+            count == 4,
+            "We expect 4 categories to exist in the DB: catUnrelatedA, catUnrelatedB, catA, catB"
+        )
+
+        // Now at some point Wikidata.org is updated so that the catB, the wikidata item
+        // gets linked with the expect commonsCategory:
+
+        // when upserting catC, the desired behaviour is to merge catA and catB with the info of catC,
+        // so the user won't see 2 or even 3 individual views for otherwise the same item.
+        let insertedC = try #require(try repo.upsert(catC))
+
+        #expect(insertedC.wikidataId == catC.wikidataId)
+        #expect(insertedC.commonsCategory == catC.commonsCategory)
+
+        let catCInfo = try repo.fetchCategoryInfo(wikidataID: catC.wikidataId!)
+        let isBookmarked = catCInfo?.itemInteraction?.isBookmarked
+        #expect(
+            isBookmarked == true,
+            "We expect the merged category to be bookmarked, because catA was."
+        )
+
+        let lastViewed = catBInfo.itemInteraction?.lastViewed
+        #expect(
+            lastViewed == catBInfo.lastViewed,
+            "We expect the merged category have lastViewed of catB, because that was the last viewed one of A and B."
+        )
+
+        let newCount = try dbQueue.read(Category.fetchCount)
+        #expect(
+            newCount == 3,
+            "We expect to have now only categories to exist in the DB: catUnrelatedA, catUnrelatedB, catC (with linked interaction info of catA and catB)"
+        )
+
+
+        // The merge must keep any itemInteraction (bookmark, lastViewed) that has occured on catA or catB.
+        // TODO: #expect interactions
+
+    }
+}
+
+extension Category: CustomTestStringConvertible {
+    var testDescription: String {
+        let desc = "\"\(commonsCategory ?? "")\" | \(wikidataId ?? "")"
+        return if let id {
+            "Category (with id \(id)) | \(desc)"
+        } else {
+            "Category(without id) | \(desc)"
+        }
+    }
+}
+
+extension MediaFile: CustomTestStringConvertible {
+    var testDescription: String {
+        "MediaFile \(id) | \(name)"
+    }
 }

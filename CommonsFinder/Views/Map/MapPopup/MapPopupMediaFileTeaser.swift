@@ -1,5 +1,5 @@
 //
-//  MapPopupMediaItem.swift
+//  MapPopupMediaFileTeaser.swift
 //  CommonsFinder
 //
 //  Created by Tom Brewe on 11.03.25.
@@ -9,7 +9,7 @@ import FrameUp
 import NukeUI
 import SwiftUI
 
-struct MapPopupMediaItem: View {
+struct MapPopupMediaFileTeaser: View {
     let namespace: Namespace.ID
     let mediaFileInfo: MediaFileInfo
     let isSelected: Bool
@@ -56,9 +56,9 @@ struct MapPopupMediaItem: View {
 #Preview("MapPopupMediaItem") {
     @Previewable @Namespace var namespace
     HStack {
-        MapPopupMediaItem(namespace: namespace, mediaFileInfo: .makeRandomUploaded(id: "1", .squareImage), isSelected: false)
-        MapPopupMediaItem(namespace: namespace, mediaFileInfo: .makeRandomUploaded(id: "2", .horizontalImage), isSelected: true)
-        MapPopupMediaItem(namespace: namespace, mediaFileInfo: .makeRandomUploaded(id: "3", .verticalImage), isSelected: false)
+        MapPopupMediaFileTeaser(namespace: namespace, mediaFileInfo: .makeRandomUploaded(id: "1", .squareImage), isSelected: false)
+        MapPopupMediaFileTeaser(namespace: namespace, mediaFileInfo: .makeRandomUploaded(id: "2", .horizontalImage), isSelected: true)
+        MapPopupMediaFileTeaser(namespace: namespace, mediaFileInfo: .makeRandomUploaded(id: "3", .verticalImage), isSelected: false)
     }
     .frame(height: 160)
 }

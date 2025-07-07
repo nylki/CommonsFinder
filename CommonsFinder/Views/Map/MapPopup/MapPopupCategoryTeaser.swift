@@ -1,5 +1,5 @@
 //
-//  MapPopupWikiItem.swift
+//  MapPopupCategoryTeaser.swift
 //  CommonsFinder
 //
 //  Created by Tom Brewe on 11.03.25.
@@ -9,23 +9,23 @@ import CommonsAPI
 import NukeUI
 import SwiftUI
 
-struct MapPopupWikiItem: View {
+struct MapPopupCategoryTeaser: View {
     // needs a better type for previews and images?
-    let item: WikidataItem
+    let item: CategoryInfo
     let isSelected: Bool
     let namespace: Namespace.ID
 
     var body: some View {
-        let hasBackgroundImage = item.thumbnailImage != nil
+        let hasBackgroundImage = item.base.thumbnailImage != nil
 
-        NavigationLink(value: NavigationStackItem.wikiItem(id: item.id)) {
+        NavigationLink(value: NavigationStackItem.wikidataItem(item)) {
             HStack {
                 VStack(alignment: .leading) {
                     Spacer()
-                    if let label = item.label {
+                    if let label = item.base.label ?? item.base.commonsCategory {
                         Text(label)
                     }
-                    if let description = item.description {
+                    if let description = item.base.description {
                         Text(description)
                             .font(.caption)
                             .allowsTightening(true)
@@ -44,7 +44,7 @@ struct MapPopupWikiItem: View {
             .background {
                 Color(.emptyWikiItemBackground)
                     .overlay {
-                        if let imageRequest = item.thumbnailImage {
+                        if let imageRequest = item.base.thumbnailImage {
                             LazyImage(request: imageRequest, transaction: .init(animation: .linear)) { imageState in
                                 if let image = imageState.image {
                                     image.resizable()
@@ -57,7 +57,7 @@ struct MapPopupWikiItem: View {
                         }
                     }
                     .overlay {
-                        if item.thumbnailImage != nil {
+                        if item.base.thumbnailImage != nil {
                             LinearGradient(
                                 stops: [
                                     .init(color: .init(white: 0, opacity: 0), location: 0),
@@ -78,7 +78,7 @@ struct MapPopupWikiItem: View {
             }
             .padding(2)
         }
-        .modifier(WikiCategoryContextMenu(wikidataItem: item))
+        .modifier(CategoryContextMenu(item: item))
         .animation(.default, value: isSelected)
     }
 
@@ -89,11 +89,11 @@ struct MapPopupWikiItem: View {
 
     VStack {
         Group {
-            MapPopupWikiItem(item: .randomItem(id: "1"), isSelected: false, namespace: namespace)
-            MapPopupWikiItem(item: .randomItem(id: "2"), isSelected: false, namespace: namespace)
-            MapPopupWikiItem(item: .testItemNoDesc, isSelected: false, namespace: namespace)
-            MapPopupWikiItem(item: .testItemNoLabel, isSelected: false, namespace: namespace)
-            MapPopupWikiItem(item: .randomItem(id: "3"), isSelected: true, namespace: namespace)
+            MapPopupCategoryTeaser(item: .randomItem(id: "1"), isSelected: false, namespace: namespace)
+            MapPopupCategoryTeaser(item: .randomItem(id: "2"), isSelected: false, namespace: namespace)
+            MapPopupCategoryTeaser(item: .init(.testItemNoDesc), isSelected: false, namespace: namespace)
+            MapPopupCategoryTeaser(item: .init(.testItemNoLabel), isSelected: false, namespace: namespace)
+            MapPopupCategoryTeaser(item: .randomItem(id: "3"), isSelected: true, namespace: namespace)
         }
         // simulates a simplified MapPopup height
         .frame(height: 160)

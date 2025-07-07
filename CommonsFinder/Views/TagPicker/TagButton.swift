@@ -35,7 +35,7 @@ struct TagButton: View {
             VStack {
                 if canUseAsCategory {
                     VStack {
-                        if case .category(let category) = tag.baseItem {
+                        if let category = tag.commonsCategory {
                             Text(category)
                         }
                         Toggle(isOn: $tag.tagItem.pickedUsages[contains: .category]) {
@@ -62,14 +62,14 @@ struct TagButton: View {
 #Preview("TagButton Animations", traits: .previewEnvironment) {
     @Previewable @State var interactiveSelection: Set<TagType> = [.category]
     @Previewable @State var tagModels: [TagModel] = [
-        .init(tagItem: .init(wikidataItem: .earth, pickedUsages: [])),
-        .init(tagItem: .init(wikidataItem: .testItemNoDesc, pickedUsages: [])),
-        .init(tagItem: .init(wikidataItem: .testItemNoLabel, pickedUsages: [])),
+        .init(tagItem: .init(.earth, pickedUsages: [])),
+        .init(tagItem: .init(.testItemNoDesc, pickedUsages: [])),
+        .init(tagItem: .init(.testItemNoLabel, pickedUsages: [])),
 
     ]
 
     VStack {
-        ForEach(tagModels) { tag in
+        ForEach(tagModels, id: \.self) { tag in
             TagButton(tag: tag) { focused in }
         }
     }

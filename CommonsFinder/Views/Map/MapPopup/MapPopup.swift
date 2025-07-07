@@ -37,7 +37,7 @@ struct MapPopup: View {
     let clusterIndex: H3Index
     @Binding var scrollPosition: ScrollPosition
     /// wikidataItems are directly visualized
-    let wikidataItems: [WikidataItem]
+    let wikidataItems: [CategoryInfo]
     /// rawMediaItems are not directly visualized, but passed to the pagination model to fetch the metadata including image url and caption
     let rawMediaItems: [GeosearchListItem]
 
@@ -51,7 +51,7 @@ struct MapPopup: View {
         }
     }
 
-    private var selectedWikiItem: WikidataItem? {
+    private var selectedWikiItem: CategoryInfo? {
         if let selectedID = scrollPosition.viewID(type: String.self) {
             wikidataItems.first { $0.id == selectedID }
         } else {
@@ -91,7 +91,7 @@ struct MapPopup: View {
             {
                 // Don't show a scroll view for a single item
                 // TODO: this is temporary workaround and will change when single items are tappable directly on the map!
-                MapPopupMediaItem(namespace: namespace, mediaFileInfo: mediaFileInfo, isSelected: true)
+                MapPopupMediaFileTeaser(namespace: namespace, mediaFileInfo: mediaFileInfo, isSelected: true)
                     .padding(.vertical, 10)
                     .frame(height: 160)
                     .frame(minWidth: 0, maxWidth: .infinity)
@@ -161,7 +161,7 @@ struct MapPopup: View {
         LazyHStack {
             ForEach(wikidataItems) { item in
                 let isSelected = item.id == scrollPosition.viewID(type: String.self)
-                MapPopupWikiItem(item: item, isSelected: isSelected, namespace: namespace)
+                MapPopupCategoryTeaser(item: item, isSelected: isSelected, namespace: namespace)
             }
         }
         .onChange(of: wikidataItems, initial: true) { oldValue, newValue in
@@ -186,7 +186,7 @@ struct MapPopup: View {
                 }
                 ForEach(mediaFileInfos) { mediaFileInfo in
                     let isSelected = mediaFileInfo.id == scrollPosition.viewID(type: String.self)
-                    MapPopupMediaItem(namespace: namespace, mediaFileInfo: mediaFileInfo, isSelected: isSelected)
+                    MapPopupMediaFileTeaser(namespace: namespace, mediaFileInfo: mediaFileInfo, isSelected: isSelected)
                         .onScrollVisibilityChange { visible in
                             guard visible else { return }
                             let threshold = min(mediaFileInfos.count - 1, max(0, mediaFileInfos.count - 5))

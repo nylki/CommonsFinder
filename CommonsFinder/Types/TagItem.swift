@@ -11,70 +11,46 @@ enum TagType: Codable, Equatable, Hashable {
     // case significantEvent
 }
 
-enum BaseTagItem: Codable, Equatable, Hashable {
-    case wikidataItem(WikidataItem)
-    case category(String)
-}
-
 /// combines categories, depict items and possible future statements like significant event
 struct TagItem: Codable, Equatable, Hashable, Identifiable {
-    let baseItem: BaseTagItem
+    let baseItem: Category
 
     // TODO: add support for qualifiers (eg. depicted part)
 
     /// what the user has choosen to be used for (eg. as depict-statement, category or both)
     var pickedUsages: Set<TagType> = []
 
-    init(wikidataItem: WikidataItem, pickedUsages: Set<TagType>) {
-        self.baseItem = .wikidataItem(wikidataItem)
+    init(_ item: Category, pickedUsages: Set<TagType>) {
+        self.baseItem = item
         self.pickedUsages = pickedUsages
     }
 
-    init(category: String, isPicked: Bool) {
-        self.baseItem = .category(category)
-        if isPicked {
-            self.pickedUsages = [.category]
-        }
-    }
-
     var id: String {
-        switch baseItem {
-        case .category(let category):
-            category
-        case .wikidataItem(let item):
-            item.id
-        }
+        (baseItem.wikidataId ?? baseItem.commonsCategory)!
     }
 
     /// what the user can choose this tag to be used for
     var possibleUsages: Set<TagType> {
-        switch baseItem {
-        case .wikidataItem(let wikidataItem):
-            if wikidataItem.commonsCategory?.isEmpty == false {
-                return [.depict, .category]
-            } else {
-                return [.depict]
-            }
-        case .category:
+        let hasWikidataId = baseItem.wikidataId != nil
+        let hasCommonsCategory = baseItem.commonsCategory?.isEmpty == false
+
+        if hasWikidataId, hasCommonsCategory {
+            return [.depict, .category]
+        } else if hasWikidataId {
+            return [.depict]
+        } else if hasCommonsCategory {
             return [.category]
+        } else {
+            assertionFailure()
+            return []
         }
     }
 
     var label: String {
-        switch baseItem {
-        case .wikidataItem(let wikidataItem):
-            wikidataItem.label ?? wikidataItem.commonsCategory ?? wikidataItem.id
-        case .category(let category):
-            category
-        }
+        baseItem.label ?? baseItem.commonsCategory ?? baseItem.wikidataId ?? ""
     }
 
     var description: String? {
-        switch baseItem {
-        case .wikidataItem(let wikidataItem):
-            wikidataItem.description
-        case .category:
-            nil
-        }
+        baseItem.description
     }
 }

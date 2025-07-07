@@ -50,14 +50,6 @@ struct MediaFileListItem: View {
         return min(450, max(110, height))
     }
 
-    private func delete(_ file: MediaFile) {
-        do {
-            try appDatabase.delete(file)
-        } catch {
-            logger.error("Failed to delete \(file.name) \(error)")
-        }
-    }
-
     private var label: some View {
         VStack(alignment: .leading) {
             imageView

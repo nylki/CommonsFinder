@@ -35,7 +35,8 @@ extension AppDatabase {
             let dbPool = try DatabasePool(
                 path: databaseURL.path,
                 // Use default AppDatabase configuration
-                configuration: AppDatabase.makeConfiguration())
+                configuration: AppDatabase.makeConfiguration()
+            )
 
             // Create the AppDatabase
             let appDatabase = try AppDatabase(dbPool)
@@ -69,7 +70,7 @@ extension AppDatabase {
     /// for previews and tests.
     ///
     /// - parameter fileID: The ID of the inserted media file.
-    static func populatedMultiple() -> AppDatabase {
+    static func populatedPreviewDatabase() -> AppDatabase {
         let repo = self.empty()
         do {
             _ = try repo.upsert(sampleDraft)
@@ -84,8 +85,18 @@ extension AppDatabase {
             _ = try repo.insert(MediaFile.makeRandomUploaded(id: "uploadedID-9", .verticalImage))
             _ = try repo.insert(MediaFile.makeRandomUploaded(id: "uploadedID-10", .verticalImage))
             _ = try repo.insert(MediaFile.makeRandomUploaded(id: "uploadedID-11", .horizontalImage))
-            _ = try repo.insert(MediaFile.makeRandomUploaded(id: "uploadedID-12", .verticalImage))
-            _ = try repo.insert(MediaFile.makeRandomUploaded(id: "uploadedID-13", .squareImage))
+
+            let anImage = try repo.insert(MediaFile.makeRandomUploaded(id: "uploadedID-12", .verticalImage))
+            _ = try repo.updateLastViewed(.init(mediaFile: anImage))
+
+            let someImage = try repo.insert(MediaFile.makeRandomUploaded(id: "uploadedID-13", .squareImage))
+            let someImageInfo = try repo.updateLastViewed(.init(mediaFile: someImage))
+            _ = try repo.updateBookmark(someImageInfo, bookmark: true)
+
+            let earthCat = try repo.upsert(.earth)!
+            let earthCatInfo = try repo.updateLastViewed(.init(earthCat))
+            _ = try repo.updateBookmark(earthCatInfo, bookmark: true)
+
         } catch {
             logger.error("Failed to populate preview DB \(error)")
             assertionFailure()

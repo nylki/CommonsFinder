@@ -16,14 +16,14 @@ import os.log
 
 enum GeoItem: GeoReferencable, Identifiable {
     case mediaFile(GeosearchListItem)
-    case wikidataItem(WikidataItem)
+    case wikidataItem(Category)  // FIXME: use CategoryInfo!?
 
     var id: String {
         switch self {
         case .mediaFile(let geosearchListItem):
             "\(geosearchListItem.id)"
         case .wikidataItem(let wikidataItem):
-            "\(wikidataItem.id)"
+            "\(wikidataItem.wikidataId ?? String(wikidataItem.hashValue))"
         }
     }
 
@@ -61,7 +61,7 @@ enum GeoItem: GeoReferencable, Identifiable {
         }
     }
 
-    var wikidataItem: WikidataItem? {
+    var wikidataItem: Category? {
         switch self {
         case .wikidataItem(let wikidataItem):
             wikidataItem
@@ -69,8 +69,6 @@ enum GeoItem: GeoReferencable, Identifiable {
         }
     }
 }
-
-extension WikidataItem: GeoReferencable {}
 
 @Observable @MainActor final class MapModel {
     var position: MapCameraPosition = .automatic
@@ -91,12 +89,12 @@ extension WikidataItem: GeoReferencable {}
     @ObservationIgnored
     private(set) var mediaClustering: GeoClustering<GeosearchListItem> = .init()
     @ObservationIgnored
-    private(set) var wikiItemClustering: GeoClustering<WikidataItem> = .init()
+    private(set) var wikiItemClustering: GeoClustering<CategoryInfo> = .init()
 
     private(set) var clusters:
         [UInt64: (
             mediaItems: [GeosearchListItem],
-            wikiItems: [WikidataItem]
+            wikiItems: [CategoryInfo]
         )] = .init()
 
     private(set) var selectedCluster: H3Index?
@@ -143,7 +141,7 @@ extension WikidataItem: GeoReferencable {}
 
 
             var mediaClusters: [UInt64: [GeosearchListItem]] = .init()
-            var wikiItemClusters: [UInt64: [WikidataItem]] = .init()
+            var wikiItemClusters: [UInt64: [CategoryInfo]] = .init()
 
             if region.diagonalMeters < imageVisibilityThreshold {
                 mediaClusters = mediaClustering.clusters(
@@ -165,7 +163,7 @@ extension WikidataItem: GeoReferencable {}
             var clusterDict = [
                 UInt64: (
                     mediaItems: [GeosearchListItem],
-                    wikiItems: [WikidataItem]
+                    wikiItems: [CategoryInfo]
                 )
             ]()
 
@@ -206,7 +204,10 @@ extension WikidataItem: GeoReferencable {}
                 async let mediaTask = fetchMediaFiles(region: region, maxDiagonalMapLength: imageVisibilityThreshold)
                 let (wikidataItems, mediaItems) = await (wikiItemsTask, mediaTask)
 
-                wikiItemClustering.add(wikidataItems)
+                let wikidataItemInfo: [CategoryInfo] = wikidataItems.map {
+                    .init($0)
+                }
+                wikiItemClustering.add(wikidataItemInfo)
                 mediaClustering.add(mediaItems)
                 refreshClusters()
 
@@ -271,7 +272,7 @@ extension WikidataItem: GeoReferencable {}
     }
 }
 
-private func fetchWikiItems(region: MKCoordinateRegion, maxDiagonalMapLength: Double) async -> [WikidataItem] {
+private func fetchWikiItems(region: MKCoordinateRegion, maxDiagonalMapLength: Double) async -> [Category] {
     guard region.diagonalMeters < maxDiagonalMapLength else { return [] }
 
     let halfLatDelata = region.span.latitudeDelta / 2
@@ -286,7 +287,7 @@ private func fetchWikiItems(region: MKCoordinateRegion, maxDiagonalMapLength: Do
     do {
         let getAllItems = region.diagonalMeters < 7500
 
-        let items: [WikidataItem] = try await API.shared
+        let items: [Category] = try await API.shared
             .getWikidataItemsInBoundingBox(
                 cornerSouthWest: .init(latitude: cornerSouthWestLat, longitude: cornerSouthWestLon),
                 cornerNorthEast: .init(latitude: cornerNorthEastLat, longitude: cornerNorthEastLon),
@@ -368,4 +369,9 @@ private func isRegionDiffSignificant(oldRegion: MKCoordinateRegion?, newRegion: 
 extension GeosearchListItem: GeoReferencable {
     var latitude: Double? { lat }
     var longitude: Double? { lon }
+}
+
+extension CategoryInfo: GeoReferencable {
+    var latitude: Double? { base.latitude }
+    var longitude: Double? { base.longitude }
 }

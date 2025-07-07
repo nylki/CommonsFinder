@@ -24,7 +24,6 @@ struct CommonsFinderApp: App {
     private let searchModel: SearchModel
     private let uploadManager: UploadManager
     private let account: AccountModel
-    private let wikidataCache: WikidataCache
 
     init() {
         postInstallMaintenance()
@@ -57,9 +56,6 @@ struct CommonsFinderApp: App {
         let uploadManager = UploadManager(appDatabase: appDatabase)
         self.uploadManager = uploadManager
 
-        let wikidataCache = WikidataCache(appDatabase: appDatabase)
-        self.wikidataCache = wikidataCache
-
 
         AppDependencyManager.shared.add(dependency: appDatabase)
         AppDependencyManager.shared.add(dependency: account)
@@ -83,7 +79,6 @@ struct CommonsFinderApp: App {
                 .environment(navigation)
                 .environment(searchModel)
                 .environment(uploadManager)
-                .environment(wikidataCache)
                 .task {
                     postLaunchMaintennce()
 

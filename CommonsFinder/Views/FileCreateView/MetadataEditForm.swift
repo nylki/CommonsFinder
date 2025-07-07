@@ -17,7 +17,6 @@ struct MetadataEditForm: View {
 
     @Environment(\.openURL) private var openURL
     @Environment(\.locale) private var locale
-    @Environment(WikidataCache.self) private var wikidataCache
     @FocusState private var focus: FocusElement?
 
     @State private var selectedFilenameType: FileNameType = .captionAndDate
@@ -90,7 +89,6 @@ struct MetadataEditForm: View {
                     date: model.draft.inceptionDate,
                     desc: model.draft.captionWithDesc,
                     locale: locale,
-                    localizationModel: wikidataCache,
                     tags: model.draft.tags
                 ) ?? model.draft.name
 

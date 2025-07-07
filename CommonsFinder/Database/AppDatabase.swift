@@ -12,6 +12,8 @@ import os.log
 enum DatabaseError: Error {
     case assertionFailed
     case failedToFetchAfterUpdate
+    case failedToCreateOrFetchItemInteraction
+    case itemInteractionEmptyID
 }
 
 /// The AppDatabase holding image models, drafts and user info.
@@ -49,7 +51,7 @@ final class AppDatabase: Sendable {
             migrator.eraseDatabaseOnSchemaChange = true
         #endif
 
-        // See <https://swiftpackageindex.com/groue/grdb.swift/documentation/grdb/databaseschema>
+        // See <https://swiftpackageindex.com/groue/grdb.swift.documentation/grdb/databaseschema>
         migrator.registerMigration("initial schema") { db in
             try db.create(table: "mediaFile") { t in
                 t.primaryKey("id", .text)
@@ -150,6 +152,79 @@ final class AppDatabase: Sendable {
             }
         }
 
+        migrator.registerMigration("reverse itemInteraction association and adjust + rename wikidataItem") { db in
+
+
+            // 1. Create new itemInteraction table with id and temporary mediaFileId
+            try db.create(table: "new_itemInteraction") { t in
+                t.column("id", .integer).primaryKey(autoincrement: true)
+                t.column("isBookmarked", .boolean).notNull().defaults(to: false)
+                t.column("lastViewed", .datetime)
+                t.column("viewCount", .integer).notNull().defaults(to: 0)
+
+                t.column("mediaFileId", .text).notNull()  // temporary, will be dropped
+            }
+
+            // 2. Copy old data into new_itemInteraction
+            try db.execute(
+                sql: """
+                        INSERT INTO new_itemInteraction (mediaFileId, isBookmarked, viewCount, lastViewed)
+                        SELECT mediaFileId, isBookmarked, viewCount, lastViewed FROM itemInteraction
+                    """)
+
+            // 3. Drop old table
+            try db.drop(table: "itemInteraction")
+
+            // 4. Rename new table
+            try db.rename(table: "new_itemInteraction", to: "itemInteraction")
+
+            try db.alter(table: "mediaFile") { t in
+                t.add(column: "itemInteractionId").references("itemInteraction", onDelete: .setNull).indexed()
+            }
+
+            // 6. Update mediaFile.itemInteractionId based on matching mediaFileId
+            try db.execute(
+                sql: """
+                    UPDATE mediaFile
+                    SET itemInteractionId = (
+                        SELECT id FROM itemInteraction WHERE itemInteraction.mediaFileId = mediaFile.id
+                    )
+                    """
+            )
+
+            // 7. drop temp mediaFileId that was needed only for migration
+            try db.alter(table: "itemInteraction") { t in
+                t.drop(column: "mediaFileId")
+            }
+
+            // 8. drop wikidataItem and create new (similiar) category table
+            // we drop wikidataItem since it was not used for user-facing features yet
+            try db.drop(table: "wikidataItem")
+
+            try db.create(table: "category") { t in
+                t.autoIncrementedPrimaryKey("id")
+
+                t.column("commonsCategory", .text).unique()
+                t.column("wikidataId", .text).unique()
+
+                t.column("label", .text)
+                t.column("description", .text)
+                t.column("aliases", .jsonText)
+                t.column("latitude", .numeric)
+                t.column("longitude", .numeric)
+
+                t.column("instances", .jsonText)
+                t.column("image", .text)
+                t.column("fetchDate", .datetime)
+                t.column("preferredLanguageAtFetchDate", .text)
+
+                /// creates `itemInteractionId` foreign key
+                t.belongsTo("itemInteraction", onDelete: .setNull)
+            }
+
+
+        }
+
         return migrator
     }
 }
@@ -179,7 +254,7 @@ extension AppDatabase {
             db.add(tokenizer: LatinAsciiTokenizer.self)
 
             // Log SQL statements if the `SQL_TRACE` environment variable is set.
-            // See <https://swiftpackageindex.com/groue/grdb.swift/documentation/grdb/database/trace(options:_:)>
+            // See <https://swiftpackageindex.com/groue/grdb.swift/documentation/grdb/database/trace/options:_>
             if ProcessInfo.processInfo.environment["SQL_TRACE"] != nil {
                 db.trace {
                     // It's ok to log statements publicly. Sensitive
@@ -214,13 +289,22 @@ extension AppDatabase {
         }
     }
 
-    /// Inserts multiple media files and returns the inserted media files.
+    /// inserts or updates all mediaFiles while retaining any `itemInteractionID` if it already is set, and returns the inserted media files.
     @discardableResult
     func upsert(_ mediaFiles: [MediaFile]) throws -> [MediaFile] {
         try dbWriter.write { db in
             mediaFiles.compactMap {
                 do {
+                    // Important: Copies potentially existing itemInteractionID to new mediaFile
+                    // so bookmarks etc. don't get lost when upserting:
+                    let itemInteractionID =
+                        try? MediaFile
+                        .filter(id: $0.id)
+                        .select(MediaFile.Columns.itemInteractionID, as: Int64.self)
+                        .fetchOne(db)
+
                     var file = $0
+                    file.itemInteractionID = itemInteractionID
                     return try file.upsertAndFetch(db)
                 } catch {
                     logger.warning("Filed to insert media file \(error)")
@@ -230,73 +314,301 @@ extension AppDatabase {
         }
     }
 
-    /// Updates the file.
-    func update(_ imageModel: MediaFile) throws {
-        try dbWriter.write { db in
-            try imageModel.update(db)
+    /// updates given mediaFiles but **only  if a MediaFile with the same ID is already present**
+    /// The role of this function is to update existing items in the DB with MediaFiles freshly fetched over the network.
+    func replaceExistingMediaFiles(_ mediaFiles: [MediaFile]) throws {
+        let existingIDs: Set<String> = try dbWriter.read { db in
+            return
+                try MediaFile
+                .filter(ids: mediaFiles.map(\.id))
+                .select(\.id, as: MediaFile.ID.self)
+                .fetchSet(db)
         }
+
+        let mediaFilesToUpsert = mediaFiles.filter { mediaFile in
+            existingIDs.contains(mediaFile.id)
+        }
+        try upsert(mediaFilesToUpsert)
     }
 
     /// Deletes the file.
-    func delete(_ imageModel: MediaFile) throws {
-        try dbWriter.write { db in
-            _ = try imageModel.delete(db)
-        }
+    func delete(_ imageModel: MediaFile) throws -> Bool {
+        try dbWriter.write(imageModel.delete)
     }
 
     /// Deletes all files.
-    func deleteAllImageModels() throws {
-        try dbWriter.write { db in
-            _ = try MediaFile.deleteAll(db)
-        }
+    func deleteAllImageModels() throws -> Int {
+        try dbWriter.write(MediaFile.deleteAll)
     }
 }
 
 // MARK: - MediaFileInfo Writes
 extension AppDatabase {
-    /// Updates MediaFile.lastViewed to .now, *will create entry in DB if it does not exist yet*
-    func saveAsRecentlyViewed(_ mediaFileInfo: MediaFileInfo) throws -> MediaFileInfo {
-        let id = mediaFileInfo.id
-        var existingMediaFile = mediaFileInfo.mediaFile
+    /// creates a new DB entry if needed
+    func updateLastViewed(_ mediaFileInfo: MediaFileInfo) throws -> MediaFileInfo {
+        try updateInteractionImpl(mediaFileInfo, lastViewed: .now, incrementViewCount: true)
+    }
+
+    /// creates a new DB entry if needed
+    func updateBookmark(_ mediaFileInfo: MediaFileInfo, bookmark: Bool) throws -> MediaFileInfo {
+        try updateInteractionImpl(mediaFileInfo, isBookmarked: bookmark)
+    }
+
+    /// Updates MediaFile interactions and also *will create entry in DB if it does not exist yet*
+    private func updateInteractionImpl(_ mediaFileInfo: MediaFileInfo, isBookmarked: Bool? = nil, lastViewed: Date? = nil, incrementViewCount: Bool = false) throws -> MediaFileInfo {
+        let mediaFileID = mediaFileInfo.mediaFile.id
+
         return try dbWriter.write { db in
-            try existingMediaFile.upsert(db)
-            let existingMetadata = try? ItemInteraction.find(db, id: id)
-            var metadata = existingMetadata ?? ItemInteraction(mediaFileId: id)
+            var itemInteraction =
+                if let existingInteraction = try ItemInteraction.fetchOne(db, id: mediaFileInfo.itemInteraction?.id) {
+                    existingInteraction
+                } else {
+                    try ItemInteraction().inserted(db)
+                }
 
-            metadata.lastViewed = .now
-            metadata.viewCount = min(metadata.viewCount + 1, UInt.max)
+            guard let itemInteractionID = itemInteraction.id else {
+                throw DatabaseError.itemInteractionEmptyID
+            }
 
-            _ = try metadata.upsertAndFetch(db)
-            let mediaFile = try MediaFile.fetchOne(db, id: id)
+            if let lastViewed {
+                itemInteraction.lastViewed = lastViewed
+            }
 
-            guard let mediaFile else {
+            if incrementViewCount {
+                itemInteraction.viewCount = min(itemInteraction.viewCount + 1, UInt.max)
+            }
+
+            if let isBookmarked {
+                itemInteraction.isBookmarked = isBookmarked
+            }
+
+            try itemInteraction.upsert(db)
+
+            // If the mediaFile was not interacted before, it now gets linked with the itemInteraction
+            // via the itemInteractionID (foreign key):
+            if mediaFileInfo.mediaFile.itemInteractionID == nil {
+                var updatedMediaFile = mediaFileInfo.mediaFile
+                updatedMediaFile.itemInteractionID = itemInteractionID
+                try updatedMediaFile.upsert(db)
+            }
+
+            let freshMediaFileInfo =
+                try MediaFile
+                .filter(id: mediaFileID)
+                .including(required: MediaFile.itemInteraction)
+                .asRequest(of: MediaFileInfo.self)
+                .fetchOne(db)
+
+            guard let freshMediaFileInfo else {
                 assertionFailure("Failed to fetch base mediaFile after updating usage. Should not happen.")
                 throw DatabaseError.failedToFetchAfterUpdate
             }
 
-            return .init(mediaFile: mediaFile, itemInteraction: metadata)
+            return freshMediaFileInfo
         }
     }
 }
 
-// MARK: - WikidataItem Writes
+// MARK: - Category Writes
 extension AppDatabase {
-    func upsert(_ item: WikidataItem) throws {
-        try dbWriter.write { db in
-            var item = item
-            try item.upsert(db)
-        }
+    @discardableResult
+    func upsert(_ item: Category) throws -> Category? {
+        try upsert([item]).first
     }
-
-    func upsert(_ items: [WikidataItem]) throws {
+    /// inserts or updates all Categories while retaining any `itemInteractionID` if it already is set, and returns the inserted media files.
+    @discardableResult
+    func upsert(_ items: [Category]) throws -> [Category] {
         try dbWriter.write { db in
-            for item in items {
-                var item = item
-                try item.upsert(db)
+            items.compactMap { item in
+                do {
+                    // When upserting Categories we have to check if an item already exists that
+                    // (in order of importance) has the same:
+                    // 1. id (database id, only applicable if the item to upsert was itself already in the DB)
+                    // 2. wikidataId
+                    // 3. commonsCategory
+
+                    // If an item matching one of the above exists, we must copy the itemInteractionID
+                    // before upserting (and in effect replacing the existing one).
+
+                    let existingCategories =
+                        try Category
+                        .findExistingCategory(basedOn: item)
+                        .fetchAll(db)
+
+                    if existingCategories.count < 2 {
+                        let existingCategory = existingCategories.first
+                        var itemCopy = item
+                        itemCopy.commonsCategory = item.commonsCategory ?? existingCategory?.commonsCategory
+                        itemCopy.wikidataId = item.wikidataId ?? existingCategory?.wikidataId
+                        itemCopy.id = item.id ?? existingCategory?.id
+                        itemCopy.itemInteractionID = item.itemInteractionID ?? existingCategory?.itemInteractionID
+
+                        return try itemCopy.upsertAndFetch(db)
+                    } else {
+                        // We need to merge multiple items
+                        let existingCategoryInfos: [CategoryInfo] =
+                            try Category
+                            .filter(ids: existingCategories.compactMap(\.id))
+                            .including(optional: Category.itemInteraction)
+                            .asRequest(of: CategoryInfo.self)
+                            .fetchAll(db)
+
+                        // We choose a reference item from the currently existing ones in the db,
+                        // preferring one that has already an interaction.
+                        let refCategoryInfo = existingCategoryInfos.first { $0.itemInteraction != nil } ?? existingCategoryInfos.first
+                        let refItemInteraction = refCategoryInfo?.itemInteraction
+                        guard let refCategoryInfo, let refCategoryID = refCategoryInfo.base.id else {
+                            assertionFailure("We expect items fetched from the DB to always have an (autoincremented) id.")
+                            throw DatabaseError.assertionFailed
+                        }
+
+                        // 1. First we combine all previous interactions, of categories to be merged,
+                        // into one:
+                        var mergeItemInteraction: ItemInteraction = refItemInteraction ?? .init()
+                        for existingInteraction in existingCategoryInfos.compactMap(\.itemInteraction) {
+                            // Assign the `isBookmarked` if any interaction was bookmarked
+                            if existingInteraction.isBookmarked {
+                                mergeItemInteraction.isBookmarked = true
+                            }
+                            // Choose the max `viewCount`
+                            mergeItemInteraction
+                                .viewCount = max(existingInteraction.viewCount, mergeItemInteraction.viewCount)
+
+                            // Choose the most recent (max) `lastViewed`
+                            if let lastViewed = existingInteraction.lastViewed {
+                                if let mergeLastViewed = mergeItemInteraction.lastViewed {
+                                    mergeItemInteraction.lastViewed = max(lastViewed, mergeLastViewed)
+                                } else {
+                                    mergeItemInteraction.lastViewed = lastViewed
+                                }
+                            }
+                        }
+
+                        // 2. Now that we have our final mergeItemInteraction
+                        // we delete the ones that are not needed anymore.
+                        let interactionIdsToDelete =
+                            existingCategoryInfos
+                            .compactMap(\.itemInteraction?.id)
+                            .filter { mergeItemInteraction.id != $0 }
+
+                        let deletedInteractionCount = try ItemInteraction.deleteAll(db, ids: interactionIdsToDelete)
+                        assert(deletedInteractionCount == interactionIdsToDelete.count)
+
+                        // and finally upsert the merged interaction
+                        mergeItemInteraction = try mergeItemInteraction.upsertAndFetch(db)
+
+                        // 3. Now we merge the base Category.
+                        // We want the fields from the new item, so copy that one first
+                        var mergeCategory = item
+                        // and assign it the `id` and `itemInteractionID` of the existing entry that was choosen.
+                        mergeCategory.id = refCategoryID
+                        mergeCategory.itemInteractionID = refItemInteraction?.id
+
+                        // 5. Delete all Categories that are not needed anymore
+                        let categoryIdsToRemove: [Int64] =
+                            existingCategories
+                            .compactMap(\.id)
+                            .filter { $0 != mergeCategory.id }
+
+                        let deletedCategoriesCount = try Category.deleteAll(db, ids: categoryIdsToRemove)
+                        assert(deletedCategoriesCount == categoryIdsToRemove.count)
+
+                        // 6. Finally upsert the new merged Category
+                        mergeCategory = try mergeCategory.upsertAndFetch(db)
+                        assert(mergeCategory.id == refCategoryID)
+                        assert(mergeCategory.itemInteractionID == mergeItemInteraction.id)
+
+                        return mergeCategory
+                    }
+
+                } catch {
+                    logger.warning("Failed to insert category \(error)")
+                    return nil
+                }
             }
         }
     }
+
+    func delete(_ category: Category) throws -> Bool {
+        try dbWriter.write(category.delete)
+    }
+
 }
+
+// MARK: - CategoryInfo Writes
+extension AppDatabase {
+    /// creates a new DB entry if needed
+    func updateLastViewed(_ item: CategoryInfo) throws -> CategoryInfo {
+        try updateInteractionImpl(item, lastViewed: .now, incrementViewCount: true)
+    }
+
+    /// creates a new DB entry if needed
+    @discardableResult
+    func updateBookmark(_ item: CategoryInfo, bookmark: Bool) throws -> CategoryInfo {
+        try updateInteractionImpl(item, isBookmarked: bookmark)
+    }
+
+    /// Updates MediaFile interactions and also *will create entry in DB if it does not exist yet*
+    private func updateInteractionImpl(_ item: CategoryInfo, isBookmarked: Bool? = nil, lastViewed: Date? = nil, incrementViewCount: Bool = false) throws -> CategoryInfo {
+        return try dbWriter.write { db in
+
+            let databaseItem: CategoryInfo? =
+                try Category
+                .findExistingCategory(basedOn: item.base)
+                .including(optional: Category.itemInteraction)
+                .asRequest(of: CategoryInfo.self)
+                .fetchOne(db)
+
+            var workItem: CategoryInfo
+
+            if let databaseItem {
+                workItem = databaseItem
+            } else {
+                let insertedCategory = try item.base.inserted(db)
+                workItem = .init(insertedCategory, itemInteraction: nil)
+            }
+
+            var itemInteraction = workItem.itemInteraction ?? .init()
+
+            if let lastViewed {
+                itemInteraction.lastViewed = lastViewed
+            }
+
+            if incrementViewCount {
+                itemInteraction.viewCount = min(itemInteraction.viewCount + 1, UInt.max)
+            }
+
+            if let isBookmarked {
+                itemInteraction.isBookmarked = isBookmarked
+            }
+
+            try itemInteraction.upsert(db)
+
+            // If the mediaFile was not interacted before, it now gets linked with the itemInteraction
+            // via the itemInteractionID (foreign key):
+            if workItem.itemInteraction == nil {
+                try workItem.base.updateChanges(db) {
+                    $0.itemInteractionID = itemInteraction.id
+                }
+            }
+
+            let freshWikidataItemInfo =
+                try Category
+                .filter(id: workItem.base.id)
+                .including(required: Category.itemInteraction)
+                .asRequest(of: CategoryInfo.self)
+                .fetchOne(db)
+
+            guard let freshWikidataItemInfo else {
+                assertionFailure("Failed to fetch base freshWikidataItem after updating usage. Should not happen.")
+                throw DatabaseError.failedToFetchAfterUpdate
+            }
+
+            return freshWikidataItemInfo
+        }
+    }
+}
+
 
 // MARK: - MediaFileDraft Writes
 extension AppDatabase {
@@ -380,19 +692,17 @@ extension AppDatabase {
         case desc
     }
 
-    func fetchOrderedMediaFileIDs(order: BasicOrdering) throws -> [String] {
+    func fetchRecentlyViewedMediaFileInfos(order: BasicOrdering) throws -> [MediaFileInfo] {
         try dbWriter.read { db in
-            var orderedIdsRequest = ItemInteraction.filter { $0.lastViewed != nil }
-
-            orderedIdsRequest =
+            let request =
                 switch order {
-                case .asc: orderedIdsRequest.order(\.lastViewed.asc)
-                case .desc: orderedIdsRequest.order(\.lastViewed.desc)
+                case .asc: MediaFile.including(required: MediaFile.itemInteraction.order(\.lastViewed.asc))
+                case .desc: MediaFile.including(required: MediaFile.itemInteraction.order(\.lastViewed.desc))
                 }
 
             return
-                try orderedIdsRequest
-                .select(\.mediaFileId, as: String.self)
+                try request
+                .asRequest(of: MediaFileInfo.self)
                 .fetchAll(db)
         }
     }
@@ -439,6 +749,61 @@ extension AppDatabase {
                 .fetchOne(db)
         }
     }
+
+    func fetchCategoryInfo(commonsCategory: String) throws -> CategoryInfo? {
+        try dbWriter.read { db in
+            try Category
+                .filter(Category.Columns.commonsCategory == commonsCategory)
+                .including(optional: Category.itemInteraction)
+                .asRequest(of: CategoryInfo.self)
+                .fetchOne(db)
+        }
+    }
+
+    func fetchCategoryInfo(wikidataID: String) throws -> CategoryInfo? {
+        try dbWriter.read { db in
+            try Category
+                .filter(Category.Columns.wikidataId == wikidataID)
+                .including(optional: Category.itemInteraction)
+                .asRequest(of: CategoryInfo.self)
+                .fetchOne(db)
+        }
+    }
+
+    func fetchCategoryInfos(commonsCategories: [String]) throws -> [CategoryInfo] {
+        try dbWriter.read { db in
+            try Category
+                .filter(commonsCategories.contains(Category.Columns.commonsCategory))
+                .including(optional: Category.itemInteraction)
+                .asRequest(of: CategoryInfo.self)
+                .fetchAll(db)
+        }
+    }
+
+    func fetchCategoryInfos(wikidataIDs: [String]) throws -> [CategoryInfo] {
+        try dbWriter.read { db in
+            try Category
+                .filter(wikidataIDs.contains(Category.Columns.wikidataId))
+                .including(optional: Category.itemInteraction)
+                .asRequest(of: CategoryInfo.self)
+                .fetchAll(db)
+        }
+    }
+
+    func fetchRecentlyViewedCategoryInfos(order: BasicOrdering) throws -> [CategoryInfo] {
+        try dbWriter.read { db in
+            let request =
+                switch order {
+                case .asc: Category.including(required: Category.itemInteraction.order(\.lastViewed.asc))
+                case .desc: Category.including(required: Category.itemInteraction.order(\.lastViewed.desc))
+                }
+
+            return
+                try request
+                .asRequest(of: CategoryInfo.self)
+                .fetchAll(db)
+        }
+    }
 }
 
 extension MediaFileInfo {
@@ -448,5 +813,37 @@ extension MediaFileInfo {
             .including(optional: MediaFile.itemInteraction)
             .asRequest(of: MediaFileInfo.self)
             .fetchAll(db)
+    }
+}
+
+extension Category {
+    /// finds existing Category based on id, wikidataId, commonsCategory
+    static func findExistingCategory(basedOn category: Category) -> QueryInterfaceRequest<Category> {
+        let id = category.id
+        let commonsCategory = category.commonsCategory
+        let wikidataId = category.wikidataId
+
+        guard id != nil || commonsCategory != nil || wikidataId != nil else {
+            return Category.none()
+        }
+
+        if let id {
+            return Category.filter(id: id)
+        } else if let wikidataId, let commonsCategory {
+            return Category.filter(
+                (Category.Columns.wikidataId == wikidataId) || (Category.Columns.commonsCategory == commonsCategory)
+            )
+        } else if let commonsCategory {
+            return Category.filter(
+                Category.Columns.commonsCategory == commonsCategory
+            )
+        } else if let wikidataId {
+            return Category.filter(
+                Category.Columns.wikidataId == wikidataId
+            )
+        } else {
+            return Category.none()
+        }
+
     }
 }

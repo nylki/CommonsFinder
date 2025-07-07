@@ -238,6 +238,8 @@ extension MediaFileDraft {
                 timezone = exifTimezone
             }
 
+            // FIXME: width/hight are reversed for portrait photos due to orientation not taken into account
+            // see: https://github.com/nylki/CommonsFinder/issues/5
             width = exifData.pixelWidth
             height = exifData.pixelHeight
 

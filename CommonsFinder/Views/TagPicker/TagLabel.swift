@@ -11,7 +11,6 @@ import SwiftUI
 struct TagLabel: View {
     let tag: TagItem
 
-    @Environment(WikidataCache.self) private var wikidataCache
     @Environment(\.locale) private var locale
 
     private var languageCode: String {
@@ -137,11 +136,11 @@ struct TagList: View {
         }
 
         HFlowLayout {
-            TagLabel(tag: .init(wikidataItem: .earth, pickedUsages: []))
-            TagLabel(tag: .init(wikidataItem: .earth, pickedUsages: []))
-            TagLabel(tag: .init(wikidataItem: .earth, pickedUsages: interactiveSelection))
-            TagLabel(tag: .init(wikidataItem: .earth, pickedUsages: []))
-            TagLabel(tag: .init(wikidataItem: .earth, pickedUsages: []))
+            TagLabel(tag: .init(.earth, pickedUsages: []))
+            TagLabel(tag: .init(.earth, pickedUsages: []))
+            TagLabel(tag: .init(.earth, pickedUsages: interactiveSelection))
+            TagLabel(tag: .init(.earth, pickedUsages: []))
+            TagLabel(tag: .init(.earth, pickedUsages: []))
         }
 
     }
@@ -150,16 +149,16 @@ struct TagList: View {
 
 
 #Preview("TagLabel short", traits: .previewEnvironment) {
-    TagLabel(tag: .init(wikidataItem: .earth, pickedUsages: []))
-    TagLabel(tag: .init(wikidataItem: .earth, pickedUsages: [.depict]))
-    TagLabel(tag: .init(wikidataItem: .earth, pickedUsages: [.category]))
-    TagLabel(tag: .init(wikidataItem: .earth, pickedUsages: [.depict, .category]))
+    TagLabel(tag: .init(.earth, pickedUsages: []))
+    TagLabel(tag: .init(.earth, pickedUsages: [.depict]))
+    TagLabel(tag: .init(.earth, pickedUsages: [.category]))
+    TagLabel(tag: .init(.earth, pickedUsages: [.depict, .category]))
 }
 
 #Preview("TagLabel long", traits: .previewEnvironment) {
-    TagLabel(tag: .init(wikidataItem: .earthExtraLongLabel, pickedUsages: []))
-    TagLabel(tag: .init(wikidataItem: .earthExtraLongLabel, pickedUsages: [.depict]))
-    TagLabel(tag: .init(wikidataItem: .earthExtraLongLabel, pickedUsages: [.category]))
-    TagLabel(tag: .init(wikidataItem: .earthExtraLongLabel, pickedUsages: [.depict, .category]))
+    TagLabel(tag: .init(.earthExtraLongLabel, pickedUsages: []))
+    TagLabel(tag: .init(.earthExtraLongLabel, pickedUsages: [.depict]))
+    TagLabel(tag: .init(.earthExtraLongLabel, pickedUsages: [.category]))
+    TagLabel(tag: .init(.earthExtraLongLabel, pickedUsages: [.depict, .category]))
 
 }
