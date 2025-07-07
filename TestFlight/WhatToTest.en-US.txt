@@ -1,1 +1,1 @@
-This release fixes a crash that occurred while uploading an image.
+This release fixes a crash that can occur when editing the filename (custom filename)

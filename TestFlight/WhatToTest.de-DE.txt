@@ -1,1 +1,1 @@
-Dieser Release behebt einen Crash, der während des Hochladens eines Bildes auftrat.
+Dieser Release behebt einen Crash, der beim editieren des Dateinamens auftreten kann (custom filename).
