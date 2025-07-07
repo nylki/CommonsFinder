@@ -33,15 +33,8 @@ struct FileShowView: View {
     }
 
     var body: some View {
-        MainFileShowView(mediaFileInfo: mediaFileInfo, navigationNamespace: navigationNamespace)
+        MainFileShowView(mediaFileInfo: mediaFileInfo, navigationNamespace: navigationNamespace, onUpdateBookmark: updateBookmark)
             .modifier(OptionalZoomTransition(fileID: mediaFileInfo.mediaFile.id, namespaceID: navigationNamespace))
-
-
-            //            .fullScreenCover(
-            //                item: $isShowingEditSheet,
-            //                onDismiss: reloadAfterEdit,
-            //                content: FileEditView.init
-            //            )
             .task {
                 let timeIntervalSinceLastFetchDate = Date.now.timeIntervalSince(mediaFileInfo.mediaFile.fetchDate)
                 //            logger.info("Time since last fetch: \(timeIntervalSinceLastFetchDate)")
@@ -54,34 +47,26 @@ struct FileShowView: View {
             }
     }
 
-    //    func reloadAfterEdit() {
-    //        print("Reload after edit")
-    //        do {
-    //            let updatedMediaFileInfo = try appDatabase.reader.read { db in
-    //                try MediaFile
-    //                    .filter(id: mediaFileInfo.id)
-    //                    .including(optional: MediaFile.itemInteraction)
-    //                    .asRequest(of: MediaFileInfo.self)
-    //                    .fetchOne(db)
-    //
-    //            }
-    //            if updatedMediaFileInfo != mediaFileInfo {
-    //                // NOTE: having os.log crashes previewsin XCode 16 when no argument provided! weird! thats why there is a \(1)
-    //                // TODO: check XCode 17
-    //
-    //                logger.info("\("File was updated (after edit), relad full description and show new file")")
-    //                _updatedMediaFileInfo = updatedMediaFileInfo
-    //            }
-    //        } catch {
-    //            logger.error("Failed to reload file info after edit \(error)")
-    //        }
-    //    }
-
     private func saveFileToLastViewed() {
         do {
-            _updatedMediaFileInfo = try appDatabase.saveAsRecentlyViewed(mediaFileInfo)
+            _updatedMediaFileInfo = try appDatabase.updateLastViewed(mediaFileInfo)
         } catch {
             logger.error("Failed to save media file as recently viewed. \(error)")
+        }
+    }
+
+    private func updateBookmark(_ value: Bool) {
+        do {
+            let result = try appDatabase.updateBookmark(mediaFileInfo, bookmark: value)
+            if let isBookmarked = result.itemInteraction?.isBookmarked {
+                print("bookmark value should be: \(value). it is: \(isBookmarked) ")
+            } else {
+                print("bookmark value should be: \(value). it is nil!!!! ")
+            }
+
+            _updatedMediaFileInfo = result
+        } catch {
+            logger.error("Failed to update bookmark on \(mediaFileInfo.mediaFile.name): \(error)")
         }
     }
 
@@ -107,26 +92,29 @@ struct FileShowView: View {
         } catch {
             logger.error("Failed to refresh media file \(error)")
         }
-
     }
 }
 
 
 private struct MainFileShowView: View {
+    // TODO: maybe convert to @Query (or other observation here) and upsert MediaFile into DB on .task and then do dbMediaFile ?? passedMediaFile
     let mediaFileInfo: MediaFileInfo
     let navigationNamespace: Namespace.ID
+    let onUpdateBookmark: (_ newBookmarkValue: Bool) -> Void
 
     @Environment(\.locale) private var locale
     @Environment(\.dismiss) private var dismiss
     @Environment(Navigation.self) private var navigation
     @Environment(SearchModel.self) private var searchModel
-    @Environment(WikidataCache.self) private var wikidataCache
     @Environment(\.isPresented) private var isPresented
+    @Environment(\.appDatabase) private var appDatabase
 
     @State private var fullDescription: AttributedString?
     @State private var isDescriptionExpanded = false
     @State private var titleAreaHidden = false
     @State private var gradientAreaHidden = false
+
+    @State private var resolvedTags: [TagItem] = []
 
 
     private var userUploads: NavigationStackItem {
@@ -169,6 +157,13 @@ private struct MainFileShowView: View {
 
                 ToolbarItem(placement: .automatic) {
                     Menu {
+                        Button(
+                            mediaFileInfo.isBookmarked ? "Remove Bookmark" : "Add Bookmark",
+                            systemImage: mediaFileInfo.isBookmarked ? "bookmark.fill" : "bookmark"
+                        ) {
+                            onUpdateBookmark(!mediaFileInfo.isBookmarked)
+                        }
+
                         ShareLink(item: mediaFileInfo.mediaFile.descriptionURL)
                         Link(destination: mediaFileInfo.mediaFile.descriptionURL) {
                             Label("Open in Browser", systemImage: "globe")
@@ -305,6 +300,19 @@ private struct MainFileShowView: View {
             if let attributedString = mediaFileInfo.mediaFile.createAttributedStringDescription(locale: locale) {
                 fullDescription = attributedString
             }
+
+            do {
+                let start = Date.now
+                // TODO: tags could actually benefit from being based on CategoryInfo
+                // so that links would get info about bookmarks
+                let tags = try await mediaFileInfo.mediaFile.resolveTags(appDatabase: appDatabase)
+                let tagsWhereFetchedAsync = Date.now.timeIntervalSince(start) > 0.1
+                withAnimation(tagsWhereFetchedAsync ? .default : nil) {
+                    self.resolvedTags = tags
+                }
+            } catch {
+                logger.error("Failed to resolve MediaFile tags: \(error)")
+            }
         }
     }
 
@@ -398,103 +406,75 @@ private struct MainFileShowView: View {
                     }
                 }
             }
-
-
-        }
-    }
-
-    private var categories: some View {
-        GroupBox("Categories") {
-            HFlowLayout(alignment: .leading) {
-                ForEach(mediaFileInfo.mediaFile.categories, id: \.self) { category in
-                    let navItem = NavigationStackItem.category(title: category)
-                    NavigationLink(value: navItem) {
-                        Text(category)
-                    }
-                    .buttonStyle(.bordered)
-                }
-            }
-        }
-    }
-
-
-    @ViewBuilder
-    private var WikidataClaimView: some View {
-        lazy var filteredStatements = mediaFileInfo.mediaFile.statements.filter { $0.isDepicts == false }
-        VStack {
-            let dict: [WikidataProp: [WikidataClaim]] = Dictionary(grouping: filteredStatements, by: \.mainProp)
-
-            let properties = filteredStatements.map(\.mainProp)
-            ForEach(Array(properties), id: \.rawValue) { property in
-                if let propStatements = dict[property] {
-                    let propLabel = wikidataCache[property.description]?.label
-                    GroupBox(propLabel ?? property.description) {
-                        StatementListBox(propStatements.compactMap { $0.mainsnak.datavalue })
-                    }
-                }
-            }
         }
     }
 
     @ViewBuilder
     private var tagSection: some View {
-        let tags = mediaFileInfo.mediaFile.getTags(wikidataCache: wikidataCache)
-
-        if !tags.isEmpty {
-            TagsContainerView(tags: tags)
-        }
-    }
-
-    @ViewBuilder
-    private func StatementListBox(_ values: [WikidataSnakValue]) -> some View {
-        lazy var languageIdentifier = locale.wikiLanguageCodeIdentifier
-
-        ScrollView(.horizontal) {
-            HStack {
-                ForEach(values, id: \.self) { value in
-                    ZStack {
-                        switch value {
-                        case .wikibaseEntityID(let item):
-                            let localizedLabel = wikidataCache[item.id]?.label
-                            Text(localizedLabel ?? item.id)
-                                .animation(.default, value: localizedLabel)
-                        case .quantity(let quantity):
-                            quantityLabel(quantity)
-                        case .string(let string):
-                            Text(string)
-                        case .time(let dateValue):
-                            if let date = dateValue.date {
-                                Text(date, style: .date)
-                            }
-                        // location is handled separately
-                        default:
-                            Text("Unknown type of value")
-                        }
-                    }
-                    .bold()
-                    .padding(.horizontal, 15)
-                    .padding(.vertical, 10)
+        let itemCount = mediaFileInfo.mediaFile.categories.count + mediaFileInfo.mediaFile.statements.map(\.isDepicts).count
+        if !resolvedTags.isEmpty {
+            TagsContainerView(tags: resolvedTags)
+        } else if itemCount > 0 {
+            // TODO: better placeholder
+            Color.clear.frame(height: Double(itemCount * 30))
+                .overlay {
+                    ProgressView().progressViewStyle(.circular)
                 }
-            }
         }
     }
 
-    private func quantityLabel(_ quantity: WikidataClaim.Snak.DataValue.Quantity) -> Text {
-        var unitLabel = ""
-        if let unitID = quantity.unitID {
-            unitLabel = wikidataCache[unitID.id]?.label ?? ""
-        }
+    //    @ViewBuilder
+    // FIXME: for wikidata items (aka Categories) use CategoryInfo to initialize
+    // eg. to be able to bookmark etc.
+    //    private func StatementListBox(_ values: [WikidataSnakValue]) -> some View {
+    //        lazy var languageIdentifier = locale.wikiLanguageCodeIdentifier
+    //
+    //        ScrollView(.horizontal) {
+    //            HStack {
+    //                ForEach(values, id: \.self) { value in
+    //                    ZStack {
+    //                        switch value {
+    //                        case .wikibaseEntityID(let item):
+    //                            let localizedLabel = categoryCache[item.id]?.base.label
+    //                            Text(localizedLabel ?? item.id)
+    //                                .animation(.default, value: localizedLabel)
+    //                        case .quantity(let quantity):
+    //                            quantityLabel(quantity)
+    //                        case .string(let string):
+    //                            Text(string)
+    //                        case .time(let dateValue):
+    //                            if let date = dateValue.date {
+    //                                Text(date, style: .date)
+    //                            }
+    //                        // location is handled separately
+    //                        default:
+    //                            Text("Unknown type of value")
+    //                        }
+    //                    }
+    //                    .bold()
+    //                    .padding(.horizontal, 15)
+    //                    .padding(.vertical, 10)
+    //                }
+    //            }
+    //        }
+    //    }
 
-        let formatter = NumberFormatter()
-        formatter.minimumFractionDigits = 0
-        formatter.maximumFractionDigits = 2
-        formatter.minimumIntegerDigits = quantity.amountNumber < 1 ? 1 : 0
-        print("\(quantity.amountNumber) \(unitLabel)")
-
-        let amount = String(format: "%g", quantity.amountNumber)
-
-        return Text("\(amount) \(unitLabel)")
-    }
+    //    private func quantityLabel(_ quantity: WikidataClaim.Snak.DataValue.Quantity) -> Text {
+    //        var unitLabel = ""
+    //        if let unitID = quantity.unitID {
+    //            unitLabel = categoryCache[unitID.id]?.base.label ?? ""
+    //        }
+    //
+    //        let formatter = NumberFormatter()
+    //        formatter.minimumFractionDigits = 0
+    //        formatter.maximumFractionDigits = 2
+    //        formatter.minimumIntegerDigits = quantity.amountNumber < 1 ? 1 : 0
+    //        print("\(quantity.amountNumber) \(unitLabel)")
+    //
+    //        let amount = String(format: "%g", quantity.amountNumber)
+    //
+    //        return Text("\(amount) \(unitLabel)")
+    //    }
 
     @ViewBuilder
     private var imageView: some View {
@@ -544,6 +524,7 @@ private struct MainFileShowView: View {
         //        }
 
     }
+
 }
 
 
@@ -613,7 +594,7 @@ extension WikidataItemID {
 #Preview(traits: .previewEnvironment) {
     @Previewable @Namespace var namespace
     NavigationView {
-        MainFileShowView(mediaFileInfo: .makeRandomUploaded(id: "Lorem Ipsum", .squareImage), navigationNamespace: namespace)
+        MainFileShowView(mediaFileInfo: .makeRandomUploaded(id: "Lorem Ipsum", .squareImage), navigationNamespace: namespace, onUpdateBookmark: { _ in })
     }
 
 }

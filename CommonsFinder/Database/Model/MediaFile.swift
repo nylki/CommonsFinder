@@ -38,8 +38,8 @@ struct MediaFile: Equatable, Hashable, Sendable, Identifiable {
     /// The preferred thumbURL of the image/video file
     var thumbURL: URL?
 
-    var width: Double?
-    var height: Double?
+    var width: Int?
+    var height: Int?
 
     /// short structured data caption
     var captions: [LanguageString]
@@ -58,14 +58,16 @@ struct MediaFile: Equatable, Hashable, Sendable, Identifiable {
 
     var fetchDate: Date
 
+    var itemInteractionID: Int64?
+
     init(
         id: String,
         name: String,
         url: URL,
         descriptionURL: URL,
         thumbURL: URL? = nil,
-        width: Double? = nil,
-        height: Double? = nil,
+        width: Int? = nil,
+        height: Int? = nil,
         uploadDate: Date,
         caption: [LanguageString],
         fullDescription: [LanguageString],
@@ -122,6 +124,7 @@ extension MediaFile: Codable, FetchableRecord, MutablePersistableRecord {
     // Define database columns from CodingKeys
     enum Columns {
         static let id = Column(CodingKeys.id)
+        static let itemInteractionID = Column(CodingKeys.itemInteractionID)
         static let username = Column(CodingKeys.username)
         static let name = Column(CodingKeys.name)
         static let mimeType = Column(CodingKeys.mimeType)
@@ -136,10 +139,13 @@ extension MediaFile: Codable, FetchableRecord, MutablePersistableRecord {
         static let statements = Column(CodingKeys.statements)
     }
 
-    static let itemInteraction = hasOne(ItemInteraction.self)
-    var mediaFileUsage: QueryInterfaceRequest<ItemInteraction> {
-        request(for: MediaFile.itemInteraction)
+    // itemInteractionId foreign key
+    static let itemInteraction = belongsTo(ItemInteraction.self)
+
+    var itemInteraction: QueryInterfaceRequest<ItemInteraction> {
+        request(for: Self.itemInteraction)
     }
+
 }
 
 // MARK: - Extensions

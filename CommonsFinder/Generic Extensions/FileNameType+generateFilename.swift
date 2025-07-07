@@ -13,7 +13,7 @@ import os.log
 extension FileNameType {
     @MainActor
     func generateFilename(
-        location: CLLocation?, date: Date?, desc: [MediaFileDraft.DraftCaptionWithDescription], locale: Locale, localizationModel: WikidataCache, tags: [TagItem]
+        location: CLLocation?, date: Date?, desc: [MediaFileDraft.DraftCaptionWithDescription], locale: Locale, tags: [TagItem]
     ) async
         -> String?
     {
@@ -67,49 +67,3 @@ private func generateGeoAndDateFilename(date: Date?, location: CLLocation?, loca
 
     return [geoString, date].compactMap { $0 }.joined(separator: ", ")
 }
-
-//@MainActor
-//private func generateAutomaticFilename(
-//    desc: [MediaFileDraft.DraftCaptionWithDescription],
-//    date: Date?,
-//    locale: Locale,
-//    localizationModel: WikidataCache,
-//    tags: [TagItem]
-//) -> String {
-//
-//    var captionString = desc.first?.caption ?? ""
-//
-//    if let firstSentencePart = captionString.split(separator: /[.,;-]/).first {
-//        captionString = String(firstSentencePart)
-//    }
-//
-//    let date = date?.ISO8601Format(.iso8601.year().month().day()) ?? ""
-//
-//    let preferredLanguage = desc.first?.languageCode ?? Locale.current.wikiLanguageCodeIdentifier
-//    let depictedString: String =
-//        tags.compactMap { tag in
-//            if !tag.label.isEmpty,
-//                // exclude labels that are already in the caption
-//                captionString.localizedStandardContains(tag.label) == false
-//            {
-//                return tag.label
-//            }
-//            return nil
-//        }
-//        .joined(separator: ", ")
-//
-//
-//
-//    let filename: String
-//    if captionString.count < 30 {
-//        filename = [captionString, depictedString, date]
-//            .filter { !$0.isEmpty }
-//            .joined(separator: ", ")
-//    } else {
-//        filename = "\(captionString), \(date)"
-//    }
-//
-//
-//    return filename
-//
-//}

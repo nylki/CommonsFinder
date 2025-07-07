@@ -11,8 +11,7 @@ import SwiftUI
 struct PopulatedPreviewEnvironment: PreviewModifier {
     private let navigation: Navigation = .init()
     private let mockUploadManager: UploadManager
-    private let wikidataCache: WikidataCache
-    static private let previewDatabase = AppDatabase.populatedMultiple()
+    static private let previewDatabase = AppDatabase.populatedPreviewDatabase()
     private let account: AccountModel
     private let searchModel: SearchModel
 
@@ -25,7 +24,6 @@ struct PopulatedPreviewEnvironment: PreviewModifier {
             mockSimulation: uploadSimulation,
             appDatabase: Self.previewDatabase
         )
-        wikidataCache = WikidataCache(appDatabase: Self.previewDatabase)
 
         account = AccountModel(
             appDatabase: Self.previewDatabase,
@@ -41,7 +39,6 @@ struct PopulatedPreviewEnvironment: PreviewModifier {
             .environment(searchModel)
             .environment(navigation)
             .environment(mockUploadManager)
-            .environment(wikidataCache)
     }
 }
 

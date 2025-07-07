@@ -17,16 +17,7 @@ struct TagsContainerView: View {
         GroupBox("Tags") {
             HFlowLayout(alignment: .leading) {
                 ForEach(tags) { tag in
-
-                    let navigationValue =
-                        switch tag.baseItem {
-                        case .category(let category):
-                            NavigationStackItem.category(title: category)
-                        case .wikidataItem(let wikiItem):
-                            NavigationStackItem.wikiItem(id: wikiItem.id)
-                        }
-
-                    NavigationLink(value: navigationValue) {
+                    NavigationLink(value: NavigationStackItem.wikidataItem(.init(tag.baseItem))) {
                         TagLabel(tag: tag)
                     }
                     .foregroundStyle(.primary)
@@ -38,5 +29,5 @@ struct TagsContainerView: View {
 
 
 #Preview {
-    TagsContainerView(tags: [.init(wikidataItem: .earth, pickedUsages: [.depict])])
+    TagsContainerView(tags: [.init(.earth, pickedUsages: [.depict])])
 }

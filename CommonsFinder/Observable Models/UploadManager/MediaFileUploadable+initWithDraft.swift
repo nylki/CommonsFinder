@@ -48,16 +48,14 @@ extension MediaFileUploadable {
         var categories: [String] = []
 
         for tag in draft.tags {
-            switch tag.baseItem {
-            case .wikidataItem(let wikidataItem):
-                if tag.pickedUsages.contains(.depict), let id = WikidataItemID(stringValue: wikidataItem.id) {
-                    depictStatements.append(.depicts(id))
-                }
-                if tag.pickedUsages.contains(.category), let category = wikidataItem.commonsCategory {
-                    categories.append(category)
-                }
-            case .category(let category):
-                categories.append(category)
+            lazy var wikidataItemID = tag.baseItem.wikidataItemID
+            lazy var commonsCategory = tag.baseItem.commonsCategory
+
+            if tag.pickedUsages.contains(.depict), let wikidataItemID {
+                depictStatements.append(.depicts(wikidataItemID))
+            }
+            if tag.pickedUsages.contains(.category), let commonsCategory {
+                categories.append(commonsCategory)
             }
         }
         var statements: [WikidataClaim] = depictStatements
@@ -217,10 +215,10 @@ extension MediaFileUploadable {
             .joined(separator: "\n")
 
 
-        var testUploadString = ""
+        let testUploadString = ""
         // DEBUGGING NOTE: un-comment to mark uploads as test upload, eg when testing new upload functionality
         //
-        // testUploadString = "{{test upload}}"
+        // let testUploadString = "{{test upload}}"
 
         let wikiText = """
             =={{int:filedesc}}==
@@ -255,5 +253,15 @@ extension MediaFileUploadable {
             captions: captions,
             wikitext: wikiText
         )
+    }
+}
+
+extension Category {
+    var wikidataItemID: WikidataItemID? {
+        if let wikidataId {
+            .init(stringValue: wikidataId)
+        } else {
+            nil
+        }
     }
 }

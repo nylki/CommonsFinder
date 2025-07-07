@@ -12,7 +12,7 @@ import OrderedCollections
 import SwiftUI
 import os.log
 
-@Observable final class PaginatableWikiCategoryFiles: PaginatableMediaFiles {
+@Observable final class PaginatableCategoryFiles: PaginatableMediaFiles {
     private let categoryName: String?
     private let depictItemID: String?
 

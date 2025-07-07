@@ -113,7 +113,7 @@ struct ContentView: View {
         switch (url.scheme, components.host) {
         // -> "CommonsFinder://ShareExtension"
         case ("CommonsFinder", "ShareExtension"):
-
+            // TODO: this could be implemented with an intent handler instead in iOS 26 maybe?
             // -> "CommonsFinder://ShareExtension/openDrafts"
             guard url.pathComponents.count == 2, url.pathComponents[1] == "openDrafts" else {
                 assertionFailure()
@@ -150,7 +150,7 @@ struct ContentView: View {
             }
 
             Task {
-                // A short visually delay to allow the openin app animations to settle a moment
+                // A short visually delay to allow the opening app animations to settle a moment
                 try? await Task.sleep(for: .milliseconds(200))
                 if drafts.count > 1 {
                     // TODO: needs batch image implementation
@@ -180,16 +180,18 @@ struct CommonNavigationDestination: ViewModifier {
                     FileShowView(file, navigationNamespace: namespace)
                 case .loadFile(let title, let namespace):
                     FileLoadView(title: title, navigationNamespace: namespace)
-                case .tag(let tagItem):
-                    WikiCategoryView(tag: tagItem)
-                case .category(let title):
-                    WikiCategoryView(config: .categoryName(title))
-                case .wikiItem(let id):
-                    WikiCategoryView(config: .wikiItemID(id))
+                case .wikidataItem(let item):
+                    CategoryView(item)
                 case .userUploads(let username):
                     UploadsView(username: username)
-                case .recentlyViewed:
-                    RecentlyViewedView()
+                case .recentlyViewedMedia:
+                    RecentlyViewedMediaView()
+                case .bookmarkedMedia:
+                    BookmarkedFilesView()
+                case .bookmarkedCategories:
+                    BookmarkedCategoriesView()
+                case .recentlyViewedCategories:
+                    RecentlyViewedCategoriesView()
                 }
             }
     }

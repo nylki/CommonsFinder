@@ -15,7 +15,7 @@ import os.log
 final class TagPickerModel {
     var searchText = ""
     var isSearching = false
-    var wikidataCache: WikidataCache?
+    var appDatabase: AppDatabase?
 
     var popoverTag: TagModel?
 
@@ -44,8 +44,8 @@ final class TagPickerModel {
     func search() {
         tags.removeAll(where: \.pickedUsages.isEmpty)
         guard !searchText.isEmpty else { return }
-        guard let wikidataCache else {
-            assertionFailure("We expect the wikidataCache to be initialized by now")
+        guard let appDatabase else {
+            assertionFailure("We expect the appDatabase to be initialized by now")
             return
         }
 
@@ -96,27 +96,29 @@ final class TagPickerModel {
                 let labelAndDescription = searchItems.grouped(by: \.id)
                 let combinedWikidataItems = (sortedWikiItems + sortedCategoryItems).uniqued(on: \.id)
 
-                let mergedSearchWikiItems: [WikidataItem] = combinedWikidataItems.map { item in
-                    var item = WikidataItem(apiItem: item)
-                    item.label = labelAndDescription[item.id]?.first?.label ?? item.label
-                    item.description = labelAndDescription[item.id]?.first?.description ?? item.description
+                let mergedSearchWikiItems: [Category] = combinedWikidataItems.map { apiItem in
+                    var item = Category(apiItem: apiItem)
+                    item.label = labelAndDescription[apiItem.id]?.first?.label ?? item.label
+                    item.description = labelAndDescription[apiItem.id]?.first?.description ?? item.description
                     return item
                 }
 
 
-                for item in mergedSearchWikiItems {
-                    wikidataCache.cache(wikidataItem: item)
+                do {
+                    try appDatabase.upsert(mergedSearchWikiItems)
+                } catch {
+                    logger.error("Failed to save Category items from TagPicker during search. \(error)")
                 }
 
                 let wikiItemTags: [TagModel] = mergedSearchWikiItems.compactMap { item in
-                    .init(tagItem: .init(wikidataItem: item, pickedUsages: []))
+                    .init(tagItem: .init(item, pickedUsages: []))
                 }
 
                 // Only keep categories that do not already have a wikidata item
-                let categoryTags: [TagModel] = searchCategories.compactMap { category in
-                    let isAlreadyInWikiItems = wikiItemTags.contains(where: { $0.category == category })
+                let categoryTags: [TagModel] = searchCategories.compactMap { categoryName in
+                    let isAlreadyInWikiItems = wikiItemTags.contains(where: { $0.commonsCategory == categoryName })
                     if isAlreadyInWikiItems { return nil }
-                    return .init(tagItem: .init(category: category, isPicked: false))
+                    return .init(tagItem: .init(Category(commonsCategory: categoryName), pickedUsages: []))
                 }
 
                 let existingTagIDs = Set(tags.map(\.id))

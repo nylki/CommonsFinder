@@ -157,9 +157,9 @@ private struct ItemAnnotation: MapContent {
     var body: some MapContent {
         if let lat = item.latitude, let lon = item.longitude {
             Annotation("", coordinate: .init(latitude: lat, longitude: lon), anchor: .center) {
-                if let wikiItem = item as? WikidataItem {
-                    WikiAnnotationView(item: wikiItem)
-                        .id(wikiItem.id)
+                if let wikiItemInfo = item as? CategoryInfo {
+                    WikiAnnotationView(item: wikiItemInfo.base)
+                        .id(wikiItemInfo.id)
 
                 } else if let imageItem = item as? GeosearchListItem {
                     MediaAnnotationView(item: imageItem)
@@ -175,7 +175,7 @@ private struct ItemAnnotation: MapContent {
 // for now this gives us some flexibility to differentiate both if useful or looks better
 private struct WikiAnnotationView: View {
     @State private var isVisible = false
-    let item: WikidataItem
+    let item: Category
 
     var body: some View {
         ZStack {

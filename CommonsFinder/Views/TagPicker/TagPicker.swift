@@ -25,7 +25,7 @@ struct TagPicker: View {
 
     @Environment(\.locale) private var locale
     @Environment(\.dismiss) private var dismiss
-    @Environment(WikidataCache.self) private var wikidataCache
+    @Environment(\.appDatabase) private var appDatabase
 
     @State private var viewModel = TagPickerModel()
 
@@ -50,7 +50,7 @@ struct TagPicker: View {
             viewModel.search()
         }
         .task {
-            viewModel.wikidataCache = wikidataCache
+            viewModel.appDatabase = appDatabase
         }
     }
 

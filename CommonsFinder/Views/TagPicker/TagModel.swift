@@ -26,16 +26,11 @@ extension TagModel: @preconcurrency Identifiable, @preconcurrency Hashable {
         hasher.combine(tagItem)
     }
 
-    var category: String? {
-        switch baseItem {
-        case .wikidataItem(let wikidataItem):
-            wikidataItem.commonsCategory
-        case .category(let category):
-            category
-        }
+    var commonsCategory: String? {
+        baseItem.commonsCategory
     }
 
-    var baseItem: BaseTagItem { tagItem.baseItem }
+    var baseItem: Category { tagItem.baseItem }
     var pickedUsages: Set<TagType> {
         get { tagItem.pickedUsages }
         set { tagItem.pickedUsages = newValue }

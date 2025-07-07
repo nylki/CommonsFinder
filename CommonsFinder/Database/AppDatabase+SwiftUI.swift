@@ -67,7 +67,7 @@ struct AllUploadsRequest: ValueObservationQueryable {
 
             return allFiles
         } catch {
-            logger.error("Failed to fetch all media files from db \(error)!")
+            logger.error("Failed to fetch all uploaded files from db \(error)!")
             return []
         }
     }
@@ -78,29 +78,57 @@ struct AllRecentlyViewedMediaFileRequest: ValueObservationQueryable {
     static var defaultValue: [MediaFileInfo] { [] }
 
     func fetch(_ db: Database) throws -> [MediaFileInfo] {
-        do {
-            let orderedMediaFileUserMetadata = MediaFile.itemInteraction
-                .filter { $0.lastViewed != nil }
-                .order(\.lastViewed.desc)
+        return
+            try MediaFile
+            .including(required: MediaFile.itemInteraction.order(\.lastViewed.desc))
+            .asRequest(of: MediaFileInfo.self)
+            .fetchAll(db)
+    }
+}
 
-            let allFiles =
-                try MediaFile
-                .including(required: orderedMediaFileUserMetadata)
-                .asRequest(of: MediaFileInfo.self)
-                .fetchAll(db)
+/// A @Query request that observes all wiki items in the database
+struct AllRecentlyViewedWikiItemsRequest: ValueObservationQueryable {
+    static var defaultValue: [CategoryInfo] { [] }
 
+    func fetch(_ db: Database) throws -> [CategoryInfo] {
+        try Category
+            .including(required: Category.itemInteraction.order(\.lastViewed.desc))
+            .asRequest(of: CategoryInfo.self)
+            .fetchAll(db)
+    }
+}
 
-            assert(
-                // Sanity check to make sure the MediaFileInfo was returned in a complete state from GRDB
-                allFiles.allSatisfy({ $0.itemInteraction?.lastViewed != nil }),
-                "We expect all files here to have the metadata including 'lastViewed'"
+/// A @Query request that observes all bookmarked media items in the database
+struct AllBookmarksFileRequest: ValueObservationQueryable {
+    static var defaultValue: [MediaFileInfo] { [] }
+
+    func fetch(_ db: Database) throws -> [MediaFileInfo] {
+        try MediaFile
+            .including(
+                required: MediaFile
+                    .itemInteraction
+                    .filter { $0.isBookmarked == true }
+                    .order(\.lastViewed.desc)
             )
+            .asRequest(of: MediaFileInfo.self)
+            .fetchAll(db)
+    }
+}
 
-            return allFiles
-        } catch {
-            print("Failed to fetch all media files from db \(error)!")
-            return []
-        }
+/// A @Query request that observes all bookmarked wiki items in the database
+struct AllBookmarksWikiItemRequest: ValueObservationQueryable {
+    static var defaultValue: [CategoryInfo] { [] }
+
+    func fetch(_ db: Database) throws -> [CategoryInfo] {
+        try Category
+            .including(
+                required: Category
+                    .itemInteraction
+                    .filter { $0.isBookmarked == true }
+                    .order(\.lastViewed.desc)
+            )
+            .asRequest(of: CategoryInfo.self)
+            .fetchAll(db)
     }
 }
 
@@ -117,48 +145,48 @@ struct MediaFileRequest: ValueObservationQueryable {
 
 
 // TODO: rethink this, similar to horizontal list?
-struct MediaFileListRequest: ValueObservationQueryable {
-    let queryType: QueryType
-    var filterString: String = ""
-
-    static var defaultValue: [MediaFileInfo] { [] }
-
-    enum QueryType: Equatable, Hashable {
-        case recentlyViewed
-    }
-
-    func fetch(_ db: Database) throws -> [MediaFileInfo] {
-        switch queryType {
-        case .recentlyViewed:
-
-            let orderedMediaFileUserMetadata = MediaFile.itemInteraction
-                .filter { $0.lastViewed != nil }
-                .order(\.lastViewed.desc)
-
-            let allFiles =
-                MediaFile
-                .including(required: orderedMediaFileUserMetadata)
-                .asRequest(of: MediaFileInfo.self)
-
-
-            //            if !filterString.isEmpty {
-            //                let sql = """
-            //                        SELECT mediaFile.*
-            //                        FROM mediaFile
-            //                        JOIN mediaFile_ft
-            //                            ON mediaFile_ft.rowid = mediaFile.rowid
-            //                            AND mediaFile_ft MATCH ? ORDER BY rank
-            //                    """
-            //
-            //
-            //                let pattern = FTS5Pattern(matchingAllPrefixesIn: filterString)
-            //
-            //                return try allFiles
-            //                    .filter(sql: sql, arguments: [pattern])
-            //                    .fetchAll(db)
-            //            }
-
-            return try allFiles.fetchAll(db)
-        }
-    }
-}
+//struct MediaFileListRequest: ValueObservationQueryable {
+//    let queryType: QueryType
+//    var filterString: String = ""
+//
+//    static var defaultValue: [MediaFileInfo] { [] }
+//
+//    enum QueryType: Equatable, Hashable {
+//        case recentlyViewedMedia
+//    }
+//
+//    func fetch(_ db: Database) throws -> [MediaFileInfo] {
+//        switch queryType {
+//        case .recentlyViewedMedia:
+//
+//            let orderedMediaFileUserMetadata = MediaFile.itemInteraction
+//                .filter { $0.lastViewed != nil }
+//                .order(\.lastViewed.desc)
+//
+//            let allFiles =
+//                MediaFile
+//                .including(required: orderedMediaFileUserMetadata)
+//                .asRequest(of: MediaFileInfo.self)
+//
+//
+//            //            if !filterString.isEmpty {
+//            //                let sql = """
+//            //                        SELECT mediaFile.*
+//            //                        FROM mediaFile
+//            //                        JOIN mediaFile_ft
+//            //                            ON mediaFile_ft.rowid = mediaFile.rowid
+//            //                            AND mediaFile_ft MATCH ? ORDER BY rank
+//            //                    """
+//            //
+//            //
+//            //                let pattern = FTS5Pattern(matchingAllPrefixesIn: filterString)
+//            //
+//            //                return try allFiles
+//            //                    .filter(sql: sql, arguments: [pattern])
+//            //                    .fetchAll(db)
+//            //            }
+//
+//            return try allFiles.fetchAll(db)
+//        }
+//    }
+//}

@@ -12,12 +12,24 @@ import os.log
 struct MediaFileContextMenu: ViewModifier {
     let mediaFileInfo: MediaFileInfo
     let namespace: Namespace.ID
+    @Environment(\.appDatabase) private var appDatabase
+
     func body(content: Content) -> some View {
         content
             .contextMenu {
                 VStack {
                     let navItem = NavigationStackItem.viewFile(mediaFileInfo, namespace: namespace)
                     NavigationLink("Open Details", value: navItem)
+                    Button(
+                        mediaFileInfo.isBookmarked ? "Remove Bookmark" : "Add Bookmark",
+                        systemImage: mediaFileInfo.isBookmarked ? "bookmark.fill" : "bookmark"
+                    ) {
+                        do {
+                            _ = try appDatabase.updateBookmark(mediaFileInfo, bookmark: !mediaFileInfo.isBookmarked)
+                        } catch {
+                            logger.error("Failed to update bookmark on \(mediaFileInfo.mediaFile.name): \(error)")
+                        }
+                    }
                     ShareLink(item: mediaFileInfo.mediaFile.descriptionURL)
                 }
             } preview: {
@@ -28,8 +40,8 @@ struct MediaFileContextMenu: ViewModifier {
                             .aspectRatio(contentMode: .fit)
                     } else {
                         Color.clear.frame(
-                            width: mediaFileInfo.mediaFile.width ?? 256,
-                            height: mediaFileInfo.mediaFile.height ?? 256
+                            width: Double(mediaFileInfo.mediaFile.width ?? 256),
+                            height: Double(mediaFileInfo.mediaFile.height ?? 256)
                         )
                     }
                 }

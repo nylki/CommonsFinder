@@ -1,5 +1,5 @@
 //
-//  WikidataItem+InitFromAPI.swift
+//  Category+InitFromAPI.swift
 //  CommonsFinder
 //
 //  Created by Tom Brewe on 01.04.25.
@@ -8,16 +8,16 @@
 import CommonsAPI
 import Foundation
 
-extension WikidataItem {
+extension Category {
     init(apiItem: GenericWikidataItem) {
         self.init(
-            id: apiItem.id,
+            wikidataId: apiItem.id,
+            commonsCategory: apiItem.commonsCategory,
             preferredLanguageAtFetchDate: apiItem.labelLanguage,
             fetchDate: .now,
             label: apiItem.label,
             description: apiItem.description,
             aliases: [],
-            commonsCategory: apiItem.commonsCategory,
             instances: apiItem.instances ?? [],
             latitude: apiItem.latitude,
             longitude: apiItem.longitude,

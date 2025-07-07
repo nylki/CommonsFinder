@@ -51,13 +51,13 @@ struct HorizontalFileListSection: View {
                     .accessibilityLabel(accessibilityLabel)
                 }
             }
+            .scrollTargetLayout()
             .frame(height: 128)
             .padding([.vertical, .trailing], 5)
             .padding(.leading, 0)
             .scenePadding(.bottom)
         }
-
-
+        .scrollTargetBehavior(.viewAligned)
         .animation(.default, value: mediaFileInfos)
     }
 

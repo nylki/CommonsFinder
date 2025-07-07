@@ -16,6 +16,9 @@ struct HomeView: View {
 
     @Query(AllDraftsRequest()) private var drafts
     @Query(AllRecentlyViewedMediaFileRequest()) private var recentlyViewedFiles
+    @Query(AllBookmarksFileRequest()) private var bookmarkedFiles
+    @Query(AllRecentlyViewedWikiItemsRequest()) private var recentlyViewedWikiItems
+    @Query(AllBookmarksWikiItemRequest()) private var bookmarkedCategories
 
     var body: some View {
 
@@ -30,18 +33,44 @@ struct HomeView: View {
                 }
 
 
-                VStack(spacing: 25) {
+                VStack(alignment: .leading, spacing: 25) {
                     if let activerUser = account.activeUser {
                         HorizontalUploadsSection(username: activerUser.username)
                     }
 
+                    if !bookmarkedCategories.isEmpty {
+                        HorizontalWikiItemListSection(
+                            label: "Bookmarked Categories",
+                            destination: .bookmarkedCategories,
+                            items: bookmarkedCategories
+                        )
+                    }
+
+                    if !bookmarkedFiles.isEmpty {
+                        HorizontalFileListSection(
+                            label: "Bookmarked Images",
+                            destination: .bookmarkedMedia,
+                            mediaFileInfos: bookmarkedFiles
+                        )
+                    }
+
+                    if !recentlyViewedWikiItems.isEmpty {
+                        HorizontalWikiItemListSection(
+                            label: "Recently Viewed Categories",
+                            destination: .recentlyViewedCategories,
+                            items: recentlyViewedWikiItems
+                        )
+                    }
+
                     if !recentlyViewedFiles.isEmpty {
                         HorizontalFileListSection(
-                            label: "Recently Viewed",
-                            destination: .recentlyViewed,
+                            label: "Recently Viewed Images",
+                            destination: .recentlyViewedMedia,
                             mediaFileInfos: recentlyViewedFiles
                         )
                     }
+
+
                 }
 
                 // This space-filling clear rect avoids unwanted scale-up

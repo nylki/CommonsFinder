@@ -465,7 +465,7 @@ public actor API {
     }
     
     
-    public struct CategoryInfo: Sendable {
+    public struct CommonsCategoryInfo: Sendable {
         public let title: String
         public let subCategories: [String]
         public let parentCategories: [String]
@@ -476,7 +476,7 @@ public actor API {
     }
     
     /// returns parent and sub-categories and wikidata item if available
-    public func fetchCategoryInfo(of category: String) async throws -> CategoryInfo? {
+    public func fetchCategoryInfo(of category: String) async throws -> CommonsCategoryInfo? {
         let parameters: Parameters = [
             "action": "query",
             "formatversion": 2,
@@ -518,7 +518,7 @@ public actor API {
         
         assert(rawSubCategories.count == subCategories.count, "We expect all categories to have the \"Category:\" prefix")
         
-        return CategoryInfo(
+        return CommonsCategoryInfo(
             title: category,
             subCategories: subCategories,
             parentCategories: parentCategories,
@@ -838,7 +838,8 @@ WHERE {
     OPTIONAL {
         ?item p:P2046/psn:P2046 [ # area, normalised (psn retrieves the normaized value, psv the original one)
             wikibase:quantityAmount ?area;
-            wikibase:quantityUnit ?areaUnit;
+            wikibase:quantityUnit ?
+areaUnit;
         ]
     }
     SERVICE wikibase:label {
@@ -878,17 +879,33 @@ GROUP BY ?item ?commonsCategory ?area ?label ?image ?description
             partialResult + " wd:\(qItem)"
         }
         let sparqlQuery = """
-        SELECT (STRAFTER(STR(?item), "entity/") AS ?id) ?commonsCategory ?label (GROUP_CONCAT(DISTINCT STRAFTER(STR(?instance), "entity/"); separator=",") AS ?instances)  ?description WHERE {
-            VALUES ?item { \(ids) }  # Q-items
-            OPTIONAL { ?item wdt:P373 ?commonsCategory. }
-            SERVICE wikibase:label {
-                bd:serviceParam wikibase:language "\(preferredLanguages),[AUTO_LANGUAGE],mul,en,de,fr,es,it,nl".
-                ?item rdfs:label ?label;
-                schema:description ?description.
-            }
-        }
-        GROUP BY ?item ?commonsCategory ?label ?description
-        """
+SELECT
+(STRAFTER(STR(?item), "entity/") AS ?id)
+?commonsCategory
+?label
+?image
+?area
+(GROUP_CONCAT(DISTINCT STRAFTER(STR(?instance), "entity/"); separator=",") AS ?instances)
+?description
+WHERE {
+    VALUES ?item { \(ids) }  # Q-items
+    OPTIONAL { ?item wdt:P18 ?image. }
+    OPTIONAL { ?item wdt:P31 ?instance. }
+    OPTIONAL { ?item wdt:P373 ?commonsCategory. }
+    OPTIONAL {
+        ?item p:P2046/psn:P2046 [ # area, normalised (psn retrieves the normaized value, psv the original one)
+            wikibase:quantityAmount ?area;
+            wikibase:quantityUnit ?areaUnit;
+        ]
+    }
+    SERVICE wikibase:label {
+        bd:serviceParam wikibase:language "\(preferredLanguages),[AUTO_LANGUAGE],mul,en,de,fr,es,it,nl".
+        ?item rdfs:label ?label;
+        schema:description ?description.
+    }
+}
+GROUP BY ?item ?commonsCategory ?area ?label ?image ?description
+"""
         
         let parameters: Parameters = [
             "query": sparqlQuery,
@@ -919,18 +936,34 @@ GROUP BY ?item ?commonsCategory ?area ?label ?image ?description
         // but We filter out instances of meta-items (ie. Q4167836) that,
         // eg. only return "Berlin Q64, but not Wikimedia-Kategorie:Berlin Q4579913,
         let sparqlQuery = """
-        SELECT (STRAFTER(STR(?item), "entity/") AS ?id) ?commonsCategory ?label (GROUP_CONCAT(DISTINCT STRAFTER(STR(?instance), "entity/"); separator=",") AS ?instances) ?description WHERE {
-            VALUES ?commonsCategory { \(categoriesString) }
-            ?item wdt:P373 ?commonsCategory.
-            FILTER(NOT EXISTS { ?item (wdt:P31/(wdt:P279*)) wd:Q4167836. })
-            SERVICE wikibase:label {
-                bd:serviceParam wikibase:language "\(preferredLanguages),[AUTO_LANGUAGE],mul,en,de,fr,es,it,nl".
-                ?item rdfs:label ?label;
-                schema:description ?description.
-            }
-        }
-        GROUP BY ?item ?commonsCategory ?label ?description
-        """
+SELECT
+(STRAFTER(STR(?item), "entity/") AS ?id)
+?commonsCategory
+?label
+?image
+?area
+(GROUP_CONCAT(DISTINCT STRAFTER(STR(?instance), "entity/"); separator=",") AS ?instances)
+?description
+WHERE {
+    VALUES ?commonsCategory { \(categoriesString) } ?item wdt:P373 ?commonsCategory.
+    FILTER(NOT EXISTS { ?item (wdt:P31/(wdt:P279*)) wd:Q4167836. })
+    OPTIONAL { ?item wdt:P18 ?image. }
+    OPTIONAL { ?item wdt:P31 ?instance. }
+    OPTIONAL { ?item wdt:P373 ?commonsCategory. }
+    OPTIONAL {
+        ?item p:P2046/psn:P2046 [ # area, normalised (psn retrieves the normaized value, psv the original one)
+            wikibase:quantityAmount ?area;
+            wikibase:quantityUnit ?areaUnit;
+        ]
+    }
+    SERVICE wikibase:label {
+        bd:serviceParam wikibase:language "\(preferredLanguages),[AUTO_LANGUAGE],mul,en,de,fr,es,it,nl".
+        ?item rdfs:label ?label;
+        schema:description ?description.
+    }
+}
+GROUP BY ?item ?commonsCategory ?area ?label ?image ?description
+"""
         
         let parameters: Parameters = [
             "query": sparqlQuery,
@@ -1292,11 +1325,6 @@ LIMIT \(limit)
         let responseValue = await request.response
         // FIXME: make this function throw if response is unexpected
         logger.debug("wbeditentity: \(responseValue.value ?? "")\n\n \(responseValue.debugDescription)")
-    }
-
-    
-    public func addToWatchlist(pageID: String) async throws {
-        // FIXME: needs implementation
     }
 }
 

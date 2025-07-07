@@ -1,5 +1,5 @@
 //
-//  RecentlyViewedView.swift
+//  RecentlyViewedMediaView.swift
 //  CommonsFinder
 //
 //  Created by Tom Brewe on 21.05.25.
@@ -9,7 +9,7 @@ import GRDB
 import SwiftUI
 import os.log
 
-struct RecentlyViewedView: View {
+struct RecentlyViewedMediaView: View {
     @State private var mediaFileInfos: [MediaFileInfo]?
     @State private var observationTask: Task<Void, Never>?
 
@@ -45,24 +45,7 @@ struct RecentlyViewedView: View {
             observationTask?.cancel()
             observationTask = Task<Void, Never> {
                 do {
-                    let orderedIds = try appDatabase.fetchOrderedMediaFileIDs(order: .desc)
-
-                    let observation = ValueObservation.tracking { db in
-                        try MediaFileInfo.fetchAll(ids: orderedIds, db: db)
-                    }
-
-                    for try await freshMediaFileInfos in observation.values(in: appDatabase.reader) {
-                        try Task.checkCancellation()
-                        // NOTE: real-time re-ordering of the list is *not desired* here in this view.
-                        // But we still want to get updates to the files (eg. bookmark, etc.),
-                        // To achieve that and retaining the original order when this view was opened,
-                        // we map the original ids to the results:
-
-                        let groupedResult = Dictionary(grouping: freshMediaFileInfos, by: \.id)
-                        mediaFileInfos = orderedIds.compactMap { id in
-                            groupedResult[id]?.first
-                        }
-                    }
+                    mediaFileInfos = try appDatabase.fetchRecentlyViewedMediaFileInfos(order: .desc)
                 } catch {
                     logger.error("Failed to observe media files \(error)")
                 }
@@ -72,5 +55,5 @@ struct RecentlyViewedView: View {
 }
 
 #Preview {
-    RecentlyViewedView()
+    RecentlyViewedMediaView()
 }

@@ -286,12 +286,12 @@ public struct FileMetadata: Decodable, Sendable, Hashable, Equatable, Identifiab
         
         // Optional image specific fields
         // because these could be nil for sound etc. (i suppose, needs to be tested).
-        public let width: Double?
-        public let height: Double?
-        public let size: Double?
+        public let width: Int?
+        public let height: Int?
+        public let size: Int?
         public let thumburl: URL?
-        public let thumbwidth: Double?
-        public let thumbheight: Double?
+        public let thumbwidth: Int?
+        public let thumbheight: Int?
         
         
 

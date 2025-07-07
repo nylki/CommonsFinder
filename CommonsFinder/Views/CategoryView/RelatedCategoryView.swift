@@ -9,13 +9,14 @@ import FrameUp
 import SwiftUI
 
 struct RelatedCategoryView: View {
-    let categories: [String]
+    let categories: [CategoryInfo]
     var body: some View {
         VMasonryLayout(columns: 2) {
             ForEach(categories, id: \.self) { subCategory in
-                let navItem = NavigationStackItem.category(title: subCategory)
+                let navItem = NavigationStackItem.wikidataItem(subCategory)
                 NavigationLink(value: navItem) {
-                    Text(subCategory)
+                    let label = subCategory.base.commonsCategory ?? "-"
+                    Text(label)
                         .multilineTextAlignment(.leading)
                         .frame(maxWidth: 150)
                         .lineLimit(3)
@@ -29,8 +30,10 @@ struct RelatedCategoryView: View {
 
 #Preview(traits: .previewEnvironment) {
     RelatedCategoryView(categories: [
-        "foo", "bar",
-        "Lake with a very long name and some more overflowing description",
-        "Cities by Sound by Music", "Lake B",
+        .init(.init(commonsCategory: "foo")),
+        .init(.init(commonsCategory: "bar")),
+        .init(.init(commonsCategory: "Lake with a very long name and some more overflowing description")),
+        .init(.init(commonsCategory: "Cities by Sound by Music")),
+        .init(.init(commonsCategory: "Lake B")),
     ])
 }
