@@ -816,7 +816,7 @@ public actor API {
         return resultValue.search
     }
     
-    public func getGenericWikidataItems(itemIDs: [String], languageCode: LanguageCode) async throws -> [GenericWikidataItem] {
+    public func fetchGenericWikidataItems(itemIDs: [String], languageCode: LanguageCode) async throws -> [GenericWikidataItem] {
         let preferredLanguages = ([languageCode] + Locale.preferredLanguages).uniqued().joined(separator: ",")
         let ids = itemIDs.reduce("") { partialResult, qItem in
             partialResult + " wd:\(qItem)"
@@ -838,8 +838,7 @@ WHERE {
     OPTIONAL {
         ?item p:P2046/psn:P2046 [ # area, normalised (psn retrieves the normaized value, psv the original one)
             wikibase:quantityAmount ?area;
-            wikibase:quantityUnit ?
-areaUnit;
+            wikibase:quantityUnit ?areaUnit;
         ]
     }
     SERVICE wikibase:label {

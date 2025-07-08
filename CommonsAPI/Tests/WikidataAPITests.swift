@@ -47,4 +47,15 @@ struct WikidataEndToEndTests {
         }
         #expect(!result.isEmpty, "We expect to find Q-items for those commons categories.")
     }
+    
+    @Test("fetch wikidata items by id", arguments:
+            [["Q1"], ["Q1", "Q2", "Q42"]], ["en", "de"]
+    )
+    func fetchGenericWikidataItem(ids: [String], languageCode: String) async throws {
+        let result = try await CommonsAPI.API.shared.fetchGenericWikidataItems(itemIDs: ids, languageCode: languageCode)
+        #expect(result.count == ids.count)
+        let resultIDs = Set(result.map(\.id))
+        #expect(resultIDs == Set(ids))
+        #expect(result.allSatisfy{ $0.label != nil })
+    }
 }

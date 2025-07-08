@@ -43,7 +43,7 @@ struct CommonsEndToEndTests {
     }
     
     
-    @Test("search categories", arguments: ["Berlin", "Earth"])
+    @Test("search categories", arguments: ["Earth", "test", "امتحان", "测试", "テスト", "土", "п"])
     func searchCategories(term: String) async throws {
         let searchResults = try await API.shared.searchCategories(term: term)
         print(searchResults)
@@ -58,16 +58,16 @@ struct CommonsEndToEndTests {
         #expect(searchResults.items.allSatisfy { $0.ns == .file }, "We expect that all results to be in the `file` mediawiki namespace.")
     }
     
-    @Test("search suggestions (fast prefix matching search)")
-    func searchSuggestions() async throws {
-        let searchSuggestions = try await API.shared.searchSuggestedSearchTerms(for: "test", namespaces: [.category, .main, .file])
+    @Test("search suggestions (fast prefix matching search)", arguments: ["test", "a", "ü", "Ü", "امتحان", "测试", "テスト", "土", "п"])
+    func searchSuggestions(searchTerm: String) async throws {
+        let searchSuggestions = try await API.shared.searchSuggestedSearchTerms(for: searchTerm, namespaces: [.category, .main, .file])
         print(searchSuggestions)
         #expect(!searchSuggestions.isEmpty, "We expect to get results for this search term")
     }
     
-    @Test("get wikidata statements")
-    func getWikidataClaims() async throws {
-        let statements = try await API.shared.getWikidataFiles(titles: ["File:Chaos ommunication Camp 2015.jpg"])
+    @Test("get wikidata statements", arguments: ["File:Chaos ommunication Camp 2015.jpg"])
+    func getWikidataClaims(title: String) async throws {
+        let statements = try await API.shared.getWikidataFiles(titles: [title])
         print(statements)
         #expect(!statements.isEmpty, "We expect to get results for this search term")
     }
@@ -79,6 +79,7 @@ struct CommonsEndToEndTests {
             (["Q4321"], ["vo"]),
         ]
     )
+    
     func fetchWikidataLabels(ids: [String], languages: [String]) async throws {
         let entities = try await API.shared.fetchWikidataEntities(ids: ids, preferredLanguages: languages)
         print(entities)
