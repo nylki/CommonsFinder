@@ -65,7 +65,7 @@ struct CommonsEndToEndTests {
         #expect(!searchSuggestions.isEmpty, "We expect to get results for this search term")
     }
     
-    @Test("get wikidata statements", arguments: ["File:Chaos ommunication Camp 2015.jpg"])
+    @Test("get wikidata statements", arguments: ["File:The Earth seen from Apollo 17.jpg"])
     func getWikidataClaims(title: String) async throws {
         let statements = try await API.shared.getWikidataFiles(titles: [title])
         print(statements)

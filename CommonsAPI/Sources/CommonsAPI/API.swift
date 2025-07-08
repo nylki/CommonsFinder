@@ -610,7 +610,7 @@ public actor API {
         return fileNames.compactMap { result[$0] }
     }
     
-    // Example: https://commons.wikimedia.org/w/api.php?action=query&format=json&prop=imageinfo&titles=File%3AChaos_ommunication_Camp_2015.jpg&formatversion=2&iiprop=url%7Cextmetadata&iiurlwidth=640&iiurlheight=640&iiextmetadatamultilang=1
+    // Example: https://commons.wikimedia.org/w/api.php?action=query&format=json&prop=imageinfo&titles=File%3The_Earth_seen_from_Apollo_17.jpg&formatversion=2&iiprop=url%7Cextmetadata&iiurlwidth=640&iiurlheight=640&iiextmetadatamultilang=1
     internal func fetchImageMetadata(forImageTitles titles: [String]) async throws -> [FileMetadata] {
         var titles = titles
         if titles.count >= 50 {
@@ -1107,7 +1107,7 @@ LIMIT \(limit)
     }
     
     // see "snak": http://www.wikidata.org/entity/Wikidata:Glossary
-    // https://commons.wikimedia.org/w/api.php?action=wbgetentities&format=json&curtimestamp=1&sites=commonswiki&titles=File%3AChaos%20ommunication%20Camp%202015.jpg&redirects=yes&props=info%7Clabels%7Cclaims&languages=&sitefilter=&callback=&formatversion=2
+    // https://commons.wikimedia.org/w/api.php?action=wbgetentities&format=json&curtimestamp=1&sites=commonswiki&titles=File%3AThe_Earth_seen_from_Apollo_17.jpg&redirects=yes&props=info%7Clabels%7Cclaims&languages=&sitefilter=&callback=&formatversion=2
     /// Returns a dictionary of entities where the key is the wikibase formatted pageID (string with "M" suffix), eg. "M148014716" for pageID 148014716.
     public func getWikidataFiles(titles: [String]) async throws -> [String: WikidataFileEntity] {
         // NOTE: In contrast to Q-Items and Properties (P) where only limited language translations are fetched,
