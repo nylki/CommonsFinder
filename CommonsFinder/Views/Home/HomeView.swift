@@ -69,8 +69,6 @@ struct HomeView: View {
                             mediaFileInfos: recentlyViewedFiles
                         )
                     }
-
-
                 }
 
                 // This space-filling clear rect avoids unwanted scale-up

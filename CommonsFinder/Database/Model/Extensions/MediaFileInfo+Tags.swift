@@ -82,7 +82,7 @@ extension MediaFile {
                 // than performing two queries like this?
 
                 async let wikiItemsTask = API.shared
-                    .getGenericWikidataItems(itemIDs: ids, languageCode: languageCode)
+                    .fetchGenericWikidataItems(itemIDs: ids, languageCode: languageCode)
 
                 async let labelAndDescriptionTask = API.shared
                     .fetchWikidataEntities(ids: ids, preferredLanguages: [languageCode])

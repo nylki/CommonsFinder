@@ -70,6 +70,8 @@ struct MapPopupCategoryTeaser: View {
 
             }
             .clipShape(.rect(cornerRadius: 10))
+            .contentShape([.contextMenuPreview, .interaction], .rect(cornerRadius: 10))
+            .modifier(CategoryContextMenu(item: item))
             .padding(2)
             .overlay {
                 if isSelected {
@@ -78,7 +80,7 @@ struct MapPopupCategoryTeaser: View {
             }
             .padding(2)
         }
-        .modifier(CategoryContextMenu(item: item))
+
         .animation(.default, value: isSelected)
     }
 

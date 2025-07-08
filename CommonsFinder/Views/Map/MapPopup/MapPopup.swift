@@ -104,19 +104,17 @@ struct MapPopup: View {
                     case .mediaItem:
                         mediaList
                             .frame(minWidth: 100)
-                            .scrollTargetLayout()
-                            .padding(.vertical, 10)
-                            .padding(.leading, 120)
-                            .padding(.trailing, 120)
+                            .safeAreaPadding(.vertical, 10)
+                            .safeAreaPadding(.horizontal, 120)
                             .frame(height: 160)
+                            .scrollTargetLayout()
                     case .wikiItem:
                         wikiItemsList
                             .frame(minWidth: 100)
-                            .scrollTargetLayout()
-                            .padding(.vertical, 10)
-                            .padding(.leading, 120)
-                            .padding(.trailing, 120)
+                            .safeAreaPadding(.vertical, 10)
+                            .safeAreaPadding(.horizontal, 120)
                             .frame(height: 160)
+                            .scrollTargetLayout()
                     case .empty:
                         EmptyView()
                     }
@@ -133,6 +131,8 @@ struct MapPopup: View {
                 }
                 .scrollIndicators(.hidden)
                 .clipped()
+                // FIXME: scrollTargetBehavior glitches when scrolling distance is too forward+short
+                //                .scrollTargetBehavior(.viewAligned)
                 .scrollPosition($scrollPosition, anchor: .center)
             }
         }
@@ -164,6 +164,7 @@ struct MapPopup: View {
                 MapPopupCategoryTeaser(item: item, isSelected: isSelected, namespace: namespace)
             }
         }
+        .scrollTargetLayout()
         .onChange(of: wikidataItems, initial: true) { oldValue, newValue in
             // set scroll position to first image if not yet
             if scrollPosition.viewID == nil,

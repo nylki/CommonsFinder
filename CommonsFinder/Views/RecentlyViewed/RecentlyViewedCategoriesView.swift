@@ -27,12 +27,9 @@ struct RecentlyViewedCategoriesView: View {
                     )
                 } else {
                     LazyVStack(spacing: 20) {
-                        Text("This View is Work-in-Progress")
                         ForEach(categories) { categoryInfo in
-                            CategoryListItem(
-                                categoryInfo: categoryInfo,
-                                namespace: namespace
-                            )
+                            CategoryTeaser(categoryInfo: categoryInfo)
+                                .frame(height: 185)
                         }
                     }
                     .compositingGroup()

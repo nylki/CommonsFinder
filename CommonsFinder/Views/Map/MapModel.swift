@@ -180,7 +180,7 @@ enum GeoItem: GeoReferencable, Identifiable {
         //        logger.debug("refreshClusters took \(elapsed)")
 
         if elapsed > .milliseconds(4) {
-            logger.critical("refreshClusters took long!")
+            logger.critical("refreshClusters took long! \(elapsed)")
         }
 
     }

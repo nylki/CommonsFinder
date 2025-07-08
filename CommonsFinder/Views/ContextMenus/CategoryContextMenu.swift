@@ -13,6 +13,7 @@ import os.log
 struct CategoryContextMenu: ViewModifier {
     let item: CategoryInfo
     @Environment(\.appDatabase) private var appDatabase
+    @Namespace private var namespace
 
     func body(content: Content) -> some View {
         content
@@ -29,44 +30,10 @@ struct CategoryContextMenu: ViewModifier {
                     // TODO: open location in OrganicMaps / AppleMaps
                     CategoryLinkSection(item: item)
                 }
+            } preview: {
+                CategoryTeaser(categoryInfo: item, withContextMenu: false)
+
             }
-        //        preview: {
-        //                VStack {
-        //                    VStack {
-        //                        if let label = item.base.label ?? item.base.commonsCategory {
-        //                            Text(label)
-        //                                .lineLimit(4)
-        //                                .font(.title3)
-        //                        }
-        //                        if let desc = item.base.description {
-        //                            Text(desc)
-        //                                .lineLimit(4)
-        //                                .font(.caption)
-        //                        }
-        //                    }
-        //                    .padding()
-        //
-        //                    if let imageRequest = item.base.thumbnailImage {
-        //                        LazyImage(request: imageRequest) {
-        //                            if let image = $0.image {
-        //                                image
-        //                                    .resizable()
-        //                                    .aspectRatio(contentMode: .fit)
-        //                            }
-        //                        }
-        //                        .clipShape(.rect(cornerRadius: 16))
-        //                        .padding()
-        //                    }
-        //                }
-        //                .frame(minHeight: 100)
-        //
-        //
-        //                //                LazyImage(request: mediaFileInfo.thumbRequest) {
-        //                //                    if let image = $0.image {
-        //                //                        image.resizable()
-        //                //                    }
-        //                //                }
-        //            }
     }
 
     private func updateBookmark(_ value: Bool) {

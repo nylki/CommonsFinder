@@ -158,18 +158,18 @@ final class AppDatabase: Sendable {
             // 1. Create new itemInteraction table with id and temporary mediaFileId
             try db.create(table: "new_itemInteraction") { t in
                 t.column("id", .integer).primaryKey(autoincrement: true)
-                t.column("isBookmarked", .boolean).notNull().defaults(to: false)
+                t.column("bookmarked", .datetime)
                 t.column("lastViewed", .datetime)
                 t.column("viewCount", .integer).notNull().defaults(to: 0)
 
                 t.column("mediaFileId", .text).notNull()  // temporary, will be dropped
             }
 
-            // 2. Copy old data into new_itemInteraction
+            // 2. Copy old data into new_itemInteraction, skipping `isBookmarked` because of different type
             try db.execute(
                 sql: """
-                        INSERT INTO new_itemInteraction (mediaFileId, isBookmarked, viewCount, lastViewed)
-                        SELECT mediaFileId, isBookmarked, viewCount, lastViewed FROM itemInteraction
+                        INSERT INTO new_itemInteraction (mediaFileId, viewCount, lastViewed)
+                        SELECT mediaFileId, viewCount, lastViewed FROM itemInteraction
                     """)
 
             // 3. Drop old table
@@ -379,7 +379,7 @@ extension AppDatabase {
             }
 
             if let isBookmarked {
-                itemInteraction.isBookmarked = isBookmarked
+                itemInteraction.bookmarked = isBookmarked ? .now : nil
             }
 
             try itemInteraction.upsert(db)
@@ -467,8 +467,8 @@ extension AppDatabase {
                         var mergeItemInteraction: ItemInteraction = refItemInteraction ?? .init()
                         for existingInteraction in existingCategoryInfos.compactMap(\.itemInteraction) {
                             // Assign the `isBookmarked` if any interaction was bookmarked
-                            if existingInteraction.isBookmarked {
-                                mergeItemInteraction.isBookmarked = true
+                            if let bookmarked = existingInteraction.bookmarked {
+                                mergeItemInteraction.bookmarked = bookmarked
                             }
                             // Choose the max `viewCount`
                             mergeItemInteraction
@@ -579,7 +579,7 @@ extension AppDatabase {
             }
 
             if let isBookmarked {
-                itemInteraction.isBookmarked = isBookmarked
+                itemInteraction.bookmarked = isBookmarked ? .now : nil
             }
 
             try itemInteraction.upsert(db)

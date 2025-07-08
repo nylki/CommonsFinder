@@ -58,12 +58,6 @@ struct FileShowView: View {
     private func updateBookmark(_ value: Bool) {
         do {
             let result = try appDatabase.updateBookmark(mediaFileInfo, bookmark: value)
-            if let isBookmarked = result.itemInteraction?.isBookmarked {
-                print("bookmark value should be: \(value). it is: \(isBookmarked) ")
-            } else {
-                print("bookmark value should be: \(value). it is nil!!!! ")
-            }
-
             _updatedMediaFileInfo = result
         } catch {
             logger.error("Failed to update bookmark on \(mediaFileInfo.mediaFile.name): \(error)")

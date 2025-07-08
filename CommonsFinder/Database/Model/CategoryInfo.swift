@@ -13,7 +13,11 @@ struct CategoryInfo: FetchableRecord, Equatable, Hashable, Codable {
     var itemInteraction: ItemInteraction?
 
     var isBookmarked: Bool {
-        itemInteraction?.isBookmarked ?? false
+        itemInteraction?.bookmarked != nil
+    }
+
+    var bookmarkDate: Date? {
+        itemInteraction?.bookmarked
     }
 
     var viewCount: UInt {

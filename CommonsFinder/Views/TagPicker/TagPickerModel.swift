@@ -69,13 +69,13 @@ final class TagPickerModel {
 
                 // Since the searched wikidata items don not contain all info we need (ie. commons category)
                 // we fetch more detailed info and merge them.
-                // NOTE: We don't simply map the items from `getGenericWikidataItems` because the labels/descriptions
+                // NOTE: We don't simply map the items from `fetchGenericWikidataItems` because the labels/descriptions
                 // from the action-API are preferred due to their language-fallback, which can't easily accomplished
                 // with sparql queries.
                 // TODO: Alternatively, we could fetch wbgetentities and use the claims to get the commons category, but might be slower than SPARQL??
 
                 async let resolvedWikiItemsTask = API.shared
-                    .getGenericWikidataItems(itemIDs: searchItems.map(\.id), languageCode: languageCode)
+                    .fetchGenericWikidataItems(itemIDs: searchItems.map(\.id), languageCode: languageCode)
 
                 /// categories often have associated wikidataItems( & vice-versa, see above), resolve wiki items for the found categories:
                 async let resolvedCategoryItemsTask = API.shared

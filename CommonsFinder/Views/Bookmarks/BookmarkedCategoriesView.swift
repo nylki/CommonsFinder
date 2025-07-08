@@ -20,13 +20,10 @@ struct BookmarkedCategoriesView: View {
             BookmarksUnavailableView()
         } else {
             ScrollView(.vertical) {
-                Text("This View is Work-in-Progress")
                 LazyVStack(spacing: 20) {
                     ForEach(categoryInfos) { categoryInfo in
-                        CategoryListItem(
-                            categoryInfo: categoryInfo,
-                            namespace: namespace
-                        )
+                        CategoryTeaser(categoryInfo: categoryInfo)
+                            .frame(height: 185)
                     }
                 }
                 .compositingGroup()

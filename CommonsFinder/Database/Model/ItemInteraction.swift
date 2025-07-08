@@ -15,17 +15,16 @@ struct ItemInteraction: Equatable, Hashable, Sendable, Identifiable {
 
     var lastViewed: Date?
     var viewCount: UInt
-    var isBookmarked: Bool
-    //    var bookmarkDate: Date?
+    var bookmarked: Date?
 
     init(
         lastViewed: Date? = nil,
         viewCount: UInt = 0,
-        isBookmarked: Bool = false
+        bookmarked: Date? = nil
     ) {
         self.lastViewed = lastViewed
         self.viewCount = viewCount
-        self.isBookmarked = isBookmarked
+        self.bookmarked = bookmarked
     }
 
 }
@@ -38,7 +37,7 @@ extension ItemInteraction: Codable, FetchableRecord, MutablePersistableRecord {
         static let id = Column(CodingKeys.id)
         static let lastViewed = Column(CodingKeys.lastViewed)
         static let viewCount = Column(CodingKeys.viewCount)
-        static let isBookmarked = Column(CodingKeys.isBookmarked)
+        static let bookmarked = Column(CodingKeys.bookmarked)
     }
 
     /// Updates the id after it has been inserted in the database.

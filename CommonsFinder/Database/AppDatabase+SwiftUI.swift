@@ -107,8 +107,8 @@ struct AllBookmarksFileRequest: ValueObservationQueryable {
             .including(
                 required: MediaFile
                     .itemInteraction
-                    .filter { $0.isBookmarked == true }
-                    .order(\.lastViewed.desc)
+                    .filter { $0.bookmarked != nil }
+                    .order(\.bookmarked.desc)
             )
             .asRequest(of: MediaFileInfo.self)
             .fetchAll(db)
@@ -124,7 +124,7 @@ struct AllBookmarksWikiItemRequest: ValueObservationQueryable {
             .including(
                 required: Category
                     .itemInteraction
-                    .filter { $0.isBookmarked == true }
+                    .filter { $0.bookmarked != nil }
                     .order(\.lastViewed.desc)
             )
             .asRequest(of: CategoryInfo.self)

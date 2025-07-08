@@ -23,10 +23,12 @@ struct HorizontalWikiItemListSection: View {
                     NavigationLink(value: destination) {
                         Label(label, systemImage: "chevron.right")
                             .labelStyle(IconTrailingLabelStyle())
+                            .font(.title3)
+                            .bold()
                     }
+                    .tint(.primary)
                     Spacer()
                 }
-                .scenePadding(.leading)
             }
         }
         .safeAreaPadding(.leading)
@@ -36,24 +38,16 @@ struct HorizontalWikiItemListSection: View {
         ScrollView(.horizontal) {
             LazyHStack {
                 ForEach(items.prefix(50)) { item in
-                    NavigationLink(value: NavigationStackItem.wikidataItem(item)) {
-                        // FIXME: do not re-use map item view, unless it is more generic without selection!
-                        MapPopupCategoryTeaser(item: item, isSelected: false, namespace: namespace)
-                    }
-                    .matchedTransitionSource(id: item.id, in: namespace)
-                    .contentShape([.contextMenuPreview, .interaction], .rect(cornerRadius: 16))
-                    .modifier(CategoryContextMenu(item: item))
+                    CategoryTeaser(categoryInfo: item)
+                        .frame(width: 260, height: 185)
                 }
             }
             .scrollTargetLayout()
-            .frame(height: 128)
             .padding([.vertical, .trailing], 5)
             .padding(.leading, 0)
             .scenePadding(.bottom)
         }
         .scrollTargetBehavior(.viewAligned)
-
-
         .animation(.default, value: items)
     }
 }
