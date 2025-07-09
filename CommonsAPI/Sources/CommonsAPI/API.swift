@@ -981,6 +981,62 @@ GROUP BY ?item ?commonsCategory ?area ?label ?image ?description
         return formattedResult
     }
     
+    public func getWikidataItemsAroundCoordinate(_ coordinate: CLLocationCoordinate2D, kilometerRadius: Double, limit: Int = 10000, languageCode: LanguageCode) async throws -> [GenericWikidataItem] {
+        let preferredLanguages = ([languageCode] + Locale.preferredLanguages).uniqued().joined(separator: ",")
+
+        let sparqlQuery = """
+SELECT
+(STRAFTER(STR(?item), "entity/") AS ?id)
+?commonsCategory
+?label
+?image
+?area
+(GROUP_CONCAT(DISTINCT STRAFTER(STR(?instance), "entity/"); separator=",") AS ?instances)
+?description
+WHERE {
+    SERVICE wikibase:around {
+      ?item wdt:P625 ?location .
+      bd:serviceParam wikibase:center "Point(\(coordinate.longitude) \(coordinate.latitude))"^^geo:wktLiteral .
+      bd:serviceParam wikibase:radius "\(kilometerRadius)" .
+      bd:serviceParam wikibase:distance ?distance .
+    }
+    OPTIONAL { ?item wdt:P18 ?image. }
+    OPTIONAL { ?item wdt:P31 ?instance. }
+    OPTIONAL { ?item wdt:P373 ?commonsCategory. }
+    OPTIONAL {
+        ?item p:P2046/psn:P2046 [ # area, normalised (psn retrieves the normaized value, psv the original one)
+            wikibase:quantityAmount ?area;
+            wikibase:quantityUnit ?areaUnit;
+        ]
+    }
+    SERVICE wikibase:label {
+        bd:serviceParam wikibase:language "\(preferredLanguages),[AUTO_LANGUAGE],mul,en,de,fr,es,it,nl".
+        ?item rdfs:label ?label;
+        schema:description ?description.
+    }
+}
+GROUP BY ?item ?commonsCategory ?area ?label ?image ?description
+ORDER BY ?distance LIMIT \(limit)
+"""
+        
+        let parameters: Parameters = [
+            "query": sparqlQuery,
+            "format": "json"
+        ]
+        
+        let request = session.request(wikidataSparqlEndpoint, method: .get, parameters: parameters)
+        
+        let resultValue = try await request
+            .serializingDecodable(SPARQLResponse<SparqlGenericWikidataItem>.self, decoder: jsonDecoder)
+            .value
+        
+        let formattedResult: [GenericWikidataItem] = resultValue.results.bindings.map {
+            GenericWikidataItem($0, language: languageCode)
+        }
+        
+        return formattedResult
+    }
+    
     public func getWikidataItemsInBoundingBox(
         cornerSouthWest: CLLocationCoordinate2D,
         cornerNorthEast: CLLocationCoordinate2D,
