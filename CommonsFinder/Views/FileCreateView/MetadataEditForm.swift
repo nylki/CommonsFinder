@@ -46,8 +46,11 @@ struct MetadataEditForm: View {
         // so for now until this behaviour is fixed by Apple
         // this is a fullScreenCover (but TODO: consider using a push navigation here)
         .fullScreenCover(isPresented: $model.isShowingStatementPicker) {
+            let nearbyTags = model.analysisResult?.nearbyCategories.map { TagItem($0) } ?? []
+
             TagPicker(
                 initialTags: model.draft.tags,
+                suggestedNearbyTags: nearbyTags,
                 onEditedTags: {
                     model.draft.tags = $0
                 }
@@ -76,6 +79,9 @@ struct MetadataEditForm: View {
             } else {
                 generateFilename()
             }
+        }
+        .task {
+            await model.analyzeImage()
         }
     }
 

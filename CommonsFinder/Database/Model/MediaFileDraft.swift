@@ -53,6 +53,17 @@ struct MediaFileDraft: Identifiable, Equatable, Codable, Hashable {
         set { locationHandling = newValue ? .exifLocation : .noLocation }
     }
 
+    var coordinate: CLLocationCoordinate2D? {
+        switch locationHandling {
+        case .noLocation:
+            nil
+        case .exifLocation:
+            exifData?.location?.coordinate
+        case .userDefinedLocation(let latitude, let longitude):
+            .init(latitude: latitude, longitude: longitude)
+        }
+    }
+
     enum LocationHandling: Codable, Equatable, Hashable {
         /// location data will be removed from EXIF if it exists inside the binary and won't be added to wikitext or structured data
         case noLocation

@@ -804,6 +804,14 @@ extension AppDatabase {
                 .fetchAll(db)
         }
     }
+
+    func fetchBookmarkedCategoryInfos() throws -> [CategoryInfo] {
+        try dbWriter.read { db in
+            try Category.including(required: Category.itemInteraction)
+                .asRequest(of: CategoryInfo.self)
+                .fetchAll(db)
+        }
+    }
 }
 
 extension MediaFileInfo {

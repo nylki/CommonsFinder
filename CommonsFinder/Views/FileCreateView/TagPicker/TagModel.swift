@@ -47,7 +47,6 @@ extension Set<TagType> {
             } else {
                 remove(el)
             }
-
         }
     }
 }

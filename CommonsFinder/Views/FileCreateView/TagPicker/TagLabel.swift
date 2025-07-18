@@ -33,7 +33,7 @@ struct TagLabel: View {
                 }
             }
             .multilineTextAlignment(.leading)
-            .frame(minWidth: 55, alignment: .leading)
+            .frame(minWidth: 60, alignment: .leading)
             .allowsTightening(true)
             .padding(.top, 4)
             .padding([.horizontal, .bottom], 6)
@@ -55,6 +55,7 @@ struct TagLabel: View {
 struct TagList: View {
     let possibleUsages: Set<TagType>
     let usages: Set<TagType>
+    @ScaledMetric private var scale = 1
 
     var body: some View {
         HStack(alignment: .bottom, spacing: 0) {
@@ -83,10 +84,11 @@ struct TagList: View {
             .clipShape(
                 UnevenRoundedRectangle(cornerRadii: .init(topLeading: 12, topTrailing: 12), style: .continuous)
             )
-            .font(.callout)
+            .font(.system(size: 20 * scale))
 
             roundTriangleNotch
         }
+
     }
 
     private var roundTriangleNotch: some View {

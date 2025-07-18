@@ -20,7 +20,7 @@ struct TagItem: Codable, Equatable, Hashable, Identifiable {
     /// what the user has choosen to be used for (eg. as depict-statement, category or both)
     var pickedUsages: Set<TagType> = []
 
-    init(_ item: Category, pickedUsages: Set<TagType>) {
+    init(_ item: Category, pickedUsages: Set<TagType> = .init()) {
         self.baseItem = item
         self.pickedUsages = pickedUsages
     }
@@ -52,5 +52,19 @@ struct TagItem: Codable, Equatable, Hashable, Identifiable {
 
     var description: String? {
         baseItem.description
+    }
+}
+
+
+extension [TagItem] {
+    static var sampleTags: Self {
+        [
+            .init(.earth, pickedUsages: []),
+            .init(.testItemNoLabel, pickedUsages: []),
+            .init(.testItemNoDesc, pickedUsages: []),
+            .init(.earthExtraLongLabel, pickedUsages: []),
+            .init(.randomItem(id: "432"), pickedUsages: []),
+            .init(.randomItem(id: "982323"), pickedUsages: []),
+        ]
     }
 }

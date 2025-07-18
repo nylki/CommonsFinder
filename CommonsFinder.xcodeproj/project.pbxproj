@@ -155,6 +155,7 @@
 				"Observable Models/UploadManager/MockUploadManager.swift",
 				"Observable Models/UploadManager/UploadManager.swift",
 				"Preview Content/Preview Assets.xcassets",
+				Types/DraftAnalysisResult.swift,
 				Types/DraftMediaLicense.swift,
 				"Types/DraftMediaLicense+CommonsAPI.swift",
 				Types/FileNameType.swift,
@@ -163,6 +164,7 @@
 				Types/WikimediaLanguage.swift,
 				Utilities/Authentication.swift,
 				"Utilities/CLLocation+gpsDictionary.swift",
+				Utilities/DraftAnalysis.swift,
 				Utilities/ExifData.swift,
 				Utilities/GeoPlacemarkCache.swift,
 				Utilities/Logging.swift,
@@ -191,6 +193,11 @@
 				Views/FileCreateView/Model/FileCreateViewModel.swift,
 				Views/FileCreateView/Model/FileItem.swift,
 				Views/FileCreateView/Model/MediaFileDraftModel.swift,
+				Views/FileCreateView/TagPicker/TagButton.swift,
+				Views/FileCreateView/TagPicker/TagLabel.swift,
+				Views/FileCreateView/TagPicker/TagModel.swift,
+				Views/FileCreateView/TagPicker/TagPicker.swift,
+				Views/FileCreateView/TagPicker/TagPickerModel.swift,
 				Views/FileCreateView/TimezonePicker.swift,
 				Views/FileShowView/FileLoadView.swift,
 				Views/FileShowView/FileShowView.swift,
@@ -232,11 +239,6 @@
 				Views/Styles/ImageButtonStyle.swift,
 				Views/Styles/OutlinedTextFieldStyle.swift,
 				Views/Styles/TagButtonStyle.swift,
-				Views/TagPicker/TagButton.swift,
-				Views/TagPicker/TagLabel.swift,
-				Views/TagPicker/TagModel.swift,
-				Views/TagPicker/TagPicker.swift,
-				Views/TagPicker/TagPickerModel.swift,
 				Views/UploadsView/UploadsView.swift,
 			);
 			target = E2839FF72CA2DD910053C312 /* CommonsFinderTests */;
@@ -773,6 +775,7 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GENERATE_ASSET_SYMBOL_FRAMEWORKS = "SwiftUI UIKit";
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS = YES;
 				CLANG_TIDY_BUGPRONE_REDUNDANT_BRANCH_CONDITION = YES;
 				CLANG_TIDY_MISC_REDUNDANT_EXPRESSION = YES;
 				CODE_SIGN_ENTITLEMENTS = CommonsFinder/CommonsFinder.entitlements;
@@ -824,6 +827,7 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GENERATE_ASSET_SYMBOL_FRAMEWORKS = "SwiftUI UIKit";
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS = YES;
 				CLANG_TIDY_BUGPRONE_REDUNDANT_BRANCH_CONDITION = YES;
 				CLANG_TIDY_MISC_REDUNDANT_EXPRESSION = YES;
 				CODE_SIGN_ENTITLEMENTS = CommonsFinder/CommonsFinder.entitlements;
