@@ -71,8 +71,8 @@ Although I am happy with the current name, I am open to other suggestins if they
 
 ## Contributing and Testing
 
-The best way to curently help, is by using the TestFlight releases and especially reporting crashes (should they occur) as well as other experience breaking issues.
-The number of testers is currently limited, but I'll increase the number in due time.
+The best way to curently help, is by using the TestFlight releases and especially reporting crashes (should they occur) as well as other experience breaking issues: https://testflight.apple.com/join/15KtE2Mn
+
 
 Regarding MRs and Issues: Although a lot of stuff already works well, the project and code base is still work-in-progress and several parts are actively being worked on. I value your and my time and therefore do not consider MR's to avoid duplicate over conflicting work.
 Once the development becomes slower-paced and the code base settles a bit more I'll be happy to consider contributions.
