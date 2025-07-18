@@ -984,6 +984,9 @@ GROUP BY ?item ?commonsCategory ?area ?label ?image ?description
     public func getWikidataItemsAroundCoordinate(_ coordinate: CLLocationCoordinate2D, kilometerRadius: Double, limit: Int = 10000, languageCode: LanguageCode) async throws -> [GenericWikidataItem] {
         let preferredLanguages = ([languageCode] + Locale.preferredLanguages).uniqued().joined(separator: ",")
 
+        
+        // NOTE: IMPORTANT: `?distance` must remain in the query even if not used when parsing
+        // because it affects the ORDER BY statement
         let sparqlQuery = """
 SELECT
 (STRAFTER(STR(?item), "entity/") AS ?id)
@@ -991,6 +994,7 @@ SELECT
 ?label
 ?image
 ?area
+?distance
 (GROUP_CONCAT(DISTINCT STRAFTER(STR(?instance), "entity/"); separator=",") AS ?instances)
 ?description
 WHERE {
@@ -1015,7 +1019,7 @@ WHERE {
         schema:description ?description.
     }
 }
-GROUP BY ?item ?commonsCategory ?area ?label ?image ?description
+GROUP BY ?item ?commonsCategory ?distance ?area ?label ?image ?description
 ORDER BY ?distance LIMIT \(limit)
 """
         
