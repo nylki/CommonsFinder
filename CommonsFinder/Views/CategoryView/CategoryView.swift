@@ -111,6 +111,7 @@ struct CategoryView: View {
                 startInitialNetworkTask()
             }
         }
+        .containerRelativeFrame(.horizontal)
         .animation(.default, value: paginationModel == nil)
         .navigationTitle(title)
         .toolbar(removing: .title)

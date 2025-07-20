@@ -10,18 +10,29 @@ import SwiftUI
 
 struct RelatedCategoryView: View {
     let categories: [CategoryInfo]
+
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
+
+    private var columnCount: Int {
+        if dynamicTypeSize.isAccessibilitySize {
+            dynamicTypeSize >= .xLarge ? 1 : 2
+        } else {
+            2
+        }
+    }
+
     var body: some View {
-        VMasonryLayout(columns: 2) {
+        VMasonryLayout(columns: columnCount) {
             ForEach(categories, id: \.self) { subCategory in
                 let navItem = NavigationStackItem.wikidataItem(subCategory)
                 NavigationLink(value: navItem) {
                     let label = subCategory.base.commonsCategory ?? "-"
                     Text(label)
                         .multilineTextAlignment(.leading)
-                        .frame(maxWidth: 150)
                         .lineLimit(3)
                 }
                 .buttonStyle(.bordered)
+                .frame(maxWidth: 320 / Double(columnCount))
             }
         }
         .padding(.top, 5)
