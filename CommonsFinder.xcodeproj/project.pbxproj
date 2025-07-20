@@ -114,7 +114,6 @@
 				"App Intents/MediaFileEntity.swift",
 				"App Intents/MediaFileEntity+PropertyQuery.swift",
 				"App Intents/Shortcuts.swift",
-				AppIcon.icon,
 				Assets.xcassets,
 				CommonsFinderApp.swift,
 				ContentView.swift,

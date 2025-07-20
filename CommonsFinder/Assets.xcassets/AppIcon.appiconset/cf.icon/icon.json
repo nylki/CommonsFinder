@@ -1,0 +1,39 @@
+{
+  "fill" : "system-light",
+  "groups" : [
+    {
+      "layers" : [
+        {
+          "image-name" : "4_cf.svg",
+          "name" : "4_cf"
+        },
+        {
+          "image-name" : "3_cf.svg",
+          "name" : "3_cf"
+        },
+        {
+          "image-name" : "2_cf.svg",
+          "name" : "2_cf"
+        },
+        {
+          "image-name" : "1_cf.svg",
+          "name" : "1_cf"
+        }
+      ],
+      "shadow" : {
+        "kind" : "neutral",
+        "opacity" : 0.5
+      },
+      "translucency" : {
+        "enabled" : true,
+        "value" : 0.5
+      }
+    }
+  ],
+  "supported-platforms" : {
+    "circles" : [
+      "watchOS"
+    ],
+    "squares" : "shared"
+  }
+}
