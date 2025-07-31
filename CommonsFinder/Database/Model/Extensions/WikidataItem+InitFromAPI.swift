@@ -24,4 +24,22 @@ extension Category {
             image: apiItem.image
         )
     }
+
+    /// initializes an empty Category that just redirects to another
+    init(wikidataID: WikidataID, redirectsTo redirectID: WikidataID) {
+        self.init(
+            wikidataId: wikidataID,
+            commonsCategory: nil,
+            redirectsToWikidataID: redirectID,
+            preferredLanguageAtFetchDate: "en",
+            fetchDate: .now,
+            label: nil,
+            description: nil,
+            aliases: [],
+            instances: [],
+            latitude: nil,
+            longitude: nil,
+            image: nil
+        )
+    }
 }

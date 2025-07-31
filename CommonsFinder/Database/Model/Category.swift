@@ -14,8 +14,15 @@ struct Category: Identifiable, Equatable, Hashable, Sendable, Codable {
     // todo used Tagged!?
     typealias WikidataID = String
 
+    /// NOTE: `id` is a Database SQL id, prefer the `wikidataId` or `commonsCategory` for API requests!
     var id: Int64?
+
     var wikidataId: WikidataID?
+
+    // If the item was merged with another,
+    // then redirectToWikidataId has the ID of the preferred/merged item
+    var redirectToWikidataId: WikidataID?
+
     var commonsCategory: String?
 
     /// this is used to re-fetch label and description if the user's locale was changed
@@ -40,12 +47,14 @@ struct Category: Identifiable, Equatable, Hashable, Sendable, Codable {
 
     /// Initialize with non-optional wikidataId
     init(
-        wikidataId: String, commonsCategory: String? = nil, preferredLanguageAtFetchDate: LanguageCode = "en", fetchDate: Date = .now, label: String? = nil, description: String? = nil,
+        wikidataId: String, commonsCategory: String? = nil, redirectsToWikidataID: String? = nil, preferredLanguageAtFetchDate: LanguageCode = "en", fetchDate: Date = .now, label: String? = nil,
+        description: String? = nil,
         aliases: [String] = [],
         instances: [String] = [], latitude: Double? = nil, longitude: Double? = nil, image: URL? = nil
     ) {
         self.wikidataId = wikidataId
         self.commonsCategory = commonsCategory
+        self.redirectToWikidataId = redirectsToWikidataID
         self.preferredLanguageAtFetchDate = preferredLanguageAtFetchDate
         self.fetchDate = fetchDate
         self.label = label
@@ -59,12 +68,14 @@ struct Category: Identifiable, Equatable, Hashable, Sendable, Codable {
 
     /// Initialize with non-optional commonsCategory
     init(
-        commonsCategory: String, wikidataId: String? = nil, preferredLanguageAtFetchDate: LanguageCode = "en", fetchDate: Date = .now, label: String? = nil, description: String? = nil,
+        commonsCategory: String, wikidataId: String? = nil, redirectsToWikidataID: String? = nil, preferredLanguageAtFetchDate: LanguageCode = "en", fetchDate: Date = .now, label: String? = nil,
+        description: String? = nil,
         aliases: [String] = [],
         instances: [String] = [], latitude: Double? = nil, longitude: Double? = nil, image: URL? = nil
     ) {
         self.wikidataId = wikidataId
         self.commonsCategory = commonsCategory
+        self.redirectToWikidataId = redirectsToWikidataID
         self.preferredLanguageAtFetchDate = preferredLanguageAtFetchDate
         self.fetchDate = fetchDate
         self.label = label
@@ -107,6 +118,7 @@ extension Category: FetchableRecord, MutablePersistableRecord {
         static let id = Column(CodingKeys.id)
         static let itemInteractiondID = Column(CodingKeys.itemInteractionID)
         static let wikidataId = Column(CodingKeys.wikidataId)
+        static let redirectToWikidataId = Column(CodingKeys.redirectToWikidataId)
         static let commonsCategory = Column(CodingKeys.commonsCategory)
 
         static let fetchDate = Column(CodingKeys.fetchDate)

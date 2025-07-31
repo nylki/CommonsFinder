@@ -46,6 +46,7 @@ import os.log
     // TODO: always copy to disk. Because re-opening drafts will also read from Disk.
     private var imageLoadTask: Task<Void, Never>?
 
+    // TODO: move to parent, to handle potentially multiple drafts at once
     func analyzeImage() async {
         guard analysisResult == nil else { return }
 

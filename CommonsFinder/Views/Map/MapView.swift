@@ -22,6 +22,7 @@ struct MapView: View {
     @Environment(\.isPresented) private var isPresented
     @Environment(\.verticalSizeClass) private var verticalSizeClass
     @Environment(\.locale) private var locale
+    @Environment(\.scenePhase) private var scenePhase
 
     /// this is either a media item or a wiki item
     private var scrollClusterItem: (any GeoReferencable)? {

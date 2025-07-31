@@ -117,72 +117,14 @@ final class TagPickerModel {
             do {
                 try await Task.sleep(for: .milliseconds(500))
                 print("preferred languages: \(Locale.preferredLanguages)")
-                let languageCode = Locale.current.language.languageCode?.identifier ?? "en"
-
-                async let wikidataSearchTask = try await API.shared
-                    .searchWikidataItems(term: searchText, languageCode: languageCode)
-                async let categorySearchTask = try await API.shared
-                    .searchCategories(term: searchText, limit: .count(50))
-
-                let (searchItems, searchCategories) = try await (wikidataSearchTask, categorySearchTask)
-
-
-                // Since the searched wikidata items don not contain all info we need (ie. commons category)
-                // we fetch more detailed info and merge them.
-                // NOTE: We don't simply map the items from `fetchGenericWikidataItems` because the labels/descriptions
-                // from the action-API are preferred due to their language-fallback, which can't easily accomplished
-                // with sparql queries.
-                // TODO: Alternatively, we could fetch wbgetentities and use the claims to get the commons category, but might be slower than SPARQL??
-
-                async let resolvedWikiItemsTask = API.shared
-                    .fetchGenericWikidataItems(itemIDs: searchItems.map(\.id), languageCode: languageCode)
-
-                /// categories often have associated wikidataItems( & vice-versa, see above), resolve wiki items for the found categories:
-                async let resolvedCategoryItemsTask = API.shared
-                    .findWikidataItemsForCategories(searchCategories, languageCode: languageCode)
-
-                let (resolvedWikiItems, resolvedCategoryItems) = try await (resolvedWikiItemsTask, resolvedCategoryItemsTask)
-
-                // We need to sort our resolved items along the original search order
-                // because they arrive sorted by relevance, and we want the most relevant on top/first.
-                let sortedWikiItems = searchItems.compactMap { searchItem in
-                    resolvedWikiItems.first(where: { $0.id == searchItem.id })
-                }
-                let sortedCategoryItems = searchCategories.compactMap { category in
-                    resolvedCategoryItems.first(where: { $0.commonsCategory == category })
-                }
-
-                // Prefer label and description from action API (because of language fallback):
-                let labelAndDescription = searchItems.grouped(by: \.id)
-                let combinedWikidataItems = (sortedWikiItems + sortedCategoryItems).uniqued(on: \.id)
-
-                let mergedSearchWikiItems: [Category] = combinedWikidataItems.map { apiItem in
-                    var item = Category(apiItem: apiItem)
-                    item.label = labelAndDescription[apiItem.id]?.first?.label ?? item.label
-                    item.description = labelAndDescription[apiItem.id]?.first?.description ?? item.description
-                    return item
-                }
-
-                do {
-                    try appDatabase.upsert(mergedSearchWikiItems)
-                } catch {
-                    logger.error("Failed to save Category items from TagPicker during search. \(error)")
-                }
-
-                let wikiItemTags: [TagModel] = mergedSearchWikiItems.compactMap { item in
-                    .init(tagItem: .init(item, pickedUsages: []))
-                }
-
-                // Only keep categories that do not already have a wikidata item
-                let categoryTags: [TagModel] = searchCategories.compactMap { categoryName in
-                    let isAlreadyInWikiItems = wikiItemTags.contains(where: { $0.commonsCategory == categoryName })
-                    if isAlreadyInWikiItems { return nil }
-                    return .init(tagItem: .init(Category(commonsCategory: categoryName), pickedUsages: []))
-                }
+                let searchedCategories = try await APIUtils.searchCategories(for: searchText)
 
                 let existingTagIDs = Set(tags.map(\.id))
 
-                let filteredSearchedTags = (wikiItemTags + categoryTags)
+                let filteredSearchedTags: [TagModel] =
+                    searchedCategories.map {
+                        TagModel(tagItem: .init($0))
+                    }
                     .filter { searchTag in
                         !existingTagIDs.contains(searchTag.id)
                     }

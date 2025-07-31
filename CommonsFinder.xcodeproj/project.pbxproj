@@ -162,11 +162,14 @@
 				Types/TagItem.swift,
 				Types/WikidataStatement.swift,
 				Types/WikimediaLanguage.swift,
+				Utilities/APIUtils.swift,
 				Utilities/Authentication.swift,
 				"Utilities/CLLocation+gpsDictionary.swift",
 				Utilities/DraftAnalysis.swift,
 				Utilities/ExifData.swift,
 				Utilities/GeoPlacemarkCache.swift,
+				Utilities/GeoVectorMath.swift,
+				Utilities/GeoVectorMathTests.swift,
 				Utilities/Logging.swift,
 				Utilities/OverWriteExifLocation.swift,
 				Utilities/ValidationUtils.swift,
@@ -214,6 +217,7 @@
 				"Views/Map/GeoClustering/H3+Convenience.swift",
 				Views/Map/MapModel.swift,
 				Views/Map/MapPopup/MapPopup.swift,
+				Views/Map/MapPopup/MapPopupCategoryTeaser.swift,
 				Views/Map/MapPopup/MapPopupMediaFileTeaser.swift,
 				Views/Map/MapPopup/PseudoSheet.swift,
 				Views/Map/MapView.swift,
@@ -248,6 +252,7 @@
 			membershipExceptions = (
 				Database/DatabaseTests.swift,
 				Info.plist,
+				Utilities/GeoVectorMathTests.swift,
 			);
 			target = E2839FE62CA2DD900053C312 /* CommonsFinder */;
 		};

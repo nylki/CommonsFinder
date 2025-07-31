@@ -5,6 +5,7 @@
 //  Created by Tom Brewe on 04.10.24.
 //
 
+import Algorithms
 import Foundation
 import GRDB
 import os.log
@@ -206,6 +207,8 @@ final class AppDatabase: Sendable {
 
                 t.column("commonsCategory", .text).unique()
                 t.column("wikidataId", .text).unique()
+
+                t.column("redirectToWikidataId", .text)
 
                 t.column("label", .text)
                 t.column("description", .text)
@@ -761,13 +764,7 @@ extension AppDatabase {
     }
 
     func fetchCategoryInfo(wikidataID: String) throws -> CategoryInfo? {
-        try dbWriter.read { db in
-            try Category
-                .filter(Category.Columns.wikidataId == wikidataID)
-                .including(optional: Category.itemInteraction)
-                .asRequest(of: CategoryInfo.self)
-                .fetchOne(db)
-        }
+        try fetchCategoryInfos(wikidataIDs: [wikidataID]).first
     }
 
     func fetchCategoryInfos(commonsCategories: [String]) throws -> [CategoryInfo] {
@@ -782,8 +779,20 @@ extension AppDatabase {
 
     func fetchCategoryInfos(wikidataIDs: [String]) throws -> [CategoryInfo] {
         try dbWriter.read { db in
-            try Category
+            let redirects =
+                try Category
                 .filter(wikidataIDs.contains(Category.Columns.wikidataId))
+                .filter { $0.redirectToWikidataId != nil }
+                .fetchAll(db)
+                .grouped(by: \.wikidataId)
+
+            let normalizedIDs = wikidataIDs.map {
+                redirects[$0]?.first?.redirectToWikidataId ?? $0
+            }
+
+            return
+                try Category
+                .filter(normalizedIDs.contains(Category.Columns.wikidataId))
                 .including(optional: Category.itemInteraction)
                 .asRequest(of: CategoryInfo.self)
                 .fetchAll(db)

@@ -293,9 +293,10 @@ struct DatabaseTests {
         #expect(insertedC.commonsCategory == catC.commonsCategory)
 
         let catCInfo = try repo.fetchCategoryInfo(wikidataID: catC.wikidataId!)
-        let isBookmarked = catCInfo?.itemInteraction?.isBookmarked
+        let bookmarked = catCInfo?.itemInteraction?.bookmarked
+
         #expect(
-            isBookmarked == true,
+            bookmarked != nil,
             "We expect the merged category to be bookmarked, because catA was."
         )
 

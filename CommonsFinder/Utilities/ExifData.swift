@@ -51,6 +51,8 @@ struct ExifData: Codable, Equatable, Hashable {
 
     private(set) var imgDirection: Double?
     private(set) var altitude: Double?
+    /// see discussion: https://exiftool.org/forum/index.php?topic=15654.0
+    /// and test with front/back cam for accuracy of angle
     private(set) var destBearing: Double?
     private(set) var hPositioningError: Double?
 
