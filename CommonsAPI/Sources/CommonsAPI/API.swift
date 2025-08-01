@@ -1107,7 +1107,7 @@ SERVICE wikibase:label {
 }
 }
 \(orderQuery)
-GROUP BY ?item ?commonsCategory ?location ?label ?description ?image ?location ?area
+GROUP BY ?item ?commonsCategory ?location ?label ?description ?image ?area
 LIMIT \(limit)
 """
         
