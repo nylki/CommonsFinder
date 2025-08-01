@@ -177,7 +177,8 @@ struct CommonNavigationDestination: ViewModifier {
                 switch item {
                 case .settings: SettingsView()
                 case .viewFile(let file, let namespace):
-                    FileShowView(file, navigationNamespace: namespace)
+                    FileDetailView(mediaFileInfo: file, navigationNamespace: namespace)
+                //                    FileDetailView(mediaFileInfo: file, navigationNamespace: namespace)
                 case .loadFile(let title, let namespace):
                     FileLoadView(title: title, navigationNamespace: namespace)
                 case .wikidataItem(let item):

@@ -1,5 +1,5 @@
 //
-//  FileShowView.swift
+//  FileDetailView.swift
 //  CommonsFinder
 //
 //  Created by Tom Brewe on 18.10.24.
@@ -12,44 +12,65 @@ import NukeUI
 import SwiftUI
 import os.log
 
-struct FileShowView: View {
-    private let navigationNamespace: Namespace.ID
+//struct ___FileShowView: View {
+//    private let navigationNamespace: Namespace.ID
+//
+//    // To make this a bit more minimal only one  non-optional @State MediaFile that gets the initial value initialized in Init?
+//    // -> but that is considered bad practice, because it can be confusing that State is only set once in an init...
+//    // But might be alright here, when stated that it is intended....
+//    private let _initialMediaFileInfo: MediaFileInfo
+//    @State private var _updatedMediaFileInfo: MediaFileInfo?
+//    private var mediaFileInfo: MediaFileInfo { _updatedMediaFileInfo ?? _initialMediaFileInfo }
+//    @State private var isShowingEditSheet: MediaFileInfo?
+//    @Environment(\.appDatabase) private var appDatabase
+//
+//    init(_ mediaFileInfo: MediaFileInfo, navigationNamespace: Namespace.ID) {
+//        // The immutable MediaFile is wrapped as an @Observable MediaFileModel here, to allow
+//        // registering changes when user edits the file.
+//        logger.debug("FileShowView Init")
+//        _initialMediaFileInfo = mediaFileInfo
+//        self.navigationNamespace = navigationNamespace
+//    }
+//
+//    var body: some View {
+//        MainFileShowView(mediaFileInfo: mediaFileInfo, navigationNamespace: navigationNamespace, onUpdateBookmark: updateBookmark)
+//
+//    }
+//}
 
-    // To make this a bit more minimal only one  non-optional @State MediaFile that gets the initial value initialized in Init?
-    // -> but that is considered bad practice, because it can be confusing that State is only set once in an init...
-    // But might be alright here, when stated that it is intended....
-    private let _initialMediaFileInfo: MediaFileInfo
-    @State private var _updatedMediaFileInfo: MediaFileInfo?
-    private var mediaFileInfo: MediaFileInfo { _updatedMediaFileInfo ?? _initialMediaFileInfo }
-    @State private var isShowingEditSheet: MediaFileInfo?
+
+struct FileDetailView: View {
+    // TODO: maybe convert to @Query (or other observation here) and upsert MediaFile into DB on .task and then do dbMediaFile ?? passedMediaFile
+    let mediaFileInfo: MediaFileInfo
+    let navigationNamespace: Namespace.ID
+
+    @Environment(\.locale) private var locale
+    @Environment(\.dismiss) private var dismiss
+    @Environment(Navigation.self) private var navigation
+    @Environment(SearchModel.self) private var searchModel
+    @Environment(\.isPresented) private var isPresented
     @Environment(\.appDatabase) private var appDatabase
 
-    init(_ mediaFileInfo: MediaFileInfo, navigationNamespace: Namespace.ID) {
-        // The immutable MediaFile is wrapped as an @Observable MediaFileModel here, to allow
-        // registering changes when user edits the file.
-        logger.debug("FileShowView Init")
-        _initialMediaFileInfo = mediaFileInfo
-        self.navigationNamespace = navigationNamespace
+    @State private var _updatedMediaFileInfo: MediaFileInfo?
+    private var currentInfo: MediaFileInfo { _updatedMediaFileInfo ?? mediaFileInfo }
+    @State private var isShowingEditSheet: MediaFileInfo?
+
+
+    @State private var fullDescription: AttributedString?
+    @State private var isDescriptionExpanded = false
+    @State private var titleAreaHidden = false
+    @State private var gradientAreaHidden = false
+
+    @State private var resolvedTags: [TagItem] = []
+
+    private var tagsHashID: String {
+        "\(currentInfo.mediaFile.categories.hashValue)-\(currentInfo.mediaFile.statements.hashValue)"
     }
 
-    var body: some View {
-        MainFileShowView(mediaFileInfo: mediaFileInfo, navigationNamespace: navigationNamespace, onUpdateBookmark: updateBookmark)
-            .modifier(OptionalZoomTransition(fileID: mediaFileInfo.mediaFile.id, namespaceID: navigationNamespace))
-            .task {
-                let timeIntervalSinceLastFetchDate = Date.now.timeIntervalSince(mediaFileInfo.mediaFile.fetchDate)
-                //            logger.info("Time since last fetch: \(timeIntervalSinceLastFetchDate)")
-                if timeIntervalSinceLastFetchDate > 20 {
-                    await refreshMediaFileFromAPI()
-                }
-            }
-            .onDisappear {
-                saveFileToLastViewed()
-            }
-    }
 
     private func saveFileToLastViewed() {
         do {
-            _updatedMediaFileInfo = try appDatabase.updateLastViewed(mediaFileInfo)
+            _updatedMediaFileInfo = try appDatabase.updateLastViewed(currentInfo)
         } catch {
             logger.error("Failed to save media file as recently viewed. \(error)")
         }
@@ -57,18 +78,18 @@ struct FileShowView: View {
 
     private func updateBookmark(_ value: Bool) {
         do {
-            let result = try appDatabase.updateBookmark(mediaFileInfo, bookmark: value)
+            let result = try appDatabase.updateBookmark(currentInfo, bookmark: value)
             _updatedMediaFileInfo = result
         } catch {
-            logger.error("Failed to update bookmark on \(mediaFileInfo.mediaFile.name): \(error)")
+            logger.error("Failed to update bookmark on \(currentInfo.mediaFile.name): \(error)")
         }
     }
 
-    private func refreshMediaFileFromAPI() async {
+    private func refreshFromNetwork() async {
         do {
             guard
                 let result = try await CommonsAPI.API()
-                    .fetchFullFileMetadata(fileNames: [mediaFileInfo.mediaFile.apiName]).first
+                    .fetchFullFileMetadata(fileNames: [currentInfo.mediaFile.apiName]).first
             else {
                 return
             }
@@ -81,38 +102,14 @@ struct FileShowView: View {
                 return
             }
 
+            let refreshedTags = try await refreshedMediaFile.resolveTags(appDatabase: appDatabase)
+
             _updatedMediaFileInfo = refreshedMediaFileInfo
+            resolvedTags = refreshedTags
 
         } catch {
             logger.error("Failed to refresh media file \(error)")
         }
-    }
-}
-
-
-private struct MainFileShowView: View {
-    // TODO: maybe convert to @Query (or other observation here) and upsert MediaFile into DB on .task and then do dbMediaFile ?? passedMediaFile
-    let mediaFileInfo: MediaFileInfo
-    let navigationNamespace: Namespace.ID
-    let onUpdateBookmark: (_ newBookmarkValue: Bool) -> Void
-
-    @Environment(\.locale) private var locale
-    @Environment(\.dismiss) private var dismiss
-    @Environment(Navigation.self) private var navigation
-    @Environment(SearchModel.self) private var searchModel
-    @Environment(\.isPresented) private var isPresented
-    @Environment(\.appDatabase) private var appDatabase
-
-    @State private var fullDescription: AttributedString?
-    @State private var isDescriptionExpanded = false
-    @State private var titleAreaHidden = false
-    @State private var gradientAreaHidden = false
-
-    @State private var resolvedTags: [TagItem] = []
-
-
-    private var userUploads: NavigationStackItem {
-        .userUploads(username: mediaFileInfo.mediaFile.username)
     }
 
     var body: some View {
@@ -155,7 +152,7 @@ private struct MainFileShowView: View {
                             mediaFileInfo.isBookmarked ? "Remove Bookmark" : "Add Bookmark",
                             systemImage: mediaFileInfo.isBookmarked ? "bookmark.fill" : "bookmark"
                         ) {
-                            onUpdateBookmark(!mediaFileInfo.isBookmarked)
+                            updateBookmark(!mediaFileInfo.isBookmarked)
                         }
 
                         ShareLink(item: mediaFileInfo.mediaFile.descriptionURL)
@@ -175,6 +172,36 @@ private struct MainFileShowView: View {
                         }
                     }
                 }
+            }
+            .navigationTransition(.zoom(sourceID: mediaFileInfo.mediaFile.id, in: navigationNamespace))
+            .task(id: currentInfo.mediaFile.fullDescriptions, priority: .userInitiated) {
+                if let attributedString = currentInfo.mediaFile.createAttributedStringDescription(locale: locale) {
+                    fullDescription = attributedString
+                }
+            }
+            .task(priority: .medium) {
+                let timeIntervalSinceLastFetchDate = Date.now.timeIntervalSince(mediaFileInfo.mediaFile.fetchDate)
+                //            logger.info("Time since last fetch: \(timeIntervalSinceLastFetchDate)")
+                if timeIntervalSinceLastFetchDate > 20 {
+                    await refreshFromNetwork()
+                }
+            }
+            .task(id: tagsHashID, priority: .userInitiated) {
+                do {
+                    logger.info("Resolving Tags...")
+                    let start = Date.now
+                    let tags = try await currentInfo.mediaFile.resolveTags(appDatabase: appDatabase)
+                    let tagsWhereFetchedAsync = Date.now.timeIntervalSince(start) > 0.1
+                    withAnimation(tagsWhereFetchedAsync ? .default : nil) {
+                        self.resolvedTags = tags
+                        logger.info("Resolving Tags finished.")
+                    }
+                } catch {
+                    logger.error("Failed to resolve MediaFile tags: \(error)")
+                }
+            }
+            .onDisappear {
+                saveFileToLastViewed()
             }
     }
 
@@ -197,7 +224,7 @@ private struct MainFileShowView: View {
                 }
 
                 ZStack {
-                    if let caption = mediaFileInfo.mediaFile.localizedDisplayCaption {
+                    if let caption = currentInfo.mediaFile.localizedDisplayCaption {
                         Text(caption)
                             .font(.title3)
                             .bold()
@@ -236,14 +263,14 @@ private struct MainFileShowView: View {
 
                 }
 
-                if let inceptionDate = mediaFileInfo.mediaFile.inceptionDate {
+                if let inceptionDate = currentInfo.mediaFile.inceptionDate {
                     Text(inceptionDate, style: .date).font(.caption)
                 }
 
                 tagSection
 
-                if let coordinate = mediaFileInfo.mediaFile.coordinate {
-                    InlineMap(coordinate: coordinate, fileTitle: mediaFileInfo.mediaFile.name)
+                if let coordinate = currentInfo.mediaFile.coordinate {
+                    InlineMap(coordinate: coordinate, fileTitle: currentInfo.mediaFile.name)
                 }
 
 
@@ -252,10 +279,6 @@ private struct MainFileShowView: View {
                     uploaderAndUploadDate
                 }
                 .padding(.vertical)
-
-
-                // WikidataClaimView
-
             }
             .padding([.horizontal, .bottom])
         }
@@ -263,7 +286,7 @@ private struct MainFileShowView: View {
         .background(alignment: .top) {
             let isVisible = (!gradientAreaHidden && !titleAreaHidden)
             let pixelClip = 7.0
-            LazyImage(request: mediaFileInfo.thumbRequest) { phase in
+            LazyImage(request: currentInfo.thumbRequest) { phase in
                 if let image = phase.image {
                     image
                         .resizable()
@@ -290,36 +313,19 @@ private struct MainFileShowView: View {
             .accessibilityHidden(true)
         }
         .groupBoxStyle(FileGroupBoxStyle())
-        .task {
-            if let attributedString = mediaFileInfo.mediaFile.createAttributedStringDescription(locale: locale) {
-                fullDescription = attributedString
-            }
-
-            do {
-                let start = Date.now
-                // TODO: tags could actually benefit from being based on CategoryInfo
-                // so that links would get info about bookmarks
-                let tags = try await mediaFileInfo.mediaFile.resolveTags(appDatabase: appDatabase)
-                let tagsWhereFetchedAsync = Date.now.timeIntervalSince(start) > 0.1
-                withAnimation(tagsWhereFetchedAsync ? .default : nil) {
-                    self.resolvedTags = tags
-                }
-            } catch {
-                logger.error("Failed to resolve MediaFile tags: \(error)")
-            }
-        }
     }
 
     @ViewBuilder
     private var uploaderAndUploadDate: some View {
         // TODO: differentiate between creator and uploader if they differ
         VStack(alignment: .leading) {
+            let userUploads = NavigationStackItem.userUploads(username: currentInfo.mediaFile.username)
             NavigationLink(value: userUploads) {
-                Label(mediaFileInfo.mediaFile.username, systemImage: "person.fill")
+                Label(currentInfo.mediaFile.username, systemImage: "person.fill")
             }
             .bold()
 
-            Text("uploaded \(mediaFileInfo.mediaFile.uploadDate, style: .relative) ago")
+            Text("uploaded \(currentInfo.mediaFile.uploadDate, style: .relative) ago")
                 .font(.caption)
         }
     }
@@ -338,8 +344,8 @@ private struct MainFileShowView: View {
             // 3. optionally go to license website
             // eg. attribution might be missing from structured data, but its important for re-use
             // so we may have to use extMetadata "Attribution" which is more complete for legacy wikitext licensing
-            Link(destination: mediaFileInfo.mediaFile.descriptionURL) {
-                if let license = mediaFileInfo.mediaFile.primaryLicenseForDisplay {
+            Link(destination: currentInfo.mediaFile.descriptionURL) {
+                if let license = currentInfo.mediaFile.primaryLicenseForDisplay {
                     Label {
                         ZStack {
                             switch license {
@@ -354,7 +360,7 @@ private struct MainFileShowView: View {
                             case .CC_BY_SA_4_0, .CC_BY_SA_3_0, .CC_BY_SA_IGO_3_0, .CC_BY_SA_2_5, .CC_BY_SA_2_0, .CC_BY_SA_1_0, .CC_BY_SA_IGO_3_0:
                                 Text("CC BY-SA")
                             default:
-                                if let rawAttribution = mediaFileInfo.mediaFile.rawAttribution {
+                                if let rawAttribution = currentInfo.mediaFile.rawAttribution {
                                     Text(rawAttribution)
                                         .multilineTextAlignment(.leading)
                                 } else {
@@ -387,7 +393,7 @@ private struct MainFileShowView: View {
                         .font(.system(size: 24))
                     }
                     .labelStyle(VerticalLabelStyle())
-                } else if let copyright = mediaFileInfo.mediaFile.copyrightStatus {
+                } else if let copyright = currentInfo.mediaFile.copyrightStatus {
                     switch copyright {
                     case .publicDomainCopyrightStatus:
                         Text("public domain")
@@ -405,7 +411,7 @@ private struct MainFileShowView: View {
 
     @ViewBuilder
     private var tagSection: some View {
-        let itemCount = mediaFileInfo.mediaFile.categories.count + mediaFileInfo.mediaFile.statements.map(\.isDepicts).count
+        let itemCount = currentInfo.mediaFile.categories.count + currentInfo.mediaFile.statements.map(\.isDepicts).count
         if !resolvedTags.isEmpty {
             TagsContainerView(tags: resolvedTags)
         } else if itemCount > 0 {
@@ -417,67 +423,14 @@ private struct MainFileShowView: View {
         }
     }
 
-    //    @ViewBuilder
-    // FIXME: for wikidata items (aka Categories) use CategoryInfo to initialize
-    // eg. to be able to bookmark etc.
-    //    private func StatementListBox(_ values: [WikidataSnakValue]) -> some View {
-    //        lazy var languageIdentifier = locale.wikiLanguageCodeIdentifier
-    //
-    //        ScrollView(.horizontal) {
-    //            HStack {
-    //                ForEach(values, id: \.self) { value in
-    //                    ZStack {
-    //                        switch value {
-    //                        case .wikibaseEntityID(let item):
-    //                            let localizedLabel = categoryCache[item.id]?.base.label
-    //                            Text(localizedLabel ?? item.id)
-    //                                .animation(.default, value: localizedLabel)
-    //                        case .quantity(let quantity):
-    //                            quantityLabel(quantity)
-    //                        case .string(let string):
-    //                            Text(string)
-    //                        case .time(let dateValue):
-    //                            if let date = dateValue.date {
-    //                                Text(date, style: .date)
-    //                            }
-    //                        // location is handled separately
-    //                        default:
-    //                            Text("Unknown type of value")
-    //                        }
-    //                    }
-    //                    .bold()
-    //                    .padding(.horizontal, 15)
-    //                    .padding(.vertical, 10)
-    //                }
-    //            }
-    //        }
-    //    }
-
-    //    private func quantityLabel(_ quantity: WikidataClaim.Snak.DataValue.Quantity) -> Text {
-    //        var unitLabel = ""
-    //        if let unitID = quantity.unitID {
-    //            unitLabel = categoryCache[unitID.id]?.base.label ?? ""
-    //        }
-    //
-    //        let formatter = NumberFormatter()
-    //        formatter.minimumFractionDigits = 0
-    //        formatter.maximumFractionDigits = 2
-    //        formatter.minimumIntegerDigits = quantity.amountNumber < 1 ? 1 : 0
-    //        print("\(quantity.amountNumber) \(unitLabel)")
-    //
-    //        let amount = String(format: "%g", quantity.amountNumber)
-    //
-    //        return Text("\(amount) \(unitLabel)")
-    //    }
-
     @ViewBuilder
     private var imageView: some View {
-        LazyImage(request: mediaFileInfo.largeResizedRequest) { phase in
+        LazyImage(request: currentInfo.largeResizedRequest) { phase in
             if let image = phase.image {
                 image
                     .resizable()
                     .aspectRatio(contentMode: .fit)
-            } else if let thumbRequest = mediaFileInfo.thumbRequest {
+            } else if let thumbRequest = currentInfo.thumbRequest {
                 LazyImage(request: thumbRequest) { phase in
                     Group {
                         if let image = phase.image {
@@ -499,40 +452,6 @@ private struct MainFileShowView: View {
         .frame(minWidth: 0, maxWidth: .infinity)
         .frame(minHeight: 0, maxHeight: .infinity)
         .modifier(FullscreenOnRotate())
-        //        .safeAreaInset(edge: .top, spacing: 0) {
-        //            LazyImage(request: mediaFileInfo.thumbRequest) { phase in
-        //                if let image = phase.image {
-        //                    image
-        //                        .resizable()
-        //                        .aspectRatio(contentMode: .fill)
-        //                }
-        //            }
-        //            .frame(height: 65, alignment: .top)
-        //            .blur(radius: 40)
-        //            .scaleEffect(1.15, anchor: .top)
-        //            .clipped()
-        //            .onScrollVisibilityChange { visible in
-        //                isScrolledDown = !visible
-        //            }
-        //            .statusBar(hidden: isScrolledDown)
-        //        }
-
-    }
-
-}
-
-
-struct OptionalZoomTransition: ViewModifier {
-    let fileID: String
-    let namespaceID: Namespace.ID?
-
-    func body(content: Content) -> some View {
-        if let namespaceID {
-            content
-                .navigationTransition(.zoom(sourceID: fileID, in: namespaceID))
-        } else {
-            content
-        }
     }
 }
 
@@ -588,14 +507,11 @@ extension WikidataItemID {
 #Preview(traits: .previewEnvironment) {
     @Previewable @Namespace var namespace
     NavigationView {
-        MainFileShowView(mediaFileInfo: .makeRandomUploaded(id: "Lorem Ipsum", .squareImage), navigationNamespace: namespace, onUpdateBookmark: { _ in })
+        FileDetailView(
+            mediaFileInfo: .makeRandomUploaded(id: "Lorem Ipsum", .squareImage),
+            navigationNamespace: namespace
+        )
     }
-
-}
-
-#Preview(traits: .previewEnvironment) {
-    @Previewable @Namespace var namespace
-    FileShowView(.makeRandomUploaded(id: "abc", .horizontalImage), navigationNamespace: namespace)
 }
 
 
@@ -609,3 +525,57 @@ struct VerticalLabelStyle: LabelStyle {
         }
     }
 }
+
+// Moved for later reference:
+//    @ViewBuilder
+// FIXME: for wikidata items (aka Categories) use CategoryInfo to initialize
+// eg. to be able to bookmark etc.
+//    private func StatementListBox(_ values: [WikidataSnakValue]) -> some View {
+//        lazy var languageIdentifier = locale.wikiLanguageCodeIdentifier
+//
+//        ScrollView(.horizontal) {
+//            HStack {
+//                ForEach(values, id: \.self) { value in
+//                    ZStack {
+//                        switch value {
+//                        case .wikibaseEntityID(let item):
+//                            let localizedLabel = categoryCache[item.id]?.base.label
+//                            Text(localizedLabel ?? item.id)
+//                                .animation(.default, value: localizedLabel)
+//                        case .quantity(let quantity):
+//                            quantityLabel(quantity)
+//                        case .string(let string):
+//                            Text(string)
+//                        case .time(let dateValue):
+//                            if let date = dateValue.date {
+//                                Text(date, style: .date)
+//                            }
+//                        // location is handled separately
+//                        default:
+//                            Text("Unknown type of value")
+//                        }
+//                    }
+//                    .bold()
+//                    .padding(.horizontal, 15)
+//                    .padding(.vertical, 10)
+//                }
+//            }
+//        }
+//    }
+
+//    private func quantityLabel(_ quantity: WikidataClaim.Snak.DataValue.Quantity) -> Text {
+//        var unitLabel = ""
+//        if let unitID = quantity.unitID {
+//            unitLabel = categoryCache[unitID.id]?.base.label ?? ""
+//        }
+//
+//        let formatter = NumberFormatter()
+//        formatter.minimumFractionDigits = 0
+//        formatter.maximumFractionDigits = 2
+//        formatter.minimumIntegerDigits = quantity.amountNumber < 1 ? 1 : 0
+//        print("\(quantity.amountNumber) \(unitLabel)")
+//
+//        let amount = String(format: "%g", quantity.amountNumber)
+//
+//        return Text("\(amount) \(unitLabel)")
+//    }

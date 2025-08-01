@@ -18,7 +18,7 @@ extension MediaFile {
     /// resolves Tags based on commons categories and depict items in MediaFile
     /// will return redirected (merged) items instead of original ones!
     @MainActor
-    func resolveTags(appDatabase: AppDatabase) async throws -> [TagItem] {
+    func resolveTags(appDatabase: AppDatabase, forceNetworkRefresh: Bool = false) async throws -> [TagItem] {
 
         let depictWikdataIDs: [String] =
             statements
@@ -26,7 +26,13 @@ extension MediaFile {
             .compactMap(\.mainItem?.id)
 
 
-        let cachedCategoryInfos = (try? appDatabase.fetchCategoryInfos(wikidataIDs: depictWikdataIDs)) ?? []
+        let cachedCategoryInfos: [CategoryInfo] =
+            if forceNetworkRefresh {
+                []
+            } else {
+                (try? appDatabase.fetchCategoryInfos(wikidataIDs: depictWikdataIDs)) ?? []
+            }
+
         let cachedIDs = cachedCategoryInfos.compactMap(\.base.wikidataId)
         let missingIDs = Set(depictWikdataIDs).subtracting(cachedIDs)
 
@@ -54,7 +60,6 @@ extension MediaFile {
             consume combinedCategories,
             appDatabase: appDatabase
         )
-
 
         let depictionTags: [TagItem] =
             redirectionResolvedCategories
