@@ -64,6 +64,7 @@ struct MediaFileDraft: Identifiable, Equatable, Codable, Hashable {
         }
     }
 
+
     enum LocationHandling: Codable, Equatable, Hashable {
         /// location data will be removed from EXIF if it exists inside the binary and won't be added to wikitext or structured data
         case noLocation

@@ -418,17 +418,25 @@ extension AppDatabase {
     func upsert(_ item: Category) throws -> Category? {
         try upsert([item]).first
     }
+
     /// inserts or updates all Categories while retaining any `itemInteractionID` if it already is set, and returns the inserted media files.
+    /// Optionally also creates redirect items (as returned from the API), expecting the format [fromWikidataID:toWikidataID] in the same transaction.
+
     @discardableResult
-    func upsert(_ items: [Category]) throws -> [Category] {
+    func upsert(_ items: [Category], redirectItemsAfterUpsert redirectItems: [Category.WikidataID: Category.WikidataID]? = nil) throws -> [Category] {
+
         try dbWriter.write { db in
-            items.compactMap { item in
+            let resultIDs = items.compactMap { item in
                 do {
+                    if let redirectToWikidataId = item.redirectToWikidataId {
+                        logger.debug("redirectToWikidataId \(redirectToWikidataId)")
+                    }
                     // When upserting Categories we have to check if an item already exists that
                     // (in order of importance) has the same:
                     // 1. id (database id, only applicable if the item to upsert was itself already in the DB)
                     // 2. wikidataId
                     // 3. commonsCategory
+                    // this is what `findExistingCategory(basedOn: )` does.
 
                     // If an item matching one of the above exists, we must copy the itemInteractionID
                     // before upserting (and in effect replacing the existing one).
@@ -446,7 +454,7 @@ extension AppDatabase {
                         itemCopy.id = item.id ?? existingCategory?.id
                         itemCopy.itemInteractionID = item.itemInteractionID ?? existingCategory?.itemInteractionID
 
-                        return try itemCopy.upsertAndFetch(db)
+                        return try itemCopy.upsertAndFetch(db).id
                     } else {
                         // We need to merge multiple items
                         let existingCategoryInfos: [CategoryInfo] =
@@ -521,7 +529,7 @@ extension AppDatabase {
                         assert(mergeCategory.id == refCategoryID)
                         assert(mergeCategory.itemInteractionID == mergeItemInteraction.id)
 
-                        return mergeCategory
+                        return mergeCategory.id
                     }
 
                 } catch {
@@ -529,7 +537,74 @@ extension AppDatabase {
                     return nil
                 }
             }
+
+            /// handle redirections before returning values
+            ///
+            /// FIXME: i prefer to have these in the same transaction, but it make this function rather long
+            /// can we still split this up, while keeping them in the same transaction to be safer?
+            if let redirectItems {
+                for (fromWikidataID, toWikidataID) in redirectItems {
+
+                    let existingFromInfo = try fetchCategoryInfo(wikidataID: fromWikidataID)
+
+
+                    // This item will replace the original "from" item and poinst to the "to" item
+                    var redirectingCategory = Category(
+                        wikidataID: fromWikidataID,
+                        redirectsTo: toWikidataID
+                    )
+
+                    try redirectingCategory.upsert(db)
+
+                    guard var existingToInfo = try fetchCategoryInfo(wikidataID: toWikidataID) else {
+                        logger.debug("No  target item of the redirection exists to rewrite interaction.")
+                        continue
+                    }
+
+                    // Now we rewrite the interactionID if the redirected item had any.
+                    // if the to-item also has an interaction, we merge fields from
+                    if let existingFromInteraction = existingFromInfo?.itemInteraction {
+
+                        if var existingToInteraction = existingToInfo.itemInteraction {
+                            // to-item already has interactions, we merge the previous one into the target
+                            existingToInteraction = existingToInteraction.merge(with: existingFromInteraction)
+                            try existingToInteraction.update(db)
+                            // and then delete the old interaction that won't be needed anymore.
+                            try existingFromInteraction.delete(db)
+                        } else {
+                            // otherwise re-use the interaction of the previous item
+                            existingToInfo.base.itemInteractionID = existingFromInteraction.id
+                            try existingToInfo.base.upsert(db)
+
+                        }
+                    }
+
+                    try redirectingCategory.upsert(db)
+
+                }
+            }
+
+            return try Category.fetchAll(db, ids: resultIDs)
         }
+    }
+
+
+    func adjustInteractions(forRedirections redirections: [Category.WikidataID: Category.WikidataID]) throws {
+        //        guard !redirections.isEmpty else { return }
+        //        var itemsToAdjust = try fetchCategoryInfos(wikidataIDs: redirections.map(\.key))
+        //        guard !itemsToAdjust.isEmpty else { return }
+        //
+        //        itemsToAdjust = itemsToAdjust.map({ <#CategoryInfo#> in
+        //            <#code#>
+        //        })
+        //
+        //        try dbWriter.write { db in
+        //
+        //        }
+        //
+        //        for (from, to) in redirections {
+        //
+        //        }
     }
 
     func delete(_ category: Category) throws -> Bool {

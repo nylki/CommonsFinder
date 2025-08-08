@@ -22,6 +22,13 @@ struct CategoryView: View {
 
     init(_ item: CategoryInfo) {
         self.initialItem = item
+
+
+        // FIXME HACK DEBUG:
+        //        var item = item
+        //
+        //
+        //        self.initialItem = .init(.init(wikidataID: "Q99937301", redirectsTo: ""))
     }
 
     @State private var networkInitTask: Task<Void, Never>?
@@ -286,7 +293,32 @@ struct CategoryView: View {
                 logger.info("CAT: network task for Category \"\(debugLabel)\" finished!")
             #endif
 
+            await refreshBaseItemFromNetwork()
+
             hasBeenInitialized = true
+        }
+    }
+
+    private func refreshBaseItemFromNetwork() async {
+        guard let item else { return }
+        do {
+            let refreshedItem = try await DataFetching.fetchCategoryFromNetwork(
+                category: item.base,
+                appDatabase: appDatabase
+            )
+            if refreshedItem?.wikidataId != item.base.wikidataId {
+                logger.info("Refresh got a redirected item!")
+                // TODO: inform the user somehow that the item was merged into another?
+            }
+
+
+            // FIXME: test: since we observe from database, the fetch category from network
+            // should update the database entries, or we re-start the database task
+
+
+            print("refreshed item \(refreshedItem)")
+        } catch {
+            logger.error("Failed to fetch category freshly from network")
         }
     }
 

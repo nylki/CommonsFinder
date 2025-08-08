@@ -29,6 +29,31 @@ struct ItemInteraction: Equatable, Hashable, Sendable, Identifiable {
 
 }
 
+extension ItemInteraction {
+    /// returns a new ItemInteraction by merging both interactions by choosen the more recent date's of each,
+    /// and adding the viewCount together.
+    /// The ID of the self-item will be kept.
+    func merge(with otherInteraction: Self) -> ItemInteraction {
+        var copy = self
+
+        if let existingBookmarked = copy.bookmarked {
+            copy.bookmarked = max(existingBookmarked, (otherInteraction.bookmarked ?? .distantPast))
+        } else {
+            copy.bookmarked = otherInteraction.bookmarked
+        }
+
+        if let existingLastViewed = copy.lastViewed {
+            copy.lastViewed = max(existingLastViewed, (otherInteraction.lastViewed ?? .distantPast))
+        } else {
+            copy.lastViewed = otherInteraction.lastViewed
+        }
+
+        copy.viewCount += otherInteraction.viewCount
+
+        return copy
+    }
+}
+
 // MARK: - Database
 
 /// See <https://github.com/groue/GRDB.swift/blob/master/README.md#records>

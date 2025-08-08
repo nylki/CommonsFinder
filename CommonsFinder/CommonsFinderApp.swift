@@ -28,11 +28,6 @@ struct CommonsFinderApp: App {
     init() {
         postInstallMaintenance()
 
-        #if DEBUG
-            RemoteLogger.shared.isAutomaticConnectionEnabled = true
-            (ImagePipeline.shared.configuration.dataLoader as? DataLoader)?.delegate = URLSessionProxyDelegate()
-        #endif
-
         /** _Comment from Apple's AppIntentsSampleApp_:
         
          Register important objects that are required as dependencies of an `AppIntent` or an `EntityQuery`.
@@ -93,6 +88,12 @@ struct CommonsFinderApp: App {
                         // Handle TipKit errors
                         logger.error("Error initializing TipKit \(error.localizedDescription)")
                     }
+
+                    #if DEBUG
+                        RemoteLogger.shared.isAutomaticConnectionEnabled = true
+                        ImagePipeline.Configuration.isSignpostLoggingEnabled = true
+                        (ImagePipeline.shared.configuration.dataLoader as? DataLoader)?.delegate = URLSessionProxyDelegate()
+                    #endif
                 }
         }
 

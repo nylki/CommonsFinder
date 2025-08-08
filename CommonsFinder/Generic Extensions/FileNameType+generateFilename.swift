@@ -5,7 +5,6 @@
 //  Created by Tom Brewe on 28.12.24.
 //
 
-import CommonsAPI
 import CoreLocation
 import Foundation
 import os.log

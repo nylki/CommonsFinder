@@ -147,6 +147,7 @@
 				"Generic Extensions/Uint64+Identifiable.swift",
 				"Generic Extensions/URL+resizedCommonsImageURL.swift",
 				"Generic Extensions/URL+staticUrls.swift",
+				Networking/DataFetching.swift,
 				"Observable Models/AccountModel.swift",
 				"Observable Models/LocationManager.swift",
 				"Observable Models/Navigation.swift",
