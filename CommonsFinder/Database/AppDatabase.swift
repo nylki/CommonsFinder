@@ -544,19 +544,18 @@ extension AppDatabase {
             /// can we still split this up, while keeping them in the same transaction to be safer?
             if let redirectItems {
                 for (fromWikidataID, toWikidataID) in redirectItems {
-
-                    let existingFromInfo = try fetchCategoryInfo(wikidataID: fromWikidataID)
-
-
                     // This item will replace the original "from" item and poinst to the "to" item
                     var redirectingCategory = Category(
                         wikidataID: fromWikidataID,
                         redirectsTo: toWikidataID
                     )
 
+                    let existingFromInfo = try CategoryInfo.filter(wikidataID: fromWikidataID).fetchOne(db)
+                    let existingToInfo = try CategoryInfo.filter(wikidataID: toWikidataID).fetchOne(db)
+
                     try redirectingCategory.upsert(db)
 
-                    guard var existingToInfo = try fetchCategoryInfo(wikidataID: toWikidataID) else {
+                    guard var existingToInfo else {
                         logger.debug("No  target item of the redirection exists to rewrite interaction.")
                         continue
                     }
@@ -579,7 +578,6 @@ extension AppDatabase {
                         }
                     }
 
-                    try redirectingCategory.upsert(db)
 
                 }
             }
@@ -838,8 +836,12 @@ extension AppDatabase {
         }
     }
 
-    func fetchCategoryInfo(wikidataID: String) throws -> CategoryInfo? {
-        try fetchCategoryInfos(wikidataIDs: [wikidataID]).first
+    func fetchCategoryInfo(wikidataID: String, resolveRedirections: Bool = true) throws -> CategoryInfo? {
+        try fetchCategoryInfos(
+            wikidataIDs: [wikidataID],
+            resolveRedirections: resolveRedirections
+        )
+        .first
     }
 
     func fetchCategoryInfos(commonsCategories: [String]) throws -> [CategoryInfo] {
@@ -852,24 +854,29 @@ extension AppDatabase {
         }
     }
 
-    func fetchCategoryInfos(wikidataIDs: [String]) throws -> [CategoryInfo] {
+    /// takes redirections into account
+    func fetchCategoryInfos(wikidataIDs: [Category.WikidataID], resolveRedirections: Bool) throws -> [CategoryInfo] {
         try dbWriter.read { db in
-            let redirects =
-                try Category
-                .filter(wikidataIDs.contains(Category.Columns.wikidataId))
-                .filter { $0.redirectToWikidataId != nil }
-                .fetchAll(db)
-                .grouped(by: \.wikidataId)
+            let ids: [Category.WikidataID]
 
-            let normalizedIDs = wikidataIDs.map {
-                redirects[$0]?.first?.redirectToWikidataId ?? $0
+            if resolveRedirections {
+                let redirects =
+                    try Category
+                    .filter(wikidataIDs.contains(Category.Columns.wikidataId))
+                    .filter { $0.redirectToWikidataId != nil }
+                    .fetchAll(db)
+                    .grouped(by: \.wikidataId)
+
+                ids = wikidataIDs.map {
+                    redirects[$0]?.first?.redirectToWikidataId ?? $0
+                }
+            } else {
+                ids = wikidataIDs
             }
 
             return
-                try Category
-                .filter(normalizedIDs.contains(Category.Columns.wikidataId))
-                .including(optional: Category.itemInteraction)
-                .asRequest(of: CategoryInfo.self)
+                try CategoryInfo
+                .filter(wikidataIDs: ids)
                 .fetchAll(db)
         }
     }
@@ -910,7 +917,7 @@ extension MediaFileInfo {
 
 extension Category {
     /// finds existing Category based on id, wikidataId, commonsCategory
-    static func findExistingCategory(basedOn category: Category) -> QueryInterfaceRequest<Category> {
+    static func findExistingCategory(basedOn category: Category) -> QueryInterfaceRequest<Self> {
         let id = category.id
         let commonsCategory = category.commonsCategory
         let wikidataId = category.wikidataId
@@ -937,5 +944,23 @@ extension Category {
             return Category.none()
         }
 
+    }
+}
+
+extension CategoryInfo {
+    static func filter(wikidataID: Category.WikidataID) -> QueryInterfaceRequest<Self> {
+        Category
+            .filter { $0.wikidataId == wikidataID }
+            .including(optional: Category.itemInteraction)
+            .asRequest(of: CategoryInfo.self)
+    }
+
+    static func filter(wikidataIDs: [Category.WikidataID]) -> QueryInterfaceRequest<Self> {
+        let idSet = Set(wikidataIDs)
+        return
+            Category
+            .filter { idSet.contains($0.wikidataId) }
+            .including(optional: Category.itemInteraction)
+            .asRequest(of: CategoryInfo.self)
     }
 }

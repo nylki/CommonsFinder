@@ -311,11 +311,98 @@ struct DatabaseTests {
             newCount == 3,
             "We expect to have now only categories to exist in the DB: catUnrelatedA, catUnrelatedB, catC (with linked interaction info of catA and catB)"
         )
+    }
 
 
-        // The merge must keep any itemInteraction (bookmark, lastViewed) that has occured on catA or catB.
-        // TODO: #expect interactions
+    @Test(
+        "Category upserts with redirections",
+        arguments: [
+            (
+                [
+                    Category(wikidataId: "old1", commonsCategory: "old1"),
+                    Category(wikidataId: "new1", commonsCategory: "new1"),
+                ],
+                // redirect: old1 -> new1 etc.
+                [
+                    "old1": "new1",
+                    "other3": "newOther3",
+                    "xyz": "abc",
+                ]
+            ),
+            (
+                [
+                    Category(wikidataId: "other1", commonsCategory: "other1"),
+                    Category(wikidataId: "other2", commonsCategory: "other2"),
+                    Category(wikidataId: "other3", commonsCategory: "other3"),
+                    Category(wikidataId: "old1", commonsCategory: "old1"),
+                    Category(wikidataId: "new1", commonsCategory: "new1"),
+                    Category(wikidataId: "other4", commonsCategory: "other5"),
+                    Category(wikidataId: "newOther3", commonsCategory: "newOther3"),
+                ],
+                [
+                    "old1": "new1",
+                    "other3": "newOther3",
+                ]
+            ),
+        ])
+    func testUpsertWithRedirection(categories: [Category], redirections: [Category.WikidataID: Category.WikidataID]) throws {
+        let dbQueue = try DatabaseQueue(configuration: AppDatabase.makeConfiguration())
+        let repo = try AppDatabase(dbQueue)
+        let wikidataIDs = categories.compactMap(\.wikidataId)
 
+        #expect(
+            try repo.reader.read(Category.fetchCount) == 0,
+            "At the start, we expect the db to be empty for a clean test."
+        )
+
+        let upsertedCategories = try repo.upsert(categories, redirectItemsAfterUpsert: redirections)
+        #expect(upsertedCategories.count == categories.count)
+
+        let fetchedItemsWithResolvedRedirects = try repo.fetchCategoryInfos(wikidataIDs: wikidataIDs, resolveRedirections: true)
+
+        // test the redirection fetch to include the target (to-item, instead of from-item) for all upserted items.
+        for (from, to) in redirections {
+            // Only perform a check if we also attempted to inserted a category matching "to"
+            guard categories.contains(where: { $0.wikidataId == to }) else { continue }
+
+            try repo.reader.read { db in
+                let fromCatExists =
+                    try Category
+                    .filter { $0.redirectToWikidataId == to && $0.wikidataId == from }
+                    .fetchCount(db) == 1
+
+                #expect(fromCatExists, "We expect that the from-category \(from) exists that redirects to \(to)")
+
+                let toCatExists =
+                    try Category
+                    .filter { $0.wikidataId == to }
+                    .fetchCount(db) == 1
+
+                #expect(toCatExists, "We expect that the to-category \(to) exists is the target of the redirect from \(from)")
+            }
+
+            #expect(
+                fetchedItemsWithResolvedRedirects.contains { $0.base.wikidataId == from } == false,
+                "When fetching with `resolveRedirections=true` we don't expect to find a category with from-id \(from), but only the redirected target item."
+            )
+
+            #expect(
+                fetchedItemsWithResolvedRedirects.contains { $0.base.wikidataId == to },
+                "When fetching with `resolveRedirections=true` we expect to find the target category with to-id \(to)"
+            )
+        }
+
+        // test for consistency of created redirection Categories in relation to the test argument redirections.
+        let allItems = try repo.reader.read(Category.fetchAll)
+        for item in allItems {
+            if let redirectTo = item.redirectToWikidataId {
+                let wikidataID = try #require(item.wikidataId)
+                #expect(
+                    redirections[wikidataID] == redirectTo,
+                    "Categories with `redirectToWikidataId` must be present in the `redirections`-arguments."
+                )
+            }
+        }
     }
 }
 

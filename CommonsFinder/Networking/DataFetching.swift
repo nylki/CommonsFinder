@@ -39,7 +39,7 @@ enum DataFetching {
             if forceNetworkRefresh {
                 []
             } else {
-                (try? appDatabase.fetchCategoryInfos(wikidataIDs: wikidataIDs)) ?? []
+                (try? appDatabase.fetchCategoryInfos(wikidataIDs: wikidataIDs, resolveRedirections: true)) ?? []
             }
 
         let cachedIDs = cachedCategoryInfos.compactMap(\.base.wikidataId)

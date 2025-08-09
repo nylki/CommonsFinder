@@ -980,16 +980,16 @@
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/kean/Nuke";
 			requirement = {
-				kind = upToNextMajorVersion;
-				minimumVersion = 12.8.0;
+				kind = exactVersion;
+				version = 12.8.0;
 			};
 		};
 		E24D3BFB2CF3ACDC003484CC /* XCRemoteSwiftPackageReference "FrameUp" */ = {
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/ryanlintott/FrameUp";
 			requirement = {
-				kind = upToNextMajorVersion;
-				minimumVersion = 0.9.9;
+				kind = exactVersion;
+				version = 0.9.9;
 			};
 		};
 		E2549B212CBD6886005DFE14 /* XCRemoteSwiftPackageReference "swift-async-algorithms" */ = {
@@ -1004,16 +1004,16 @@
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/apple/swift-algorithms.git";
 			requirement = {
-				kind = upToNextMajorVersion;
-				minimumVersion = 1.2.1;
+				kind = exactVersion;
+				version = 1.2.1;
 			};
 		};
 		E2549B272CBD69C7005DFE14 /* XCRemoteSwiftPackageReference "swift-collections" */ = {
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/apple/swift-collections.git";
 			requirement = {
-				kind = upToNextMajorVersion;
-				minimumVersion = 1.2.0;
+				kind = exactVersion;
+				version = 1.2.0;
 			};
 		};
 		E257E6BD2D2038F90049FFE8 /* XCRemoteSwiftPackageReference "Lock" */ = {
@@ -1028,16 +1028,16 @@
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/kean/Pulse";
 			requirement = {
-				kind = upToNextMajorVersion;
-				minimumVersion = 5.1.4;
+				kind = exactVersion;
+				version = 5.1.4;
 			};
 		};
 		E290323D2D9EA84700A0CD8F /* XCRemoteSwiftPackageReference "GRDBQuery" */ = {
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/groue/GRDBQuery";
 			requirement = {
-				kind = upToNextMajorVersion;
-				minimumVersion = 0.11.0;
+				kind = exactVersion;
+				version = 0.11.0;
 			};
 		};
 		E2F19BC42CA43C6400E19DCD /* XCRemoteSwiftPackageReference "swift-security" */ = {
@@ -1052,8 +1052,8 @@
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/groue/GRDB.swift.git";
 			requirement = {
-				kind = upToNextMinorVersion;
-				minimumVersion = 7.5.0;
+				kind = exactVersion;
+				version = 7.6.1;
 			};
 		};
 		E2F9791F2D81D01D0088062F /* XCRemoteSwiftPackageReference "h3kit-ios" */ = {
