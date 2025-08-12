@@ -54,7 +54,10 @@ struct ExifData: Codable, Equatable, Hashable {
     /// see discussion: https://exiftool.org/forum/index.php?topic=15654.0
     /// and test with front/back cam for accuracy of angle
     private(set) var destBearing: Double?
+
+    /// positioning error in meters
     private(set) var hPositioningError: Double?
+    private(set) var gpsDOP: Double?
 
     private(set) var latitude: Double?
     private(set) var longitude: Double?
@@ -204,7 +207,11 @@ struct ExifData: Codable, Equatable, Hashable {
         if let gpsData = metadata[kCGImagePropertyGPSDictionary] as? NSDictionary {
             self.altitude = gpsData[kCGImagePropertyGPSAltitude] as? Double
             self.destBearing = gpsData[kCGImagePropertyGPSDestBearing] as? Double
+
+            // TODO: in meters, set accurac
             self.hPositioningError = gpsData[kCGImagePropertyGPSHPositioningError] as? Double
+
+            self.gpsDOP = gpsData[kCGImagePropertyGPSDOP] as? Double
             self.imgDirection = gpsData[kCGImagePropertyGPSImgDirection] as? Double
 
             self.gpsTimestamp = gpsData[kCGImagePropertyGPSTimeStamp] as? String

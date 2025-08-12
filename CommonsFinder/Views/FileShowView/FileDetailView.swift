@@ -41,8 +41,14 @@ import os.log
 
 struct FileDetailView: View {
     // TODO: maybe convert to @Query (or other observation here) and upsert MediaFile into DB on .task and then do dbMediaFile ?? passedMediaFile
-    let mediaFileInfo: MediaFileInfo
-    let navigationNamespace: Namespace.ID
+
+    init(_ initialMediaFileInfo: MediaFileInfo, namespace: Namespace.ID) {
+        self.initialMediaFileInfo = initialMediaFileInfo
+        self.navigationNamespace = namespace
+    }
+
+    private let initialMediaFileInfo: MediaFileInfo
+    private let navigationNamespace: Namespace.ID
 
     @Environment(\.locale) private var locale
     @Environment(\.dismiss) private var dismiss
@@ -51,11 +57,10 @@ struct FileDetailView: View {
     @Environment(\.isPresented) private var isPresented
     @Environment(\.appDatabase) private var appDatabase
 
-    @State private var _updatedMediaFileInfo: MediaFileInfo?
-    private var currentInfo: MediaFileInfo { _updatedMediaFileInfo ?? mediaFileInfo }
+    @State private var updatedMediaFileInfo: MediaFileInfo?
+    private var mediaFileInfo: MediaFileInfo { updatedMediaFileInfo ?? initialMediaFileInfo }
+
     @State private var isShowingEditSheet: MediaFileInfo?
-
-
     @State private var fullDescription: AttributedString?
     @State private var isDescriptionExpanded = false
     @State private var titleAreaHidden = false
@@ -64,13 +69,13 @@ struct FileDetailView: View {
     @State private var resolvedTags: [TagItem] = []
 
     private var tagsHashID: String {
-        "\(currentInfo.mediaFile.categories.hashValue)-\(currentInfo.mediaFile.statements.hashValue)"
+        "\(mediaFileInfo.mediaFile.categories.hashValue)-\(mediaFileInfo.mediaFile.statements.hashValue)"
     }
 
 
     private func saveFileToLastViewed() {
         do {
-            _updatedMediaFileInfo = try appDatabase.updateLastViewed(currentInfo)
+            updatedMediaFileInfo = try appDatabase.updateLastViewed(mediaFileInfo)
         } catch {
             logger.error("Failed to save media file as recently viewed. \(error)")
         }
@@ -78,10 +83,10 @@ struct FileDetailView: View {
 
     private func updateBookmark(_ value: Bool) {
         do {
-            let result = try appDatabase.updateBookmark(currentInfo, bookmark: value)
-            _updatedMediaFileInfo = result
+            let result = try appDatabase.updateBookmark(mediaFileInfo, bookmark: value)
+            updatedMediaFileInfo = result
         } catch {
-            logger.error("Failed to update bookmark on \(currentInfo.mediaFile.name): \(error)")
+            logger.error("Failed to update bookmark on \(mediaFileInfo.mediaFile.name): \(error)")
         }
     }
 
@@ -89,7 +94,7 @@ struct FileDetailView: View {
         do {
             guard
                 let result = try await CommonsAPI.API()
-                    .fetchFullFileMetadata(fileNames: [currentInfo.mediaFile.apiName]).first
+                    .fetchFullFileMetadata(fileNames: [mediaFileInfo.mediaFile.apiName]).first
             else {
                 return
             }
@@ -104,7 +109,7 @@ struct FileDetailView: View {
 
             let refreshedTags = try await refreshedMediaFile.resolveTags(appDatabase: appDatabase)
 
-            _updatedMediaFileInfo = refreshedMediaFileInfo
+            updatedMediaFileInfo = refreshedMediaFileInfo
             resolvedTags = refreshedTags
 
         } catch {
@@ -174,8 +179,8 @@ struct FileDetailView: View {
                 }
             }
             .navigationTransition(.zoom(sourceID: mediaFileInfo.mediaFile.id, in: navigationNamespace))
-            .task(id: currentInfo.mediaFile.fullDescriptions, priority: .userInitiated) {
-                if let attributedString = currentInfo.mediaFile.createAttributedStringDescription(locale: locale) {
+            .task(id: mediaFileInfo.mediaFile.fullDescriptions, priority: .userInitiated) {
+                if let attributedString = mediaFileInfo.mediaFile.createAttributedStringDescription(locale: locale) {
                     fullDescription = attributedString
                 }
             }
@@ -190,7 +195,7 @@ struct FileDetailView: View {
                 do {
                     logger.info("Resolving Tags...")
                     let start = Date.now
-                    let tags = try await currentInfo.mediaFile.resolveTags(appDatabase: appDatabase)
+                    let tags = try await mediaFileInfo.mediaFile.resolveTags(appDatabase: appDatabase)
                     let tagsWhereFetchedAsync = Date.now.timeIntervalSince(start) > 0.1
                     withAnimation(tagsWhereFetchedAsync ? .default : nil) {
                         self.resolvedTags = tags
@@ -224,7 +229,7 @@ struct FileDetailView: View {
                 }
 
                 ZStack {
-                    if let caption = currentInfo.mediaFile.localizedDisplayCaption {
+                    if let caption = mediaFileInfo.mediaFile.localizedDisplayCaption {
                         Text(caption)
                             .font(.title3)
                             .bold()
@@ -263,14 +268,14 @@ struct FileDetailView: View {
 
                 }
 
-                if let inceptionDate = currentInfo.mediaFile.inceptionDate {
+                if let inceptionDate = mediaFileInfo.mediaFile.inceptionDate {
                     Text(inceptionDate, style: .date).font(.caption)
                 }
 
                 tagSection
 
-                if let coordinate = currentInfo.mediaFile.coordinate {
-                    InlineMap(coordinate: coordinate, fileTitle: currentInfo.mediaFile.name)
+                if let coordinate = mediaFileInfo.mediaFile.coordinate {
+                    InlineMap(coordinate: coordinate, fileTitle: mediaFileInfo.mediaFile.name)
                 }
 
 
@@ -286,7 +291,7 @@ struct FileDetailView: View {
         .background(alignment: .top) {
             let isVisible = (!gradientAreaHidden && !titleAreaHidden)
             let pixelClip = 7.0
-            LazyImage(request: currentInfo.thumbRequest) { phase in
+            LazyImage(request: mediaFileInfo.thumbRequest) { phase in
                 if let image = phase.image {
                     image
                         .resizable()
@@ -319,13 +324,13 @@ struct FileDetailView: View {
     private var uploaderAndUploadDate: some View {
         // TODO: differentiate between creator and uploader if they differ
         VStack(alignment: .leading) {
-            let userUploads = NavigationStackItem.userUploads(username: currentInfo.mediaFile.username)
+            let userUploads = NavigationStackItem.userUploads(username: mediaFileInfo.mediaFile.username)
             NavigationLink(value: userUploads) {
-                Label(currentInfo.mediaFile.username, systemImage: "person.fill")
+                Label(mediaFileInfo.mediaFile.username, systemImage: "person.fill")
             }
             .bold()
 
-            Text("uploaded \(currentInfo.mediaFile.uploadDate, style: .relative) ago")
+            Text("uploaded \(mediaFileInfo.mediaFile.uploadDate, style: .relative) ago")
                 .font(.caption)
         }
     }
@@ -344,8 +349,8 @@ struct FileDetailView: View {
             // 3. optionally go to license website
             // eg. attribution might be missing from structured data, but its important for re-use
             // so we may have to use extMetadata "Attribution" which is more complete for legacy wikitext licensing
-            Link(destination: currentInfo.mediaFile.descriptionURL) {
-                if let license = currentInfo.mediaFile.primaryLicenseForDisplay {
+            Link(destination: mediaFileInfo.mediaFile.descriptionURL) {
+                if let license = mediaFileInfo.mediaFile.primaryLicenseForDisplay {
                     Label {
                         ZStack {
                             switch license {
@@ -360,7 +365,7 @@ struct FileDetailView: View {
                             case .CC_BY_SA_4_0, .CC_BY_SA_3_0, .CC_BY_SA_IGO_3_0, .CC_BY_SA_2_5, .CC_BY_SA_2_0, .CC_BY_SA_1_0, .CC_BY_SA_IGO_3_0:
                                 Text("CC BY-SA")
                             default:
-                                if let rawAttribution = currentInfo.mediaFile.rawAttribution {
+                                if let rawAttribution = mediaFileInfo.mediaFile.rawAttribution {
                                     Text(rawAttribution)
                                         .multilineTextAlignment(.leading)
                                 } else {
@@ -393,7 +398,7 @@ struct FileDetailView: View {
                         .font(.system(size: 24))
                     }
                     .labelStyle(VerticalLabelStyle())
-                } else if let copyright = currentInfo.mediaFile.copyrightStatus {
+                } else if let copyright = mediaFileInfo.mediaFile.copyrightStatus {
                     switch copyright {
                     case .publicDomainCopyrightStatus:
                         Text("public domain")
@@ -411,7 +416,7 @@ struct FileDetailView: View {
 
     @ViewBuilder
     private var tagSection: some View {
-        let itemCount = currentInfo.mediaFile.categories.count + currentInfo.mediaFile.statements.map(\.isDepicts).count
+        let itemCount = mediaFileInfo.mediaFile.categories.count + mediaFileInfo.mediaFile.statements.map(\.isDepicts).count
         if !resolvedTags.isEmpty {
             TagsContainerView(tags: resolvedTags)
         } else if itemCount > 0 {
@@ -425,12 +430,12 @@ struct FileDetailView: View {
 
     @ViewBuilder
     private var imageView: some View {
-        LazyImage(request: currentInfo.largeResizedRequest) { phase in
+        LazyImage(request: mediaFileInfo.largeResizedRequest) { phase in
             if let image = phase.image {
                 image
                     .resizable()
                     .aspectRatio(contentMode: .fit)
-            } else if let thumbRequest = currentInfo.thumbRequest {
+            } else if let thumbRequest = mediaFileInfo.thumbRequest {
                 LazyImage(request: thumbRequest) { phase in
                     Group {
                         if let image = phase.image {
@@ -508,8 +513,8 @@ extension WikidataItemID {
     @Previewable @Namespace var namespace
     NavigationView {
         FileDetailView(
-            mediaFileInfo: .makeRandomUploaded(id: "Lorem Ipsum", .squareImage),
-            navigationNamespace: namespace
+            .makeRandomUploaded(id: "Lorem Ipsum", .squareImage),
+            namespace: namespace
         )
     }
 }

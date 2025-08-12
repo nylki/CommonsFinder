@@ -5,7 +5,9 @@
 //  Created by Tom Brewe on 04.03.25.
 //
 
+import Algorithms
 import CommonsAPI
+import GRDB
 import H3kit
 import NukeUI
 import SwiftUI
@@ -37,27 +39,12 @@ struct MapPopup: View {
     let clusterIndex: H3Index
     @Binding var scrollPosition: ScrollPosition
     /// wikidataItems are directly visualized
-    let wikidataItems: [CategoryInfo]
+    let rawCategories: [Category]
     /// rawMediaItems are not directly visualized, but passed to the pagination model to fetch the metadata including image url and caption
-    let rawMediaItems: [GeosearchListItem]
+    let rawMediaItems: [GeoSearchFileItem]
 
     @State private var mediaPaginationModel: PaginatableMediaFiles? = nil
-
-    private var selectedMediaFile: MediaFileInfo? {
-        if let selectedID = scrollPosition.viewID(type: String.self) {
-            mediaPaginationModel?.mediaFileInfos.first { $0.id == selectedID }
-        } else {
-            nil
-        }
-    }
-
-    private var selectedWikiItem: CategoryInfo? {
-        if let selectedID = scrollPosition.viewID(type: String.self) {
-            wikidataItems.first { $0.id == selectedID }
-        } else {
-            nil
-        }
-    }
+    @State private var resolvedCategories: [CategoryInfo] = []
 
 
     @Environment(\.appDatabase) private var appDatabase
@@ -72,7 +59,7 @@ struct MapPopup: View {
 
     var body: some View {
         VStack {
-            if selectedItemType != .empty, !wikidataItems.isEmpty, !rawMediaItems.isEmpty {
+            if selectedItemType != .empty, !rawCategories.isEmpty, !rawMediaItems.isEmpty {
                 Picker("", selection: $selectedItemType) {
                     Text("Locations").tag(ItemType.wikiItem)
                     Text("Images").tag(ItemType.mediaItem)
@@ -121,7 +108,7 @@ struct MapPopup: View {
                 }
                 .onAppear {
                     if selectedItemType == .empty {
-                        if !wikidataItems.isEmpty {
+                        if !rawCategories.isEmpty {
                             selectedItemType = .wikiItem
                         } else if !rawMediaItems.isEmpty {
                             selectedItemType = .mediaItem
@@ -159,19 +146,46 @@ struct MapPopup: View {
     @ViewBuilder
     private var wikiItemsList: some View {
         LazyHStack {
-            ForEach(wikidataItems) { item in
+            ForEach(resolvedCategories) { item in
                 let isSelected = item.id == scrollPosition.viewID(type: String.self)
                 MapPopupCategoryTeaser(item: item, isSelected: isSelected, namespace: namespace)
             }
         }
         .scrollTargetLayout()
-        .onChange(of: wikidataItems, initial: true) { oldValue, newValue in
+        .onChange(of: resolvedCategories, initial: true) { oldValue, newValue in
             // set scroll position to first image if not yet
             if scrollPosition.viewID == nil,
                 let firstItem = newValue.first
             {
                 scrollPosition = .init(id: firstItem.id)
             }
+        }
+        .task(id: rawCategories) {
+            do {
+                let wikidataIDs: [Category.WikidataID] = rawCategories.compactMap(\.wikidataId)
+                let observation = ValueObservation.tracking { db in
+                    try CategoryInfo
+                        .fetchAll(db, wikidataIDs: wikidataIDs, resolveRedirections: true)
+                }
+                for try await result in observation.values(in: appDatabase.reader) {
+                    let fetchedCategories =
+                        result
+                        .grouped(by: \.base.wikidataId)
+
+                    let originalCategories =
+                        rawCategories
+                        .map { CategoryInfo($0, itemInteraction: nil) }
+                        .grouped(by: \.base.wikidataId)
+
+                    resolvedCategories = wikidataIDs.compactMap { wikidataID in
+                        (fetchedCategories[wikidataID]?.first ?? originalCategories[wikidataID]?.first)
+                    }
+
+                }
+            } catch {
+                logger.error("Failed to observe Category changes in MapPopup \(error)")
+            }
+
         }
 
     }
@@ -241,7 +255,7 @@ struct MapPopup: View {
         .pseudoSheet(isPresented: $isShowing) {
             MapPopup(
                 clusterIndex: 640_371_092_026_114_823, scrollPosition: $scrollPosition,
-                wikidataItems: [.randomItem(id: "1"), .randomItem(id: "2"), .randomItem(id: "3"), .randomItem(id: "4"), .randomItem(id: "5"), .randomItem(id: "5")],
+                rawCategories: [.randomItem(id: "1"), .randomItem(id: "2"), .randomItem(id: "3"), .randomItem(id: "4"), .randomItem(id: "5"), .randomItem(id: "5")],
                 rawMediaItems: [
                     //                .makeRandomUploaded(id: "1", .squareImage),
                     //                .makeRandomUploaded(id: "2", .horizontalImage),

@@ -1,34 +1,14 @@
 //
-//  AppDatabase+SwiftUI.swift
+//  AppDatabase+Queries.swift
 //  CommonsFinder
 //
-//  Created by Tom Brewe on 04.10.24.
+//  Created by Tom Brewe on 11.08.25.
 //
 
+import Foundation
 import GRDB
 import GRDBQuery
-import SwiftUI
 import os.log
-
-// MARK: - Give SwiftUI access to the AppDatabase
-
-// Define a new environment key that grants access to a `AppDatabase`.
-// The technique is documented at
-// <https://developer.apple.com/documentation/swiftui/environmentvalues/>.
-extension EnvironmentValues {
-    @Entry var appDatabase: AppDatabase = .empty()
-}
-
-extension View {
-    /// Sets both the `database` (for writes) and `databaseContext`
-    /// (for `@Query`) environment values.
-    ///
-    func appDatabase(_ repository: AppDatabase) -> some View {
-        self
-            .environment(\.appDatabase, repository)
-            .databaseContext(.readOnly { repository.reader })
-    }
-}
 
 // MARK: - Queries
 
@@ -121,14 +101,22 @@ struct AllBookmarksWikiItemRequest: ValueObservationQueryable {
 
     func fetch(_ db: Database) throws -> [CategoryInfo] {
         try Category
+            .all()
+            .includeInteractionsWithBookmarks()
+            .fetchAll(db)
+    }
+}
+
+extension QueryInterfaceRequest<Category> {
+    func includeInteractionsWithBookmarks() -> QueryInterfaceRequest<CategoryInfo> {
+        Category
             .including(
                 required: Category
                     .itemInteraction
                     .filter { $0.bookmarked != nil }
-                    .order(\.lastViewed.desc)
+                    .order(\.bookmarked.desc)
             )
             .asRequest(of: CategoryInfo.self)
-            .fetchAll(db)
     }
 }
 
@@ -140,6 +128,57 @@ struct MediaFileRequest: ValueObservationQueryable {
     func fetch(_ db: Database) throws -> MediaFile? {
         try MediaFile
             .fetchOne(db, id: id)
+    }
+}
+
+
+extension Category {
+    /// finds existing Category based on id, wikidataId, commonsCategory
+    static func findExistingCategory(basedOn category: Category) -> QueryInterfaceRequest<Self> {
+        let id = category.id
+        let commonsCategory = category.commonsCategory
+        let wikidataId = category.wikidataId
+
+        guard id != nil || commonsCategory != nil || wikidataId != nil else {
+            return Category.none()
+        }
+
+        if let id {
+            return Category.filter(id: id)
+        } else if let wikidataId, let commonsCategory {
+            return Category.filter(
+                (Category.Columns.wikidataId == wikidataId) || (Category.Columns.commonsCategory == commonsCategory)
+            )
+        } else if let commonsCategory {
+            return Category.filter(
+                Category.Columns.commonsCategory == commonsCategory
+            )
+        } else if let wikidataId {
+            return Category.filter(
+                Category.Columns.wikidataId == wikidataId
+            )
+        } else {
+            return Category.none()
+        }
+
+    }
+}
+
+extension CategoryInfo {
+    static func filter(wikidataID: Category.WikidataID) -> QueryInterfaceRequest<Self> {
+        Category
+            .filter { $0.wikidataId == wikidataID }
+            .including(optional: Category.itemInteraction)
+            .asRequest(of: CategoryInfo.self)
+    }
+
+    static func filter(wikidataIDs: [Category.WikidataID]) -> QueryInterfaceRequest<Self> {
+        let idSet = Set(wikidataIDs)
+        return
+            Category
+            .filter { idSet.contains($0.wikidataId) }
+            .including(optional: Category.itemInteraction)
+            .asRequest(of: CategoryInfo.self)
     }
 }
 

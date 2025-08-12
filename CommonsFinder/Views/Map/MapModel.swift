@@ -14,62 +14,6 @@ import OrderedCollections
 import SwiftUI
 import os.log
 
-enum GeoItem: GeoReferencable, Identifiable {
-    case mediaFile(GeosearchListItem)
-    case wikidataItem(Category)  // FIXME: use CategoryInfo!?
-
-    var id: String {
-        switch self {
-        case .mediaFile(let geosearchListItem):
-            "\(geosearchListItem.id)"
-        case .wikidataItem(let wikidataItem):
-            "\(wikidataItem.wikidataId ?? String(wikidataItem.hashValue))"
-        }
-    }
-
-    var latitude: Double? {
-        switch self {
-        case .mediaFile(let geosearchListItem):
-            geosearchListItem.lat
-        case .wikidataItem(let wikidataItem):
-            wikidataItem.location?.latitude
-        }
-    }
-
-    var longitude: Double? {
-        switch self {
-        case .mediaFile(let geosearchListItem):
-            geosearchListItem.lon
-        case .wikidataItem(let wikidataItem):
-            wikidataItem.location?.longitude
-        }
-    }
-
-    var isWikidataItem: Bool {
-        if case .wikidataItem = self { true } else { false }
-    }
-
-    var isMediaFile: Bool {
-        if case .mediaFile = self { true } else { false }
-    }
-
-    var mediaFileItem: GeosearchListItem? {
-        switch self {
-        case .mediaFile(let geosearchListItem):
-            geosearchListItem
-        default: nil
-        }
-    }
-
-    var wikidataItem: Category? {
-        switch self {
-        case .wikidataItem(let wikidataItem):
-            wikidataItem
-        default: nil
-        }
-    }
-}
-
 @Observable @MainActor final class MapModel {
     var position: MapCameraPosition = .automatic
     var locale: Locale = .current
@@ -78,6 +22,7 @@ enum GeoItem: GeoReferencable, Identifiable {
 
     @ObservationIgnored
     private var refreshTask: Task<Void, Never>?
+    private var dbTask: Task<Void, Never>?
 
     private var refreshRegionChannel: AsyncChannel<MKCoordinateRegion> = .init()
     private(set) var lastRefreshedRegions: OrderedSet<MKCoordinateRegion> = .init()
@@ -87,14 +32,14 @@ enum GeoItem: GeoReferencable, Identifiable {
     // FIXME: constantly filling the cluster collections may end up eating all memory
     // we need to prune them when they get too big, based to distance to current region
     @ObservationIgnored
-    private(set) var mediaClustering: GeoClustering<GeosearchListItem> = .init()
+    private(set) var mediaClustering: GeoClustering<GeoSearchFileItem> = .init()
     @ObservationIgnored
-    private(set) var wikiItemClustering: GeoClustering<CategoryInfo> = .init()
+    private(set) var wikiItemClustering: GeoClustering<Category> = .init()
 
     private(set) var clusters:
         [UInt64: (
-            mediaItems: [GeosearchListItem],
-            wikiItems: [CategoryInfo]
+            mediaItems: [GeoSearchFileItem],
+            wikiItems: [Category]
         )] = .init()
 
     private(set) var selectedCluster: H3Index?
@@ -102,7 +47,7 @@ enum GeoItem: GeoReferencable, Identifiable {
 
     var isSheetPresented = false
     /// The item that is scrolled to inside the sheet when tapping on a cluster circle
-    var focusedClusterItem = ScrollPosition(idType: String.self)
+    var focusedClusterItem = ScrollPosition(idType: GeoReferencable.GeoRefID.self)
 
 
     @ObservationIgnored
@@ -140,8 +85,8 @@ enum GeoItem: GeoReferencable, Identifiable {
         let elapsed = clock.measure {
 
 
-            var mediaClusters: [UInt64: [GeosearchListItem]] = .init()
-            var wikiItemClusters: [UInt64: [CategoryInfo]] = .init()
+            var mediaClusters: [UInt64: [GeoSearchFileItem]] = .init()
+            var wikiItemClusters: [UInt64: [Category]] = .init()
 
             if region.diagonalMeters < imageVisibilityThreshold {
                 mediaClusters = mediaClustering.clusters(
@@ -162,8 +107,8 @@ enum GeoItem: GeoReferencable, Identifiable {
             let clusterIndices = Set(mediaClusters.keys).union(wikiItemClusters.keys)
             var clusterDict = [
                 UInt64: (
-                    mediaItems: [GeosearchListItem],
-                    wikiItems: [CategoryInfo]
+                    mediaItems: [GeoSearchFileItem],
+                    wikiItems: [Category]
                 )
             ]()
 
@@ -204,9 +149,7 @@ enum GeoItem: GeoReferencable, Identifiable {
                 async let mediaTask = fetchMediaFiles(region: region, maxDiagonalMapLength: imageVisibilityThreshold)
                 let (wikidataItems, mediaItems) = await (wikiItemsTask, mediaTask)
 
-                let wikidataItemInfo: [CategoryInfo] = wikidataItems.map {
-                    .init($0)
-                }
+                let wikidataItemInfo: [Category] = wikidataItems
                 wikiItemClustering.add(wikidataItemInfo)
                 mediaClustering.add(mediaItems)
                 refreshClusters()
@@ -307,12 +250,12 @@ private func fetchWikiItems(region: MKCoordinateRegion, maxDiagonalMapLength: Do
     }
 }
 
-private func fetchMediaFiles(region: MKCoordinateRegion, maxDiagonalMapLength: Double) async -> [GeosearchListItem] {
+private func fetchMediaFiles(region: MKCoordinateRegion, maxDiagonalMapLength: Double) async -> [GeoSearchFileItem] {
     guard region.diagonalMeters < maxDiagonalMapLength else { return [] }
     do {
         let boundingBox = region.boundingBox
 
-        let items: [GeosearchListItem] = try await API.shared
+        let items: [GeoSearchFileItem] = try await API.shared
             .geoSearchFiles(
                 topLeft: boundingBox.topLeft,
                 bottomRight: boundingBox.bottomRight
@@ -366,12 +309,19 @@ private func isRegionDiffSignificant(oldRegion: MKCoordinateRegion?, newRegion: 
 
 }
 
-extension GeosearchListItem: GeoReferencable {
+extension GeoSearchFileItem: GeoReferencable {
+    var geoRefID: GeoRefID {
+        self.id
+    }
+
     var latitude: Double? { lat }
     var longitude: Double? { lon }
 }
 
-extension CategoryInfo: GeoReferencable {
-    var latitude: Double? { base.latitude }
-    var longitude: Double? { base.longitude }
+extension Category: GeoReferencable {
+    var geoRefID: GeoRefID {
+        let geoRefID = wikidataId ?? commonsCategory
+        assert(geoRefID != nil)
+        return geoRefID!
+    }
 }

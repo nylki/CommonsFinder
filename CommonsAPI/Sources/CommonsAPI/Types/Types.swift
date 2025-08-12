@@ -215,7 +215,7 @@ public struct RawFileMetadata: Sendable, Identifiable {
 }
 
 
-public struct GeosearchListItem: Decodable, Equatable, Hashable, Sendable, Identifiable {
+public struct GeoSearchFileItem: Decodable, Equatable, Hashable, Sendable, Identifiable {
     public let pageid: Int64
     public let ns: MediawikiNamespace
     public let title: String
@@ -770,7 +770,7 @@ internal struct FileMetadataListResponse: Decodable, Sendable {
 }
 
 public struct GeosearchListResponse: Decodable, Sendable {
-    let geosearch: [GeosearchListItem]
+    let geosearch: [GeoSearchFileItem]
 }
 
 // query: list=search

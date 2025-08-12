@@ -854,30 +854,9 @@ extension AppDatabase {
         }
     }
 
-    /// takes redirections into account
     func fetchCategoryInfos(wikidataIDs: [Category.WikidataID], resolveRedirections: Bool) throws -> [CategoryInfo] {
         try dbWriter.read { db in
-            let ids: [Category.WikidataID]
-
-            if resolveRedirections {
-                let redirects =
-                    try Category
-                    .filter(wikidataIDs.contains(Category.Columns.wikidataId))
-                    .filter { $0.redirectToWikidataId != nil }
-                    .fetchAll(db)
-                    .grouped(by: \.wikidataId)
-
-                ids = wikidataIDs.map {
-                    redirects[$0]?.first?.redirectToWikidataId ?? $0
-                }
-            } else {
-                ids = wikidataIDs
-            }
-
-            return
-                try CategoryInfo
-                .filter(wikidataIDs: ids)
-                .fetchAll(db)
+            try CategoryInfo.fetchAll(db, wikidataIDs: wikidataIDs, resolveRedirections: resolveRedirections)
         }
     }
 
@@ -915,52 +894,29 @@ extension MediaFileInfo {
     }
 }
 
-extension Category {
-    /// finds existing Category based on id, wikidataId, commonsCategory
-    static func findExistingCategory(basedOn category: Category) -> QueryInterfaceRequest<Self> {
-        let id = category.id
-        let commonsCategory = category.commonsCategory
-        let wikidataId = category.wikidataId
-
-        guard id != nil || commonsCategory != nil || wikidataId != nil else {
-            return Category.none()
-        }
-
-        if let id {
-            return Category.filter(id: id)
-        } else if let wikidataId, let commonsCategory {
-            return Category.filter(
-                (Category.Columns.wikidataId == wikidataId) || (Category.Columns.commonsCategory == commonsCategory)
-            )
-        } else if let commonsCategory {
-            return Category.filter(
-                Category.Columns.commonsCategory == commonsCategory
-            )
-        } else if let wikidataId {
-            return Category.filter(
-                Category.Columns.wikidataId == wikidataId
-            )
-        } else {
-            return Category.none()
-        }
-
-    }
-}
-
 extension CategoryInfo {
-    static func filter(wikidataID: Category.WikidataID) -> QueryInterfaceRequest<Self> {
-        Category
-            .filter { $0.wikidataId == wikidataID }
-            .including(optional: Category.itemInteraction)
-            .asRequest(of: CategoryInfo.self)
-    }
+    /// takes redirections into account
+    static func fetchAll(_ db: Database, wikidataIDs: [Category.WikidataID], resolveRedirections: Bool) throws -> [Self] {
+        let ids: [Category.WikidataID]
 
-    static func filter(wikidataIDs: [Category.WikidataID]) -> QueryInterfaceRequest<Self> {
-        let idSet = Set(wikidataIDs)
+        if resolveRedirections {
+            let redirects =
+                try Category
+                .filter(wikidataIDs.contains(Category.Columns.wikidataId))
+                .filter { $0.redirectToWikidataId != nil }
+                .fetchAll(db)
+                .grouped(by: \.wikidataId)
+
+            ids = wikidataIDs.map {
+                redirects[$0]?.first?.redirectToWikidataId ?? $0
+            }
+        } else {
+            ids = wikidataIDs
+        }
+
         return
-            Category
-            .filter { idSet.contains($0.wikidataId) }
-            .including(optional: Category.itemInteraction)
-            .asRequest(of: CategoryInfo.self)
+            try CategoryInfo
+            .filter(wikidataIDs: ids)
+            .fetchAll(db)
     }
 }

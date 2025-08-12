@@ -743,7 +743,7 @@ public actor API {
     }
     
     // https://commons.wikimedia.org/w/api.php?action=query&format=json&prop=&continue=gsroffset%7C%7C&generator=geosearch&redirects=1&formatversion=2&ggscoord=37.786971%7C-122.399677&ggsradius=5000&ggssort=relevance&ggslimit=500&ggsglobe=earth&ggsnamespace=6&ggsprop=
-    public func geoSearchFiles(topLeft: CLLocationCoordinate2D, bottomRight: CLLocationCoordinate2D) async throws -> [GeosearchListItem] {
+    public func geoSearchFiles(topLeft: CLLocationCoordinate2D, bottomRight: CLLocationCoordinate2D) async throws -> [GeoSearchFileItem] {
         
         enum Sort: String {
             case distance

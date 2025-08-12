@@ -52,6 +52,7 @@ import os.log
             do {
                 let ids = mediaFileInfos.map(\.id)
 
+
                 let observation = ValueObservation.tracking { db in
                     try MediaFileInfo.fetchAll(ids: ids, db: db)
                 }

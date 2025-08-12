@@ -10,15 +10,17 @@ import H3kit
 import MapKit
 import os.log
 
-protocol GeoReferencable: Identifiable, Hashable, Equatable {
+protocol GeoReferencable: Hashable, Equatable {
+    typealias GeoRefID = String
     var latitude: Double? { get }
     var longitude: Double? { get }
+    var geoRefID: GeoRefID { get }
 }
 
 struct GeoClustering<Item: GeoReferencable> {
     typealias Index = UInt64
-    var items: [Item.ID: Item]
-    var h3IndexTree: [H3.Resolution: [Index: Set<Item.ID>]]
+    var items: [GeoReferencable.GeoRefID: Item]
+    var h3IndexTree: [H3.Resolution: [Index: Set<Item.GeoRefID>]]
 
 
     init() {
@@ -89,7 +91,7 @@ struct GeoClustering<Item: GeoReferencable> {
             return false
         }
 
-        items[item.id] = item
+        items[item.geoRefID] = item
         for resolution in H3.Resolution.allCases {
             do {
                 let index = try H3.latLngToCell(lat: latRad, lng: lngRad, resolution: resolution)
@@ -97,7 +99,7 @@ struct GeoClustering<Item: GeoReferencable> {
                 if h3IndexTree[resolution]?[index] == nil {
                     h3IndexTree[resolution]?[index] = .init()
                 }
-                h3IndexTree[resolution]?[index]?.insert(item.id)
+                h3IndexTree[resolution]?[index]?.insert(item.geoRefID)
             } catch {
                 logger.error("Failed to add coordinate \(error)")
             }
