@@ -121,7 +121,6 @@
 				"Database/AppDatabase+Queries.swift",
 				"Database/AppDatabase+Repositories.swift",
 				"Database/AppDatabase+SwiftUIEnvironment.swift",
-				Database/DatabaseTests.swift,
 				Database/FTS5Tokenizer.swift,
 				Database/Model/Category.swift,
 				Database/Model/CategoryInfo.swift,
@@ -157,6 +156,8 @@
 				"Observable Models/UploadManager/MockUploadManager.swift",
 				"Observable Models/UploadManager/UploadManager.swift",
 				"Preview Content/Preview Assets.xcassets",
+				Tests/DatabaseTests.swift,
+				Tests/GeoVectorMathTests.swift,
 				Types/DraftAnalysisResult.swift,
 				Types/DraftMediaLicense.swift,
 				"Types/DraftMediaLicense+CommonsAPI.swift",
@@ -171,7 +172,6 @@
 				Utilities/ExifData.swift,
 				Utilities/GeoPlacemarkCache.swift,
 				Utilities/GeoVectorMath.swift,
-				Utilities/GeoVectorMathTests.swift,
 				Utilities/Logging.swift,
 				Utilities/OverWriteExifLocation.swift,
 				Utilities/ValidationUtils.swift,
@@ -252,9 +252,9 @@
 		E2DC53012D146B78009EF370 /* Exceptions for "CommonsFinder" folder in "CommonsFinder" target */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
-				Database/DatabaseTests.swift,
 				Info.plist,
-				Utilities/GeoVectorMathTests.swift,
+				Tests/DatabaseTests.swift,
+				Tests/GeoVectorMathTests.swift,
 			);
 			target = E2839FE62CA2DD900053C312 /* CommonsFinder */;
 		};
