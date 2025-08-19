@@ -27,7 +27,10 @@ import os.log
     /// this holds the information about filename, filetype and Data.
     var fileItem: FileItem?
 
-    var exifData: ExifData?
+    @ObservationIgnored
+    lazy var exifData: ExifData? = {
+        draft.loadExifData()
+    }()
 
     init(fileItem: FileItem) {
         addedDate = .now
@@ -35,7 +38,6 @@ import os.log
         self.id = fileItem.id
         self.draft = draft
         self.fileItem = fileItem
-        exifData = draft.loadExifData()
     }
 
     /// Use an already fully initialized draft
@@ -43,7 +45,6 @@ import os.log
         addedDate = .now
         id = existingDraft.id
         draft = existingDraft
-        exifData = draft.loadExifData()
     }
 
     // TODO: always copy to disk. Because re-opening drafts will also read from Disk.
