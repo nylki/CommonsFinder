@@ -21,6 +21,7 @@ extension Category {
             instances: apiItem.instances ?? [],
             latitude: apiItem.latitude,
             longitude: apiItem.longitude,
+            areaSqm: apiItem.area,
             image: apiItem.image
         )
     }
@@ -39,6 +40,7 @@ extension Category {
             instances: [],
             latitude: nil,
             longitude: nil,
+            areaSqm: nil,
             image: nil
         )
     }

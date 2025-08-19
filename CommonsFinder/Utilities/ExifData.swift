@@ -53,7 +53,15 @@ struct ExifData: Codable, Equatable, Hashable {
     private(set) var altitude: Double?
     /// see discussion: https://exiftool.org/forum/index.php?topic=15654.0
     /// and test with front/back cam for accuracy of angle
-    private(set) var destBearing: Double?
+    private var destBearing: Double?
+
+    var normalizedBearing: Double? {
+        if let destBearing {
+            GeoVectorMath.normalizeBearing(degrees: destBearing)
+        } else {
+            nil
+        }
+    }
 
     /// positioning error in meters
     private(set) var hPositioningError: Double?
@@ -69,33 +77,11 @@ struct ExifData: Codable, Equatable, Hashable {
     // Combined from both above
     private(set) var gpsDate: Date?
 
-    var location: CLLocation? {
-        guard let latitude, let longitude else {
-            return nil
-        }
-
-        lazy var coordinate = CLLocationCoordinate2D(latitude: latitude, longitude: longitude)
-
-        if let altitude, let speed, let gpsDate, let hPositioningError, let imgDirection {
-            return CLLocation(
-                coordinate: coordinate,
-                altitude: altitude,
-                horizontalAccuracy: hPositioningError,
-                verticalAccuracy: hPositioningError,  // technically not 100% correct but vPositioningError does not exist?
-                course: imgDirection,
-                speed: speed,
-                timestamp: gpsDate
-            )
-        } else if let altitude, let gpsDate, let hPositioningError {
-            return CLLocation(
-                coordinate: coordinate,
-                altitude: altitude,
-                horizontalAccuracy: hPositioningError,
-                verticalAccuracy: hPositioningError,
-                timestamp: gpsDate
-            )
+    var coordinate: CLLocationCoordinate2D? {
+        if let latitude, let longitude {
+            CLLocationCoordinate2D(latitude: latitude, longitude: longitude)
         } else {
-            return CLLocation(latitude: latitude, longitude: longitude)
+            nil
         }
     }
 

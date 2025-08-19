@@ -58,8 +58,8 @@ struct MediaFileDraft: Identifiable, Equatable, Codable, Hashable {
         case .noLocation:
             nil
         case .exifLocation:
-            exifData?.location?.coordinate
-        case .userDefinedLocation(let latitude, let longitude):
+            exifData?.coordinate
+        case .userDefinedLocation(let latitude, let longitude, _):
             .init(latitude: latitude, longitude: longitude)
         }
     }
@@ -71,7 +71,7 @@ struct MediaFileDraft: Identifiable, Equatable, Codable, Hashable {
         /// location data from EXIF will be used for wikitext and structured data
         case exifLocation
         /// user defined location data will be used for wikitext and structured data, EXIF-location will be overwritten by user defined location
-        case userDefinedLocation(latitude: Double, longitude: Double)
+        case userDefinedLocation(latitude: CLLocationDegrees, longitude: CLLocationDegrees, precision: CLLocationDegrees)
     }
 
     var tags: [TagItem]

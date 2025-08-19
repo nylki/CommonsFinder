@@ -215,6 +215,7 @@ final class AppDatabase: Sendable {
                 t.column("aliases", .jsonText)
                 t.column("latitude", .numeric)
                 t.column("longitude", .numeric)
+                t.column("areaSqm", .numeric)
 
                 t.column("instances", .jsonText)
                 t.column("image", .text)

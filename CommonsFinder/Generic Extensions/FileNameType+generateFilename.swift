@@ -12,7 +12,7 @@ import os.log
 extension FileNameType {
     @MainActor
     func generateFilename(
-        location: CLLocation?, date: Date?, desc: [MediaFileDraft.DraftCaptionWithDescription], locale: Locale, tags: [TagItem]
+        coordinate: CLLocationCoordinate2D?, date: Date?, desc: [MediaFileDraft.DraftCaptionWithDescription], locale: Locale, tags: [TagItem]
     ) async
         -> String?
     {
@@ -24,7 +24,7 @@ extension FileNameType {
         case .captionAndDate:
             generateCaptionAndDateFilename(desc: desc, date: date, locale: locale)
         case .geoAndDate:
-            await generateGeoAndDateFilename(date: date, location: location, locale: locale)
+            await generateGeoAndDateFilename(date: date, coordinate: coordinate, locale: locale)
         }
     }
 }
@@ -52,11 +52,13 @@ private func generateCaptionAndDateFilename(desc: [MediaFileDraft.DraftCaptionWi
 }
 
 
-private func generateGeoAndDateFilename(date: Date?, location: CLLocation?, locale: Locale) async -> String {
+private func generateGeoAndDateFilename(date: Date?, coordinate: CLLocationCoordinate2D?, locale: Locale) async -> String {
     var geoString: String?
-    if let location {
+    if let coordinate {
         do {
-            geoString = try await location.generateHumanReadableString(includeCountry: false)
+
+            geoString = try await CLLocation(latitude: coordinate.latitude, longitude: coordinate.longitude)
+                .generateHumanReadableString(includeCountry: false)
         } catch {
             logger.warning("Failed to reverse geo location")
         }

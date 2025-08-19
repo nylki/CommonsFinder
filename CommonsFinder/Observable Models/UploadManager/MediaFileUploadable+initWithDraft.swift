@@ -115,16 +115,29 @@ extension MediaFileUploadable {
         statements.append(.inception(wikidataDate))
 
         let exifData = try? ExifData(url: localFileURL)
-        let exifLocation = exifData?.location
+        let exifCoordinate = exifData?.coordinate
 
         switch draft.locationHandling {
         case .exifLocation:
-            if let location = exifLocation {
-                statements.append(.coordinatesOfViewpoint(location, heading: location.course))
+            if let exifData, let exifCoordinate {
+                let precision =
+                    if let hPositioningError = exifData.hPositioningError {
+                        GeoVectorMath.degrees(fromMeters: hPositioningError, atLatitude: exifCoordinate.latitude).latitudeDegrees
+                    } else {
+                        // If hPositioningError is missing for some reason we assign a low precision to this coordinate
+                        1.0
+                    }
+                statements.append(
+                    .coordinatesOfViewpoint(
+                        exifCoordinate,
+                        altitude: exifData.altitude ?? 0,
+                        precision: precision,
+                        heading: exifData.normalizedBearing
+                    ))
 
                 var locationParts: [String] = []
-                locationParts.append("Location|\(location.coordinate.latitude)|\(location.coordinate.longitude)")
-                if let heading = exifLocation?.course {
+                locationParts.append("Location|\(exifCoordinate.latitude)|\(exifCoordinate.longitude)")
+                if let heading = exifData.normalizedBearing {
                     locationParts.append("heading: \(heading)")
                 }
 
@@ -135,12 +148,18 @@ extension MediaFileUploadable {
             }
         case .noLocation:
             wikitextLocation = ""
-        case .userDefinedLocation(let latitude, let longitude):
-            statements.append(.coordinatesOfViewpoint(.init(latitude: latitude, longitude: longitude), heading: nil))
+        case .userDefinedLocation(let latitude, let longitude, let precision):
+            let coordinate = CLLocationCoordinate2D(latitude: latitude, longitude: longitude)
+            let altitude = exifData?.altitude ?? 0
+
+            statements.append(.coordinatesOfViewpoint(coordinate, altitude: altitude, precision: precision, heading: exifData?.normalizedBearing))
 
             var locationParts: [String] = []
             locationParts.append("Location|\(latitude)|\(longitude)")
-            if let heading = exifLocation?.course {
+            // still use headinf from exif even if user adjusted the coordinates, because the heading is measured independently
+            // and is most likely be accurate.
+
+            if let heading = exifData?.normalizedBearing {
                 locationParts.append("heading: \(heading)")
             }
             wikitextLocation = "{{\(locationParts.joined(separator: "|"))}}"

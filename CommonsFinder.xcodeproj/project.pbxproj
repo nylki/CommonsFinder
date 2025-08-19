@@ -141,6 +141,7 @@
 				"Generic Extensions/CLLocation+generateHumanReadableString.swift",
 				"Generic Extensions/Date+dateOnlyWikidataCompatibleISOString.swift",
 				"Generic Extensions/FileNameType+generateFilename.swift",
+				"Generic Extensions/FloatingPoint+interpolateRanges.swift",
 				"Generic Extensions/Locale+languageCode.swift",
 				"Generic Extensions/Sequence+sortedByKeyPath.swift",
 				"Generic Extensions/String+CapitalizedFirstLetter.swift",
@@ -158,6 +159,7 @@
 				"Preview Content/Preview Assets.xcassets",
 				Tests/DatabaseTests.swift,
 				Tests/GeoVectorMathTests.swift,
+				Tests/OtherTests.swift,
 				Types/DraftAnalysisResult.swift,
 				Types/DraftMediaLicense.swift,
 				"Types/DraftMediaLicense+CommonsAPI.swift",
@@ -255,6 +257,7 @@
 				Info.plist,
 				Tests/DatabaseTests.swift,
 				Tests/GeoVectorMathTests.swift,
+				Tests/OtherTests.swift,
 			);
 			target = E2839FE62CA2DD900053C312 /* CommonsFinder */;
 		};

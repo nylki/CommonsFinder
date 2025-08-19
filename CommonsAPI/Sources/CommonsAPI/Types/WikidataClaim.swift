@@ -97,13 +97,13 @@ public struct WikidataClaim: Codable, Hashable, Equatable, Sendable {
             }
             
             public struct Coordinate: Codable, Equatable, Hashable, Sendable {
-                public let latitude: Double
-                public let longitude: Double
+                public let latitude: CLLocationDegrees
+                public let longitude: CLLocationDegrees
                 public let altitude: Double?
-                public let precision: Double?
+                public let precision: CLLocationDegrees?
                 public let globe: URL
                 
-                public init(latitude: Double, longitude: Double, altitude: Double?, precision: Double?, globe: URL) {
+                public init(latitude: CLLocationDegrees, longitude: CLLocationDegrees, altitude: Double?, precision: CLLocationDegrees?, globe: URL) {
                     self.latitude = latitude
                     self.longitude = longitude
                     self.altitude = altitude
@@ -594,7 +594,7 @@ extension WikidataClaim {
         WikidataClaim(property: .timezone, item: itemID)
     }
     
-    public static func coordinatesOfViewpoint(_ location: CLLocation, heading: Double?) -> WikidataClaim {
+    public static func coordinatesOfViewpoint(_ coordinate: CLLocationCoordinate2D, altitude: Double, precision: CLLocationDegrees, heading: Double?) -> WikidataClaim {
         var qualifiers: [WikidataProp: [Snak]]? = nil
         if let heading {
             let headingSnak = Snak(
@@ -611,7 +611,7 @@ extension WikidataClaim {
         
         return WikidataClaim(
             property: .coordinatesOfViewpoint,
-            coordinate: .init(location: location),
+            coordinate: .init(coordinate: coordinate, altitude: altitude, precision: precision),
             qualifiers: qualifiers
         )
     }
@@ -730,12 +730,12 @@ extension WikidataClaim {
 }
 
 extension WikidataClaim.Snak.DataValue.Coordinate {
-    public init(location: CLLocation) {
+    public init(coordinate: CLLocationCoordinate2D, altitude: Double, precision: CLLocationDegrees) {
         self.init(
-            latitude: location.coordinate.latitude,
-            longitude: location.coordinate.longitude,
-            altitude: location.altitude,
-            precision: location.horizontalAccuracy,
+            latitude: coordinate.latitude,
+            longitude: coordinate.longitude,
+            altitude: altitude,
+            precision: precision,
             // A CLLocation is a geo-reference on earth, so its save to assume Q2 (Earth) here.
             globe: URL(string: "http://www.wikidata.org/entity/Q2")!
         )

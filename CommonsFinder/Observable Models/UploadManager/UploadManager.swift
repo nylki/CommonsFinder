@@ -193,7 +193,7 @@ extension MediaFileDraft {
             return
         case .noLocation:
             location = nil
-        case .userDefinedLocation(let latitude, let longitude):
+        case .userDefinedLocation(let latitude, let longitude, let precision):
             location = .init(latitude: latitude, longitude: longitude)
         }
 

@@ -91,7 +91,7 @@ struct MetadataEditForm: View {
         Task<Void, Never> {
             let generatedFilename =
                 await selectedFilenameType.generateFilename(
-                    location: model.draft.exifData?.location,
+                    coordinate: model.draft.exifData?.coordinate,
                     date: model.draft.inceptionDate,
                     desc: model.draft.captionWithDesc,
                     locale: locale,
@@ -244,7 +244,7 @@ struct MetadataEditForm: View {
     private var locationSection: some View {
         Section {
             VStack(alignment: .leading) {
-                if model.draft.exifData?.location == nil {
+                if model.draft.exifData?.coordinate == nil {
                     // TODO: allow user to add own location
                     Label {
                         VStack(alignment: .leading) {
@@ -263,8 +263,12 @@ struct MetadataEditForm: View {
                     if model.draft.locationEnabled == false {
                         Text("Location will be erased from the file metadata before uploading.")
                             .font(.caption)
-                    } else if let location = model.draft.exifData?.location {
-                        FileLocationMapView(location: location)
+                    } else if let coordinate = model.draft.exifData?.coordinate {
+                        FileLocationMapView(
+                            location: .init(
+                                latitude: coordinate.latitude,
+                                longitude: coordinate.longitude
+                            ))
                     }
                 }
             }

@@ -57,9 +57,7 @@ public actor API {
     
     // see: https://www.wikidata.org/wiki/Wikidata:SPARQL_query_service
     let wikidataSparqlEndpoint = URL(string: "https://query.wikidata.org/bigdata/namespace/wdq/sparql")!
-    
     let createAccountRedirectURL = URL(string: "https://commons.m.wikimedia.beta.wmflabs.org/w/index.php?title=Main_Page&welcome=yes")!
-    let imageEndpoint = URL(string: "https://magnus-toolserver.toolforge.org/commonsapi.php")!
 
     public static let shared = API()
     private let session: Alamofire.Session
@@ -995,9 +993,15 @@ GROUP BY ?item ?commonsCategory ?area ?location ?label ?image ?description
         return formattedResult
     }
     
-    public func getWikidataItemsAroundCoordinate(_ coordinate: CLLocationCoordinate2D, kilometerRadius: Double, limit: Int = 10000, languageCode: LanguageCode) async throws -> [GenericWikidataItem] {
+    // NOTE: see "radius_query_for_upload_wizard.rq" for similar query in android commons project
+    public func getWikidataItemsAroundCoordinate(_ coordinate: CLLocationCoordinate2D, kilometerRadius: Double, limit: Int = 10000, minArea: Double? = nil, languageCode: LanguageCode) async throws -> [GenericWikidataItem] {
         let preferredLanguages = ([languageCode] + Locale.preferredLanguages).uniqued().joined(separator: ",")
-
+        
+        let minAreaFilter = if let minArea {
+            "FILTER(?area > \(minArea))"
+        } else {
+            ""
+        }
         
         // NOTE: IMPORTANT: `?distance` must remain in the query even if not used when parsing
         // because it affects the ORDER BY statement
@@ -1023,11 +1027,12 @@ WHERE {
     OPTIONAL { ?item wdt:P31 ?instance. }
     OPTIONAL { ?item wdt:P625 ?location. }
     OPTIONAL { ?item wdt:P373 ?commonsCategory. }
-    OPTIONAL {
+    \(minArea == nil  ? "OPTIONAL" : "") {
         ?item p:P2046/psn:P2046 [ # area, normalised (psn retrieves the normaized value, psv the original one)
             wikibase:quantityAmount ?area;
             wikibase:quantityUnit ?areaUnit;
         ]
+        \(minAreaFilter)
     }
     SERVICE wikibase:label {
         bd:serviceParam wikibase:language "\(preferredLanguages),[AUTO_LANGUAGE],mul,en,de,fr,es,it,nl".

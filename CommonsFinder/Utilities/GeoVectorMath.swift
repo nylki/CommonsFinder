@@ -13,7 +13,8 @@ import simd
 enum GeoVectorMath {
 
     /// Earth radius
-    static let R = 6371_000.0  // meters
+    static let earthRadius: CLLocationDistance = 6_371_008.8
+    static let earthCircumference: CLLocationDistance = 40_075_016.6855785
 
     func getCameraDirection(cameraLocation: CLLocationCoordinate2D, cameraBearing: CLLocationDegrees) -> SIMD2<Double> {
         let angleRad = cameraBearing.degreesToRadians
@@ -27,12 +28,16 @@ enum GeoVectorMath {
         let tLat = b.latitude.degreesToRadians
         let tLng = b.longitude.degreesToRadians
 
-        let degree = (atan2(sin(tLng - fLng) * cos(tLat), cos(fLat) * sin(tLat) - sin(fLat) * cos(tLat) * cos(tLng - fLng))).radiansToDegrees
+        let degrees = (atan2(sin(tLng - fLng) * cos(tLat), cos(fLat) * sin(tLat) - sin(fLat) * cos(tLat) * cos(tLng - fLng))).radiansToDegrees
 
-        if degree >= 0 {
-            return degree
+        return normalizeBearing(degrees: degrees)
+    }
+
+    static func normalizeBearing(degrees: CLLocationDegrees) -> CLLocationDegrees {
+        if degrees >= 0 {
+            return degrees
         } else {
-            return 360 + degree
+            return 360 + degrees
         }
     }
 
@@ -49,14 +54,14 @@ enum GeoVectorMath {
     static func getDestination(
         fromStart start: CLLocationCoordinate2D,
         bearing: CLLocationDegrees,
-        distance d: Double
+        distance d: CLLocationDistance
     ) -> CLLocationCoordinate2D {
 
         let bearingRad = bearing.degreesToRadians
         let startLonRad = start.longitude.degreesToRadians
         let startLatRad = start.latitude.degreesToRadians
 
-        let relDist = d / R
+        let relDist = d / earthRadius
 
         let destLatRad = asin(
             sin(startLatRad) * cos(relDist) + cos(startLatRad) * sin(relDist) * cos(bearingRad)
@@ -78,6 +83,27 @@ enum GeoVectorMath {
             latitude: destLat,
             longitude: destLon
         )
+    }
+
+    // degrees from meters function
+    // adapted from https://github.com/Outdooractive/gis-tools/blob/f6259f510548fe7879d3eea51566b8dc7ecda0af/Sources/GISTools/Algorithms/Conversions.swift#L177-L189
+    // (MIT licensed)
+    static func degrees(
+        fromMeters meters: CLLocationDistance,
+        atLatitude latitude: CLLocationDegrees
+    ) -> (latitudeDegrees: CLLocationDegrees, longitudeDegrees: CLLocationDegrees) {
+        // Length of one minute at this latitude
+        let oneDegreeLatitudeDistance: CLLocationDistance = earthCircumference / 360.0  // ~111 km
+        let oneDegreeLongitudeDistance: CLLocationDistance = cos(latitude * Double.pi / 180.0) * oneDegreeLatitudeDistance
+
+        let longitudeDistance: Double = (meters / oneDegreeLongitudeDistance)
+        let latitudeDistance: Double = (meters / oneDegreeLatitudeDistance)
+
+        return (latitudeDistance, longitudeDistance)
+    }
+
+    static func meters(fromDegrees degrees: CLLocationDegrees) -> CLLocationDistance {
+        degrees.degreesToRadians * earthRadius
     }
 }
 

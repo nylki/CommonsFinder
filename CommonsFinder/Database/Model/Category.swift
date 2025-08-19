@@ -39,6 +39,7 @@ struct Category: Identifiable, Equatable, Hashable, Sendable, Codable {
     var instances: [String]
     var latitude: Double?
     var longitude: Double?
+    var areaSqm: Double?
 
     /// the designated Wikidata image
     var image: URL?
@@ -50,7 +51,7 @@ struct Category: Identifiable, Equatable, Hashable, Sendable, Codable {
         wikidataId: String, commonsCategory: String? = nil, redirectsToWikidataID: String? = nil, preferredLanguageAtFetchDate: LanguageCode = "en", fetchDate: Date = .now, label: String? = nil,
         description: String? = nil,
         aliases: [String] = [],
-        instances: [String] = [], latitude: Double? = nil, longitude: Double? = nil, image: URL? = nil
+        instances: [String] = [], latitude: Double? = nil, longitude: Double? = nil, areaSqm: Double? = nil, image: URL? = nil
     ) {
         self.wikidataId = wikidataId
         self.commonsCategory = commonsCategory
@@ -64,6 +65,7 @@ struct Category: Identifiable, Equatable, Hashable, Sendable, Codable {
         self.latitude = latitude
         self.longitude = longitude
         self.image = image
+        self.areaSqm = areaSqm
     }
 
     /// Initialize with non-optional commonsCategory
@@ -71,7 +73,7 @@ struct Category: Identifiable, Equatable, Hashable, Sendable, Codable {
         commonsCategory: String, wikidataId: String? = nil, redirectsToWikidataID: String? = nil, preferredLanguageAtFetchDate: LanguageCode = "en", fetchDate: Date = .now, label: String? = nil,
         description: String? = nil,
         aliases: [String] = [],
-        instances: [String] = [], latitude: Double? = nil, longitude: Double? = nil, image: URL? = nil
+        instances: [String] = [], latitude: Double? = nil, longitude: Double? = nil, areaSqm: Double? = nil, image: URL? = nil
     ) {
         self.wikidataId = wikidataId
         self.commonsCategory = commonsCategory
@@ -89,7 +91,7 @@ struct Category: Identifiable, Equatable, Hashable, Sendable, Codable {
 }
 
 extension Category {
-    var location: CLLocationCoordinate2D? {
+    var coordinate: CLLocationCoordinate2D? {
         if let latitude, let longitude {
             CLLocationCoordinate2D(latitude: latitude, longitude: longitude)
         } else {
