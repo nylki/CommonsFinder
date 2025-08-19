@@ -16,13 +16,54 @@ enum ExifExtractionError: Error {
 
 // Adapted from https://gist.github.com/lukebrandonfarrell/961a6dbc8367f0ac9cabc89b0052d1fe
 struct ExifData: Codable, Equatable, Hashable {
+    enum Orientation: Int, Codable {
+        case horizontal = 1
+        case MirrorHorizontal = 2
+        case rotate180 = 3
+        case mirrorVertical = 4
+        case MirrorHorizontalAndRotate270CW = 5
+        case Rotate90CW = 6
+        case MirrorHorizontalAndRotate90CW = 7
+        case Rotate270CW = 8
+
+        /// 90 degrees rotated
+        var widthHeightFlipped: Bool {
+            switch self {
+            case .horizontal, .MirrorHorizontal, .rotate180, .mirrorVertical:
+                false
+            case .MirrorHorizontalAndRotate270CW, .Rotate90CW, .MirrorHorizontalAndRotate90CW, .Rotate270CW:
+                true
+            }
+        }
+    }
+
     private(set) var colorModel: String?
-    private(set) var pixelWidth: Int?
-    private(set) var pixelHeight: Int?
+
+    private var pixelWidth: Int?
+    private var pixelHeight: Int?
+
+    var normalizedWidth: Int? {
+        guard let pixelWidth, let pixelHeight else { return nil }
+        return if let orientation, orientation.widthHeightFlipped {
+            pixelHeight
+        } else {
+            pixelWidth
+        }
+    }
+
+    var normalizedHeight: Int? {
+        guard let pixelWidth, let pixelHeight else { return nil }
+        return if let orientation, orientation.widthHeightFlipped {
+            pixelWidth
+        } else {
+            pixelHeight
+        }
+    }
+
     private(set) var dpiWidth: Int?
     private(set) var dpiHeight: Int?
     private(set) var depth: Int?
-    private(set) var orientation: Int?
+    private(set) var orientation: Orientation?
     private(set) var subjectArea: CGRect?
 
     private(set) var apertureValue: String?
@@ -156,7 +197,9 @@ struct ExifData: Codable, Equatable, Hashable {
         self.dpiWidth = metadata[kCGImagePropertyDPIWidth] as? Int
         self.dpiHeight = metadata[kCGImagePropertyDPIHeight] as? Int
         self.depth = metadata[kCGImagePropertyDepth] as? Int
-        self.orientation = metadata[kCGImagePropertyOrientation] as? Int
+        if let rawOrientation = metadata[kCGImagePropertyOrientation] as? Int {
+            self.orientation = .init(rawValue: rawOrientation)
+        }
 
         if let tiffData = metadata[kCGImagePropertyTIFFDictionary] as? NSDictionary {
             self.model = tiffData[kCGImagePropertyTIFFModel] as? String
