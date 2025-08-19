@@ -27,8 +27,6 @@ struct MediaFileDraft: Identifiable, Equatable, Codable, Hashable {
 
     var addedDate: Date
 
-    var exifData: ExifData?
-
     /// The unique name without the mediawiki "File:"-prefix and (should be without) any file-extension like .jpeg, editable in UI (eg. "screenshot 2025-01-01")
     var name: String
     /// `name` + file-extension is written just before uploading (eg. "screenshot 2025-01-01.jpeg")
@@ -42,7 +40,7 @@ struct MediaFileDraft: Identifiable, Equatable, Codable, Hashable {
 
     var captionWithDesc: [DraftCaptionWithDescription]
 
-    /// The custom publication or creation date of the file to be used **instead of the EXIF-Date**
+    /// falls back to the EXIF-data if no custom date set
     var inceptionDate: Date
     var timezone: String?
 
@@ -52,18 +50,6 @@ struct MediaFileDraft: Identifiable, Equatable, Codable, Hashable {
         get { locationHandling == .exifLocation }
         set { locationHandling = newValue ? .exifLocation : .noLocation }
     }
-
-    var coordinate: CLLocationCoordinate2D? {
-        switch locationHandling {
-        case .noLocation:
-            nil
-        case .exifLocation:
-            exifData?.coordinate
-        case .userDefinedLocation(let latitude, let longitude, _):
-            .init(latitude: latitude, longitude: longitude)
-        }
-    }
-
 
     enum LocationHandling: Codable, Equatable, Hashable {
         /// location data will be removed from EXIF if it exists inside the binary and won't be added to wikitext or structured data
@@ -103,6 +89,17 @@ struct MediaFileDraft: Identifiable, Equatable, Codable, Hashable {
         case fileFromTheWeb(URL)
         // TODO: check correct modelling
         case book(WikidataItemID, page: Int)
+    }
+}
+
+extension MediaFileDraft {
+    /// exifData is created lazily and is not saved into the DB
+    func loadExifData() -> ExifData? {
+        if let url = self.localFileURL() {
+            try? ExifData(url: url)
+        } else {
+            nil
+        }
     }
 }
 
@@ -150,8 +147,7 @@ extension MediaFileDraft: FetchableRecord, MutablePersistableRecord {
 // MARK: - Extensions
 
 extension MediaFileDraft {
-    /// Returns the location of the local file (of the image, video, etc.) if it exists
-    /// This should always exist for drafts, but is not guaranteed for uploaded files.
+    /// Returns the location of the local file (of the image, video, etc.)
     func localFileURL() -> URL? {
         URL.documentsDirectory.appending(path: localFileName)
     }
@@ -170,35 +166,6 @@ extension MediaFileDraft {
 }
 
 extension MediaFileDraft {
-    //    var coordinate: CLLocationCoordinate2D? {
-    //        get {
-    //            if let latitude, let longitude {
-    //                CLLocationCoordinate2D(latitude: latitude, longitude: longitude)
-    //            } else {
-    //                nil
-    //            }
-    //        }
-    //        set {
-    //            gpsTimestamp = nil
-    //        }
-    //    }
-    //
-    //    var location: CLLocation? {
-    //        if let coordinate, let altitude, let horizontalAccuracy, let gpsTimestamp {
-    //            CLLocation(
-    //                coordinate: coordinate,
-    //                altitude: altitude,
-    //                horizontalAccuracy: horizontalAccuracy,
-    //                verticalAccuracy: horizontalAccuracy,
-    //                timestamp: gpsTimestamp
-    //            )
-    //        } else if let coordinate {
-    //            CLLocation(latitude: coordinate.latitude, longitude: coordinate.longitude)
-    //        } else {
-    //            nil
-    //        }
-    //    }
-
     var aspectRatio: Double? {
         if let width, let height {
             (Double(width) / Double(height))
@@ -233,15 +200,16 @@ extension MediaFileDraft {
             assertionFailure("We expect the file to have a mime type")
         }
 
-        // Read EXIF-Data and insert it into MediaFileDraft entity if not previously done
-        if let exifData = try? ExifData(url: fileItem.fileURL) {
-            self.exifData = exifData
+        locationHandling = .noLocation
+        inceptionDate = .now
+        timezone = TimeZone.current.identifier
+
+        // Read EXIF-Data and update relevant values
+        if let exifData = loadExifData() {
             locationHandling = .exifLocation
 
             if let date = exifData.dateOriginal {
                 inceptionDate = date
-            } else {
-                inceptionDate = .now
             }
 
             if let exifTimezone = exifData.offsetTime {
@@ -250,15 +218,9 @@ extension MediaFileDraft {
                 timezone = exifTimezone
             }
 
-            // FIXME: width/hight are reversed for portrait photos due to orientation not taken into account
-            // see: https://github.com/nylki/CommonsFinder/issues/5
-            width = exifData.pixelWidth
-            height = exifData.pixelHeight
+            width = exifData.normalizedWidth
+            height = exifData.normalizedHeight
 
-        } else {
-            locationHandling = .noLocation
-            inceptionDate = .now
-            timezone = TimeZone.current.identifier
         }
     }
 }

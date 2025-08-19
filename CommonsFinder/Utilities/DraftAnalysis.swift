@@ -18,17 +18,18 @@ enum DraftAnalysis {
 
         guard let fileURL = draft.localFileURL() else { return nil }
         let handler = ImageRequestHandler(fileURL)
+        let exifData = draft.loadExifData()
 
         let nearbyCategoryTask = Task<[Category], Never> {
-            var coordinate = draft.coordinate
+            var coordinate = exifData?.coordinate
             if case .userDefinedLocation(latitude: let lat, longitude: let lon, _) = draft.locationHandling {
                 coordinate = .init(latitude: lat, longitude: lon)
             }
             guard let coordinate else { return [] }
             let categories = await fetchNearbyCategories(
                 coordinate: coordinate,
-                horizontalError: draft.exifData?.hPositioningError,
-                bearing: draft.exifData?.normalizedBearing
+                horizontalError: exifData?.hPositioningError,
+                bearing: exifData?.normalizedBearing
             )
             return categories
         }

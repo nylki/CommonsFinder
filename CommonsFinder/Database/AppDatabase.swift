@@ -153,6 +153,13 @@ final class AppDatabase: Sendable {
             }
         }
 
+        migrator.registerMigration("remove exifData from MediaFileDraft") { db in
+            try db.alter(table: "mediaFileDraft") { t in
+                t.drop(column: "exifData")
+            }
+        }
+
+
         migrator.registerMigration("reverse itemInteraction association and adjust + rename wikidataItem") { db in
 
 
