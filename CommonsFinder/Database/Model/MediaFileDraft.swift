@@ -90,6 +90,28 @@ struct MediaFileDraft: Identifiable, Equatable, Codable, Hashable {
         // TODO: check correct modelling
         case book(WikidataItemID, page: Int)
     }
+
+    init(from decoder: any Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        self.id = try container.decode(String.self, forKey: .id)
+        self.addedDate = try container.decode(Date.self, forKey: .addedDate)
+        self.name = try container.decode(String.self, forKey: .name)
+        self.finalFilename = try container.decode(String.self, forKey: .finalFilename)
+        self.localFileName = try container.decode(String.self, forKey: .localFileName)
+        self.mimeType = try container.decodeIfPresent(String.self, forKey: .mimeType)
+        self.captionWithDesc = try container.decode([MediaFileDraft.DraftCaptionWithDescription]?.self, forKey: .captionWithDesc) ?? []
+        self.inceptionDate = try container.decode(Date.self, forKey: .inceptionDate)
+        self.timezone = try container.decodeIfPresent(String.self, forKey: .timezone)
+        self.locationHandling = try container.decode(MediaFileDraft.LocationHandling?.self, forKey: .locationHandling) ?? .exifLocation
+
+        self.tags = try container.decode([TagItem]?.self, forKey: .tags) ?? []
+
+        self.license = try container.decodeIfPresent(DraftMediaLicense?.self, forKey: .license) ?? nil
+        self.author = try container.decode(MediaFileDraft.DraftAuthor?.self, forKey: .author) ?? .appUser
+        self.source = try container.decode(MediaFileDraft.DraftSource?.self, forKey: .source) ?? .own
+        self.width = try container.decodeIfPresent(Int.self, forKey: .width)
+        self.height = try container.decodeIfPresent(Int.self, forKey: .height)
+    }
 }
 
 extension MediaFileDraft {

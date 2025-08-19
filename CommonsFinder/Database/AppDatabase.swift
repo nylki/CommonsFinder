@@ -209,6 +209,7 @@ final class AppDatabase: Sendable {
             // we drop wikidataItem since it was not used for user-facing features yet
             try db.drop(table: "wikidataItem")
 
+
             try db.create(table: "category") { t in
                 t.autoIncrementedPrimaryKey("id")
 
