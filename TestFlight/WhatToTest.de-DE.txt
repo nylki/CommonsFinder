@@ -1,1 +1,34 @@
-Dieser Release behebt einen Crash, der beim editieren des Dateinamens auftreten kann (custom filename).
+Heya! Dieser Release bringt ein paar neue Features und Veränderungen :)
+
+# Lesezeichen
+
+Files und Kategorien können sich nun via Lesezeichen für später gemerkt werden.
+Diese erscheinen dann in der Home-Ansicht, welche auch ein paar UI-Anpassungen bekommen hat.
+
+
+# Tag-Vorschläge im Upload-Flow
+
+Sofern ein Bild Standortkoordinaten hat, werden nun möglicherweise passende Kategorien vorgeschlagen.
+Wenn auch die Kamera-Richtung in den EXIF-Daten stehen, wird auch diese benutzt um die Vorschläge zu filtern.
+Somit werden Kategorien priorisiert vorgeschlagen die sich im Sichtfeld der Kamera befinden könnten.
+
+
+# Bugfixes
+
+- beim Upload sind Koordinate nun auch mit einer korrekte Genauigkeit/precision versehen
+- Kamera-Richtung hat nun normalisierte Grad-Werte (also statt -10 Grad nun 350 Grad)
+- diverse weitere
+
+# Ausblick
+
+Nach diesem etwas größeren Update, versuche ich die nächsten etwas kleinteiliger und fokussierter zu halten.
+Folgende Dinge möchte ich mir als nächstes angucken:
+
+- robustere Uploads (Dateinamen-Duplikats-Check, Background-Uploads, bessere Fehlermeldungen, etc.)
+- iOS 26 Anpassungen bzgl. neuem UI
+- bessere Suche (Suche auch nach Kategorien und Usern, vorschläge von Suchbegriffen)
+
+Auch die Karte soll verbessert werden, aber wahrscheinlich erst so richtig, wenn die obigen Sachen abgehakt sind.
+
+Viel Spaß beim Testen und Benutzen! :)
+
