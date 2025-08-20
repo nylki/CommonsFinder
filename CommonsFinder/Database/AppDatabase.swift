@@ -153,15 +153,16 @@ final class AppDatabase: Sendable {
             }
         }
 
-        migrator.registerMigration("remove exifData from MediaFileDraft") { db in
+        migrator.registerMigration("remove exifData from MediaFileDraft and license from MediaFile") { db in
             try db.alter(table: "mediaFileDraft") { t in
                 t.drop(column: "exifData")
             }
+            try db.alter(table: "mediaFile") { t in
+                t.drop(column: "license")
+            }
         }
 
-
         migrator.registerMigration("reverse itemInteraction association and adjust + rename wikidataItem") { db in
-
 
             // 1. Create new itemInteraction table with id and temporary mediaFileId
             try db.create(table: "new_itemInteraction") { t in
@@ -233,8 +234,6 @@ final class AppDatabase: Sendable {
                 /// creates `itemInteractionId` foreign key
                 t.belongsTo("itemInteraction", onDelete: .setNull)
             }
-
-
         }
 
         return migrator

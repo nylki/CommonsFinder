@@ -21,7 +21,7 @@ import os.log
 // avoiding duplicates with wikidata structured data (eg. for location, date etc.)
 
 
-struct MediaFileDraft: Identifiable, Equatable, Codable, Hashable {
+struct MediaFileDraft: Identifiable, Equatable, Hashable {
     // UUID-string
     let id: String
 
@@ -44,7 +44,7 @@ struct MediaFileDraft: Identifiable, Equatable, Codable, Hashable {
     var inceptionDate: Date
     var timezone: String?
 
-    var locationHandling: LocationHandling
+    var locationHandling: LocationHandling?
 
     var locationEnabled: Bool {
         get { locationHandling == .exifLocation }
@@ -63,8 +63,8 @@ struct MediaFileDraft: Identifiable, Equatable, Codable, Hashable {
     var tags: [TagItem]
 
     var license: DraftMediaLicense?
-    var author: DraftAuthor
-    var source: DraftSource
+    var author: DraftAuthor?
+    var source: DraftSource?
 
     var width: Int?
     var height: Int?
@@ -89,28 +89,6 @@ struct MediaFileDraft: Identifiable, Equatable, Codable, Hashable {
         case fileFromTheWeb(URL)
         // TODO: check correct modelling
         case book(WikidataItemID, page: Int)
-    }
-
-    init(from decoder: any Decoder) throws {
-        let container = try decoder.container(keyedBy: CodingKeys.self)
-        self.id = try container.decode(String.self, forKey: .id)
-        self.addedDate = try container.decode(Date.self, forKey: .addedDate)
-        self.name = try container.decode(String.self, forKey: .name)
-        self.finalFilename = try container.decode(String.self, forKey: .finalFilename)
-        self.localFileName = try container.decode(String.self, forKey: .localFileName)
-        self.mimeType = try container.decodeIfPresent(String.self, forKey: .mimeType)
-        self.captionWithDesc = try container.decode([MediaFileDraft.DraftCaptionWithDescription]?.self, forKey: .captionWithDesc) ?? []
-        self.inceptionDate = try container.decode(Date.self, forKey: .inceptionDate)
-        self.timezone = try container.decodeIfPresent(String.self, forKey: .timezone)
-        self.locationHandling = try container.decode(MediaFileDraft.LocationHandling?.self, forKey: .locationHandling) ?? .exifLocation
-
-        self.tags = try container.decode([TagItem]?.self, forKey: .tags) ?? []
-
-        self.license = try container.decodeIfPresent(DraftMediaLicense?.self, forKey: .license) ?? nil
-        self.author = try container.decode(MediaFileDraft.DraftAuthor?.self, forKey: .author) ?? .appUser
-        self.source = try container.decode(MediaFileDraft.DraftSource?.self, forKey: .source) ?? .own
-        self.width = try container.decodeIfPresent(Int.self, forKey: .width)
-        self.height = try container.decodeIfPresent(Int.self, forKey: .height)
     }
 }
 
@@ -144,7 +122,38 @@ extension MediaFileDraft.DraftCaptionWithDescription {
 
 /// Make MediaFileDraft a Codable Record.
 ///
+///
+///
 /// See <https://github.com/groue/GRDB.swift/blob/master/README.md#records>
+///
+extension MediaFileDraft: Codable {
+    init(from decoder: any Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        self.id = try container.decode(String.self, forKey: .id)
+        self.addedDate = try container.decode(Date.self, forKey: .addedDate)
+        self.name = try container.decode(String.self, forKey: .name)
+        self.finalFilename = try container.decode(String.self, forKey: .finalFilename)
+        self.localFileName = try container.decode(String.self, forKey: .localFileName)
+        self.mimeType = try container.decodeIfPresent(String.self, forKey: .mimeType)
+        self.captionWithDesc = try container.decode([MediaFileDraft.DraftCaptionWithDescription].self, forKey: .captionWithDesc)
+        self.inceptionDate = try container.decode(Date.self, forKey: .inceptionDate)
+        self.timezone = try container.decodeIfPresent(String.self, forKey: .timezone)
+        self.locationHandling = try container.decodeIfPresent(MediaFileDraft.LocationHandling.self, forKey: .locationHandling)
+        self.license = try container.decodeIfPresent(DraftMediaLicense.self, forKey: .license)
+        self.author = try container.decodeIfPresent(MediaFileDraft.DraftAuthor.self, forKey: .author)
+        self.source = try container.decodeIfPresent(MediaFileDraft.DraftSource.self, forKey: .source)
+        self.width = try container.decodeIfPresent(Int.self, forKey: .width)
+        self.height = try container.decodeIfPresent(Int.self, forKey: .height)
+
+        if let tags = try? container.decode([TagItem].self, forKey: .tags) {
+            self.tags = tags
+        } else {
+            self.tags = []
+        }
+
+    }
+}
+
 extension MediaFileDraft: FetchableRecord, MutablePersistableRecord {
     // Define database columns from CodingKeys
     enum Columns {

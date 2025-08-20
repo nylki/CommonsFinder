@@ -32,6 +32,16 @@ extension MediaFileUploadable {
             throw UploadManagerError.licenseMissing
         }
 
+        guard let source = draft.source else {
+            assertionFailure("The source must have been chosen before uploading.")
+            throw UploadManagerError.sourceMissing
+        }
+
+        guard let author = draft.author else {
+            assertionFailure("The author must have been set before uploading.")
+            throw UploadManagerError.authorMissing
+        }
+
         // see: https://commons.wikimedia.org/wiki/Template:Information
         let wikitextDate: String = draft.inceptionDate.formatted(.iso8601.year().month().day())
         let wikitextSource: String
@@ -74,7 +84,7 @@ extension MediaFileUploadable {
             }
         }
 
-        switch draft.source {
+        switch source {
         case .own:
             statements.append(.source(.originalCreationByUploader))
             wikitextSource = "{{own}}"
@@ -88,7 +98,7 @@ extension MediaFileUploadable {
             wikitextSource = "{{Self-scanned}}"
         }
 
-        switch draft.author {
+        switch author {
         case .appUser:
             // TODO: allow customization in settings, also wikidataItem, customize the display name string (2nd param)
             let usernameURL = "https://commons.wikimedia.org/wiki/User:\(appWikimediaUsername)"
@@ -163,6 +173,8 @@ extension MediaFileUploadable {
                 locationParts.append("heading: \(heading)")
             }
             wikitextLocation = "{{\(locationParts.joined(separator: "|"))}}"
+        case .none:
+            wikitextLocation = ""
         }
 
         // Set exif metadata to structured data that is not editable (and therefore not saved in the MediaFileDraft)
