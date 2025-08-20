@@ -32,6 +32,16 @@ extension MediaFileUploadable {
             throw UploadManagerError.licenseMissing
         }
 
+        guard let source = draft.source else {
+            assertionFailure("The source must have been chosen before uploading.")
+            throw UploadManagerError.sourceMissing
+        }
+
+        guard let author = draft.author else {
+            assertionFailure("The author must have been set before uploading.")
+            throw UploadManagerError.authorMissing
+        }
+
         // see: https://commons.wikimedia.org/wiki/Template:Information
         let wikitextDate: String = draft.inceptionDate.formatted(.iso8601.year().month().day())
         let wikitextSource: String
@@ -48,16 +58,14 @@ extension MediaFileUploadable {
         var categories: [String] = []
 
         for tag in draft.tags {
-            switch tag.baseItem {
-            case .wikidataItem(let wikidataItem):
-                if tag.pickedUsages.contains(.depict), let id = WikidataItemID(stringValue: wikidataItem.id) {
-                    depictStatements.append(.depicts(id))
-                }
-                if tag.pickedUsages.contains(.category), let category = wikidataItem.commonsCategory {
-                    categories.append(category)
-                }
-            case .category(let category):
-                categories.append(category)
+            lazy var wikidataItemID = tag.baseItem.wikidataItemID
+            lazy var commonsCategory = tag.baseItem.commonsCategory
+
+            if tag.pickedUsages.contains(.depict), let wikidataItemID {
+                depictStatements.append(.depicts(wikidataItemID))
+            }
+            if tag.pickedUsages.contains(.category), let commonsCategory {
+                categories.append(commonsCategory)
             }
         }
         var statements: [WikidataClaim] = depictStatements
@@ -76,7 +84,7 @@ extension MediaFileUploadable {
             }
         }
 
-        switch draft.source {
+        switch source {
         case .own:
             statements.append(.source(.originalCreationByUploader))
             wikitextSource = "{{own}}"
@@ -90,7 +98,7 @@ extension MediaFileUploadable {
             wikitextSource = "{{Self-scanned}}"
         }
 
-        switch draft.author {
+        switch author {
         case .appUser:
             // TODO: allow customization in settings, also wikidataItem, customize the display name string (2nd param)
             let usernameURL = "https://commons.wikimedia.org/wiki/User:\(appWikimediaUsername)"
@@ -116,17 +124,30 @@ extension MediaFileUploadable {
         //  TODO: add timezone when handling time component
         statements.append(.inception(wikidataDate))
 
-        let exifData = try? ExifData(url: localFileURL)
-        let exifLocation = exifData?.location
+        let exifData = draft.loadExifData()
+        let exifCoordinate = exifData?.coordinate
 
         switch draft.locationHandling {
         case .exifLocation:
-            if let location = exifLocation {
-                statements.append(.coordinatesOfViewpoint(location, heading: location.course))
+            if let exifData, let exifCoordinate {
+                let precision =
+                    if let hPositioningError = exifData.hPositioningError {
+                        GeoVectorMath.degrees(fromMeters: hPositioningError, atLatitude: exifCoordinate.latitude).latitudeDegrees
+                    } else {
+                        // If hPositioningError is missing for some reason we assign a low precision to this coordinate
+                        1.0
+                    }
+                statements.append(
+                    .coordinatesOfViewpoint(
+                        exifCoordinate,
+                        altitude: exifData.altitude ?? 0,
+                        precision: precision,
+                        heading: exifData.normalizedBearing
+                    ))
 
                 var locationParts: [String] = []
-                locationParts.append("Location|\(location.coordinate.latitude)|\(location.coordinate.longitude)")
-                if let heading = exifLocation?.course {
+                locationParts.append("Location|\(exifCoordinate.latitude)|\(exifCoordinate.longitude)")
+                if let heading = exifData.normalizedBearing {
                     locationParts.append("heading: \(heading)")
                 }
 
@@ -137,15 +158,23 @@ extension MediaFileUploadable {
             }
         case .noLocation:
             wikitextLocation = ""
-        case .userDefinedLocation(let latitude, let longitude):
-            statements.append(.coordinatesOfViewpoint(.init(latitude: latitude, longitude: longitude), heading: nil))
+        case .userDefinedLocation(let latitude, let longitude, let precision):
+            let coordinate = CLLocationCoordinate2D(latitude: latitude, longitude: longitude)
+            let altitude = exifData?.altitude ?? 0
+
+            statements.append(.coordinatesOfViewpoint(coordinate, altitude: altitude, precision: precision, heading: exifData?.normalizedBearing))
 
             var locationParts: [String] = []
             locationParts.append("Location|\(latitude)|\(longitude)")
-            if let heading = exifLocation?.course {
+            // still use headinf from exif even if user adjusted the coordinates, because the heading is measured independently
+            // and is most likely be accurate.
+
+            if let heading = exifData?.normalizedBearing {
                 locationParts.append("heading: \(heading)")
             }
             wikitextLocation = "{{\(locationParts.joined(separator: "|"))}}"
+        case .none:
+            wikitextLocation = ""
         }
 
         // Set exif metadata to structured data that is not editable (and therefore not saved in the MediaFileDraft)
@@ -163,11 +192,11 @@ extension MediaFileUploadable {
                 statements.append(.isoSpeed(iso))
             }
 
-            if let width = exifData.pixelWidth {
+            if let width = exifData.normalizedWidth {
                 statements.append(.width(width))
             }
 
-            if let height = exifData.pixelHeight {
+            if let height = exifData.normalizedHeight {
                 statements.append(.height(height))
             }
 
@@ -217,10 +246,10 @@ extension MediaFileUploadable {
             .joined(separator: "\n")
 
 
-        var testUploadString = ""
+        let testUploadString = ""
         // DEBUGGING NOTE: un-comment to mark uploads as test upload, eg when testing new upload functionality
         //
-        // testUploadString = "{{test upload}}"
+        // let testUploadString = "{{test upload}}"
 
         let wikiText = """
             =={{int:filedesc}}==
@@ -255,5 +284,15 @@ extension MediaFileUploadable {
             captions: captions,
             wikitext: wikiText
         )
+    }
+}
+
+extension Category {
+    var wikidataItemID: WikidataItemID? {
+        if let wikidataId {
+            .init(stringValue: wikidataId)
+        } else {
+            nil
+        }
     }
 }

@@ -16,13 +16,54 @@ enum ExifExtractionError: Error {
 
 // Adapted from https://gist.github.com/lukebrandonfarrell/961a6dbc8367f0ac9cabc89b0052d1fe
 struct ExifData: Codable, Equatable, Hashable {
+    enum Orientation: Int, Codable {
+        case horizontal = 1
+        case MirrorHorizontal = 2
+        case rotate180 = 3
+        case mirrorVertical = 4
+        case MirrorHorizontalAndRotate270CW = 5
+        case Rotate90CW = 6
+        case MirrorHorizontalAndRotate90CW = 7
+        case Rotate270CW = 8
+
+        /// 90 degrees rotated
+        var widthHeightFlipped: Bool {
+            switch self {
+            case .horizontal, .MirrorHorizontal, .rotate180, .mirrorVertical:
+                false
+            case .MirrorHorizontalAndRotate270CW, .Rotate90CW, .MirrorHorizontalAndRotate90CW, .Rotate270CW:
+                true
+            }
+        }
+    }
+
     private(set) var colorModel: String?
-    private(set) var pixelWidth: Int?
-    private(set) var pixelHeight: Int?
+
+    private var pixelWidth: Int?
+    private var pixelHeight: Int?
+
+    var normalizedWidth: Int? {
+        guard let pixelWidth, let pixelHeight else { return nil }
+        return if let orientation, orientation.widthHeightFlipped {
+            pixelHeight
+        } else {
+            pixelWidth
+        }
+    }
+
+    var normalizedHeight: Int? {
+        guard let pixelWidth, let pixelHeight else { return nil }
+        return if let orientation, orientation.widthHeightFlipped {
+            pixelWidth
+        } else {
+            pixelHeight
+        }
+    }
+
     private(set) var dpiWidth: Int?
     private(set) var dpiHeight: Int?
     private(set) var depth: Int?
-    private(set) var orientation: Int?
+    private(set) var orientation: Orientation?
     private(set) var subjectArea: CGRect?
 
     private(set) var apertureValue: String?
@@ -51,8 +92,21 @@ struct ExifData: Codable, Equatable, Hashable {
 
     private(set) var imgDirection: Double?
     private(set) var altitude: Double?
-    private(set) var destBearing: Double?
+    /// see discussion: https://exiftool.org/forum/index.php?topic=15654.0
+    /// and test with front/back cam for accuracy of angle
+    private var destBearing: Double?
+
+    var normalizedBearing: Double? {
+        if let destBearing {
+            GeoVectorMath.normalizeBearing(degrees: destBearing)
+        } else {
+            nil
+        }
+    }
+
+    /// positioning error in meters
     private(set) var hPositioningError: Double?
+    private(set) var gpsDOP: Double?
 
     private(set) var latitude: Double?
     private(set) var longitude: Double?
@@ -64,33 +118,11 @@ struct ExifData: Codable, Equatable, Hashable {
     // Combined from both above
     private(set) var gpsDate: Date?
 
-    var location: CLLocation? {
-        guard let latitude, let longitude else {
-            return nil
-        }
-
-        lazy var coordinate = CLLocationCoordinate2D(latitude: latitude, longitude: longitude)
-
-        if let altitude, let speed, let gpsDate, let hPositioningError, let imgDirection {
-            return CLLocation(
-                coordinate: coordinate,
-                altitude: altitude,
-                horizontalAccuracy: hPositioningError,
-                verticalAccuracy: hPositioningError,  // technically not 100% correct but vPositioningError does not exist?
-                course: imgDirection,
-                speed: speed,
-                timestamp: gpsDate
-            )
-        } else if let altitude, let gpsDate, let hPositioningError {
-            return CLLocation(
-                coordinate: coordinate,
-                altitude: altitude,
-                horizontalAccuracy: hPositioningError,
-                verticalAccuracy: hPositioningError,
-                timestamp: gpsDate
-            )
+    var coordinate: CLLocationCoordinate2D? {
+        if let latitude, let longitude {
+            CLLocationCoordinate2D(latitude: latitude, longitude: longitude)
         } else {
-            return CLLocation(latitude: latitude, longitude: longitude)
+            nil
         }
     }
 
@@ -165,7 +197,9 @@ struct ExifData: Codable, Equatable, Hashable {
         self.dpiWidth = metadata[kCGImagePropertyDPIWidth] as? Int
         self.dpiHeight = metadata[kCGImagePropertyDPIHeight] as? Int
         self.depth = metadata[kCGImagePropertyDepth] as? Int
-        self.orientation = metadata[kCGImagePropertyOrientation] as? Int
+        if let rawOrientation = metadata[kCGImagePropertyOrientation] as? Int {
+            self.orientation = .init(rawValue: rawOrientation)
+        }
 
         if let tiffData = metadata[kCGImagePropertyTIFFDictionary] as? NSDictionary {
             self.model = tiffData[kCGImagePropertyTIFFModel] as? String
@@ -202,7 +236,11 @@ struct ExifData: Codable, Equatable, Hashable {
         if let gpsData = metadata[kCGImagePropertyGPSDictionary] as? NSDictionary {
             self.altitude = gpsData[kCGImagePropertyGPSAltitude] as? Double
             self.destBearing = gpsData[kCGImagePropertyGPSDestBearing] as? Double
+
+            // TODO: in meters, set accurac
             self.hPositioningError = gpsData[kCGImagePropertyGPSHPositioningError] as? Double
+
+            self.gpsDOP = gpsData[kCGImagePropertyGPSDOP] as? Double
             self.imgDirection = gpsData[kCGImagePropertyGPSImgDirection] as? Double
 
             self.gpsTimestamp = gpsData[kCGImagePropertyGPSTimeStamp] as? String

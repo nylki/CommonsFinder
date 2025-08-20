@@ -88,31 +88,33 @@ enum NavigationStackItem: Hashable, CustomStringConvertible {
     case settings
     case viewFile(MediaFileInfo, namespace: Namespace.ID)
     case loadFile(title: String, namespace: Namespace.ID)
-    /// category title without the prefix
-    case category(title: String)
-    case wikiItem(id: String)
-    case tag(TagItem)
+    case wikidataItem(_ item: CategoryInfo)
     case userUploads(username: String)
-    case recentlyViewed
+    case recentlyViewedMedia
+    case bookmarkedMedia
+    case recentlyViewedCategories
+    case bookmarkedCategories
 
     var description: String {
         switch self {
         case .settings:
             "settings"
+        case .viewFile(let mediaFileInfo, let namespace):
+            "viewFile-\(mediaFileInfo.id)-namespace-\(namespace.hashValue)"
         case .loadFile(let title, let namespace):
             "loadFile-\(title)-namespace-\(namespace.hashValue)"
-        case .viewFile(let file, let namespace):
-            "viewFile-\(file.id)-namespace-\(namespace.hashValue)"
-        case .tag(let tagItem):
-            "tag-\(tagItem.id)"
-        case .category(let title):
-            "category-\(title)"
-        case .wikiItem(let id):
-            "wikiItem-\(id)"
+        case .wikidataItem(let item):
+            "tag-\(item.id)"
         case .userUploads(let username):
             "userUploads-\(username)"
-        case .recentlyViewed:
-            "recentlyViewed"
+        case .recentlyViewedMedia:
+            "recentlyViewedMedia"
+        case .bookmarkedMedia:
+            "bookmarkedMedia"
+        case .recentlyViewedCategories:
+            "recentlyViewedCategories"
+        case .bookmarkedCategories:
+            "bookmarkedCategories"
         }
     }
 }

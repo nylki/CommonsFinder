@@ -17,7 +17,6 @@ struct MetadataEditForm: View {
 
     @Environment(\.openURL) private var openURL
     @Environment(\.locale) private var locale
-    @Environment(WikidataCache.self) private var wikidataCache
     @FocusState private var focus: FocusElement?
 
     @State private var selectedFilenameType: FileNameType = .captionAndDate
@@ -47,8 +46,11 @@ struct MetadataEditForm: View {
         // so for now until this behaviour is fixed by Apple
         // this is a fullScreenCover (but TODO: consider using a push navigation here)
         .fullScreenCover(isPresented: $model.isShowingStatementPicker) {
+            let suggestedNearbyTags = model.analysisResult?.nearbyCategories.map { TagItem($0) } ?? []
+
             TagPicker(
                 initialTags: model.draft.tags,
+                suggestedNearbyTags: suggestedNearbyTags,
                 onEditedTags: {
                     model.draft.tags = $0
                 }
@@ -78,6 +80,9 @@ struct MetadataEditForm: View {
                 generateFilename()
             }
         }
+        .task {
+            await model.analyzeImage()
+        }
     }
 
 
@@ -86,11 +91,10 @@ struct MetadataEditForm: View {
         Task<Void, Never> {
             let generatedFilename =
                 await selectedFilenameType.generateFilename(
-                    location: model.draft.exifData?.location,
+                    coordinate: model.exifData?.coordinate,
                     date: model.draft.inceptionDate,
                     desc: model.draft.captionWithDesc,
                     locale: locale,
-                    localizationModel: wikidataCache,
                     tags: model.draft.tags
                 ) ?? model.draft.name
 
@@ -240,7 +244,7 @@ struct MetadataEditForm: View {
     private var locationSection: some View {
         Section {
             VStack(alignment: .leading) {
-                if model.draft.exifData?.location == nil {
+                if model.exifData?.coordinate == nil {
                     // TODO: allow user to add own location
                     Label {
                         VStack(alignment: .leading) {
@@ -259,8 +263,12 @@ struct MetadataEditForm: View {
                     if model.draft.locationEnabled == false {
                         Text("Location will be erased from the file metadata before uploading.")
                             .font(.caption)
-                    } else if let location = model.draft.exifData?.location {
-                        FileLocationMapView(location: location)
+                    } else if let coordinate = model.exifData?.coordinate {
+                        FileLocationMapView(
+                            location: .init(
+                                latitude: coordinate.latitude,
+                                longitude: coordinate.longitude
+                            ))
                     }
                 }
             }
@@ -339,10 +347,7 @@ struct MetadataEditForm: View {
             //
             //            }
 
-            if let exifDate = model.draft.exifData?.dateOriginal,
-                model.draft.inceptionDate != exifDate
-            {
-
+            if let exifDate = model.exifData?.dateOriginal, model.draft.inceptionDate != exifDate {
                 Button("Restore EXIF-Date") {
                     model.draft.inceptionDate = exifDate
                 }

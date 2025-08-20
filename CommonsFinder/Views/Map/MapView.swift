@@ -22,12 +22,14 @@ struct MapView: View {
     @Environment(\.isPresented) private var isPresented
     @Environment(\.verticalSizeClass) private var verticalSizeClass
     @Environment(\.locale) private var locale
+    @Environment(\.scenePhase) private var scenePhase
 
     /// this is either a media item or a wiki item
     private var scrollClusterItem: (any GeoReferencable)? {
         guard let id = mapModel.focusedClusterItem.viewID(type: String.self) else {
             return nil
         }
+
         return mapModel.wikiItemClustering.items[id] ?? mapModel.mediaClustering.items[id]
     }
 
@@ -104,7 +106,7 @@ struct MapView: View {
                 MapPopup(
                     clusterIndex: cellIndex,
                     scrollPosition: $mapModel.focusedClusterItem,
-                    wikidataItems: wikiItems,
+                    rawCategories: wikiItems,
                     rawMediaItems: rawMediaItems
                 )
                 // the .id makes sure we don't retain state of the previous cell
@@ -157,13 +159,13 @@ private struct ItemAnnotation: MapContent {
     var body: some MapContent {
         if let lat = item.latitude, let lon = item.longitude {
             Annotation("", coordinate: .init(latitude: lat, longitude: lon), anchor: .center) {
-                if let wikiItem = item as? WikidataItem {
-                    WikiAnnotationView(item: wikiItem)
-                        .id(wikiItem.id)
+                if let category = item as? Category {
+                    WikiAnnotationView(item: category)
+                        .id(category.geoRefID)
 
-                } else if let imageItem = item as? GeosearchListItem {
+                } else if let imageItem = item as? GeoSearchFileItem {
                     MediaAnnotationView(item: imageItem)
-                        .id(imageItem.id)
+                        .id(imageItem.geoRefID)
                 }
             }
         }
@@ -175,7 +177,7 @@ private struct ItemAnnotation: MapContent {
 // for now this gives us some flexibility to differentiate both if useful or looks better
 private struct WikiAnnotationView: View {
     @State private var isVisible = false
-    let item: WikidataItem
+    let item: Category
 
     var body: some View {
         ZStack {
@@ -211,7 +213,7 @@ private struct WikiAnnotationView: View {
 // TODO: unify both views (WikiAnnotationView + MediaAnnotationView) via Nuke.ImageRequest param when they stay identical
 // for now this gives us some flexibility to differentiate both if useful or looks better
 private struct MediaAnnotationView: View {
-    let item: GeosearchListItem
+    let item: GeoSearchFileItem
     @State private var isVisible = false
 
 

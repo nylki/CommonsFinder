@@ -191,9 +191,9 @@ extension MediaFileDraft {
         switch locationHandling {
         case .exifLocation:
             return
-        case .noLocation:
+        case .noLocation, .none:
             location = nil
-        case .userDefinedLocation(let latitude, let longitude):
+        case .userDefinedLocation(let latitude, let longitude, let precision):
             location = .init(latitude: latitude, longitude: longitude)
         }
 
@@ -250,6 +250,8 @@ enum UploadManagerError: Error {
     case fileURLMissing(id: String)
     case finalFilenameMissing
     case licenseMissing
+    case sourceMissing
+    case authorMissing
     case missingMimetypePreventedFinalFilenameGeneration
     case databaseErrorOnFinalFilenameUpdate(Error)
     case failedToReadFileData

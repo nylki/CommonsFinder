@@ -8,6 +8,8 @@
 import CommonsAPI
 import Foundation
 import Nuke
+import Vision
+import os.log
 
 /// Represents the data to allow editing either a DB-backed MediaFile or a newly created one.
 @Observable
@@ -19,11 +21,16 @@ import Nuke
 
     var isShowingStatementPicker = false
     var isShowingCategoryPicker = false
+    var analysisResult: DraftAnalysisResult?
 
     /// If a draft has just been created and does not have its media file backed on disk in the apps directory
     /// this holds the information about filename, filetype and Data.
     var fileItem: FileItem?
 
+    @ObservationIgnored
+    lazy var exifData: ExifData? = {
+        draft.loadExifData()
+    }()
 
     init(fileItem: FileItem) {
         addedDate = .now
@@ -42,6 +49,16 @@ import Nuke
 
     // TODO: always copy to disk. Because re-opening drafts will also read from Disk.
     private var imageLoadTask: Task<Void, Never>?
+
+    // TODO: move to parent, to handle potentially multiple drafts at once
+    func analyzeImage() async {
+        guard analysisResult == nil else { return }
+
+        logger.debug("analyzing draft image...")
+        let result = await DraftAnalysis.analyze(draft: draft)
+        logger.debug("analyzing draft image finished! \(result?.debugDescription ?? "")")
+        self.analysisResult = result
+    }
 }
 
 extension MediaFileDraftModel {

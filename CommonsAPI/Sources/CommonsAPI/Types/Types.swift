@@ -215,7 +215,7 @@ public struct RawFileMetadata: Sendable, Identifiable {
 }
 
 
-public struct GeosearchListItem: Decodable, Equatable, Hashable, Sendable, Identifiable {
+public struct GeoSearchFileItem: Decodable, Equatable, Hashable, Sendable, Identifiable {
     public let pageid: Int64
     public let ns: MediawikiNamespace
     public let title: String
@@ -286,12 +286,12 @@ public struct FileMetadata: Decodable, Sendable, Hashable, Equatable, Identifiab
         
         // Optional image specific fields
         // because these could be nil for sound etc. (i suppose, needs to be tested).
-        public let width: Double?
-        public let height: Double?
-        public let size: Double?
+        public let width: Int?
+        public let height: Int?
+        public let size: Int?
         public let thumburl: URL?
-        public let thumbwidth: Double?
-        public let thumbheight: Double?
+        public let thumbwidth: Int?
+        public let thumbheight: Int?
         
         
 
@@ -430,6 +430,7 @@ internal struct SparqlGenericWikidataItem: Decodable, Sendable {
 public struct GenericWikidataItem: Sendable, Hashable, Equatable, Identifiable, Decodable {
     public let commonsCategory: String?
     public let id: String
+    public let redirectsToId: String?
 
     
     public let label: String?
@@ -464,6 +465,7 @@ extension GenericWikidataItem {
         Self(
             commonsCategory: "Universe",
             id: "Q1",
+            redirectsToId: nil,
             label: "Universe",
             description:  "totality consisting of space, time, matter and energy",
             labelLanguage: "en",
@@ -500,9 +502,15 @@ extension GenericWikidataItem {
             instances = instancesString.components(separatedBy: ",")
         }
         
+        
         self.init(
             commonsCategory: sparqlItem.commonsCategory?.value,
             id: sparqlItem.id.value,
+            
+            // The redirect ID is unfortunately unavailable via SPARQL (to my knowledge)
+            // and must bet fetched via wbgetentities (via `fetchWikidataEntities()`)
+            redirectsToId: nil,
+            
             label: sparqlItem.label?.value,
             description: sparqlItem.description?.value,
             labelLanguage: language,
@@ -599,20 +607,35 @@ public typealias LanguageCode = String
 public struct WikidataEntity: Sendable, Decodable, Identifiable {
     public let id: String
     public let type: String?
+    public let redirects: RedirectsContainer?
     public let labels: [LanguageCode: String]
     public let descriptions: [LanguageCode: String]
+    
+    public struct RedirectsContainer: Decodable, Sendable {
+        let from: String
+        let to: String
+    }
     
     enum CodingKeys: CodingKey {
         case type
         case id
+        case redirects
         case labels
         case descriptions
     }
+    
 
     public init(from decoder: any Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
         self.type = try container.decodeIfPresent(String.self, forKey: .type)
         self.id = try container.decode(String.self, forKey: .id)
+        
+        if let redirectsContainer = try container.decodeIfPresent(RedirectsContainer.self, forKey: .redirects) {
+            self.redirects = redirectsContainer
+        } else {
+            self.redirects = nil
+        }
+        
         if let bulkyLabels = try container.decodeIfPresent([String: LanguageValue].self, forKey: .labels) {
             self.labels = convertBulkyTranslations(bulkyLabels)
         } else {
@@ -747,7 +770,7 @@ internal struct FileMetadataListResponse: Decodable, Sendable {
 }
 
 public struct GeosearchListResponse: Decodable, Sendable {
-    let geosearch: [GeosearchListItem]
+    let geosearch: [GeoSearchFileItem]
 }
 
 // query: list=search

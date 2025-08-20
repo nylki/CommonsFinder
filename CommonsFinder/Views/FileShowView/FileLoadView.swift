@@ -19,7 +19,7 @@ struct FileLoadView: View {
 
     var body: some View {
         if let mediaFileInfo {
-            FileShowView(mediaFileInfo, navigationNamespace: navigationNamespace)
+            FileDetailView(mediaFileInfo, namespace: navigationNamespace)
         } else {
             ProgressView().progressViewStyle(.circular)
                 .task {

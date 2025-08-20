@@ -290,25 +290,25 @@ struct FileCreateView: View {
 }
 
 #Preview("Empty/Initial", traits: .previewEnvironment) {
-    FileCreateView(appDatabase: .populatedMultiple())
+    FileCreateView(appDatabase: .populatedPreviewDatabase())
 }
 
 #Preview(
     "new File",
     traits: .previewEnvironment
 ) {
-    FileCreateView(appDatabase: .populatedMultiple(), file: .makeRandomDraft(id: "1"))
+    FileCreateView(appDatabase: .populatedPreviewDatabase(), file: .makeRandomDraft(id: "1"))
 }
 
 #Preview(
     "editing File",
     traits: .previewEnvironment
 ) {
-    FileCreateView(appDatabase: .populatedMultiple(), file: AppDatabase.sampleDraft)
+    FileCreateView(appDatabase: .populatedPreviewDatabase(), file: AppDatabase.sampleDraft)
 }
 #Preview("multiple Files", traits: .previewEnvironment) {
     FileCreateView(
-        appDatabase: .populatedMultiple(),
+        appDatabase: .populatedPreviewDatabase(),
         files: [
             .makeRandomDraft(id: "2"),
             .makeRandomDraft(id: "3"),

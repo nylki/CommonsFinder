@@ -24,10 +24,12 @@ struct HorizontalFileListSection: View {
                     NavigationLink(value: destination) {
                         Label(label, systemImage: "chevron.right")
                             .labelStyle(IconTrailingLabelStyle())
+                            .font(.title3)
+                            .bold()
                     }
+                    .tint(.primary)
                     Spacer()
                 }
-                .scenePadding(.leading)
             }
         }
         .safeAreaPadding(.leading)
@@ -51,13 +53,12 @@ struct HorizontalFileListSection: View {
                     .accessibilityLabel(accessibilityLabel)
                 }
             }
-            .frame(height: 128)
+            .scrollTargetLayout()
             .padding([.vertical, .trailing], 5)
             .padding(.leading, 0)
             .scenePadding(.bottom)
         }
-
-
+        .scrollTargetBehavior(.viewAligned)
         .animation(.default, value: mediaFileInfos)
     }
 
@@ -71,7 +72,7 @@ struct HorizontalFileListSection: View {
                 Color.clear.background(.thinMaterial)
             }
         }
-        .frame(width: 128, height: 128)
+        .frame(width: 150, height: 150)
         .clipShape(.rect(cornerRadius: 16))
         .geometryGroup()
     }

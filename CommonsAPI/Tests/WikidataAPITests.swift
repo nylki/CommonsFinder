@@ -9,6 +9,7 @@ import Testing
 import os.log
 import SwiftUI
 @testable import CommonsAPI
+import CoreLocation
 
 
 @Suite("Wikidata E2E Tests", .serialized)
@@ -46,5 +47,28 @@ struct WikidataEndToEndTests {
             print("\(item.id): \(item.commonsCategory ?? "-") \(item.label ?? "-") \(item.description ?? "-")")
         }
         #expect(!result.isEmpty, "We expect to find Q-items for those commons categories.")
+    }
+    
+    @Test("fetch wikidata items by id", arguments:
+            [["Q1"], ["Q1", "Q2", "Q42"]], ["en", "de"]
+    )
+    func fetchGenericWikidataItem(ids: [String], languageCode: String) async throws {
+        let result = try await CommonsAPI.API.shared.fetchGenericWikidataItems(itemIDs: ids, languageCode: languageCode)
+        #expect(result.count == ids.count)
+        let resultIDs = Set(result.map(\.id))
+        #expect(resultIDs == Set(ids))
+        #expect(result.allSatisfy{ $0.label != nil })
+    }
+    
+    @Test("fetch wikidata items around coordinate radius", arguments: [
+        CLLocationCoordinate2D(latitude: 52.52, longitude: 13.404),
+        .init(latitude: 37.789246, longitude: -122.402251)
+    ]
+    )
+    func fetchWikidataItemsAroundCoordinateRadius(coordinate: CLLocationCoordinate2D) async throws {
+        let result = try await CommonsAPI.API.shared.getWikidataItemsAroundCoordinate(coordinate, kilometerRadius: 0.5, limit: 3, languageCode: "en")
+        
+        #expect(result.isEmpty == false)
+        #expect(result.count <= 3)
     }
 }

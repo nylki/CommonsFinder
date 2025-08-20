@@ -21,13 +21,11 @@ import os.log
 // avoiding duplicates with wikidata structured data (eg. for location, date etc.)
 
 
-struct MediaFileDraft: Identifiable, Equatable, Codable, Hashable {
+struct MediaFileDraft: Identifiable, Equatable, Hashable {
     // UUID-string
     let id: String
 
     var addedDate: Date
-
-    var exifData: ExifData?
 
     /// The unique name without the mediawiki "File:"-prefix and (should be without) any file-extension like .jpeg, editable in UI (eg. "screenshot 2025-01-01")
     var name: String
@@ -42,11 +40,11 @@ struct MediaFileDraft: Identifiable, Equatable, Codable, Hashable {
 
     var captionWithDesc: [DraftCaptionWithDescription]
 
-    /// The custom publication or creation date of the file to be used **instead of the EXIF-Date**
+    /// falls back to the EXIF-data if no custom date set
     var inceptionDate: Date
     var timezone: String?
 
-    var locationHandling: LocationHandling
+    var locationHandling: LocationHandling?
 
     var locationEnabled: Bool {
         get { locationHandling == .exifLocation }
@@ -59,14 +57,14 @@ struct MediaFileDraft: Identifiable, Equatable, Codable, Hashable {
         /// location data from EXIF will be used for wikitext and structured data
         case exifLocation
         /// user defined location data will be used for wikitext and structured data, EXIF-location will be overwritten by user defined location
-        case userDefinedLocation(latitude: Double, longitude: Double)
+        case userDefinedLocation(latitude: CLLocationDegrees, longitude: CLLocationDegrees, precision: CLLocationDegrees)
     }
 
     var tags: [TagItem]
 
     var license: DraftMediaLicense?
-    var author: DraftAuthor
-    var source: DraftSource
+    var author: DraftAuthor?
+    var source: DraftSource?
 
     var width: Int?
     var height: Int?
@@ -94,6 +92,17 @@ struct MediaFileDraft: Identifiable, Equatable, Codable, Hashable {
     }
 }
 
+extension MediaFileDraft {
+    /// exifData is created lazily and is not saved into the DB
+    func loadExifData() -> ExifData? {
+        if let url = self.localFileURL() {
+            try? ExifData(url: url)
+        } else {
+            nil
+        }
+    }
+}
+
 extension MediaFileDraft.DraftCaptionWithDescription {
     init(languageCode: LanguageCode) {
         self.languageCode = languageCode
@@ -113,7 +122,38 @@ extension MediaFileDraft.DraftCaptionWithDescription {
 
 /// Make MediaFileDraft a Codable Record.
 ///
+///
+///
 /// See <https://github.com/groue/GRDB.swift/blob/master/README.md#records>
+///
+extension MediaFileDraft: Codable {
+    init(from decoder: any Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        self.id = try container.decode(String.self, forKey: .id)
+        self.addedDate = try container.decode(Date.self, forKey: .addedDate)
+        self.name = try container.decode(String.self, forKey: .name)
+        self.finalFilename = try container.decode(String.self, forKey: .finalFilename)
+        self.localFileName = try container.decode(String.self, forKey: .localFileName)
+        self.mimeType = try container.decodeIfPresent(String.self, forKey: .mimeType)
+        self.captionWithDesc = try container.decode([MediaFileDraft.DraftCaptionWithDescription].self, forKey: .captionWithDesc)
+        self.inceptionDate = try container.decode(Date.self, forKey: .inceptionDate)
+        self.timezone = try container.decodeIfPresent(String.self, forKey: .timezone)
+        self.locationHandling = try container.decodeIfPresent(MediaFileDraft.LocationHandling.self, forKey: .locationHandling)
+        self.license = try container.decodeIfPresent(DraftMediaLicense.self, forKey: .license)
+        self.author = try container.decodeIfPresent(MediaFileDraft.DraftAuthor.self, forKey: .author)
+        self.source = try container.decodeIfPresent(MediaFileDraft.DraftSource.self, forKey: .source)
+        self.width = try container.decodeIfPresent(Int.self, forKey: .width)
+        self.height = try container.decodeIfPresent(Int.self, forKey: .height)
+
+        if let tags = try? container.decode([TagItem].self, forKey: .tags) {
+            self.tags = tags
+        } else {
+            self.tags = []
+        }
+
+    }
+}
+
 extension MediaFileDraft: FetchableRecord, MutablePersistableRecord {
     // Define database columns from CodingKeys
     enum Columns {
@@ -138,8 +178,7 @@ extension MediaFileDraft: FetchableRecord, MutablePersistableRecord {
 // MARK: - Extensions
 
 extension MediaFileDraft {
-    /// Returns the location of the local file (of the image, video, etc.) if it exists
-    /// This should always exist for drafts, but is not guaranteed for uploaded files.
+    /// Returns the location of the local file (of the image, video, etc.)
     func localFileURL() -> URL? {
         URL.documentsDirectory.appending(path: localFileName)
     }
@@ -158,35 +197,6 @@ extension MediaFileDraft {
 }
 
 extension MediaFileDraft {
-    //    var coordinate: CLLocationCoordinate2D? {
-    //        get {
-    //            if let latitude, let longitude {
-    //                CLLocationCoordinate2D(latitude: latitude, longitude: longitude)
-    //            } else {
-    //                nil
-    //            }
-    //        }
-    //        set {
-    //            gpsTimestamp = nil
-    //        }
-    //    }
-    //
-    //    var location: CLLocation? {
-    //        if let coordinate, let altitude, let horizontalAccuracy, let gpsTimestamp {
-    //            CLLocation(
-    //                coordinate: coordinate,
-    //                altitude: altitude,
-    //                horizontalAccuracy: horizontalAccuracy,
-    //                verticalAccuracy: horizontalAccuracy,
-    //                timestamp: gpsTimestamp
-    //            )
-    //        } else if let coordinate {
-    //            CLLocation(latitude: coordinate.latitude, longitude: coordinate.longitude)
-    //        } else {
-    //            nil
-    //        }
-    //    }
-
     var aspectRatio: Double? {
         if let width, let height {
             (Double(width) / Double(height))
@@ -221,15 +231,16 @@ extension MediaFileDraft {
             assertionFailure("We expect the file to have a mime type")
         }
 
-        // Read EXIF-Data and insert it into MediaFileDraft entity if not previously done
-        if let exifData = try? ExifData(url: fileItem.fileURL) {
-            self.exifData = exifData
+        locationHandling = .noLocation
+        inceptionDate = .now
+        timezone = TimeZone.current.identifier
+
+        // Read EXIF-Data and update relevant values
+        if let exifData = loadExifData() {
             locationHandling = .exifLocation
 
             if let date = exifData.dateOriginal {
                 inceptionDate = date
-            } else {
-                inceptionDate = .now
             }
 
             if let exifTimezone = exifData.offsetTime {
@@ -238,13 +249,9 @@ extension MediaFileDraft {
                 timezone = exifTimezone
             }
 
-            width = exifData.pixelWidth
-            height = exifData.pixelHeight
+            width = exifData.normalizedWidth
+            height = exifData.normalizedHeight
 
-        } else {
-            locationHandling = .noLocation
-            inceptionDate = .now
-            timezone = TimeZone.current.identifier
         }
     }
 }

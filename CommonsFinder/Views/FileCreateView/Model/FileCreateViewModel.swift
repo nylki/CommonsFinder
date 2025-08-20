@@ -29,7 +29,6 @@ enum DraftError: Error {
     /// The currently centered file in the scrollView that is being edited
     var selectedID: MediaFileDraftModel.ID?
 
-
     var photosPickerSelection: [PhotosPickerItem] = [] {
         didSet {
             handleNewPhotoItemSelection(oldValue: oldValue, currentValue: photosPickerSelection)
@@ -93,8 +92,6 @@ enum DraftError: Error {
         let oldItemIDs = Set(oldValue.compactMap(\.itemIdentifier))
         let addedItemIDs = itemIDs.subtracting(oldItemIDs)
         let removedItemIDs = oldItemIDs.subtracting(itemIDs)
-        print("removedItemIDs: \(removedItemIDs)")
-        print("addedItemIDs: \(addedItemIDs)")
         // remove all previously imported items that are not in the selection anymore
 
         removedItemIDs.forEach { id in
@@ -117,7 +114,6 @@ enum DraftError: Error {
                     try Task.checkCancellation()
                     let draft = MediaFileDraftModel(fileItem: fileItem)
                     editedDrafts[draft.id] = draft
-                    print("XX: \(editedDrafts.count)")
                 } catch {
                     logger.error("Failed to create fileItem of photo \(photoItem.itemIdentifier ?? ""): \(error)")
                 }
@@ -140,7 +136,6 @@ enum DraftError: Error {
                 }
             }
         case .failure(let error):
-            // handle error
             logger.error("error: \(error)")
         }
     }

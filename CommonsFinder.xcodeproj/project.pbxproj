@@ -118,10 +118,12 @@
 				CommonsFinderApp.swift,
 				ContentView.swift,
 				Database/AppDatabase.swift,
+				"Database/AppDatabase+Queries.swift",
 				"Database/AppDatabase+Repositories.swift",
-				"Database/AppDatabase+SwiftUI.swift",
-				Database/DatabaseTests.swift,
+				"Database/AppDatabase+SwiftUIEnvironment.swift",
 				Database/FTS5Tokenizer.swift,
+				Database/Model/Category.swift,
+				Database/Model/CategoryInfo.swift,
 				"Database/Model/Extensions/MediaFile+createAttributedStringDescription.swift",
 				"Database/Model/Extensions/MediaFile+InitFromAPI.swift",
 				"Database/Model/Extensions/MediaFile+makeRandomUploaded.swift",
@@ -135,11 +137,11 @@
 				Database/Model/MediaFile.swift,
 				Database/Model/MediaFileDraft.swift,
 				Database/Model/MediaFileInfo.swift,
-				Database/Model/WikidataItem.swift,
-				Database/Model/WikidataItemInfo.swift,
+				DataFetching/DataFetching.swift,
 				"Generic Extensions/CLLocation+generateHumanReadableString.swift",
 				"Generic Extensions/Date+dateOnlyWikidataCompatibleISOString.swift",
 				"Generic Extensions/FileNameType+generateFilename.swift",
+				"Generic Extensions/FloatingPoint+interpolateRanges.swift",
 				"Generic Extensions/Locale+languageCode.swift",
 				"Generic Extensions/Sequence+sortedByKeyPath.swift",
 				"Generic Extensions/String+CapitalizedFirstLetter.swift",
@@ -154,18 +156,24 @@
 				"Observable Models/UploadManager/MediaFileUploadable+initWithDraft.swift",
 				"Observable Models/UploadManager/MockUploadManager.swift",
 				"Observable Models/UploadManager/UploadManager.swift",
-				"Observable Models/WikidataCache.swift",
 				"Preview Content/Preview Assets.xcassets",
+				Tests/DatabaseTests.swift,
+				Tests/GeoVectorMathTests.swift,
+				Tests/OtherTests.swift,
+				Types/DraftAnalysisResult.swift,
 				Types/DraftMediaLicense.swift,
 				"Types/DraftMediaLicense+CommonsAPI.swift",
 				Types/FileNameType.swift,
 				Types/TagItem.swift,
 				Types/WikidataStatement.swift,
 				Types/WikimediaLanguage.swift,
+				Utilities/APIUtils.swift,
 				Utilities/Authentication.swift,
 				"Utilities/CLLocation+gpsDictionary.swift",
+				Utilities/DraftAnalysis.swift,
 				Utilities/ExifData.swift,
 				Utilities/GeoPlacemarkCache.swift,
+				Utilities/GeoVectorMath.swift,
 				Utilities/Logging.swift,
 				Utilities/OverWriteExifLocation.swift,
 				Utilities/ValidationUtils.swift,
@@ -174,8 +182,17 @@
 				Views/AuthView/Model/AuthNavigation.swift,
 				Views/AuthView/OnboardingView.swift,
 				Views/AuthView/RegisterView.swift,
+				Views/Bookmarks/BookmarkedCategoriesView.swift,
+				Views/Bookmarks/BookmarkedFilesView.swift,
+				Views/Bookmarks/BookmarksUnavailableView.swift,
+				Views/CategoryView/CategoryLinkSection.swift,
+				Views/CategoryView/CategoryView.swift,
+				Views/CategoryView/PaginatableCategoryFiles.swift,
+				Views/CategoryView/PaginatableWikiCategoryFiles.swift,
+				Views/CategoryView/RelatedCategoryView.swift,
+				Views/ContextMenus/CategoryContextMenu.swift,
 				Views/ContextMenus/MediaFileContextMenu.swift,
-				Views/ContextMenus/WikiCategoryContextMenu.swift,
+				Views/Extensions/File.swift,
 				Views/FileCreateView/FileCreateView.swift,
 				Views/FileCreateView/FilenameTip.swift,
 				Views/FileCreateView/LicensePicker.swift,
@@ -183,32 +200,39 @@
 				Views/FileCreateView/Model/FileCreateViewModel.swift,
 				Views/FileCreateView/Model/FileItem.swift,
 				Views/FileCreateView/Model/MediaFileDraftModel.swift,
+				Views/FileCreateView/TagPicker/TagButton.swift,
+				Views/FileCreateView/TagPicker/TagLabel.swift,
+				Views/FileCreateView/TagPicker/TagModel.swift,
+				Views/FileCreateView/TagPicker/TagPicker.swift,
+				Views/FileCreateView/TagPicker/TagPickerModel.swift,
 				Views/FileCreateView/TimezonePicker.swift,
-				Views/FileEditView/FileEditView.swift,
+				Views/FileShowView/FileDetailView.swift,
 				Views/FileShowView/FileLoadView.swift,
-				Views/FileShowView/FileShowView.swift,
 				Views/FileShowView/InlineMap.swift,
 				Views/FileShowView/TagsContainerView.swift,
 				Views/Home/DraftsSection.swift,
 				Views/Home/HomeView.swift,
 				Views/Home/HorizontalFileListSection.swift,
 				Views/Home/HorizontalUploadsSection.swift,
+				Views/Home/HorizontalWikiItemListSection.swift,
 				Views/Home/WelcomeTip.swift,
 				Views/Map/ClusterAnnotation.swift,
 				Views/Map/GeoClustering/GeoClustering.swift,
 				"Views/Map/GeoClustering/H3+Convenience.swift",
 				Views/Map/MapModel.swift,
 				Views/Map/MapPopup/MapPopup.swift,
-				Views/Map/MapPopup/MapPopupMediaItem.swift,
-				Views/Map/MapPopup/MapPopupWikiItem.swift,
+				Views/Map/MapPopup/MapPopupCategoryTeaser.swift,
+				Views/Map/MapPopup/MapPopupMediaFileTeaser.swift,
 				Views/Map/MapPopup/PseudoSheet.swift,
 				Views/Map/MapView.swift,
 				Views/PreviewUtils/Lorem.swift,
 				Views/PreviewUtils/PreviewEnvironment.swift,
-				Views/RecentlyViewedView/RecentlyViewedView.swift,
+				Views/RecentlyViewed/RecentlyViewedCategoriesView.swift,
+				Views/RecentlyViewed/RecentlyViewedMediaView.swift,
 				"Views/Reusable Views/CameraImagePicker.swift",
-				"Views/Reusable Views/FileListItems/DraftFileListItem.swift",
-				"Views/Reusable Views/FileListItems/MediaFileListItem.swift",
+				"Views/Reusable Views/CategoryTeaser.swift",
+				"Views/Reusable Views/DraftFileListItem.swift",
+				"Views/Reusable Views/MediaFileListItem.swift",
 				"Views/Reusable Views/PaginatableMediaList.swift",
 				"Views/Reusable Views/SearchBar.swift",
 				Views/Search/Model/PaginatableSearchMediaFiles.swift,
@@ -223,25 +247,17 @@
 				Views/Styles/ImageButtonStyle.swift,
 				Views/Styles/OutlinedTextFieldStyle.swift,
 				Views/Styles/TagButtonStyle.swift,
-				Views/TagPicker/TagButton.swift,
-				Views/TagPicker/TagLabel.swift,
-				Views/TagPicker/TagModel.swift,
-				Views/TagPicker/TagPicker.swift,
-				Views/TagPicker/TagPickerModel.swift,
 				Views/UploadsView/UploadsView.swift,
-				Views/WikiCategoryView/PaginatableCategoryFiles.swift,
-				Views/WikiCategoryView/PaginatableWikiCategoryFiles.swift,
-				Views/WikiCategoryView/RelatedCategoryView.swift,
-				Views/WikiCategoryView/WikiCategoryLinkSection.swift,
-				Views/WikiCategoryView/WikiCategoryView.swift,
 			);
 			target = E2839FF72CA2DD910053C312 /* CommonsFinderTests */;
 		};
 		E2DC53012D146B78009EF370 /* Exceptions for "CommonsFinder" folder in "CommonsFinder" target */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
-				Database/DatabaseTests.swift,
 				Info.plist,
+				Tests/DatabaseTests.swift,
+				Tests/GeoVectorMathTests.swift,
+				Tests/OtherTests.swift,
 			);
 			target = E2839FE62CA2DD900053C312 /* CommonsFinder */;
 		};
@@ -769,6 +785,7 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GENERATE_ASSET_SYMBOL_FRAMEWORKS = "SwiftUI UIKit";
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS = YES;
 				CLANG_TIDY_BUGPRONE_REDUNDANT_BRANCH_CONDITION = YES;
 				CLANG_TIDY_MISC_REDUNDANT_EXPRESSION = YES;
 				CODE_SIGN_ENTITLEMENTS = CommonsFinder/CommonsFinder.entitlements;
@@ -794,8 +811,7 @@
 				"INFOPLIST_KEY_UILaunchScreen_Generation[sdk=iphonesimulator*]" = YES;
 				"INFOPLIST_KEY_UIStatusBarStyle[sdk=iphoneos*]" = UIStatusBarStyleDefault;
 				"INFOPLIST_KEY_UIStatusBarStyle[sdk=iphonesimulator*]" = UIStatusBarStyleDefault;
-				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
-				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations = "UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown";
 				IPHONEOS_DEPLOYMENT_TARGET = 18.0;
 				LD_RUNPATH_SEARCH_PATHS = "@executable_path/Frameworks";
 				"LD_RUNPATH_SEARCH_PATHS[sdk=macosx*]" = "@executable_path/../Frameworks";
@@ -821,6 +837,7 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GENERATE_ASSET_SYMBOL_FRAMEWORKS = "SwiftUI UIKit";
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS = YES;
 				CLANG_TIDY_BUGPRONE_REDUNDANT_BRANCH_CONDITION = YES;
 				CLANG_TIDY_MISC_REDUNDANT_EXPRESSION = YES;
 				CODE_SIGN_ENTITLEMENTS = CommonsFinder/CommonsFinder.entitlements;
@@ -846,8 +863,7 @@
 				"INFOPLIST_KEY_UILaunchScreen_Generation[sdk=iphonesimulator*]" = YES;
 				"INFOPLIST_KEY_UIStatusBarStyle[sdk=iphoneos*]" = UIStatusBarStyleDefault;
 				"INFOPLIST_KEY_UIStatusBarStyle[sdk=iphonesimulator*]" = UIStatusBarStyleDefault;
-				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
-				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations = "UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown";
 				IPHONEOS_DEPLOYMENT_TARGET = 18.0;
 				LD_RUNPATH_SEARCH_PATHS = "@executable_path/Frameworks";
 				"LD_RUNPATH_SEARCH_PATHS[sdk=macosx*]" = "@executable_path/../Frameworks";
@@ -968,16 +984,16 @@
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/kean/Nuke";
 			requirement = {
-				kind = upToNextMajorVersion;
-				minimumVersion = 12.8.0;
+				kind = exactVersion;
+				version = 12.8.0;
 			};
 		};
 		E24D3BFB2CF3ACDC003484CC /* XCRemoteSwiftPackageReference "FrameUp" */ = {
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/ryanlintott/FrameUp";
 			requirement = {
-				kind = upToNextMajorVersion;
-				minimumVersion = 0.9.9;
+				kind = exactVersion;
+				version = 0.9.9;
 			};
 		};
 		E2549B212CBD6886005DFE14 /* XCRemoteSwiftPackageReference "swift-async-algorithms" */ = {
@@ -992,16 +1008,16 @@
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/apple/swift-algorithms.git";
 			requirement = {
-				kind = upToNextMajorVersion;
-				minimumVersion = 1.2.1;
+				kind = exactVersion;
+				version = 1.2.1;
 			};
 		};
 		E2549B272CBD69C7005DFE14 /* XCRemoteSwiftPackageReference "swift-collections" */ = {
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/apple/swift-collections.git";
 			requirement = {
-				kind = upToNextMajorVersion;
-				minimumVersion = 1.2.0;
+				kind = exactVersion;
+				version = 1.2.0;
 			};
 		};
 		E257E6BD2D2038F90049FFE8 /* XCRemoteSwiftPackageReference "Lock" */ = {
@@ -1016,16 +1032,16 @@
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/kean/Pulse";
 			requirement = {
-				kind = upToNextMajorVersion;
-				minimumVersion = 5.1.4;
+				kind = exactVersion;
+				version = 5.1.4;
 			};
 		};
 		E290323D2D9EA84700A0CD8F /* XCRemoteSwiftPackageReference "GRDBQuery" */ = {
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/groue/GRDBQuery";
 			requirement = {
-				kind = upToNextMajorVersion;
-				minimumVersion = 0.11.0;
+				kind = exactVersion;
+				version = 0.11.0;
 			};
 		};
 		E2F19BC42CA43C6400E19DCD /* XCRemoteSwiftPackageReference "swift-security" */ = {
@@ -1040,8 +1056,8 @@
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/groue/GRDB.swift.git";
 			requirement = {
-				kind = upToNextMinorVersion;
-				minimumVersion = 7.5.0;
+				kind = exactVersion;
+				version = 7.6.1;
 			};
 		};
 		E2F9791F2D81D01D0088062F /* XCRemoteSwiftPackageReference "h3kit-ios" */ = {

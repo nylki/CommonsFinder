@@ -1,5 +1,5 @@
 //
-//  WikidataItem+Thumbnail.swift
+//  Category+Thumbnail.swift
 //  CommonsFinder
 //
 //  Created by Tom Brewe on 01.04.25.
@@ -9,7 +9,7 @@
 import Foundation
 import Nuke
 
-extension WikidataItem {
+extension Category {
     var thumbnailImage: Nuke.ImageRequest? {
         if let image,
             let resizedURL = try? URL.experimentalResizedCommonsImageURL(filename: image.lastPathComponent, maxWidth: 640)

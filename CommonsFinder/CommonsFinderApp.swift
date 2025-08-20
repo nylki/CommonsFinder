@@ -24,15 +24,9 @@ struct CommonsFinderApp: App {
     private let searchModel: SearchModel
     private let uploadManager: UploadManager
     private let account: AccountModel
-    private let wikidataCache: WikidataCache
 
     init() {
         postInstallMaintenance()
-
-        #if DEBUG
-            RemoteLogger.shared.isAutomaticConnectionEnabled = true
-            (ImagePipeline.shared.configuration.dataLoader as? DataLoader)?.delegate = URLSessionProxyDelegate()
-        #endif
 
         /** _Comment from Apple's AppIntentsSampleApp_:
         
@@ -57,9 +51,6 @@ struct CommonsFinderApp: App {
         let uploadManager = UploadManager(appDatabase: appDatabase)
         self.uploadManager = uploadManager
 
-        let wikidataCache = WikidataCache(appDatabase: appDatabase)
-        self.wikidataCache = wikidataCache
-
 
         AppDependencyManager.shared.add(dependency: appDatabase)
         AppDependencyManager.shared.add(dependency: account)
@@ -83,7 +74,6 @@ struct CommonsFinderApp: App {
                 .environment(navigation)
                 .environment(searchModel)
                 .environment(uploadManager)
-                .environment(wikidataCache)
                 .task {
                     postLaunchMaintennce()
 
@@ -98,6 +88,12 @@ struct CommonsFinderApp: App {
                         // Handle TipKit errors
                         logger.error("Error initializing TipKit \(error.localizedDescription)")
                     }
+
+                    #if DEBUG
+                        RemoteLogger.shared.isAutomaticConnectionEnabled = true
+                        ImagePipeline.Configuration.isSignpostLoggingEnabled = true
+                        (ImagePipeline.shared.configuration.dataLoader as? DataLoader)?.delegate = URLSessionProxyDelegate()
+                    #endif
                 }
         }
 

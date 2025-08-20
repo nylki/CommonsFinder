@@ -10,8 +10,8 @@ import Foundation
 extension [MediaFileInfo] {
     func sortedByLastViewed(using comparator: ComparisonResult) -> Self {
         sorted(by: { a, b in
-            guard let lastViewedA = a.itemInteraction?.lastViewed,
-                let lastViewedB = b.itemInteraction?.lastViewed
+            guard let lastViewedA = a.lastViewed,
+                let lastViewedB = b.lastViewed
             else {
                 return false
             }

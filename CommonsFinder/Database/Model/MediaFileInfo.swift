@@ -11,6 +11,27 @@ import GRDB
 struct MediaFileInfo: FetchableRecord, Equatable, Hashable, Decodable {
     var mediaFile: MediaFile
     var itemInteraction: ItemInteraction?
+
+    var isBookmarked: Bool {
+        itemInteraction?.bookmarked != nil
+    }
+
+    var bookmarkDate: Date? {
+        itemInteraction?.bookmarked
+    }
+
+    var viewCount: UInt {
+        itemInteraction?.viewCount ?? 0
+    }
+
+    var lastViewed: Date? {
+        itemInteraction?.lastViewed
+    }
+
+    init(mediaFile: MediaFile, itemInteraction: ItemInteraction? = nil) {
+        self.mediaFile = mediaFile
+        self.itemInteraction = itemInteraction
+    }
 }
 
 extension MediaFileInfo: Identifiable {

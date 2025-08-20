@@ -11,15 +11,15 @@ import UniformTypeIdentifiers
 
 extension MediaFile {
     static func makeRandomUploaded(id: MediaFile.ID, _ imageType: TestImageType) -> MediaFile {
-        let date: Date = Date(timeIntervalSince1970: .random(in: 1..<1_576_800_000))
+        let date: Date = .init(timeIntervalSince1970: 3600 * Double(UInt.random(in: 1..<1234)))
         return MediaFile.init(
             id: id + String(Int64.random(in: 0..<Int64.max)),
             name: id,
             url: imageType.url,
             descriptionURL: imageType.url,
             thumbURL: imageType.url,
-            width: 2000 * (imageType.aspect ?? 1),
-            height: 2000 / (imageType.aspect ?? 1),
+            width: Int(2000 * (imageType.aspect ?? 1)),
+            height: Int(2000 / (imageType.aspect ?? 1)),
             uploadDate: date,
             caption: [.init("Lorem Ipsum Dolor Sitit in New York City, 1842", languageCode: "en"), .init("German localized paragraph: \(Lorem.paragraph)", languageCode: "de")],
             fullDescription: [
@@ -33,7 +33,7 @@ extension MediaFile {
             //            license: .draftSelectable.randomElement()!,
             mimeType: UTType(filenameExtension: imageType.rawValue.fileExtension())?.preferredMIMEType,
             username: "Testuser",
-            fetchDate: .now
+            fetchDate: Date.distantPast
         )
     }
 }
