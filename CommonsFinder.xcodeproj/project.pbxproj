@@ -138,6 +138,7 @@
 				Database/Model/MediaFileDraft.swift,
 				Database/Model/MediaFileInfo.swift,
 				DataFetching/DataFetching.swift,
+				"Generic Extensions/Array+safeIndex.swift",
 				"Generic Extensions/CLLocation+generateHumanReadableString.swift",
 				"Generic Extensions/Date+dateOnlyWikidataCompatibleISOString.swift",
 				"Generic Extensions/FileNameType+generateFilename.swift",

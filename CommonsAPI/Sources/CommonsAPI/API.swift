@@ -1155,30 +1155,37 @@ LIMIT \(limit)
     /// action=opensearch
     /// smaxage=30&maxage=30
     // https://commons.wikimedia.org/wiki/Special:ApiSandbox#action=opensearch&format=json&search=Adlers&namespace=6%7C0&profile=fuzzy&warningsaserror=1&formatversion=2
-    public func searchSuggestedSearchTerms(for term: String, namespaces: [MediawikiNamespace]) async throws -> [String] {
-
-        let parameters: Parameters = [
+    public func searchSuggestedSearchTerms(for term: String, limit: ListLimit? = nil, namespaces: [MediawikiNamespace]) async throws -> [String] {
+        let cacheDuration = 60 * 60 * 24 * 7 // 1 week
+        
+        var parameters: Parameters = [
             "action": "opensearch",
             "curtimestamp": 1,
             "search": term,
             "namespace": namespaces.apiString,
-            "profile": "fuzzy",
+            "profile": "engine_autoselect",
             "format": "json",
-            "smaxage": 60,
-            "maxage": 60,
+            "smaxage": cacheDuration,
+            "maxage": cacheDuration,
             "formatversion": 2,
             "warningsaserror": "1"
         ]
         
-        let request = session.request(commonsEndpoint, method: .get, parameters: parameters)
+        if let limit {
+            parameters["limit"] = limit.apiString
+        }
+        
+        let request = session
+            .request(commonsEndpoint, method: .get, parameters: parameters)
             .serializingData()
         
         guard let jsonDict = try await JSONSerialization.jsonObject(with: request.value) as? [Any] else {
             throw CommonAPIError.failedToDecodeJSONArray
         }
         // This API-action returns the original search term as the first element in the result array.
-        assert((jsonDict[0] as? String) == term,
-               "We expect the the string returned from the API to match our original search term."
+        assert(
+            (jsonDict[0] as? String) == term,
+            "We expect the the string returned from the API to match our original search term."
         )
 
         if let suggestedTerms = jsonDict[1] as? [String] {
