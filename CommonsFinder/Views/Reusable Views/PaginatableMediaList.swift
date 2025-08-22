@@ -12,6 +12,9 @@ struct PaginatableMediaList: View {
     let items: [MediaFileInfo]
     let status: PaginatableMediaFiles.Status
 
+    // when a search bar is visible
+    @Environment(\.isSearching) private var isSearching: Bool
+
     // TODO: can we get rid of this and inject the toolbar as content from outside instead maybe?
     var toolOverlayPadding = false
 
@@ -20,6 +23,7 @@ struct PaginatableMediaList: View {
 
     var body: some View {
         ScrollView(.vertical) {
+
             LazyVStack(spacing: 20) {
                 ForEach(items) { mediaFileInfo in
                     MediaFileListItem(mediaFileInfo: mediaFileInfo)
