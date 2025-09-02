@@ -1,35 +1,4 @@
-Heya! This release brings a few new features and changes :)
+# Improved Search
 
-# Bookmarks
-
-Files and categories can now be bookmarked for later.
-These will then appear in the home view, which has also received some UI adjustments.
-
-# Tag Suggestions in the Upload Flow
-
-If an image contains GPS coordinates, relevant categories may now be suggested automatically.
-If the camera direction is included in the EXIF data, this will also be used to filter the suggestions even further.
-This means categories that could be within the camera’s field of view will be suggested more.
-
-# Bug Fixes
-
-- coordinates of uploaded images now include proper accuracy/precision values
-
-- camera direction (bearing) values are now normalized (e.g., -10° is now shown as 350°)
-
-- various other fixes
-
-# Next steps
-
-- After this somewhat larger update, I’ll try to keep the next ones a bit smaller and focused.
-Here are a few things I want to look into next:
-
-- More robust uploads (duplicate filename checks, background uploads, better error messages, etc.)
-
-- iOS 26 adjustments for the new UI
-
-- Improved search (searching for categories and users, search term suggestions)
-
-The map will also be improved, though probably not until the items above are taken care of.
-
-Have fun testing and using the app! :)
+Search suggestions will now appear when typing.
+Also, in addition to the existing image search, categories will now also be searched and displayed.
