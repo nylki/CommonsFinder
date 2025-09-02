@@ -17,8 +17,9 @@ struct WikidataEndToEndTests {
     
     @Test("Searching Q-Items", arguments: [("tree", "en"), ("Baum", "de")])
     func searchItems(term: String, languageCode: String) async throws {
-        let items = try await CommonsAPI.API.shared.searchWikidataItems(term: term, languageCode: languageCode)
+        let result = try await CommonsAPI.API.shared.searchWikidataItems(term: term, languageCode: languageCode)
         print("Q-Item results for \"\(term)\"")
+        let items = result.search
         for item in items {
             print("\(item.id) (\(item.label))\n, \(item.description ?? "-")\n")
         }

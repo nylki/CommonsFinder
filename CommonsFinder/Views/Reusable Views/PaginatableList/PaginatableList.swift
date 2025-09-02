@@ -1,35 +1,31 @@
 //
-//  CategoryMediaList.swift
+//  PaginatableList.swift
 //  CommonsFinder
 //
-//  Created by Tom Brewe on 13.03.25.
+//  Created by Tom Brewe on 01.09.25.
 //
 
 import SwiftUI
 
-// NOTE: This view is used in Search and Category
-struct PaginatableMediaList: View {
-    let items: [MediaFileInfo]
-    let status: PaginatableMediaFiles.Status
-
-    // TODO: can we get rid of this and inject the toolbar as content from outside instead maybe?
+struct PaginatableList<Item: Equatable & Identifiable, ItemView: View>: View {
+    let items: [Item]
+    let status: PaginationStatus
     var toolOverlayPadding = false
-
     let paginationRequest: () -> Void
-
+    let itemView: (_ item: Item) -> ItemView
 
     var body: some View {
         ScrollView(.vertical) {
             LazyVStack(spacing: 20) {
-                ForEach(items) { mediaFileInfo in
-                    MediaFileListItem(mediaFileInfo: mediaFileInfo)
+                ForEach(items) { item in
+                    itemView(item)
                         .onScrollVisibilityChange { visible in
                             guard visible else { return }
                             let threshold = min(items.count - 1, max(0, items.count - 5))
                             guard threshold > 0 else { return }
                             let thresholdItem = items[threshold]
 
-                            if mediaFileInfo == thresholdItem {
+                            if item == thresholdItem {
                                 paginationRequest()
                             }
                         }
@@ -40,8 +36,8 @@ struct PaginatableMediaList: View {
             .compositingGroup()
             .scenePadding()
             .padding(.top, toolOverlayPadding ? 40 : 0)
+            .safeAreaPadding(.trailing)
             .shadow(color: .black.opacity(0.15), radius: 10)
-            .animation(.default, value: items)
         }
         .scrollIndicators(.visible, axes: .vertical)
         .onChange(of: status, initial: true) {
@@ -73,14 +69,17 @@ struct PaginatableMediaList: View {
     }
 }
 
-#Preview(traits: .previewEnvironment) {
-    PaginatableMediaList(
+#Preview {
+    PaginatableList(
         items: [
-            .makeRandomUploaded(id: "1", .horizontalImage),
-            .makeRandomUploaded(id: "2", .verticalImage),
-            .makeRandomUploaded(id: "3", .squareImage),
+            Category.earth, Category.testItemNoDesc,
         ],
-        status: .idle(reachedEnd: false),
-        paginationRequest: {}
-    )
+        status: .unknown,
+        paginationRequest: {
+            print("paginate")
+        }
+    ) {
+        CategoryTeaser(categoryInfo: .init($0))
+            .frame(height: 185)
+    }
 }

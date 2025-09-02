@@ -656,6 +656,7 @@ public actor API {
     
     public struct GenericSearchQueryResponse: Sendable {
         public let items: [QueryListItem]
+        public let suggestion: String?
         public let offset: Int?
     }
     
@@ -671,48 +672,95 @@ public actor API {
         case random
     }
     
-    public func search(for term: String, namespaces: [MediawikiNamespace], sort: SearchSort = .relevance, limit: ListLimit = .max, offset: Int? = nil) async throws -> GenericSearchQueryResponse {
-        //https://commons.wikimedia.org/w/api.php?action=query&format=json&prop=&list=search&meta=&exportschema=0.11&formatversion=2&srsearch=Adlershof&srnamespace=6&srlimit=50&srinfo=totalhits%7Csuggestion%7Crewrittenquery&srprop=timestamp&srenablerewrites=1
-        var parameters: Parameters = [
-            "action": "query",
-            "list": "search",
-            "srsearch":  term,
-            "srsort": sort.rawValue,
-            "srnamespace": namespaces.apiString,
-            "srlimit": limit.apiString,
-            "srprop": "timestamp",
-            "srenablerewrites": "1",
-            "smaxage": 60,
-            "maxage": 60,
-            "exportschema": "0.11",
-            "formatversion": 2,
-            "curtimestamp": 1,
-            "format": "json"
-        ]
-        if let offset {
-            parameters["sroffset"] = offset
-        }
-        
-        let request = session.request(commonsEndpoint, method: .get, parameters: parameters)
-            .serializingDecodable(QueryResponse<SearchListResponse>.self, decoder: jsonDecoder)
-        let result = try await request.value
-        guard let resultQuery = result.query else {
-            return .init(items: [], offset: nil)
-        }
-        return .init(items: resultQuery.search, offset: result.continue?.sroffset)
-    }
+//    public func search(for term: String, namespaces: [MediawikiNamespace], sort: SearchSort = .relevance, limit: ListLimit = .max, offset: Int? = nil) async throws -> GenericSearchQueryResponse {
+//        //https://commons.wikimedia.org/w/api.php?action=query&format=json&prop=&list=search&meta=&exportschema=0.11&formatversion=2&srsearch=Adlershof&srnamespace=6&srlimit=50&srinfo=totalhits%7Csuggestion%7Crewrittenquery&srprop=timestamp&srenablerewrites=1
+//        var parameters: Parameters = [
+//            "action": "query",
+//            "list": "search",
+//            "srsearch":  term,
+//            "srsort": sort.rawValue,
+//            "srnamespace": namespaces.apiString,
+//            "srlimit": limit.apiString,
+//            "srprop": "timestamp",
+//            "srenablerewrites": "1",
+//            "smaxage": 60,
+//            "maxage": 60,
+//            "exportschema": "0.11",
+//            "formatversion": 2,
+//            "curtimestamp": 1,
+//            "format": "json"
+//        ]
+//        if let offset {
+//            parameters["sroffset"] = offset
+//        }
+//        
+//        let request = session.request(commonsEndpoint, method: .get, parameters: parameters)
+//            .serializingDecodable(QueryResponse<SearchListResponse>.self, decoder: jsonDecoder)
+//        let result = try await request.value
+//        guard let resultQuery = result.query else {
+//            return .init(items: [], offset: nil)
+//        }
+//        return .init(items: resultQuery.search, offset: result.continue?.sroffset)
+//    }
 
-    public func searchFiles(for term: String, sort: SearchSort = .relevance, limit: ListLimit = .max, offset: Int? = nil) async throws -> GenericSearchQueryResponse {
-        //https://commons.wikimedia.org/w/api.php?action=query&format=json&prop=&list=search&meta=&exportschema=0.11&formatversion=2&srsearch=Adlershof&srnamespace=6&srlimit=50&srinfo=totalhits%7Csuggestion%7Crewrittenquery&srprop=timestamp&srenablerewrites=1
+    
+    private func search(
+        for term: String,
+        namespace: MediawikiNamespace,
+        sort: SearchSort = .relevance,
+        limit: ListLimit = .max,
+        additionalParams: Parameters? = nil,
+        offset: Int? = nil
+    ) async throws -> GenericSearchQueryResponse {
+
         var parameters: Parameters = [
             "action": "query",
             "list": "search",
             "redirects": 1,
             "srsearch":  term,
             "srsort": sort.rawValue,
-            "srnamespace": MediawikiNamespace.file.rawValue,
+            "srnamespace": namespace.rawValue,
             "srlimit": limit.apiString,
             "srprop": "timestamp",
+            "maxage": 60,
+            "exportschema": "0.11",
+            "formatversion": 2,
+            "curtimestamp": 1,
+            "format": "json"
+        ]
+        
+        if let additionalParams {
+            for (key,value) in additionalParams {
+                parameters[key] = value
+            }
+        }
+        if let offset {
+            parameters["sroffset"] = offset
+        }
+        
+        let request = session.request(
+            commonsEndpoint,
+            method: .get,
+            parameters: parameters
+        )
+        .serializingDecodable(
+            QueryResponse<SearchListResponse>.self,
+            decoder: jsonDecoder
+        )
+        
+        let resultValue = try await request.value
+        guard let resultQuery = resultValue.query else {
+            return .init(items: [], suggestion: nil, offset: nil)
+        }
+        return .init(
+            items: resultQuery.search,
+            suggestion: resultQuery.searchinfo.suggestion,
+            offset: resultValue.continue?.sroffset
+        )
+    }
+    
+    public func searchFiles(for term: String, sort: SearchSort = .relevance, limit: ListLimit = .max, offset: Int? = nil) async throws -> GenericSearchQueryResponse {
+        let additionalParams: Parameters = [
             "prop": "imageinfo|categories|info",
             "clshow": "!hidden",
             "cllimit": "max",
@@ -721,24 +769,15 @@ public actor API {
             "iiprop": "url|timestamp|user|dimensions",
             "iiurlwidth": 640,
             "iiurlheight": 640,
-            "maxage": 60,
-            "exportschema": "0.11",
-            "formatversion": 2,
-            "curtimestamp": 1,
-            "format": "json"
         ]
-        if let offset {
-            parameters["sroffset"] = offset
-        }
-        
-        let request = session.request(commonsEndpoint, method: .get, parameters: parameters)
-            .serializingDecodable(QueryResponse<SearchListResponse>.self, decoder: jsonDecoder)
-        let resultValue = try await request.value
-        guard let resultQuery = resultValue.query else {
-            return .init(items: [], offset: nil)
-        }
-        return .init(items: resultQuery.search, offset: resultValue.continue?.sroffset)
+        return try await search(for: term, namespace: .file, sort: sort, limit: limit, additionalParams: additionalParams, offset: offset)
     }
+    
+    public func searchCategories(for term: String, sort: SearchSort = .relevance, limit: ListLimit = .max, offset: Int? = nil) async throws -> GenericSearchQueryResponse {
+        try await search(for: term, namespace: .category, sort: sort, limit: limit, additionalParams: [:], offset: offset)
+    }
+    
+    
     
     // https://commons.wikimedia.org/w/api.php?action=query&format=json&prop=&continue=gsroffset%7C%7C&generator=geosearch&redirects=1&formatversion=2&ggscoord=37.786971%7C-122.399677&ggsradius=5000&ggssort=relevance&ggslimit=500&ggsglobe=earth&ggsnamespace=6&ggsprop=
     public func geoSearchFiles(topLeft: CLLocationCoordinate2D, bottomRight: CLLocationCoordinate2D) async throws -> [GeoSearchFileItem] {
@@ -773,32 +812,14 @@ public actor API {
 
     }
     
-    /// Searches for Commons-Files by `term`. Returns a list of `PageListItem` which includes.
-    /// This function combines a pure search query with the metadata query to deliver the full items.
-    /// 
-//    public func searchFiles(term: String) async throws -> [RawFileMetadata] {
-//        let searchResults = try await search(for: term, namespaces: [.file])
-//        let titles = searchResults.map(\.title)
-//        return try await fetchFileMetadata(titles: titles)
-//    }
-
-    
-    public func searchCategories(term: String, limit: ListLimit = .max) async throws -> [String] {
-        try await search(for: term, namespaces: [.category], limit: limit)
-            .items.compactMap {
-                String($0.title.split(separator: "Category:")[0])
-            }
-    }
-    
-    
     /// searchWikidataItems
     /// - Parameters:
     ///   - term: `String` to search for
     ///   - languageCode: the language to search in as well as return the results (should use the user's preferred Locale)
     /// - Returns: a list of Wikidata Q-Items
-    public func searchWikidataItems(term: String, languageCode: String) async throws -> [WikidataSearchItem] {
+    public func searchWikidataItems(term: String, languageCode: String, offset: Int? = nil) async throws -> SearchWikidataEntityResponse {
 //        http://www.wikidata.org/w/api.php?action=wbsearchentities&search=test&language=en&format=json&type=item
-        let parameters: Parameters = [
+        var parameters: Parameters = [
             "action": "wbsearchentities",
             "formatversion": 2,
             "language": languageCode,
@@ -812,11 +833,15 @@ public actor API {
             "curtimestamp": 1
         ]
         
+        if let offset {
+            parameters["continue"] = offset
+        }
+        
         let request = session.request(wikidataEndpoint, method: .get, parameters: parameters)
             .serializingDecodable(SearchWikidataEntityResponse.self, decoder: jsonDecoder)
         
         let resultValue = try await request.value
-        return resultValue.search
+        return resultValue
     }
     
     public func fetchGenericWikidataItems(itemIDs: [String], languageCode: LanguageCode) async throws -> [GenericWikidataItem] {
@@ -866,11 +891,17 @@ GROUP BY ?item ?commonsCategory ?area ?location ?label ?image ?description
             .serializingDecodable(SPARQLResponse<SparqlGenericWikidataItem>.self, decoder: jsonDecoder)
             .value
         
-        let formattedResult: [GenericWikidataItem] = resultValue.results.bindings.map {
+        let groupedResult = resultValue.results.bindings.map {
             GenericWikidataItem($0, language: languageCode)
+        }.grouped(by: \.id)
+        
+        /// restore the original order
+        let orderedResult: [GenericWikidataItem] = itemIDs.compactMap { id in
+            guard !id.isEmpty else { return nil }
+            return groupedResult[id]?.first
         }
         
-        return formattedResult
+        return orderedResult
     }
     
     
@@ -987,10 +1018,16 @@ GROUP BY ?item ?commonsCategory ?area ?location ?label ?image ?description
             .serializingDecodable(SPARQLResponse<SparqlGenericWikidataItem>.self, decoder: jsonDecoder)
             .value
         
-        let formattedResult: [GenericWikidataItem] = resultValue.results.bindings.map {
+        let groupedResult = resultValue.results.bindings.map {
             GenericWikidataItem($0, language: languageCode)
+        }.grouped(by: \.commonsCategory)
+        
+        /// restore the original order
+        let orderedResult: [GenericWikidataItem] = categories.compactMap { commonsCategory in
+            guard !commonsCategory.isEmpty else { return nil }
+            return groupedResult[commonsCategory]?.first
         }
-        return formattedResult
+        return orderedResult
     }
     
     // NOTE: see "radius_query_for_upload_wizard.rq" for similar query in android commons project
@@ -1155,30 +1192,37 @@ LIMIT \(limit)
     /// action=opensearch
     /// smaxage=30&maxage=30
     // https://commons.wikimedia.org/wiki/Special:ApiSandbox#action=opensearch&format=json&search=Adlers&namespace=6%7C0&profile=fuzzy&warningsaserror=1&formatversion=2
-    public func searchSuggestedSearchTerms(for term: String, namespaces: [MediawikiNamespace]) async throws -> [String] {
-
-        let parameters: Parameters = [
+    public func searchSuggestedSearchTerms(for term: String, limit: ListLimit? = nil, namespaces: [MediawikiNamespace]) async throws -> [String] {
+        let cacheDuration = 60 * 60 * 24 * 7 // 1 week
+        
+        var parameters: Parameters = [
             "action": "opensearch",
             "curtimestamp": 1,
             "search": term,
             "namespace": namespaces.apiString,
-            "profile": "fuzzy",
+            "profile": "engine_autoselect",
             "format": "json",
-            "smaxage": 60,
-            "maxage": 60,
+            "smaxage": cacheDuration,
+            "maxage": cacheDuration,
             "formatversion": 2,
             "warningsaserror": "1"
         ]
         
-        let request = session.request(commonsEndpoint, method: .get, parameters: parameters)
+        if let limit {
+            parameters["limit"] = limit.apiString
+        }
+        
+        let request = session
+            .request(commonsEndpoint, method: .get, parameters: parameters)
             .serializingData()
         
         guard let jsonDict = try await JSONSerialization.jsonObject(with: request.value) as? [Any] else {
             throw CommonAPIError.failedToDecodeJSONArray
         }
         // This API-action returns the original search term as the first element in the result array.
-        assert((jsonDict[0] as? String) == term,
-               "We expect the the string returned from the API to match our original search term."
+        assert(
+            (jsonDict[0] as? String) == term,
+            "We expect the the string returned from the API to match our original search term."
         )
 
         if let suggestedTerms = jsonDict[1] as? [String] {

@@ -39,14 +39,14 @@ Here are some demo videos and screenshots representing the development state of 
 
 I plan an implement more functionality in the next months and improve on the current ones. The priority is on these topics next:
 
-- fullscreen (and zoomable) view for images
-- bookmark images and categories/items
-- improve map: better live-location experience, direct opening of single items on the map
-- improve search: search for categories, currently only images can be searched
-- when uploading, suggest nearby location categories/items to add
-- make upload more robust in some areas (eg. check if filename already exists)
-- editing of uploaded files (eg. changing the caption or adding categories)
-- improve author and attribution editing and viewing
+- [ ] fullscreen (and zoomable) view for images
+- [x] bookmark images and categories/items
+- [ ] improve map: better live-location experience, direct opening of single items on the map
+- [ ] improve search: search for categories, currently only images can be searched
+- [x] when uploading, suggest nearby location categories/items to add
+- [ ] make upload more robust in some areas (eg. check if filename already exists)
+- [ ] editing of uploaded files (eg. changing the caption or adding categories)
+- [ ] improve author and attribution editing and viewing
 
 Those above have priority, but there are many more things planned. Here is a rough overview of what I would like the app to be able to do at some point:
 

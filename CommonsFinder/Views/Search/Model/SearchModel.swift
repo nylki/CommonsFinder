@@ -5,6 +5,7 @@
 //  Created by Tom Brewe on 29.10.24.
 //
 
+import Algorithms
 import AppIntents
 import AsyncAlgorithms
 import CommonsAPI
@@ -18,7 +19,18 @@ import os.log
     private var searchText: String = ""
     var bindableSearchText: String {
         get { searchText }
-        set { setSearchText(newValue) }
+        set {
+            guard newValue != searchText else { return }
+            mediaResults = nil
+            categoryResults = nil
+            searchTask?.cancel()
+
+            searchText = newValue
+
+            if !searchText.isEmpty {
+                fetchSearchSuggestions(for: searchText)
+            }
+        }
     }
 
     /// When this values changes the observing view may attempt to to focus the search-field
@@ -26,40 +38,44 @@ import os.log
     private(set) var suggestions: [String] = []
     private(set) var order: SearchOrder = .relevance
 
-    var isSearching: Bool { searchTaskCount > 0 }
-    var items: [MediaFileInfo] { cachedResults[searchText]?.mediaFileInfos ?? [] }
-    var paginationStatus: PaginatableMediaFiles.Status {
-        cachedResults[searchText]?.status ?? .unknown
+    var scope: SearchScope = .all
+
+    var isSearching: Bool {
+        !searchText.isEmpty && searchTask != nil || ((mediaItems.isEmpty || categoryItems.isEmpty) && (mediaPaginationStatus == .isPaginating || categoryPaginationStatus == .isPaginating))
     }
 
-    @ObservationIgnored
-    private var searchTaskCount: UInt = 0
+    var mediaItems: [MediaFileInfo] { mediaResults?.mediaFileInfos ?? [] }
+    var categoryItems: [CategoryInfo] { categoryResults?.categoryInfos ?? [] }
 
-    var cachedResults: [String: PaginatableSearchMediaFiles]
+
+    var mediaPaginationStatus: PaginationStatus {
+        mediaResults?.status ?? .unknown
+    }
+    var categoryPaginationStatus: PaginationStatus {
+        categoryResults?.status ?? .unknown
+    }
+
+    var mediaResults: PaginatableSearchMediaFiles?
+    var categoryResults: PaginatableCategorySearch?
+
+    private var searchTask: Task<Void, Never>?
+    private var suggestTask: Task<Void, Never>?
 
     @ObservationIgnored
-    private var searchThrottleTask: Task<Void, Never>?
-    @ObservationIgnored
-    private var searchChannel: AsyncChannel<String> = .init()
     private let appDatabase: AppDatabase
 
-    init(appDatabase: AppDatabase, searchText: String = "", cachedResults: [String: PaginatableSearchMediaFiles] = [:]) {
+    init(appDatabase: AppDatabase, searchText: String = "", mediaResults: PaginatableSearchMediaFiles? = nil, categoryResults: PaginatableCategorySearch? = nil) {
         self.appDatabase = appDatabase
         self.searchText = searchText
-        self.cachedResults = cachedResults
-
-        searchThrottleTask?.cancel()
-        searchThrottleTask = Task {
-            for await debouncedSearchText in searchChannel.debounce(for: .milliseconds(500)) {
-                guard !Task.isCancelled else { break }
-                logger.info("searching for: \(debouncedSearchText)...")
-                scheduleSearch(for: debouncedSearchText)
-            }
-        }
+        self.mediaResults = mediaResults
+        self.categoryResults = categoryResults
     }
 
-    func paginate() {
-        cachedResults[searchText]?.paginate()
+    func mediaPagination() {
+        mediaResults?.paginate()
+    }
+    func categoryPagination() {
+        categoryResults?.paginate()
     }
 
     func focusSearchField() {
@@ -68,62 +84,95 @@ import os.log
 
     func setOrder(_ order: SearchOrder) {
         self.order = order
-        cachedResults.removeAll()
-        if !searchText.isEmpty {
-            scheduleSearch(for: searchText)
-        }
+        mediaResults = nil
+        categoryResults = nil
+        search()
     }
 
-    /// Searches for `text` and returns [MediaFile] without setting the searchText
-    func search(_ text: String) async throws {
-        guard cachedResults[text] == nil else { return }
-        let trimmedText = text.trimmingCharacters(in: .whitespacesAndNewlines)
-        let paginatableFiles = try await PaginatableSearchMediaFiles(appDatabase: appDatabase, searchString: trimmedText, order: self.order)
-        cachedResults[text] = paginatableFiles
-    }
-
-    /// Sets the current searchText to `text` and will schedule a API search for the text.
-    /// If `debounced` is set `true` the search will not be dispatched immediately but may be discarded in favor or more recent
-    /// search text (... entered via the search bar).
-    func setSearchText(_ text: String, fetchSuggestions: Bool = true, shouldDebounce: Bool = true) {
+    /// sets `text`as the searchText and  immediately submits the search
+    func search(text: String) {
+        guard text != searchText else { return }
         searchText = text
-        guard !searchText.isEmpty else { return }
-
-        //        if fetchSuggestions {
-        //            fetchSearchSuggestions(for: searchText)
-        //        }
-
-        if shouldDebounce {
-            Task<Void, Never> {
-                await searchChannel.send(searchText)
-            }
-        } else {
-            scheduleSearch(for: searchText)
+        if !searchText.isEmpty {
+            search()
         }
     }
 
+    /// searches for the current searchText
+    func search() {
+        guard !searchText.isEmpty else { return }
+        guard searchTask == nil || searchTask?.isCancelled == true else { return }
+        let resultsAlreadyFetched = (mediaResults?.searchString == searchText && categoryResults?.searchString == searchText)
+        guard !resultsAlreadyFetched else { return }
+
+        mediaResults = nil
+        categoryResults = nil
+        suggestTask?.cancel()
+        searchTask?.cancel()
+
+        let searchIntent = InAppSearchIntent()
+        searchIntent.criteria = .init(term: searchText)
+        searchIntent.donate()
+
+        searchTask = Task {
+            let trimmedText = searchText.trimmingCharacters(in: .whitespacesAndNewlines)
+            do {
+                async let mediaSearch = PaginatableSearchMediaFiles(
+                    appDatabase: appDatabase,
+                    searchString: trimmedText,
+                    order: order
+                )
+
+                async let categorySearch = PaginatableCategorySearch(
+                    appDatabase: appDatabase,
+                    searchString: trimmedText,
+                    sort: order
+                )
+
+                let (mediaResults, categoryResults) = try await (mediaSearch, categorySearch)
+                self.mediaResults = mediaResults
+                self.categoryResults = categoryResults
+
+            } catch {
+                logger.error("Failed to search for \(trimmedText). \(error)")
+            }
+            searchTask = nil
+        }
+
+    }
 
     private func fetchSearchSuggestions(for text: String) {
-        Task {
-            suggestions = try await API.shared.searchSuggestedSearchTerms(for: text, namespaces: [.file, .main])
+        guard searchTask == nil else { return }
+        suggestTask?.cancel()
+        suggestTask = Task {
+            do {
+                try? await Task.sleep(for: .milliseconds(250))
+
+                guard !Task.isCancelled else { return }
+                logger.debug("Searching suggestions for \"\(text)\"")
+                let terms = try await API.shared.searchSuggestedSearchTerms(for: text, limit: .max, namespaces: [.category, .main])
+                guard !Task.isCancelled else { return }
+                suggestions =
+                    terms.map { term in
+                        term.components(separatedBy: "Category:")[safeIndex: 1] ?? term.components(separatedBy: "File:")[safeIndex: 1] ?? term
+                    }
+                    .uniqued(on: { $0 })
+
+            } catch is CancellationError {
+                logger.debug("Suggest task cancelled.")
+            } catch {
+                logger.debug("search suggestions cancelled or failed \(error)")
+
+            }
+
         }
     }
+}
 
-    private func scheduleSearch(for text: String) {
-        // NOTE: No need to cancel the search task, as the results will be cached per search text
-        // TODO: maybe too complicated/future error-prone?? -> just one list of results instead?
-        searchTaskCount += 1
-        Task {
-            defer { searchTaskCount -= 1 }
-            do {
-                guard !Task.isCancelled else { return }
-                try await search(text)
-                let searchIntent = InAppSearchIntent()
-                searchIntent.criteria = .init(term: text)
-                try await searchIntent.donate()
-            } catch {
-                logger.error("search failed \(error)")
-            }
-        }
+extension SearchModel {
+    enum SearchScope: String, CaseIterable {
+        case all
+        case categories
+        case images
     }
 }

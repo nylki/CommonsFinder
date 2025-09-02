@@ -20,6 +20,12 @@ import SwiftUI
         try await super.init(appDatabase: appDatabase)
     }
 
+    init(previewAppDatabase: AppDatabase, searchString: String, prefilledMedia: [MediaFileInfo]) {
+        self.sort = .relevance
+        self.searchString = searchString
+        super.init(previewAppDatabase: previewAppDatabase, initialTitles: [], mediaFileInfos: prefilledMedia)
+    }
+
     override internal func
         fetchRawContinuePaginationItems() async throws -> (items: [String], reachedEnd: Bool)
     {
@@ -32,14 +38,5 @@ import SwiftUI
 
         offset = result.offset
         return (result.items.map(\.title), offset != nil)
-    }
-}
-
-extension SearchOrder {
-    fileprivate var apiType: CommonsAPI.API.SearchSort {
-        switch self {
-        case .relevance: .relevance
-        case .newest: .createTimestampDesc
-        }
     }
 }

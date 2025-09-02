@@ -13,16 +13,16 @@ import os.log
 
 @Observable @MainActor class PaginatableMediaFiles {
 
-    var status: Status = .unknown
+    var status: PaginationStatus = .unknown
     var mediaFileInfos: [MediaFileInfo] = []
     let fullFilesFetchLimit = 10
 
     @ObservationIgnored
     private var canContinueRawPagination = false
 
-    var isEmpty: Bool { rawTitles.isEmpty }
+    var isEmpty: Bool { status != .isPaginating && mediaFileInfos.isEmpty && !canContinueRawPagination }
 
-    var rawTitles: [String]
+    var rawTitleStack: [String]
 
     @ObservationIgnored
     private var paginationTask: Task<Void, Never>?
@@ -35,9 +35,17 @@ import os.log
     var fileIDs: Set<FileMetadata.ID> = []
 
     init(appDatabase: AppDatabase, initialTitles: [String] = []) async throws {
-        self.rawTitles = initialTitles
+        self.rawTitleStack = initialTitles
         self.appDatabase = appDatabase
+        rawTitleStack = []
         try await initialFetch()
+    }
+
+    /// init for preview env not requiring to be async and can be pre-filled
+    init(previewAppDatabase: AppDatabase, initialTitles: [String], mediaFileInfos: [MediaFileInfo]) {
+        self.rawTitleStack = initialTitles
+        self.mediaFileInfos = mediaFileInfos
+        self.appDatabase = previewAppDatabase
     }
 
     func fetchRawContinuePaginationItems() async throws -> (items: [String], canContinue: Bool) {
@@ -88,7 +96,7 @@ import os.log
         paginationTask = Task<Void, Never> {
             defer { paginationTask = nil }
 
-            let needsRawFilesContinue = (mediaFileInfos.count + fullFilesFetchLimit) >= rawTitles.count
+            let needsRawFilesContinue = rawTitleStack.count < fullFilesFetchLimit
             do {
                 /// If we reached the end of the raw item list, fetch some more with the `continue` if there are more items to paginate
                 if needsRawFilesContinue, canContinueRawPagination {
@@ -97,18 +105,15 @@ import os.log
                     // Makes sure to unique the raw files in case they come from a mixed data source
                     // to prevent list loops. This is relevant for the PaginatableCategoryFiles subclass.
                     let filteredTitles = titles.filter { !fileIDs.contains($0) }
-                    rawTitles.append(contentsOf: filteredTitles)
+                    rawTitleStack.append(contentsOf: filteredTitles)
                     fileIDs.formUnion(filteredTitles)
 
                     self.canContinueRawPagination = canContinue
                 }
 
-                let startIdx = mediaFileInfos.count
-                let endIdx = min(rawTitles.count, mediaFileInfos.count + fullFilesFetchLimit)
-
-                let titlesToFetch = Array(rawTitles[startIdx..<endIdx])
+                let titlesToFetch = rawTitleStack.popFirst(n: fullFilesFetchLimit)
                 guard !titlesToFetch.isEmpty else {
-                    status = .idle(reachedEnd: mediaFileInfos.count == rawTitles.count)
+                    status = .idle(reachedEnd: true)
                     return
                 }
 
@@ -130,12 +135,12 @@ import os.log
                 // NOTE: We may already have some of the mediaFiles in the DB  (eg. isBookmarked`)
                 // So to get combine the fetched info as well as live changes (eg. user changes a bookmark), we
                 // observe the DB and augment `mediaFileInfos`.
-                // TODO:
                 observeDatabase()
 
-                status = .idle(reachedEnd: mediaFileInfos.count == rawTitles.count)
+                let reachedEnd = mediaFileInfos.isEmpty && rawTitleStack.isEmpty && !canContinueRawPagination
+                status = .idle(reachedEnd: reachedEnd)
 
-                logger.debug("new rawItems count: \(self.rawTitles.count)")
+                logger.debug("new rawItems count: \(self.rawTitleStack.count)")
                 logger.debug("new mediaFiles count: \(self.mediaFileInfos.count)")
             } catch {
                 logger.error("Failed to paginate \(error)")
@@ -149,19 +154,10 @@ import os.log
         status = .isPaginating
         let (titles, canContinue) = try await fetchRawContinuePaginationItems()
         let filteredTitles = titles.uniqued(on: \.self)
-        rawTitles.append(contentsOf: filteredTitles)
+        rawTitleStack.append(contentsOf: filteredTitles)
         fileIDs.formUnion(filteredTitles)
         canContinueRawPagination = canContinue
         paginate()
-    }
-}
-
-extension PaginatableMediaFiles {
-    enum Status: Equatable {
-        case unknown
-        case isPaginating
-        case error
-        case idle(reachedEnd: Bool)
     }
 }
 
@@ -173,4 +169,11 @@ extension PaginatableMediaFiles: @preconcurrency Equatable, @preconcurrency Hash
     func hash(into hasher: inout Hasher) {
         hasher.combine(mediaFileInfos)
     }
+}
+
+enum PaginationStatus: Equatable {
+    case unknown
+    case isPaginating
+    case error
+    case idle(reachedEnd: Bool)
 }

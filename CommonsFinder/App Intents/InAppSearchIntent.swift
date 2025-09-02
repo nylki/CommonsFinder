@@ -27,7 +27,7 @@ struct InAppSearchIntent: AppIntent, ShowInAppSearchResultsIntent {
         let searchString = criteria.term
 
         logger.info("AppIntent: Searching for \(searchString)")
-        searchModel.setSearchText(searchString, fetchSuggestions: false, shouldDebounce: false)
+        searchModel.search(text: searchString)
         navigationModel.selectedTab = .search
         Task<Void, Never> {
             try? await Task.sleep(for: .milliseconds(250))

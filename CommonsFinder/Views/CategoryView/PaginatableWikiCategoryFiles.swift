@@ -62,28 +62,13 @@ import os.log
         logger.info("\(categoryResult?.0.count ?? 0) category files")
         logger.info("\(depictResult?.0.count ?? 0) wikidata depict files")
 
-        var categoryTitles: [String] = categoryResult?.0 ?? []
-        var depictTitles: [String] = depictResult?.0 ?? []
-
-        var zippedTitles: [String] = []
-        // Reverse arrays so we can .popLast() to get the first elemenets.
-        categoryTitles.reverse()
-        depictTitles.reverse()
-        while !categoryTitles.isEmpty || !depictTitles.isEmpty {
-            let poppedA = categoryTitles.popLast() ?? depictTitles.popLast()
-            let poppedB = depictTitles.popLast() ?? categoryTitles.popLast()
-
-            if let poppedA {
-                zippedTitles.append(poppedA)
-            }
-            if let poppedB {
-                zippedTitles.append(poppedB)
-            }
-        }
-
+        var categoryTitles = categoryResult?.0 ?? []
+        var depictTitles = depictResult?.0 ?? []
         categoryContinueString = categoryResult?.1
         depictSearchOffset = depictResult?.1
+
+        let zippedTitles = zippedFlatMap(categoryTitles, depictTitles).uniqued(on: \.self)
         let canContinue = categoryContinueString != nil || depictSearchOffset != nil
-        return (zippedTitles.uniqued(on: \.self), canContinue)
+        return (zippedTitles, canContinue)
     }
 }

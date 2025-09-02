@@ -241,7 +241,7 @@ struct DatabaseTests {
         )
 
         // The user also visited and bookmarked catA:
-        var catAInfo = try repo.updateLastViewed(.init(insertedA))
+        var catAInfo = try repo.updateLastViewed(.init(insertedA), incrementViewCount: true)
         catAInfo = try repo.updateBookmark(catAInfo, bookmark: true)
         #expect(catAInfo.isBookmarked)
         let catALastViewed = try #require(catAInfo.lastViewed)
@@ -256,7 +256,7 @@ struct DatabaseTests {
         _ = try repo.upsert(catB)
 
         // The user views catB (but does not bookmark it):
-        let catBInfo = try repo.updateLastViewed(.init(catB))
+        let catBInfo = try repo.updateLastViewed(.init(catB), incrementViewCount: true)
         let catBLastViewed = try #require(catBInfo.lastViewed)
         #expect(
             Date.now.timeIntervalSince(catBLastViewed) < 0.1,
@@ -355,7 +355,7 @@ struct DatabaseTests {
             "At the start, we expect the db to be empty for a clean test."
         )
 
-        let upsertedCategories = try repo.upsert(categories, redirectItemsAfterUpsert: redirections)
+        let upsertedCategories = try repo.upsert(categories, handleRedirections: redirections)
         #expect(upsertedCategories.count == categories.count)
 
         let fetchedItemsWithResolvedRedirects = try repo.fetchCategoryInfos(wikidataIDs: wikidataIDs, resolveRedirections: true)

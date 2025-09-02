@@ -5,6 +5,7 @@
 //  Created by Tom Brewe on 03.10.24.
 //
 
+import FrameUp
 import NukeUI
 import SwiftUI
 
@@ -17,56 +18,131 @@ struct SearchView: View {
     @State private var isOptionBarVisible = true
     @State private var isScrolledDown = false
 
+
     var body: some View {
         @Bindable var searchModel = searchModel
 
         VStack {
-            PaginatableMediaList(
-                items: searchModel.items,
-                status: searchModel.paginationStatus,
-                toolOverlayPadding: true,
-                paginationRequest: searchModel.paginate
-            )
-            .onScrollPhaseChange { oldPhase, newPhase, context in
-                let geometry = context.geometry
-                withAnimation {
-                    isOptionBarVisible = (newPhase == .idle)
-                }
-
-                let totalScrollOffset = geometry.contentOffset.y + geometry.contentInsets.top
-                isScrolledDown = totalScrollOffset > 1
-            }
-            .scrollDismissesKeyboard(.immediately)
-            .overlay(alignment: .top) {
-                if isOptionBarVisible { optionBar }
-            }
-            .onChange(of: searchModel.searchFieldFocusTrigger) {
-                isSearchFieldFocused = true
+            if searchModel.isSearching {
+                ProgressView().frame(height: 500)
+            } else if searchModel.bindableSearchText.isEmpty {
+                searchResultView
+            } else {
+                searchResultView
             }
 
         }
+        .onScrollPhaseChange { oldPhase, newPhase, context in
+            let geometry = context.geometry
+            withAnimation {
+                isOptionBarVisible = (newPhase == .idle)
+            }
+
+            let totalScrollOffset = geometry.contentOffset.y + geometry.contentInsets.top
+            isScrolledDown = totalScrollOffset > 1
+        }
+        .scrollDismissesKeyboard(.immediately)
+        .overlay(alignment: .top) {
+            if !searchModel.isSearching, isOptionBarVisible { optionBar }
+        }
+        .onChange(of: searchModel.searchFieldFocusTrigger) {
+            isSearchFieldFocused = true
+        }
+        .animation(.default, value: searchModel.isSearching)
+        .animation(.default, value: searchModel.scope)
+        .searchable(
+            text: $searchModel.bindableSearchText,
+            prompt: "Search on Wikimedia Commons"
+        )
+        //        .searchScopes($searchModel.scope) {
+        //            ForEach(SearchModel.SearchScope.allCases, id: \.self) {
+        //                Text($0.rawValue)
+        //            }
+        //        }
+        .searchFocused($isSearchFieldFocused)
+        .searchSuggestions {
+            ForEach(searchModel.suggestions, id: \.self) {
+                Text($0).searchCompletion($0)
+            }
+        }
+        .onSubmit(of: .search, searchModel.search)
         .navigationTitle("Search")
         .toolbarTitleDisplayMode(.inline)
-        .searchable(text: $searchModel.bindableSearchText, prompt: "Search on Wikimedia Commons")
-        .searchFocused($isSearchFieldFocused)
-        .animation(.default, value: searchModel.isSearching)
+    }
+
+    @ViewBuilder
+    private var searchResultView: some View {
+        switch searchModel.scope {
+        case .all:
+            ScrollView(.vertical) {
+                HorizontalCategoryList
+                PaginatableMediaList(
+                    items: searchModel.mediaItems,
+                    status: searchModel.mediaPaginationStatus,
+                    toolOverlayPadding: false,
+                    paginationRequest: searchModel.mediaPagination
+                )
 
 
-        //            .searchScopes($searchScope, scopes: {
-        //                // TODO: audio, images, video for iPad
-        //                Text("relevance").tag(SearchScope.relevance)
-        //                Text("newest").tag(SearchScope.newest)
-        //                Text("oldest").tag(SearchScope.oldest)
-        //            })
+            }
+            .id("all")
+        case .categories:
+            PaginatableCategoryList(
+                items: searchModel.categoryItems,
+                status: searchModel.categoryPaginationStatus,
+                paginationRequest: searchModel.categoryPagination
+            )
+            .id("categories")
+        case .images:
+            PaginatableMediaList(
+                items: searchModel.mediaItems,
+                status: searchModel.mediaPaginationStatus,
+                toolOverlayPadding: false,
+                paginationRequest: searchModel.mediaPagination
+            )
+            .id("images")
+        }
+    }
+
+    @ViewBuilder
+    private var HorizontalCategoryList: some View {
+        let items = searchModel.categoryResults?.categoryInfos ?? []
+
+        if !items.isEmpty {
+            ScrollView(.horizontal) {
+                let fallbackToSingleRowGrid = items.count <= 2
+                LazyHGrid(rows: fallbackToSingleRowGrid ? [.init()] : [.init(), .init()]) {
+
+                    ForEach(items) { categoryInfo in
+                        CategoryTeaser(categoryInfo: categoryInfo)
+                            .frame(width: 260, height: 200)
+                            .onScrollVisibilityChange { visible in
+                                guard visible else { return }
+                                let threshold = min(items.count - 1, max(0, items.count - 5))
+                                guard threshold > 0 else { return }
+                                let thresholdItem = items[threshold]
+
+                                if categoryInfo == thresholdItem {
+                                    searchModel.categoryResults?.paginate()
+                                }
+                            }
+                    }
+
+                    if searchModel.categoryResults?.status == .isPaginating {
+                        ProgressView()
+                            .progressViewStyle(.circular)
+                            .frame(width: 260, height: 300)
+                    }
+                }
+                .scrollTargetLayout()
+                .scenePadding(.horizontal)
+                .animation(.default, value: items)
 
 
-        //            .searchSuggestions {
-        //                ForEach(model.suggestions, id: \.self) {
-        //                    Text($0).searchCompletion($0)
-        //                }
-        //            }
-
-
+                .padding(.top, 50)
+            }
+            .scrollTargetBehavior(.viewAligned)
+        }
     }
 
     private var optionBar: some View {
@@ -94,6 +170,10 @@ struct SearchView: View {
                 .background(.regularMaterial, in: .capsule)
                 .font(.footnote)
                 .frame(minWidth: 100)
+                .scenePadding(.horizontal)
+                .padding(.vertical, 5)
+                .padding(.top, isScrolledDown ? 5 : 0)
+                .contentShape(.rect)
             }
 
 
@@ -113,37 +193,62 @@ struct SearchView: View {
 
         }
         .buttonStyle(.plain)
-        .scenePadding(.horizontal)
-        .padding(.top, isScrolledDown ? 10 : 0)
         .transition(
             .asymmetric(
                 insertion: .opacity.animation(.default.speed(0.5)),
                 removal: .opacity.combined(with: .offset(y: -10)))
         )
     }
+}
 
-    @ViewBuilder
-    private var paginatingIndicator: some View {
-        Color.clear.frame(height: 300)
-            .overlay(alignment: .top) {
-                switch searchModel.paginationStatus {
-                case .unknown:
-                    EmptyView()
-                case .isPaginating:
-                    ProgressView()
-                        .progressViewStyle(.circular)
-                        .padding()
-                case .error:
-                    Text("There was an error paginating more results.")
-                case .idle(let reachedEnd):
-                    if reachedEnd {
-                        Text("You reached the end of \(searchModel.items.count) files!")
-                    }
-                }
-            }
+#Preview(
+    "Prefilled full",
+    traits: .previewEnvironment(
+        prefilledSearchMedia: [
+            .makeRandomUploaded(id: "1", .horizontalImage),
+            .makeRandomUploaded(id: "1", .verticalImage),
+            .makeRandomUploaded(id: "1", .squareImage),
+        ],
+        prefilledSearchCategories: [
+            .randomItem(id: "1"),
+            .randomItem(id: "2"),
+            .randomItem(id: "3"),
+            .randomItem(id: "4"),
+            .randomItem(id: "5"),
+            .randomItem(id: "6"),
+            .randomItem(id: "7"),
+            .randomItem(id: "8"),
+            .randomItem(id: "9"),
+        ]
+    )
+) {
+    NavigationView {
+        SearchView()
     }
 }
 
-#Preview(traits: .previewEnvironment) {
-    SearchView()
+#Preview(
+    "Prefilled few",
+    traits: .previewEnvironment(
+        prefilledSearchMedia: [
+            .makeRandomUploaded(id: "1", .horizontalImage)
+        ],
+        prefilledSearchCategories: [
+            .randomItem(id: "1")
+        ]
+    )
+) {
+    NavigationView {
+        SearchView()
+    }
+}
+
+#Preview("Actual Search", traits: .previewEnvironment) {
+    @Previewable @Environment(SearchModel.self) var searchModel
+    NavigationView {
+        SearchView()
+            .task {
+                searchModel.search(text: "earth")
+            }
+    }
 }
