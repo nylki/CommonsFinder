@@ -891,11 +891,17 @@ GROUP BY ?item ?commonsCategory ?area ?location ?label ?image ?description
             .serializingDecodable(SPARQLResponse<SparqlGenericWikidataItem>.self, decoder: jsonDecoder)
             .value
         
-        let formattedResult: [GenericWikidataItem] = resultValue.results.bindings.map {
+        let groupedResult = resultValue.results.bindings.map {
             GenericWikidataItem($0, language: languageCode)
+        }.grouped(by: \.id)
+        
+        /// restore the original order
+        let orderedResult: [GenericWikidataItem] = itemIDs.compactMap { id in
+            guard !id.isEmpty else { return nil }
+            return groupedResult[id]?.first
         }
         
-        return formattedResult
+        return orderedResult
     }
     
     
@@ -1012,10 +1018,16 @@ GROUP BY ?item ?commonsCategory ?area ?location ?label ?image ?description
             .serializingDecodable(SPARQLResponse<SparqlGenericWikidataItem>.self, decoder: jsonDecoder)
             .value
         
-        let formattedResult: [GenericWikidataItem] = resultValue.results.bindings.map {
+        let groupedResult = resultValue.results.bindings.map {
             GenericWikidataItem($0, language: languageCode)
+        }.grouped(by: \.commonsCategory)
+        
+        /// restore the original order
+        let orderedResult: [GenericWikidataItem] = categories.compactMap { commonsCategory in
+            guard !commonsCategory.isEmpty else { return nil }
+            return groupedResult[commonsCategory]?.first
         }
-        return formattedResult
+        return orderedResult
     }
     
     // NOTE: see "radius_query_for_upload_wizard.rq" for similar query in android commons project
