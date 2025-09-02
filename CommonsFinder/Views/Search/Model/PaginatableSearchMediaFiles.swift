@@ -20,6 +20,14 @@ import SwiftUI
         try await super.init(appDatabase: appDatabase)
     }
 
+    #if DEBUG
+        init(previewAppDatabase: AppDatabase, searchString: String, prefilledMedia: [MediaFileInfo]) {
+            self.sort = .relevance
+            self.searchString = searchString
+            super.init(previewAppDatabase: previewAppDatabase, initialTitles: [], mediaFileInfos: prefilledMedia)
+        }
+    #endif
+
     override internal func
         fetchRawContinuePaginationItems() async throws -> (items: [String], reachedEnd: Bool)
     {

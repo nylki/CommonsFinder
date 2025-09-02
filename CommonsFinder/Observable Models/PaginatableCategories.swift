@@ -58,6 +58,15 @@ import os.log
         try await initialFetch()
     }
 
+    #if DEBUG
+        init(previewAppDatabase: AppDatabase, searchString: String, prefilledCategories: [CategoryInfo]) {
+            self.appDatabase = previewAppDatabase
+            self.sort = .relevance
+            self.searchString = searchString
+            self.categoryInfos = prefilledCategories
+        }
+    #endif
+
     private func observeDatabase() {
         observationTask?.cancel()
         observationTask = Task<Void, Never> {
@@ -134,23 +143,24 @@ import os.log
                     return
                 }
 
+                // returns unsorted
                 let wikidataIDsForCategories = try await CommonsAPI.API.shared
                     .findWikidataItemsForCategories(commonsCategoriesToFetch, languageCode: Locale.current.wikiLanguageCodeIdentifier)
                     .map(\.id)
 
                 // Here we fetch from both wikidataIDs and commons categories
-                let wikidataIDsToFetch = Array((wikidataIDsToFetchs + wikidataIDsForCategories).uniqued())
+                let allWikidataIDsToFetch = Array((wikidataIDsToFetchs + wikidataIDsForCategories).uniqued())
 
                 // Only continue if there is anything to fetch at all
-                guard !wikidataIDsToFetch.isEmpty || !commonsCategoriesToFetch.isEmpty else {
+                guard !allWikidataIDsToFetch.isEmpty || !commonsCategoriesToFetch.isEmpty else {
                     status = .idle(reachedEnd: true)
                     return
                 }
 
                 var wikidataCategories: [Category] = []
-                if !wikidataIDsToFetch.isEmpty {
+                if !allWikidataIDsToFetch.isEmpty {
                     let result = try await DataAccess.fetchCategoriesFromAPI(
-                        wikidataIDs: wikidataIDsToFetch,
+                        wikidataIDs: allWikidataIDsToFetch,
                         shouldCache: false,
                         appDatabase: appDatabase
                     )

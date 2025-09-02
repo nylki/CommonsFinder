@@ -37,8 +37,18 @@ import os.log
     init(appDatabase: AppDatabase, initialTitles: [String] = []) async throws {
         self.rawTitleStack = initialTitles
         self.appDatabase = appDatabase
+        rawTitleStack = []
         try await initialFetch()
     }
+
+    #if DEBUG
+        /// init for preview env not requiring to be async and can be pre-filled
+        init(previewAppDatabase: AppDatabase, initialTitles: [String], mediaFileInfos: [MediaFileInfo]) {
+            self.rawTitleStack = initialTitles
+            self.mediaFileInfos = mediaFileInfos
+            self.appDatabase = previewAppDatabase
+        }
+    #endif
 
     func fetchRawContinuePaginationItems() async throws -> (items: [String], canContinue: Bool) {
         // NOTE: if sub-classed: this function should be overriden to provide the continue titles

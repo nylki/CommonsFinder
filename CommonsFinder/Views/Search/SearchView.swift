@@ -5,6 +5,7 @@
 //  Created by Tom Brewe on 03.10.24.
 //
 
+import FrameUp
 import NukeUI
 import SwiftUI
 
@@ -109,11 +110,12 @@ struct SearchView: View {
 
         if !items.isEmpty {
             ScrollView(.horizontal) {
-                LazyHGrid(rows: [GridItem(), GridItem()]) {
+                let fallbackToSingleRowGrid = items.count <= 2
+                LazyHGrid(rows: fallbackToSingleRowGrid ? [.init()] : [.init(), .init()]) {
 
                     ForEach(items) { categoryInfo in
                         CategoryTeaser(categoryInfo: categoryInfo)
-                            .frame(width: 260)
+                            .frame(width: 260, height: 200)
                             .onScrollVisibilityChange { visible in
                                 guard visible else { return }
                                 let threshold = min(items.count - 1, max(0, items.count - 5))
@@ -136,7 +138,7 @@ struct SearchView: View {
                 .scenePadding(.horizontal)
                 .animation(.default, value: items)
 
-                .frame(height: 400)
+
                 .padding(.top, 50)
             }
             .scrollTargetBehavior(.viewAligned)
@@ -199,8 +201,54 @@ struct SearchView: View {
     }
 }
 
-#Preview(traits: .previewEnvironment) {
+#Preview(
+    "Prefilled full",
+    traits: .previewEnvironment(
+        prefilledSearchMedia: [
+            .makeRandomUploaded(id: "1", .horizontalImage),
+            .makeRandomUploaded(id: "1", .verticalImage),
+            .makeRandomUploaded(id: "1", .squareImage),
+        ],
+        prefilledSearchCategories: [
+            .randomItem(id: "1"),
+            .randomItem(id: "2"),
+            .randomItem(id: "3"),
+            .randomItem(id: "4"),
+            .randomItem(id: "5"),
+            .randomItem(id: "6"),
+            .randomItem(id: "7"),
+            .randomItem(id: "8"),
+            .randomItem(id: "9"),
+        ]
+    )
+) {
     NavigationView {
         SearchView()
+    }
+}
+
+#Preview(
+    "Prefilled few",
+    traits: .previewEnvironment(
+        prefilledSearchMedia: [
+            .makeRandomUploaded(id: "1", .horizontalImage)
+        ],
+        prefilledSearchCategories: [
+            .randomItem(id: "1")
+        ]
+    )
+) {
+    NavigationView {
+        SearchView()
+    }
+}
+
+#Preview("Actual Search", traits: .previewEnvironment) {
+    @Previewable @Environment(SearchModel.self) var searchModel
+    NavigationView {
+        SearchView()
+            .task {
+                searchModel.search(text: "earth")
+            }
     }
 }

@@ -64,10 +64,11 @@ import os.log
     @ObservationIgnored
     private let appDatabase: AppDatabase
 
-    init(appDatabase: AppDatabase, searchText: String = "", result: PaginatableSearchMediaFiles? = nil) {
+    init(appDatabase: AppDatabase, searchText: String = "", mediaResults: PaginatableSearchMediaFiles? = nil, categoryResults: PaginatableCategorySearch? = nil) {
         self.appDatabase = appDatabase
         self.searchText = searchText
-        self.mediaResults = result
+        self.mediaResults = mediaResults
+        self.categoryResults = categoryResults
     }
 
     func mediaPagination() {
