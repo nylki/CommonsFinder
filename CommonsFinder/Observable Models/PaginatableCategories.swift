@@ -58,14 +58,12 @@ import os.log
         try await initialFetch()
     }
 
-    #if DEBUG
-        init(previewAppDatabase: AppDatabase, searchString: String, prefilledCategories: [CategoryInfo]) {
-            self.appDatabase = previewAppDatabase
-            self.sort = .relevance
-            self.searchString = searchString
-            self.categoryInfos = prefilledCategories
-        }
-    #endif
+    init(previewAppDatabase: AppDatabase, searchString: String, prefilledCategories: [CategoryInfo]) {
+        self.appDatabase = previewAppDatabase
+        self.sort = .relevance
+        self.searchString = searchString
+        self.categoryInfos = prefilledCategories
+    }
 
     private func observeDatabase() {
         observationTask?.cancel()
