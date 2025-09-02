@@ -21,11 +21,9 @@ import SwiftUI
     }
 
     init(previewAppDatabase: AppDatabase, searchString: String, prefilledMedia: [MediaFileInfo]) {
-        #if DEBUG
-            self.sort = .relevance
-            self.searchString = searchString
-            super.init(previewAppDatabase: previewAppDatabase, initialTitles: [], mediaFileInfos: prefilledMedia)
-        #endif
+        self.sort = .relevance
+        self.searchString = searchString
+        super.init(previewAppDatabase: previewAppDatabase, initialTitles: [], mediaFileInfos: prefilledMedia)
     }
 
     override internal func
