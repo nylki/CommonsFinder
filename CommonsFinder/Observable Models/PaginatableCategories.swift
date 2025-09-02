@@ -139,48 +139,38 @@ import os.log
                     .map(\.id)
 
                 // Here we fetch from both wikidataIDs and commons categories
-                let idsToFetch = Array((wikidataIDsToFetchs + wikidataIDsForCategories).uniqued())
-                guard !idsToFetch.isEmpty else {
+                let wikidataIDsToFetch = Array((wikidataIDsToFetchs + wikidataIDsForCategories).uniqued())
+
+                // Only continue if there is anything to fetch at all
+                guard !wikidataIDsToFetch.isEmpty || !commonsCategoriesToFetch.isEmpty else {
                     status = .idle(reachedEnd: true)
                     return
                 }
 
-                let result = try await DataAccess.fetchCategoriesFromAPI(
-                    wikidataIDs: idsToFetch,
-                    shouldCache: false,
-                    appDatabase: appDatabase
-                )
+                var wikidataCategories: [Category] = []
+                if !wikidataIDsToFetch.isEmpty {
+                    let result = try await DataAccess.fetchCategoriesFromAPI(
+                        wikidataIDs: wikidataIDsToFetch,
+                        shouldCache: false,
+                        appDatabase: appDatabase
+                    )
+                    wikidataCategories += result.fetchedCategories
+                }
 
-                let categoriesAlreadyHandled = Set(result.fetchedCategories.compactMap(\.commonsCategory))
+                let alreadyHandledCommonsCategories = Set(wikidataCategories.compactMap(\.commonsCategory))
 
                 let pureCommonCategories =
                     commonsCategoriesToFetch
-                    .filter { !categoriesAlreadyHandled.contains($0) }
+                    .filter { !alreadyHandledCommonsCategories.contains($0) }
                     .map { Category(commonsCategory: $0) }
 
 
                 let combinedResult: [CategoryInfo] =
-                    zippedFlatMap(result.fetchedCategories, pureCommonCategories)
+                    zippedFlatMap(wikidataCategories, pureCommonCategories)
                     .uniqued { ($0.wikidataId ?? $0.commonsCategory) }
                     .map { CategoryInfo($0) }
 
-                // Append the fetched Categories to our list (keeping the ItemInteraction empty as
-                // we are going to observe the DB after this block and itemInteraction will be augmented from DB there.
-
                 categoryInfos = (categoryInfos + combinedResult).uniqued { ($0.base.wikidataId ?? $0.base.commonsCategory) }
-
-                // upsert newly fetched base MediaFile DB, in case it was updated,
-                // so those changes are visible when opening a file from bookmarks later
-                //                try appDatabase.replaceExistingMediaFiles(fetchedCategories)
-
-                // Append the fetched files to our list (keeping the ItemInteraction empty as
-                // we are going to observe the DB after this block and itemInteraction will be augmented from DB there.
-
-
-                // NOTE: We may already have some of the mediaFiles in the DB  (eg. isBookmarked`)
-                // So to get combine the fetched info as well as live changes (eg. user changes a bookmark), we
-                // observe the DB and augment `mediaFileInfos`.
-                // TODO:
                 observeDatabase()
 
                 status = .idle(
@@ -236,9 +226,15 @@ import os.log
 
     private func initialFetch() async throws {
         status = .isPaginating
-        try await rawWikidataPagination()
-        try await rawCommonsCategoryPagination()
+        async let rawWikidataTask: () = rawWikidataPagination()
+        async let rawCommonsTask: () = rawCommonsCategoryPagination()
+        do {
+            let (_, _) = try await (rawWikidataTask, rawCommonsTask)
+            logger.info("raw wikidata ids: \(self.rawWikidataIDs)")
+            logger.info("raw commons categories: \(self.rawCommonsCategories)")
+        } catch {
+            logger.error("Failed to perform initial raw fetch search categories for \(self.searchString): \(error)")
+        }
         paginate()
     }
-
 }
