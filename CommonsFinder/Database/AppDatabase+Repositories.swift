@@ -94,7 +94,7 @@ extension AppDatabase {
             _ = try repo.updateBookmark(someImageInfo, bookmark: true)
 
             let earthCat = try repo.upsert(.earth)!
-            let earthCatInfo = try repo.updateLastViewed(.init(earthCat))
+            let earthCatInfo = try repo.updateLastViewed(.init(earthCat), incrementViewCount: true)
             _ = try repo.updateBookmark(earthCatInfo, bookmark: true)
 
         } catch {

@@ -89,6 +89,7 @@ struct CommonsFinderApp: App {
                         logger.error("Error initializing TipKit \(error.localizedDescription)")
                     }
 
+                    /// TESTING NOTE: If tests fail in Pulse package, comment out the following block and try again.
                     #if DEBUG
                         RemoteLogger.shared.isAutomaticConnectionEnabled = true
                         ImagePipeline.Configuration.isSignpostLoggingEnabled = true

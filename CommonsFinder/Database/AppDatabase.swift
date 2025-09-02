@@ -431,7 +431,7 @@ extension AppDatabase {
     /// Optionally also creates redirect items (as returned from the API), expecting the format [fromWikidataID:toWikidataID] in the same transaction.
 
     @discardableResult
-    func upsert(_ items: [Category], redirectItemsAfterUpsert redirectItems: [Category.WikidataID: Category.WikidataID]? = nil) throws -> [Category] {
+    func upsert(_ items: [Category], handleRedirections redirectItems: [Category.WikidataID: Category.WikidataID]? = nil) throws -> [Category] {
 
         try dbWriter.write { db in
             let resultIDs = items.compactMap { item in
@@ -451,7 +451,7 @@ extension AppDatabase {
 
                     let existingCategories =
                         try Category
-                        .findExistingCategory(basedOn: item)
+                        .filter(basedOn: item)
                         .fetchAll(db)
 
                     if existingCategories.count < 2 {
@@ -464,7 +464,7 @@ extension AppDatabase {
 
                         return try itemCopy.upsertAndFetch(db).id
                     } else {
-                        // We need to merge multiple items
+                        // We need to merge multiple items (rare edge case)
                         let existingCategoryInfos: [CategoryInfo] =
                             try Category
                             .filter(ids: existingCategories.compactMap(\.id))
@@ -546,7 +546,7 @@ extension AppDatabase {
                 }
             }
 
-            /// handle redirections before returning values
+            /// handle redirections before returning values: creates new redirection categories and rewrites interactions
             ///
             /// FIXME: i prefer to have these in the same transaction, but it make this function rather long
             /// can we still split this up, while keeping them in the same transaction to be safer?
@@ -561,6 +561,7 @@ extension AppDatabase {
                     let existingFromInfo = try CategoryInfo.filter(wikidataID: fromWikidataID).fetchOne(db)
                     let existingToInfo = try CategoryInfo.filter(wikidataID: toWikidataID).fetchOne(db)
 
+                    /// creates
                     try redirectingCategory.upsert(db)
 
                     guard var existingToInfo else {
@@ -594,25 +595,6 @@ extension AppDatabase {
         }
     }
 
-
-    func adjustInteractions(forRedirections redirections: [Category.WikidataID: Category.WikidataID]) throws {
-        //        guard !redirections.isEmpty else { return }
-        //        var itemsToAdjust = try fetchCategoryInfos(wikidataIDs: redirections.map(\.key))
-        //        guard !itemsToAdjust.isEmpty else { return }
-        //
-        //        itemsToAdjust = itemsToAdjust.map({ <#CategoryInfo#> in
-        //            <#code#>
-        //        })
-        //
-        //        try dbWriter.write { db in
-        //
-        //        }
-        //
-        //        for (from, to) in redirections {
-        //
-        //        }
-    }
-
     func delete(_ category: Category) throws -> Bool {
         try dbWriter.write(category.delete)
     }
@@ -622,8 +604,8 @@ extension AppDatabase {
 // MARK: - CategoryInfo Writes
 extension AppDatabase {
     /// creates a new DB entry if needed
-    func updateLastViewed(_ item: CategoryInfo) throws -> CategoryInfo {
-        try updateInteractionImpl(item, lastViewed: .now, incrementViewCount: true)
+    func updateLastViewed(_ item: CategoryInfo, incrementViewCount: Bool) throws -> CategoryInfo {
+        try updateInteractionImpl(item, lastViewed: .now, incrementViewCount: incrementViewCount)
     }
 
     /// creates a new DB entry if needed
@@ -638,7 +620,7 @@ extension AppDatabase {
 
             let databaseItem: CategoryInfo? =
                 try Category
-                .findExistingCategory(basedOn: item.base)
+                .filter(basedOn: item.base)
                 .including(optional: Category.itemInteraction)
                 .asRequest(of: CategoryInfo.self)
                 .fetchOne(db)
@@ -732,7 +714,7 @@ extension AppDatabase {
     func deleteDrafts(withFinalFilenames filenames: [String]) throws -> Int {
         try dbWriter.write { db in
             try MediaFileDraft
-                .filter(filenames.contains(MediaFileDraft.Columns.finalFilename))
+                //                .filter(filenames.contains(MediaFileDraft.Columns.finalFilename))
                 .deleteAll(db)
         }
     }

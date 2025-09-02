@@ -14,7 +14,7 @@ import os.log
 
 private enum MediaTab {
     case category
-    case depections
+    case depictions
 }
 
 struct CategoryView: View {
@@ -22,13 +22,6 @@ struct CategoryView: View {
 
     init(_ item: CategoryInfo) {
         self.initialItem = item
-
-
-        // FIXME HACK DEBUG:
-        //        var item = item
-        //
-        //
-        //        self.initialItem = .init(.init(wikidataID: "Q99937301", redirectsTo: ""))
     }
 
     @State private var networkInitTask: Task<Void, Never>?
@@ -103,7 +96,7 @@ struct CategoryView: View {
             }
             .onAppear {
                 if databaseTask == nil {
-                    startDatabaseTask()
+                    startDatabaseTask(incrementViewCount: true)
                 }
             }
             .onDisappear {
@@ -184,12 +177,12 @@ struct CategoryView: View {
         }
     }
 
-    private func startDatabaseTask() {
+    private func startDatabaseTask(incrementViewCount: Bool) {
         databaseTask?.cancel()
         databaseTask = Task<Void, Never> {
 
             do {
-                let updatedItem = try appDatabase.updateLastViewed(item ?? initialItem)
+                let updatedItem = try appDatabase.updateLastViewed(item ?? initialItem, incrementViewCount: incrementViewCount)
 
                 guard let existingID = updatedItem.base.id else {
                     assertionFailure("We expect the item to be persisted after calling appDatabase.updateLastViewed")
@@ -210,6 +203,7 @@ struct CategoryView: View {
                     #if DEBUG
                         let debugLabel = updatedCategoryInfo?.base.label ?? updatedCategoryInfo?.base.commonsCategory ?? ""
                         logger.info("CAT: Category \"\(debugLabel)\" has been updated.")
+                        logger.debug("CAT: Category viewCount: \(updatedCategoryInfo?.itemInteraction?.viewCount ?? 0)")
                     #endif
 
                     item = updatedCategoryInfo
@@ -293,30 +287,33 @@ struct CategoryView: View {
                 logger.info("CAT: network task for Category \"\(debugLabel)\" finished!")
             #endif
 
-            await refreshBaseItemFromNetwork()
+            await refreshFromNetwork()
 
             hasBeenInitialized = true
         }
     }
 
-    private func refreshBaseItemFromNetwork() async {
+    private func refreshFromNetwork() async {
         guard let item else { return }
+
         do {
-            let refreshedItem = try await DataFetching.fetchCategoryFromNetwork(
-                category: item.base,
-                appDatabase: appDatabase
-            )
-            if refreshedItem?.wikidataId != item.base.wikidataId {
-                logger.info("Refresh got a redirected item!")
-                // TODO: inform the user somehow that the item was merged into another?
+            let refreshedItem = try await DataAccess.refreshCategoryInfoFromAPI(categoryInfo: item, appDatabase: appDatabase)
+
+            if let refreshedItem {
+                if refreshedItem.base.id != item.base.id {
+                    logger.debug("CategoryView: item has a one DB-ID! this edge-case can caused due to redirects.")
+                }
+                if refreshedItem.base.wikidataId != item.base.wikidataId {
+                    logger.debug("CategoryView: Refresh got a redirected item!")
+                }
+                // TODO: inform the user somehow that the item was merged into another if one if those above ^ happened?
+
+                databaseTask?.cancel()
+                self.item = refreshedItem
+                startDatabaseTask(incrementViewCount: false)
             }
 
-
-            // FIXME: test: since we observe from database, the fetch category from network
-            // should update the database entries, or we re-start the database task
-
-
-            print("refreshed item \(refreshedItem)")
+            print("refreshed item \(refreshedItem.debugDescription)")
         } catch {
             logger.error("Failed to fetch category freshly from network")
         }

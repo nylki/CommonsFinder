@@ -52,7 +52,7 @@ struct CommonsEndToEndTests {
     
     @Test("list full-metadata files by search term")
     func searchFiles() async throws {
-        let searchResults = try await API.shared.search(for: "test", namespaces: [.file])
+        let searchResults = try await API.shared.searchFiles(for: "test")
         // print(searchResults)
         #expect(!searchResults.items.isEmpty, "We expect to get results for this search term")
         #expect(searchResults.items.allSatisfy { $0.ns == .file }, "We expect that all results to be in the `file` mediawiki namespace.")

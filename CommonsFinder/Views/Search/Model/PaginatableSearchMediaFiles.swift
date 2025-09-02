@@ -34,12 +34,3 @@ import SwiftUI
         return (result.items.map(\.title), offset != nil)
     }
 }
-
-extension SearchOrder {
-    fileprivate var apiType: CommonsAPI.API.SearchSort {
-        switch self {
-        case .relevance: .relevance
-        case .newest: .createTimestampDesc
-        }
-    }
-}

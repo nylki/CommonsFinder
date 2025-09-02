@@ -360,9 +360,14 @@ public struct WikidataSearchItem: Decodable, Sendable {
     public let description: String?
 }
 
-internal struct SearchWikidataEntityResponse: Decodable, Sendable {
-    let search: [WikidataSearchItem]
-    let searchContinue: Int?
+public struct SearchWikidataEntityResponse: Decodable, Sendable {
+    public let search: [WikidataSearchItem]
+    public let searchContinue: Int?
+    
+    enum CodingKeys: String, CodingKey {
+        case search = "search"
+        case searchContinue = "search-continue"
+    }
 }
 
 
@@ -776,6 +781,11 @@ public struct GeosearchListResponse: Decodable, Sendable {
 // query: list=search
 internal struct SearchListResponse: Decodable, Sendable {
     let search: [QueryListItem]
+    let searchinfo: SearchInfo
+    
+    struct SearchInfo: Decodable {
+        let suggestion: String?
+    }
 }
 
 // query: list=categorymembers
