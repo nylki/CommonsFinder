@@ -18,6 +18,6 @@ extension MediaFile {
             .filter(\.isDepicts)
             .compactMap(\.mainItem?.id)
 
-        return try await DataFetching.fetchCombinedTags(wikidataIDs: depictWikdataIDs, commonsCategories: categories, appDatabase: appDatabase)
+        return try await DataAccess.fetchCombinedTagsFromDatabaseOrAPI(wikidataIDs: depictWikdataIDs, commonsCategories: categories, appDatabase: appDatabase)
     }
 }

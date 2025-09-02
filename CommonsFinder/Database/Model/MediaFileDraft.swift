@@ -127,6 +127,25 @@ extension MediaFileDraft.DraftCaptionWithDescription {
 /// See <https://github.com/groue/GRDB.swift/blob/master/README.md#records>
 ///
 extension MediaFileDraft: Codable {
+    enum CodingKeys: CodingKey {
+        case id
+        case addedDate
+        case name
+        case finalFilename
+        case localFileName
+        case mimeType
+        case captionWithDesc
+        case inceptionDate
+        case timezone
+        case locationHandling
+        case tags
+        case license
+        case author
+        case source
+        case width
+        case height
+    }
+
     init(from decoder: any Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
         self.id = try container.decode(String.self, forKey: .id)

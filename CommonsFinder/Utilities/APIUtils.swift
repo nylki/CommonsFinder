@@ -10,6 +10,10 @@ import CommonsAPI
 import Foundation
 import os.log
 
+// TODO: create paginatable Model similar to paginatable files (or identical?)
+//always paginate both wikidata, and category search when pagination is required and unique/ results // as necessary. eg.
+
+
 enum APIUtils {
     static func searchCategories(for searchText: String) async throws -> [Category] {
         let languageCode = Locale.current.language.languageCode?.identifier ?? "en"
@@ -17,30 +21,40 @@ enum APIUtils {
         async let wikidataSearchTask = try await API.shared
             .searchWikidataItems(term: searchText, languageCode: languageCode)
         async let categorySearchTask = try await API.shared
-            .searchCategories(term: searchText, limit: .count(50))
+            .searchCategories(for: searchText, limit: .count(50))
 
-        let (searchItems, searchCategories) = try await (wikidataSearchTask, categorySearchTask)
+        let (searchItems, searchCategories) = try await (
+            wikidataSearchTask.search,
+            categorySearchTask.items.compactMap { String($0.title.split(separator: "Category:")[0]) }
+        )
 
+        return try await fetchCombinedCategories(wikidataItems: searchItems, commonsCategories: searchCategories)
+
+    }
+
+    /// returns an array of unique Categories by resolving both argument arrays deduplicating their results
+    static func fetchCombinedCategories(wikidataItems: [WikidataSearchItem], commonsCategories: [String]) async throws -> [Category] {
+        let languageCode = Locale.current.wikiLanguageCodeIdentifier
         async let resolvedWikiItemsTask = API.shared
-            .fetchGenericWikidataItems(itemIDs: searchItems.map(\.id), languageCode: languageCode)
+            .fetchGenericWikidataItems(itemIDs: wikidataItems.map(\.id), languageCode: languageCode)
 
         /// categories often have associated wikidataItems( & vice-versa, see above), resolve wiki items for the found categories:
         async let resolvedCategoryItemsTask = API.shared
-            .findWikidataItemsForCategories(searchCategories, languageCode: languageCode)
+            .findWikidataItemsForCategories(commonsCategories, languageCode: languageCode)
 
         let (resolvedWikiItems, resolvedCategoryItems) = try await (resolvedWikiItemsTask, resolvedCategoryItemsTask)
 
         // We need to sort our resolved items along the original search order
         // because they arrive sorted by relevance, and we want the most relevant on top/first.
-        let sortedWikiItems = searchItems.compactMap { searchItem in
-            resolvedWikiItems.first(where: { $0.id == searchItem.id })
+        let sortedWikiItems = wikidataItems.compactMap { item in
+            resolvedWikiItems.first(where: { $0.id == item.id })
         }
-        let sortedCategoryItems = searchCategories.compactMap { category in
+        let sortedCategoryItems = commonsCategories.compactMap { category in
             resolvedCategoryItems.first(where: { $0.commonsCategory == category })
         }
 
         // Prefer label and description from action API (because of language fallback):
-        let labelAndDescription = searchItems.grouped(by: \.id)
+        let labelAndDescription = wikidataItems.grouped(by: \.id)
         let combinedWikidataItems = (sortedWikiItems + sortedCategoryItems).uniqued(on: \.id)
 
         let wikiItemCategories: [Category] = combinedWikidataItems.map { apiItem in
@@ -51,13 +65,21 @@ enum APIUtils {
         }
 
         // Only keep categories that do not already have a wikidata item
-        let pureCommonsCategories: [Category] = searchCategories.compactMap { categoryName in
+        let pureCommonsCategories: [Category] = commonsCategories.compactMap { categoryName in
             let isAlreadyInWikiItems = wikiItemCategories.contains(where: { $0.commonsCategory == categoryName })
             if isAlreadyInWikiItems { return nil }
             return Category(commonsCategory: categoryName)
         }
 
         return wikiItemCategories + pureCommonsCategories
+    }
+}
 
+extension SearchOrder {
+    var apiType: CommonsAPI.API.SearchSort {
+        switch self {
+        case .relevance: .relevance
+        case .newest: .createTimestampDesc
+        }
     }
 }

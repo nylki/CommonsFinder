@@ -21,7 +21,8 @@ struct AllDraftsRequest: ValueObservationQueryable {
         do {
             return
                 try MediaFileDraft
-                .order(MediaFileDraft.Columns.addedDate)
+                .order(MediaFileDraft.Columns.addedDate.desc)
+                //                .order(\.addedDate.desc)
                 .fetchAll(db)
         } catch {
             logger.error("Failed to fetch all draft files from db \(error)!")
@@ -133,34 +134,20 @@ struct MediaFileRequest: ValueObservationQueryable {
 
 
 extension Category {
-    /// finds existing Category based on id, wikidataId, commonsCategory
-    static func findExistingCategory(basedOn category: Category) -> QueryInterfaceRequest<Self> {
-        let id = category.id
-        let commonsCategory = category.commonsCategory
-        let wikidataId = category.wikidataId
+    /// filters existing Categories based on id, wikidataId, commonsCategory of given Categories
+    static func filter(basedOn categories: [Category]) -> QueryInterfaceRequest<Self> {
+        let ids = Set(categories.compactMap(\.id))
+        let wikidataIDs = Set(categories.compactMap(\.wikidataId))
+        let commonsCategories = Set(categories.compactMap(\.commonsCategory))
 
-        guard id != nil || commonsCategory != nil || wikidataId != nil else {
-            return Category.none()
+        return Category.filter {
+            ids.contains($0.id) || wikidataIDs.contains($0.wikidataId) || commonsCategories.contains($0.commonsCategory)
         }
+    }
 
-        if let id {
-            return Category.filter(id: id)
-        } else if let wikidataId, let commonsCategory {
-            return Category.filter(
-                (Category.Columns.wikidataId == wikidataId) || (Category.Columns.commonsCategory == commonsCategory)
-            )
-        } else if let commonsCategory {
-            return Category.filter(
-                Category.Columns.commonsCategory == commonsCategory
-            )
-        } else if let wikidataId {
-            return Category.filter(
-                Category.Columns.wikidataId == wikidataId
-            )
-        } else {
-            return Category.none()
-        }
-
+    /// filters existing Category based on id, wikidataId, commonsCategory
+    static func filter(basedOn category: Category) -> QueryInterfaceRequest<Self> {
+        filter(basedOn: [category])
     }
 }
 
