@@ -45,9 +45,9 @@ struct CommonsEndToEndTests {
     
     @Test("search categories", arguments: ["Earth", "test", "امتحان", "测试", "テスト", "土", "п"])
     func searchCategories(term: String) async throws {
-        let searchResults = try await API.shared.searchCategories(term: term)
-        print(searchResults)
-        #expect(!searchResults.isEmpty, "We expect to get results for this search term")
+        let items = try await API.shared.searchCategories(for: term).items
+        print(items)
+        #expect(!items.isEmpty, "We expect to get results for this search term")
     }
     
     @Test("list full-metadata files by search term")
