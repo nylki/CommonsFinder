@@ -109,16 +109,22 @@ struct MetadataEditForm: View {
             let enumeratedDescs = Array(model.draft.captionWithDesc.enumerated())
             let disabledLanguages = model.draft.captionWithDesc.map(\.languageCode)
 
-            VStack(alignment: .leading) {
+            List {
                 ForEach(enumeratedDescs, id: \.element.languageCode) { (idx, desc) in
                     let languageCode = desc.languageCode
 
                     VStack(alignment: .leading) {
                         Menu(WikimediaLanguage(code: languageCode).localizedDescription) {
                             Text("Select Language")
+                            Divider()
                             LanguageButtons(disabledLanguages: disabledLanguages) { selectedLanguage in
                                 changeLanguageForCaptionAndDesc(old: languageCode, new: selectedLanguage.code)
                             }
+                            Divider()
+                            Button("Delete", role: .destructive) {
+                                model.draft.captionWithDesc.remove(at: idx)
+                            }
+
                         }
 
                         TextField(
@@ -144,6 +150,10 @@ struct MetadataEditForm: View {
                             focus = .categories
                         }
                     }
+
+                }
+                .onDelete { set in
+                    model.draft.captionWithDesc.remove(atOffsets: set)
                 }
 
                 Menu("Add", systemImage: "plus") {
@@ -162,7 +172,9 @@ struct MetadataEditForm: View {
             return
         }
 
-        model.draft.captionWithDesc.append(.init(languageCode: code))
+        withAnimation {
+            model.draft.captionWithDesc.append(.init(languageCode: code))
+        }
     }
 
     private func changeLanguageForCaptionAndDesc(old: LanguageCode, new: LanguageCode) {
