@@ -49,9 +49,38 @@ struct CategoryView: View {
         item?.base.commonsCategory
     }
 
-    var body: some View {
-        let title = item?.base.label ?? resolvedCategoryName ?? ""
+    private var title: String {
+        item?.base.label ?? resolvedCategoryName ?? ""
+    }
 
+
+    @ViewBuilder
+    private var subheadline: some View {
+
+        let description = item?.base.description
+        let shouldShowCategory = (resolvedCategoryName != title) && !title.isEmpty
+
+        if shouldShowCategory, let resolvedCategoryName {
+            VStack(alignment: .leading) {
+                Text(resolvedCategoryName)
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+                    .italic()
+
+                if let description, !description.isEmpty {
+                    Text(description)
+                        .font(.subheadline)
+                }
+            }
+
+
+        } else if let description, !description.isEmpty {
+            Text(description)
+                .font(.subheadline)
+        }
+    }
+
+    var body: some View {
         ScrollView(.vertical) {
             VStack(alignment: .leading) {
 
@@ -64,10 +93,8 @@ struct CategoryView: View {
                                 showTitleInToolbar = !visible
                             }
                         }
-                    if let description = item?.base.description {
-                        Text(description)
-                    }
 
+                    subheadline
                     relatedCategoriesView
                 }
                 .animation(.default, value: item)
