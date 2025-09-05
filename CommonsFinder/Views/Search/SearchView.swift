@@ -107,43 +107,54 @@ struct SearchView: View {
     @ViewBuilder
     private var HorizontalCategoryList: some View {
         let items = searchModel.categoryResults?.categoryInfos ?? []
+        let hasCategoriesLoaded = !items.isEmpty
+        let isLoadingCategories = searchModel.categoryPaginationStatus == .isPaginating
+        ZStack {
+            if hasCategoriesLoaded {
+                ScrollView(.horizontal) {
+                    let fallbackToSingleRowGrid = items.count <= 2
+                    LazyHGrid(rows: fallbackToSingleRowGrid ? [.init()] : [.init(), .init()]) {
 
-        if !items.isEmpty {
-            ScrollView(.horizontal) {
-                let fallbackToSingleRowGrid = items.count <= 2
-                LazyHGrid(rows: fallbackToSingleRowGrid ? [.init()] : [.init(), .init()]) {
+                        ForEach(items) { categoryInfo in
+                            CategoryTeaser(categoryInfo: categoryInfo)
+                                .frame(width: 260, height: 200)
+                                .onScrollVisibilityChange { visible in
+                                    guard visible else { return }
+                                    let threshold = min(items.count - 1, max(0, items.count - 5))
+                                    guard threshold > 0 else { return }
+                                    let thresholdItem = items[threshold]
 
-                    ForEach(items) { categoryInfo in
-                        CategoryTeaser(categoryInfo: categoryInfo)
-                            .frame(width: 260, height: 200)
-                            .onScrollVisibilityChange { visible in
-                                guard visible else { return }
-                                let threshold = min(items.count - 1, max(0, items.count - 5))
-                                guard threshold > 0 else { return }
-                                let thresholdItem = items[threshold]
-
-                                if categoryInfo == thresholdItem {
-                                    searchModel.categoryResults?.paginate()
+                                    if categoryInfo == thresholdItem {
+                                        searchModel.categoryResults?.paginate()
+                                    }
                                 }
-                            }
-                    }
+                        }
 
-                    if searchModel.categoryResults?.status == .isPaginating {
-                        ProgressView()
-                            .progressViewStyle(.circular)
-                            .frame(width: 260, height: 300)
+                        if searchModel.categoryResults?.status == .isPaginating {
+                            ProgressView()
+                                .progressViewStyle(.circular)
+                                .frame(width: 260, height: 300)
+                        }
                     }
+                    .scrollTargetLayout()
+                    .scenePadding(.horizontal)
+                    .animation(.default, value: items)
+
                 }
-                .scrollTargetLayout()
-                .scenePadding(.horizontal)
-                .animation(.default, value: items)
-
-
-                .padding(.top, 50)
+                .scrollTargetBehavior(.viewAligned)
+            } else if isLoadingCategories {
+                let height: Double = (searchModel.categoryResults?.rawCount ?? 0) <= 2 ? 200 : 400
+                ProgressView()
+                    .frame(height: height)
+                    .containerRelativeFrame(.horizontal)
             }
-            .scrollTargetBehavior(.viewAligned)
         }
+        .padding(.top, 50)
+        .animation(.default, value: hasCategoriesLoaded)
+        .animation(.default, value: searchModel.categoryPaginationStatus)
+        .animation(.default, value: searchModel.categoryResults?.rawCount)
     }
+
 
     private var optionBar: some View {
         HStack {
@@ -248,7 +259,7 @@ struct SearchView: View {
     NavigationView {
         SearchView()
             .task {
-                searchModel.search(text: "earth")
+                searchModel.search(text: "uni gardening adlershof")
             }
     }
 }

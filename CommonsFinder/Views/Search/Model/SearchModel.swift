@@ -41,7 +41,7 @@ import os.log
     var scope: SearchScope = .all
 
     var isSearching: Bool {
-        !searchText.isEmpty && searchTask != nil || ((mediaItems.isEmpty || categoryItems.isEmpty) && (mediaPaginationStatus == .isPaginating || categoryPaginationStatus == .isPaginating))
+        !searchText.isEmpty && searchTask != nil
     }
 
     var mediaItems: [MediaFileInfo] { mediaResults?.mediaFileInfos ?? [] }
