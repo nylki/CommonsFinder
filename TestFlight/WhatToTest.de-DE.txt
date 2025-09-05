@@ -1,4 +1,4 @@
-# Verbesserte Suche
-
-Beim Tippen erscheinen nun Suchvorschläge, außerdem werden neben Bildern
-nun auch Kategorien gesucht.
+- Behebung eines Crashes in der Suche
+- schnelleres Laden von Ergebnissen in der Suche
+- Bildbeschreibungen können im Upload-Dialog nun (per Sprache) entfernt werden
+- In der Kategorie-Detailansicht wird nun auch die Commons-Category angezeigt, sofern sie sich vom Wikidata label unterscheidet

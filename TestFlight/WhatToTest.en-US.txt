@@ -1,4 +1,4 @@
-# Improved Search
-
-Search suggestions will now appear when typing.
-Also, in addition to the existing image search, categories will now also be searched and displayed.
+- fixes a crash in the Search
+- fast result loading in the Search
+- image descriptions/captions can now be deleted (per language)
+- in the category detail view, the commons category is now displayed after the title, if it differs from the wikidata label
