@@ -25,12 +25,13 @@ import os.log
     // the raw ids/categories are FIFO and will be removed when fetching the full Category.
     private var rawWikidataIDs: [String] = []
     private var rawCommonsCategories: [String] = []
-    private var rawCount: Int { rawWikidataIDs.count + rawCommonsCategories.count }
+    var rawCount: Int { rawWikidataIDs.count + rawCommonsCategories.count }
 
     /// the combined commons categories + wikidata items
     var categoryInfos: [CategoryInfo] = []
 
     private let paginateFetchLimit = 10
+
 
     @ObservationIgnored
     private var canContinueWikidataPagination = false
