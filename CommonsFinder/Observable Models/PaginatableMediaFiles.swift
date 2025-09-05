@@ -132,16 +132,17 @@ import os.log
                         .init(mediaFile: $0, itemInteraction: nil)
                     })
 
+                let reachedEnd = rawTitleStack.isEmpty && !canContinueRawPagination
+                status = .idle(reachedEnd: reachedEnd)
+
+                logger.debug("new rawItems count: \(self.rawTitleStack.count)")
+                logger.debug("new mediaFiles count: \(self.mediaFileInfos.count)")
+
                 // NOTE: We may already have some of the mediaFiles in the DB  (eg. isBookmarked`)
                 // So to get combine the fetched info as well as live changes (eg. user changes a bookmark), we
                 // observe the DB and augment `mediaFileInfos`.
                 observeDatabase()
 
-                let reachedEnd = mediaFileInfos.isEmpty && rawTitleStack.isEmpty && !canContinueRawPagination
-                status = .idle(reachedEnd: reachedEnd)
-
-                logger.debug("new rawItems count: \(self.rawTitleStack.count)")
-                logger.debug("new mediaFiles count: \(self.mediaFileInfos.count)")
             } catch {
                 logger.error("Failed to paginate \(error)")
                 status = .error
