@@ -5,6 +5,7 @@
 //  Created by Tom Brewe on 06.11.24.
 //
 
+import BackgroundTasks
 import Combine
 import CommonsAPI
 import CoreGraphics
@@ -113,9 +114,7 @@ class UploadManager {
             let finalDraft = try updateDraftWithFinalFilename(draft: draft)
 
             let uploadable = try MediaFileUploadable.init(finalDraft, appWikimediaUsername: username)
-            tasks[finalDraft.id] = Task<Void, Error> {
-                await performUpload(uploadable)
-            }
+            performUpload(uploadable)
 
         } catch (.databaseErrorOnFinalFilenameUpdate(let error)) {
             logger.fault("Failed to update draft in SQL DB with final filename! \(error)")
@@ -135,50 +134,91 @@ class UploadManager {
         }
     }
 
-    func performUpload(_ uploadable: MediaFileUploadable) async {
-        let csrfToken: String
+    func performUpload(_ uploadable: MediaFileUploadable) {
+
+        let bgTaskIdentifier = "app.CommonsFinder.upload"
+        let bgRequest = BGContinuedProcessingTaskRequest(
+            identifier: bgTaskIdentifier,
+            title: "A file upload",
+            subtitle: "About to start...",
+        )
+        bgRequest.strategy = .queue
+
+        let bgTaskScheduler = BGTaskScheduler.shared
+
+        bgTaskScheduler.register(forTaskWithIdentifier: bgTaskIdentifier, using: .main) { [self] task in
+            guard let task = task as? BGContinuedProcessingTask else { return }
+
+            task.expirationHandler = {
+                self.tasks[uploadable.id]?.cancel()
+            }
+
+            tasks[uploadable.id] = Task<Void, Error> {
+                let csrfToken: String
+                do {
+                    let tokenAuthResult = try await Authentication.fetchCSRFToken()
+                    switch tokenAuthResult {
+                    case .twoFactorCodeRequired:
+                        // FIXME: actual trigger a re-login when auth failed (eg. due to 2fa, or password change)
+                        // and ability to retry/resume
+                        uploadStatus[uploadable.id] = .twoFactorCodeRequired
+                        task.setTaskCompleted(success: false)
+                        return
+                    case .emailCodeRequired:
+                        // FIXME: actual trigger a re-login when auth failed (eg. due to 2fa, or password change)
+                        // and ability to retry/resume
+                        uploadStatus[uploadable.id] = .emailCodeRequired
+                        task.setTaskCompleted(success: false)
+                        return
+                    case .tokenReceived(let token):
+                        csrfToken = token
+                    }
+                } catch {
+                    logger.error("failed to fetch CSRF token for upload: \(error)")
+                    task.setTaskCompleted(success: false)
+                    uploadStatus[uploadable.id] = .authenticationError(error)
+                    return
+                }
+
+                let request = await API.shared.publish(file: uploadable, csrfToken: csrfToken)
+
+                for await status in request {
+                    switch status {
+                    case .uploadingFile(let progress):
+                        uploadStatus[uploadable.id] = .uploading(progress.fractionCompleted)
+                        task.progress.completedUnitCount = progress.completedUnitCount
+                        task.updateTitle(bgRequest.title, subtitle: "\(UInt(progress.fractionCompleted * 100))% uploaded")
+                    case .creatingWikidataClaims:
+                        uploadStatus[uploadable.id] = .creatingWikidataClaims
+                        task.updateTitle(bgRequest.title, subtitle: "creating metadata...")
+                    case .unstashingFile:
+                        uploadStatus[uploadable.id] = .unstashingFile
+                        task.updateTitle(bgRequest.title, subtitle: "unstashing the file...")
+                    case .published:
+                        uploadStatus[uploadable.id] = .published
+                        task.updateTitle("upload succesfull", subtitle: "file was published")
+                        task.setTaskCompleted(success: true)
+                        didFinishUpload.send(uploadable.filename)
+                    case .uploadWarnings(let warnings):
+                        task.setTaskCompleted(success: false)
+                        uploadStatus[uploadable.id] = .uploadWarnings(warnings)
+                    case .unspecifiedError(let errorMessage):
+                        task.setTaskCompleted(success: false)
+                        uploadStatus[uploadable.id] = .unspecifiedError(errorMessage)
+                    }
+
+                    try Task.checkCancellation()
+                }
+            }
+        }
 
         do {
-            let tokenAuthResult = try await Authentication.fetchCSRFToken()
-            switch tokenAuthResult {
-            case .twoFactorCodeRequired:
-                // FIXME: actual trigger a re-login when auth failed (eg. due to 2fa, or password change)
-                // and ability to retry/resume
-                uploadStatus[uploadable.id] = .twoFactorCodeRequired
-                return
-            case .emailCodeRequired:
-                // FIXME: actual trigger a re-login when auth failed (eg. due to 2fa, or password change)
-                // and ability to retry/resume
-                uploadStatus[uploadable.id] = .emailCodeRequired
-                return
-            case .tokenReceived(let token):
-                csrfToken = token
-            }
+            try bgTaskScheduler.submit(bgRequest)
         } catch {
-            logger.error("failed to fetch CSRF token for upload: \(error)")
-            uploadStatus[uploadable.id] = .authenticationError(error)
-            return
+            print("Failed to submit request: \(error)")
         }
 
-        let request = await API.shared.publish(file: uploadable, csrfToken: csrfToken)
 
-        for await status in request {
-            switch status {
-            case .uploadingFile(let progress):
-                uploadStatus[uploadable.id] = .uploading(progress.fractionCompleted)
-            case .creatingWikidataClaims:
-                uploadStatus[uploadable.id] = .creatingWikidataClaims
-            case .unstashingFile:
-                uploadStatus[uploadable.id] = .unstashingFile
-            case .published:
-                uploadStatus[uploadable.id] = .published
-                didFinishUpload.send(uploadable.filename)
-            case .uploadWarnings(let warnings):
-                uploadStatus[uploadable.id] = .uploadWarnings(warnings)
-            case .unspecifiedError(let errorMessage):
-                uploadStatus[uploadable.id] = .unspecifiedError(errorMessage)
-            }
-        }
     }
 }
 
