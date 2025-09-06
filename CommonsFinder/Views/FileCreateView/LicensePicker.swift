@@ -60,10 +60,9 @@ private struct LicenseButton: View {
     var body: some View {
         Button(action: action) {
             VStack(alignment: .leading, spacing: 10) {
-                Text(license.abbreviation).bold()
-                    + Text(": ").bold()
-                    + Text(license.name).bold()
 
+                let licenseShortString = "\(license.abbreviation): \(license.name)"
+                Text(licenseShortString).bold()
                 Text(license.explanation)
             }
             .multilineTextAlignment(.leading)

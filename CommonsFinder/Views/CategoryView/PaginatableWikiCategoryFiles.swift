@@ -62,8 +62,8 @@ import os.log
         logger.info("\(categoryResult?.0.count ?? 0) category files")
         logger.info("\(depictResult?.0.count ?? 0) wikidata depict files")
 
-        var categoryTitles = categoryResult?.0 ?? []
-        var depictTitles = depictResult?.0 ?? []
+        let categoryTitles = categoryResult?.0 ?? []
+        let depictTitles = depictResult?.0 ?? []
         categoryContinueString = categoryResult?.1
         depictSearchOffset = depictResult?.1
 

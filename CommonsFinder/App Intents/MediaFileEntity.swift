@@ -12,7 +12,7 @@ import GRDB
 import MapKit
 import os.log
 
-@AssistantEnum(schema: .reader.documentKind)
+@AppEnum(schema: .reader.documentKind)
 enum ReaderDocumentKind: String, AppEnum {
     case photo
     case video
@@ -28,7 +28,7 @@ enum ReaderDocumentKind: String, AppEnum {
 
 
 /// Represents the MediaFile as an AppEntity to appear in (siri) system search etc.
-@AssistantEntity(schema: .reader.document)
+@AppEntity(schema: .reader.document)
 struct MediaFileAppEntity: AppEntity {
     var id: String
 

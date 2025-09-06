@@ -10,7 +10,7 @@ import Foundation
 import UniformTypeIdentifiers
 import os.log
 
-@AssistantIntent(schema: .system.search)
+@AppIntent(schema: .system.search)
 struct InAppSearchIntent: AppIntent, ShowInAppSearchResultsIntent {
     static let searchScopes: [StringSearchScope] = [.general]
     @Parameter
