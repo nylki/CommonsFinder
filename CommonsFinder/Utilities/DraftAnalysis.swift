@@ -90,7 +90,7 @@ enum DraftAnalysis {
 
 
         do {
-            let results = try await imageRequestHandler.perform(request)
+            let results: () = try await imageRequestHandler.perform(request)
                 .filter { $0.hasMinimumRecall(0.01, forPrecision: 0.9) }
                 .forEach { observation in
                     logger.info("image classification: \(observation.identifier) (\(observation.confidence))")
