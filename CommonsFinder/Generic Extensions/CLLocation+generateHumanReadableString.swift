@@ -5,12 +5,19 @@
 //  Created by Tom Brewe on 28.12.24.
 //
 
-import CoreLocation
 import Foundation
+@preconcurrency import MapKit
 
 extension CLLocation {
     func generateHumanReadableString(includeCountry: Bool = true) async throws -> String? {
-        guard let placemark = await GeoPlacemarkCache.shared.getPlacemark(for: self) else { return nil }
+        let reverseRequest = MKReverseGeocodingRequest(
+            location: .init(
+                latitude: coordinate.latitude,
+                longitude: coordinate.longitude
+            ))
+
+        // TODO: replace deprecated CLPlacemeark with MKMapItem? but less controll over water/ocean etc.
+        guard let placemark = try await reverseRequest?.mapItems.first?.placemark else { return nil }
 
         let primary: String? =
             if let water = placemark.ocean ?? placemark.inlandWater {

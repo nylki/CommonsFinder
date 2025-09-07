@@ -1,3 +1,4 @@
+import GeoToolbox
 @preconcurrency import MapKit
 //
 //  InlineMap.swift
@@ -92,14 +93,12 @@ struct InlineMap: View {
         )
         .task {
             do {
-                humanReadableLocation = try await location.generateHumanReadableString()
+                let itemRequest = MKMapItemRequest(placeDescriptor: .init(representations: [.coordinate(coordinate)], commonName: nil))
 
-                let mapPlacemmark = MKPlacemark(
-                    location: location,
-                    name: humanReadableLocation,
-                    postalAddress: nil
-                )
-                self.mkMapItem = MKMapItem(placemark: mapPlacemmark)
+                // TODO: potentially customize the mapItem
+                let mapItem = try await itemRequest.mapItem
+                self.humanReadableLocation = mapItem.address?.shortAddress ?? mapItem.name
+                self.mkMapItem = mapItem
 
             } catch {
 

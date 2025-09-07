@@ -10,6 +10,9 @@ import Algorithms
 import CommonsAPI
 import CoreLocation
 import Foundation
+import GeoToolbox
+import MapKit
+import RegexBuilder
 import Vision
 import os.log
 
@@ -233,28 +236,26 @@ nonisolated enum DraftAnalysis {
 
     private static func fetchCategoriesByReverseMapKitGeocoding(coordinate: CLLocationCoordinate2D) async throws -> [Category] {
         let referenceCLLocation = CLLocation(latitude: coordinate.latitude, longitude: coordinate.longitude)
-        async let placemarkRequest = await GeoPlacemarkCache.shared.getPlacemark(
-            for: .init(latitude: coordinate.latitude, longitude: coordinate.longitude)
-        )
+        let geocodingRequest = MKReverseGeocodingRequest(location: referenceCLLocation)
+        async let mapItemRequest = await geocodingRequest?.mapItems.first
 
         var result: [Category] = []
 
-        if let placemark: CLPlacemark = await placemarkRequest {
+        if let item = try await mapItemRequest {
 
-
-            if let street = placemark.thoroughfare {
+            if let shortAddress = item.address?.shortAddress {
 
                 var streetCategories: [Category] = []
-                if let locality = placemark.locality {
-                    streetCategories += try await APIUtils.searchCategories(for: "\(street) \(locality)")
-                }
-                if streetCategories.isEmpty {
+                streetCategories += try await APIUtils.searchCategories(for: "shortAddress")
+
+                if streetCategories.isEmpty,
+                    let street = shortAddress.components(separatedBy: .decimalDigits).first
+                {
                     streetCategories += try await APIUtils.searchCategories(for: street)
                 }
 
                 streetCategories =
-                    streetCategories
-                    .filter {
+                    streetCategories.filter {
                         guard let latitude = $0.latitude, let longitude = $0.longitude else {
                             return false
                         }
@@ -268,9 +269,7 @@ nonisolated enum DraftAnalysis {
                     })
 
                 result.insert(contentsOf: streetCategories.prefix(1), at: 0)
-            }
-
-            if let water = placemark.ocean ?? placemark.inlandWater {
+            } else if let water = item.placemark.ocean ?? item.placemark.inlandWater {
                 let waterCategories = try await APIUtils.searchCategories(for: water)
                     .filter { category in
                         // canal, river, lake, better to do it in the query with broader water filter
@@ -282,10 +281,20 @@ nonisolated enum DraftAnalysis {
 
                 result.insert(contentsOf: waterCategories.prefix(1), at: 0)
 
-            } else if let areaOfInterest = placemark.areasOfInterest?.first {
-                // Parks, Landmarks etc.
-                var name = areaOfInterest
-                if let dashSplit = areaOfInterest.split(separator: " - ").first {
+            }
+
+            let relevantLargeAreaPOIs: [MKPointOfInterestCategory] = [
+                .airport, .amusementPark, .aquarium, .beach, .campground, .castle, .conventionCenter, .fairground, .foodMarket, .fortress, .golf, .goKart, .hiking, .kayaking, .landmark, .marina,
+                .museum, .musicVenue, .nationalMonument, .nationalPark, .park, .publicTransport, .rvPark, .skating, .skatePark, .spa, .soccer, .skiing, .stadium, .swimming, .surfing, .tennis,
+                .theater, .university, .volleyball, .zoo,
+            ]
+            // Parks, Landmarks, beach, zoo etc.
+            if let mkPOICategory = item.pointOfInterestCategory,
+                var name = item.name,
+                relevantLargeAreaPOIs.contains(mkPOICategory)
+            {
+
+                if let dashSplit = name.split(separator: " - ").first {
                     name = String(dashSplit)
                 }
                 let areaOfInterestCategories = try await APIUtils.searchCategories(for: name)
@@ -294,7 +303,6 @@ nonisolated enum DraftAnalysis {
                     .sorted(by: { a, b in
                         sortCategoriesByDistance(to: referenceCLLocation, a: a, b: b)
                     })
-
 
                 if let areaOfInterest = areaOfInterestCategories.first,
                     let coord = areaOfInterest.coordinate
@@ -462,16 +470,6 @@ nonisolated enum DraftAnalysis {
         return scoredCategories.sorted(by: \.score, .orderedDescending)
     }
 
-    private static func sortCategoriesByDistance(to location: CLLocation, a: Category, b: Category) -> Bool {
-        guard let aCoord = a.coordinate, let bCoord = b.coordinate else {
-            return false
-        }
-        let distA = CLLocation(latitude: aCoord.latitude, longitude: aCoord.longitude)
-            .distance(from: location)
-        let distB = CLLocation(latitude: bCoord.latitude, longitude: bCoord.longitude)
-            .distance(from: location)
-        return distA < distB
-    }
 }
 
 enum CategoryGeoSuggestionStrategy {

@@ -107,6 +107,19 @@ nonisolated enum GeoVectorMath {
     }
 }
 
+nonisolated
+    func sortCategoriesByDistance(to location: CLLocation, a: Category, b: Category) -> Bool
+{
+    guard let aCoord = a.coordinate, let bCoord = b.coordinate else {
+        return false
+    }
+    let distA = CLLocation(latitude: aCoord.latitude, longitude: aCoord.longitude)
+        .distance(from: location)
+    let distB = CLLocation(latitude: bCoord.latitude, longitude: bCoord.longitude)
+        .distance(from: location)
+    return distA < distB
+}
+
 nonisolated extension FloatingPoint {
     fileprivate var degreesToRadians: Self { self * .pi / 180 }
     fileprivate var radiansToDegrees: Self { self * 180 / .pi }

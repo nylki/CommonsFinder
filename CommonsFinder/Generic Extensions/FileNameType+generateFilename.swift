@@ -7,9 +7,10 @@
 
 import CoreLocation
 import Foundation
+@preconcurrency import MapKit
 import os.log
 
-extension FileNameType {
+nonisolated extension FileNameType {
     func generateFilename(
         coordinate: CLLocationCoordinate2D?, date: Date?, desc: [MediaFileDraft.DraftCaptionWithDescription], locale: Locale, tags: [TagItem]
     ) async
@@ -29,7 +30,7 @@ extension FileNameType {
 }
 
 
-private func generateCaptionFilename(desc: [MediaFileDraft.DraftCaptionWithDescription], locale: Locale) -> String {
+nonisolated private func generateCaptionFilename(desc: [MediaFileDraft.DraftCaptionWithDescription], locale: Locale) -> String {
 
     // For caption only we select the caption matching the current locales language code if it exists
     // otherwise just the first available caption.
@@ -42,7 +43,7 @@ private func generateCaptionFilename(desc: [MediaFileDraft.DraftCaptionWithDescr
     }
 }
 
-private func generateCaptionAndDateFilename(desc: [MediaFileDraft.DraftCaptionWithDescription], date: Date?, locale: Locale) -> String {
+nonisolated private func generateCaptionAndDateFilename(desc: [MediaFileDraft.DraftCaptionWithDescription], date: Date?, locale: Locale) -> String {
     let caption = generateCaptionFilename(desc: desc, locale: locale)
 
     let date = date?.ISO8601Format(.iso8601.year().month().day()) ?? ""
@@ -51,13 +52,20 @@ private func generateCaptionAndDateFilename(desc: [MediaFileDraft.DraftCaptionWi
 }
 
 
-private func generateGeoAndDateFilename(date: Date?, coordinate: CLLocationCoordinate2D?, locale: Locale) async -> String {
+nonisolated
+    private func generateGeoAndDateFilename(date: Date?, coordinate: CLLocationCoordinate2D?, locale: Locale) async -> String
+{
     var geoString: String?
     if let coordinate {
         do {
+            let reverseRequest = MKReverseGeocodingRequest(
+                location: .init(
+                    latitude: coordinate.latitude,
+                    longitude: coordinate.longitude
+                ))
+            let mapItems = try await reverseRequest?.mapItems
+            geoString = mapItems?.first?.address?.shortAddress ?? mapItems?.first?.name
 
-            geoString = try await CLLocation(latitude: coordinate.latitude, longitude: coordinate.longitude)
-                .generateHumanReadableString(includeCountry: false)
         } catch {
             logger.warning("Failed to reverse geo location")
         }
