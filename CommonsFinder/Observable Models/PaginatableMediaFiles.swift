@@ -37,7 +37,6 @@ import os.log
     init(appDatabase: AppDatabase, initialTitles: [String] = []) async throws {
         self.rawTitleStack = initialTitles
         self.appDatabase = appDatabase
-        rawTitleStack = []
         try await initialFetch()
     }
 
