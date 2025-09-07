@@ -122,7 +122,7 @@ struct MediaFile: Equatable, Hashable, Sendable, Identifiable {
 /// See <https://github.com/groue/GRDB.swift/blob/master/README.md#records>
 extension MediaFile: Codable, FetchableRecord, MutablePersistableRecord {
     // Define database columns from CodingKeys
-    enum Columns {
+    nonisolated enum Columns {
         static let id = Column(CodingKeys.id)
         static let itemInteractionID = Column(CodingKeys.itemInteractionID)
         static let username = Column(CodingKeys.username)
@@ -140,9 +140,9 @@ extension MediaFile: Codable, FetchableRecord, MutablePersistableRecord {
     }
 
     // itemInteractionId foreign key
-    static let itemInteraction = belongsTo(ItemInteraction.self)
+    static nonisolated let itemInteraction = belongsTo(ItemInteraction.self)
 
-    var itemInteraction: QueryInterfaceRequest<ItemInteraction> {
+    nonisolated var itemInteraction: QueryInterfaceRequest<ItemInteraction> {
         request(for: Self.itemInteraction)
     }
 

@@ -7,7 +7,6 @@
 
 import SwiftUI
 
-@MainActor
 @Observable final class Navigation {
     var homePath: [NavigationStackItem] {
         get {

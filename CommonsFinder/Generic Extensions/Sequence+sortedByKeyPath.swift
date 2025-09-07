@@ -7,7 +7,7 @@
 
 import Foundation
 
-extension Sequence {
+nonisolated extension Sequence {
     func sorted(by keyPath: KeyPath<Element, some Comparable>, _ order: ComparisonResult = .orderedAscending) -> [Element] {
         switch order {
         case .orderedAscending:

@@ -7,7 +7,7 @@
 
 import Foundation
 
-extension FloatingPoint {
+nonisolated extension FloatingPoint {
     private func interpolated(
         fromLowerBound: Self,
         fromUpperBound: Self,

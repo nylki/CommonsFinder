@@ -8,7 +8,7 @@
 import Foundation
 import SwiftUI
 
-@Observable @MainActor final class TagModel {
+@Observable final class TagModel {
     var tagItem: TagItem
 
     init(tagItem: TagItem) {

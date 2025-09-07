@@ -10,7 +10,7 @@ import Foundation
 import Lock
 import os.log
 
-actor GeoPlacemarkCache {
+final class GeoPlacemarkCache {
     static let shared = GeoPlacemarkCache()
 
     private let lock = AsyncLock()

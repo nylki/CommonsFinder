@@ -8,7 +8,7 @@
 import Foundation
 import GRDB
 
-final class LatinAsciiTokenizer: FTS5WrapperTokenizer {
+nonisolated final class LatinAsciiTokenizer: FTS5WrapperTokenizer {
     static let name = "latinascii"
     let wrappedTokenizer: any FTS5Tokenizer
 

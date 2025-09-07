@@ -10,7 +10,7 @@ import Foundation
 import MapKit
 import simd
 
-enum GeoVectorMath {
+nonisolated enum GeoVectorMath {
 
     /// Earth radius
     static let earthRadius: CLLocationDistance = 6_371_008.8
@@ -107,7 +107,7 @@ enum GeoVectorMath {
     }
 }
 
-extension FloatingPoint {
+nonisolated extension FloatingPoint {
     fileprivate var degreesToRadians: Self { self * .pi / 180 }
     fileprivate var radiansToDegrees: Self { self * 180 / .pi }
 }

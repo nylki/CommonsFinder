@@ -8,7 +8,7 @@
 import CommonsAPI
 import Foundation
 
-extension Category {
+nonisolated extension Category {
     init(apiItem: GenericWikidataItem) {
         self.init(
             wikidataId: apiItem.id,

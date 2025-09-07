@@ -9,7 +9,7 @@ import CommonsAPI
 import SwiftUI
 import os.log
 
-@Observable @MainActor
+@Observable
 private final class
     PaginatableUserUploadedFiles: PaginatableMediaFiles
 {

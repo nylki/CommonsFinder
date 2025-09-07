@@ -23,7 +23,7 @@ enum DraftError: Error {
 }
 
 /// DraftModel models a drafting session where the user can add & remove files and also edit their metadata
-@Observable @MainActor class FileCreateViewModel {
+@Observable class FileCreateViewModel {
     private var photoImportTask: Task<Void, Error>?
 
     /// The currently centered file in the scrollView that is being edited
@@ -168,7 +168,7 @@ enum DraftError: Error {
 
     }
 
-    nonisolated private func loadFileItem(url: URL) async throws -> FileItem {
+    private func loadFileItem(url: URL) async throws -> FileItem {
         assert(url.isFileURL, "This function only expects file URLs.")
         return try FileItem(copyingDataFromLocalFile: url)
     }

@@ -38,7 +38,7 @@ enum LoginSuccess {
 // and  dynamically queried in views via GRDB @Query so as little memory.
 
 
-@Observable @MainActor
+@Observable
 final class AccountModel {
     private(set) var activeUser: User?
 

@@ -15,7 +15,7 @@ enum ExifExtractionError: Error {
 }
 
 // Adapted from https://gist.github.com/lukebrandonfarrell/961a6dbc8367f0ac9cabc89b0052d1fe
-struct ExifData: Codable, Equatable, Hashable {
+nonisolated struct ExifData: Codable, Equatable, Hashable {
     enum Orientation: Int, Codable {
         case horizontal = 1
         case MirrorHorizontal = 2

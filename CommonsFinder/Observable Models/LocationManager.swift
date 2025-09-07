@@ -9,7 +9,7 @@ import CoreLocation
 import SwiftUI
 import os.log
 
-@Observable @MainActor
+@Observable
 final class LocationManager {
     // Adapted from: https://holyswift.app/the-new-way-to-get-current-user-location-in-swiftu-tutorial/
     var location: CLLocation? = nil

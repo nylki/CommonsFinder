@@ -13,15 +13,15 @@ import Foundation
 import Vision
 import os.log
 
-enum DraftAnalysis {
-    static func analyze(draft: MediaFileDraft) async -> DraftAnalysisResult? {
+nonisolated enum DraftAnalysis {
+    @concurrent static func analyze(draft: MediaFileDraft) async -> DraftAnalysisResult? {
 
         guard let fileURL = draft.localFileURL() else { return nil }
         let handler = ImageRequestHandler(fileURL)
         let exifData = draft.loadExifData()
 
-        let nearbyCategoryTask = Task<[Category], Never> {
-            var coordinate = exifData?.coordinate
+        let nearbyCategoryTask = Task<[Category], Never> { @concurrent [coordinate = exifData?.coordinate] in
+            var coordinate = coordinate
             if case .userDefinedLocation(latitude: let lat, longitude: let lon, _) = draft.locationHandling {
                 coordinate = .init(latitude: lat, longitude: lon)
             }
@@ -140,7 +140,8 @@ enum DraftAnalysis {
     }
 
     private static func fetchCategories(in circles: any Collection<SearchCircle>) async -> [Category] {
-        await withTaskGroup(returning: [Category].self) { group in
+
+        let apiItems = await withTaskGroup(returning: [GenericWikidataItem].self) { @concurrent group in
             for circle in circles {
                 group.addTask {
                     do {
@@ -151,7 +152,6 @@ enum DraftAnalysis {
                                 limit: 50,
                                 languageCode: Locale.current.wikiLanguageCodeIdentifier
                             )
-                            .map(Category.init)
 
                         return categories
 
@@ -162,13 +162,15 @@ enum DraftAnalysis {
                 }
             }
 
-            var result: [Category] = []
+            var result: [GenericWikidataItem] = []
             for await taskResult in group {
                 // Set operation name as key and operation result as value
                 result.append(contentsOf: taskResult)
             }
-            return result.uniqued { ($0.wikidataId ?? $0.commonsCategory) }
+            return result.uniqued(on: \.id)
         }
+
+        return apiItems.map(Category.init)
     }
 
     private static func fetchCategoriesWithAreas(around coordinate: CLLocationCoordinate2D, radiusMeters: CLLocationDistance, minAreaQm: Double, limit: Int = 25) async -> [Category] {
@@ -477,7 +479,7 @@ enum CategoryGeoSuggestionStrategy {
     case expandingCircle
 }
 
-extension [Category] {
+nonisolated extension [Category] {
     func filterByMaxDistance(maxDistance: CLLocationDistance, to location: CLLocation) -> Self {
         filter { category in
             guard let latitude = category.latitude, let longitude = category.longitude else {

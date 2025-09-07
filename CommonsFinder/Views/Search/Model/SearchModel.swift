@@ -12,7 +12,6 @@ import CommonsAPI
 import SwiftUI
 import os.log
 
-@MainActor
 @Observable final class SearchModel {
     /// Only to be used when SwiftUI Environment is not available (AppIntents etc.)
 

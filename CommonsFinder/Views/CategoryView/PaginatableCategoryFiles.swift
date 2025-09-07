@@ -8,7 +8,7 @@
 //import CommonsAPI
 //import SwiftUI
 //
-//@Observable @MainActor
+//@Observable
 //final class
 //    PaginatableCategoryFiles: PaginatableMediaFiles
 //{

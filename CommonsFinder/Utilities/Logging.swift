@@ -9,7 +9,7 @@
 import Foundation
 import os.log
 
-let logger = Logger(subsystem: Bundle.main.bundleIdentifier!, category: "generic")
+nonisolated let logger = Logger(subsystem: Bundle.main.bundleIdentifier!, category: "generic")
 
 // inspiration: https://www.avanderlee.com/debugging/oslog-unified-logging/
 //extension Logger {

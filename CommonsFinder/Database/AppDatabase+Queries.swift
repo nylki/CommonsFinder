@@ -108,7 +108,7 @@ struct AllBookmarksWikiItemRequest: ValueObservationQueryable {
     }
 }
 
-extension QueryInterfaceRequest<Category> {
+nonisolated extension QueryInterfaceRequest<Category> {
     func includeInteractionsWithBookmarks() -> QueryInterfaceRequest<CategoryInfo> {
         Category
             .including(
@@ -133,7 +133,7 @@ struct MediaFileRequest: ValueObservationQueryable {
 }
 
 
-extension Category {
+nonisolated extension Category {
     /// filters existing Categories based on id, wikidataId, commonsCategory of given Categories
     static func filter(basedOn categories: [Category]) -> QueryInterfaceRequest<Self> {
         let ids = Set(categories.compactMap(\.id))
@@ -151,7 +151,7 @@ extension Category {
     }
 }
 
-extension CategoryInfo {
+nonisolated extension CategoryInfo {
     static func filter(wikidataID: Category.WikidataID) -> QueryInterfaceRequest<Self> {
         Category
             .filter { $0.wikidataId == wikidataID }

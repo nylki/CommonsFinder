@@ -10,7 +10,6 @@ import Foundation
 import os.log
 
 extension FileNameType {
-    @MainActor
     func generateFilename(
         coordinate: CLLocationCoordinate2D?, date: Date?, desc: [MediaFileDraft.DraftCaptionWithDescription], locale: Locale, tags: [TagItem]
     ) async

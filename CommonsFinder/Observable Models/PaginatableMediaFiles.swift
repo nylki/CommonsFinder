@@ -11,7 +11,7 @@ import GRDB
 import SwiftUI
 import os.log
 
-@Observable @MainActor class PaginatableMediaFiles {
+@Observable class PaginatableMediaFiles {
 
     var status: PaginationStatus = .unknown
     var mediaFileInfos: [MediaFileInfo] = []

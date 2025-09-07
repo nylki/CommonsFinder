@@ -94,7 +94,7 @@ struct MediaFileDraft: Identifiable, Equatable, Hashable {
 
 extension MediaFileDraft {
     /// exifData is created lazily and is not saved into the DB
-    func loadExifData() -> ExifData? {
+    nonisolated func loadExifData() -> ExifData? {
         if let url = self.localFileURL() {
             try? ExifData(url: url)
         } else {
@@ -175,7 +175,7 @@ extension MediaFileDraft: Codable {
 
 extension MediaFileDraft: FetchableRecord, MutablePersistableRecord {
     // Define database columns from CodingKeys
-    enum Columns {
+    nonisolated enum Columns {
         static let id = Column(CodingKeys.id)
         static let addedDate = Column(CodingKeys.addedDate)
         static let name = Column(CodingKeys.name)
@@ -196,7 +196,7 @@ extension MediaFileDraft: FetchableRecord, MutablePersistableRecord {
 
 // MARK: - Extensions
 
-extension MediaFileDraft {
+nonisolated extension MediaFileDraft {
     /// Returns the location of the local file (of the image, video, etc.)
     func localFileURL() -> URL? {
         URL.documentsDirectory.appending(path: localFileName)

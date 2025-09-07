@@ -12,8 +12,7 @@ import Vision
 import os.log
 
 /// Represents the data to allow editing either a DB-backed MediaFile or a newly created one.
-@Observable
-@MainActor final class MediaFileDraftModel: @preconcurrency Identifiable {
+@Observable final class MediaFileDraftModel: @preconcurrency Identifiable {
     typealias ID = String
     var id: ID
     var draft: MediaFileDraft

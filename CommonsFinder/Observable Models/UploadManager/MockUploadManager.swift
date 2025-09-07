@@ -11,7 +11,7 @@ import CommonsAPI
 import Foundation
 
 /// Mock UploadManager for Previews and simulating slow uploading etc.
-@Observable @MainActor
+@Observable
 final class MockUploadManager: UploadManager {
     enum UploadMockSimulation {
         // a couple seconds

@@ -70,7 +70,7 @@ enum UploadManagerStatus: Equatable, Sendable, CustomStringConvertible {
 }
 
 
-@Observable @MainActor
+@Observable
 class UploadManager {
 
     private let appDatabase: AppDatabase

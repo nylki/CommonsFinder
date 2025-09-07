@@ -10,7 +10,7 @@ import H3kit
 import MapKit
 import os.log
 
-protocol GeoReferencable: Hashable, Equatable {
+nonisolated protocol GeoReferencable: Hashable, Equatable {
     typealias GeoRefID = String
     var latitude: Double? { get }
     var longitude: Double? { get }

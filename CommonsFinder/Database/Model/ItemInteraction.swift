@@ -58,7 +58,7 @@ extension ItemInteraction {
 
 /// See <https://github.com/groue/GRDB.swift/blob/master/README.md#records>
 extension ItemInteraction: Codable, FetchableRecord, MutablePersistableRecord {
-    enum Columns {
+    nonisolated enum Columns {
         static let id = Column(CodingKeys.id)
         static let lastViewed = Column(CodingKeys.lastViewed)
         static let viewCount = Column(CodingKeys.viewCount)

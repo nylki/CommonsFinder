@@ -14,7 +14,7 @@ import OrderedCollections
 import SwiftUI
 import os.log
 
-@Observable @MainActor final class MapModel {
+@Observable final class MapModel {
     var position: MapCameraPosition = .automatic
     var locale: Locale = .current
 
