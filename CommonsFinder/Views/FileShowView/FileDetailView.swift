@@ -127,7 +127,7 @@ struct FileDetailView: View {
         // let _ = Self._printChanges()
 
         main
-            
+
             .navigationTitle(navTitle)
             .toolbarTitleDisplayMode(.inline)
             .toolbar(removing: titleAreaHidden ? nil : .title)

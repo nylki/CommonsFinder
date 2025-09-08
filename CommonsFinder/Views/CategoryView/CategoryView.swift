@@ -87,12 +87,12 @@ struct CategoryView: View {
                 VStack(alignment: .leading) {
                     Text(title)
                         .font(.largeTitle).bold()
-//                        .opacity(showTitleInToolbar ? 0 : 1)
-//                        .onScrollVisibilityChange(threshold: 0.01) { visible in
-//                            withAnimation {
-//                                showTitleInToolbar = !visible
-//                            }
-//                        }
+                    //                        .opacity(showTitleInToolbar ? 0 : 1)
+                    //                        .onScrollVisibilityChange(threshold: 0.01) { visible in
+                    //                            withAnimation {
+                    //                                showTitleInToolbar = !visible
+                    //                            }
+                    //                        }
                     subheadline
                     relatedCategoriesView
                 }
@@ -142,16 +142,16 @@ struct CategoryView: View {
         .navigationTitle(title)
         .toolbar(removing: .title)
         .toolbar {
-//            ToolbarItem(placement: .principal) {
-//                if showTitleInToolbar {
-//                    Text(title)
-//                        .font(.headline)
-//                        .lineLimit(2)
-//                        .fixedSize(horizontal: false, vertical: true)
-//                        .padding(.vertical, 3)
-//                        .allowsTightening(true)
-//                }
-//            }
+            //            ToolbarItem(placement: .principal) {
+            //                if showTitleInToolbar {
+            //                    Text(title)
+            //                        .font(.headline)
+            //                        .lineLimit(2)
+            //                        .fixedSize(horizontal: false, vertical: true)
+            //                        .padding(.vertical, 3)
+            //                        .allowsTightening(true)
+            //                }
+            //            }
 
             ToolbarItem(placement: .automatic) {
                 let isBookmarked = (item ?? initialItem).isBookmarked
