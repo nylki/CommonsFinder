@@ -87,13 +87,12 @@ struct CategoryView: View {
                 VStack(alignment: .leading) {
                     Text(title)
                         .font(.largeTitle).bold()
-                        .opacity(showTitleInToolbar ? 0 : 1)
-                        .onScrollVisibilityChange(threshold: 0.01) { visible in
-                            withAnimation {
-                                showTitleInToolbar = !visible
-                            }
-                        }
-
+//                        .opacity(showTitleInToolbar ? 0 : 1)
+//                        .onScrollVisibilityChange(threshold: 0.01) { visible in
+//                            withAnimation {
+//                                showTitleInToolbar = !visible
+//                            }
+//                        }
                     subheadline
                     relatedCategoriesView
                 }
@@ -143,20 +142,16 @@ struct CategoryView: View {
         .navigationTitle(title)
         .toolbar(removing: .title)
         .toolbar {
-            // NOTE: ^ having navigationTitle but removing it from display
-            // and instead showing the following, allows us to have a two-line
-            // title, but still retain the title in the nav-stack (when long-pressing back-buttons, eg.)
-            // or potentially for screen-readers or other stuff.
-            ToolbarItem(placement: .principal) {
-                if showTitleInToolbar {
-                    Text(title)
-                        .font(.headline)
-                        .lineLimit(2)
-                        .fixedSize(horizontal: false, vertical: true)
-                        .padding(.vertical, 3)
-                        .allowsTightening(true)
-                }
-            }
+//            ToolbarItem(placement: .principal) {
+//                if showTitleInToolbar {
+//                    Text(title)
+//                        .font(.headline)
+//                        .lineLimit(2)
+//                        .fixedSize(horizontal: false, vertical: true)
+//                        .padding(.vertical, 3)
+//                        .allowsTightening(true)
+//                }
+//            }
 
             ToolbarItem(placement: .automatic) {
                 let isBookmarked = (item ?? initialItem).isBookmarked
@@ -168,7 +163,7 @@ struct CategoryView: View {
                 }
             }
             ToolbarItem(placement: .automatic) {
-                Menu("More", systemImage: "ellipsis.circle") {
+                Menu("More", systemImage: "ellipsis") {
                     if let item {
                         CategoryLinkSection(item: item)
                     }
@@ -377,7 +372,9 @@ struct CategoryView: View {
 
 
 #Preview(traits: .previewEnvironment) {
-    CategoryView(.init(.init(commonsCategory: "Earth")))
+    NavigationView {
+        CategoryView(.init(.init(commonsCategory: "Earth")))
+    }
 }
 #Preview("Different Category String", traits: .previewEnvironment) {
     CategoryView(.init(.init(commonsCategory: "Lise-Meitner-Haus")))

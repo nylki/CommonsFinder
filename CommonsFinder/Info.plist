@@ -32,6 +32,6 @@
 		<string>_pulse._tcp</string>
 	</array>
 	<key>UIDesignRequiresCompatibility</key>
-	<true/>
+	<false/>
 </dict>
 </plist>

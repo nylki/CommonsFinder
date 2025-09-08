@@ -65,7 +65,7 @@ struct FileDetailView: View {
     @State private var fullDescription: AttributedString?
     @State private var isDescriptionExpanded = false
     @State private var titleAreaHidden = false
-    @State private var gradientAreaHidden = false
+
 
     @State private var resolvedTags: [TagItem] = []
 
@@ -127,31 +127,12 @@ struct FileDetailView: View {
         // let _ = Self._printChanges()
 
         main
-            .animation(.default, value: titleAreaHidden)
+            
             .navigationTitle(navTitle)
             .toolbarTitleDisplayMode(.inline)
             .toolbar(removing: titleAreaHidden ? nil : .title)
-            .toolbarBackgroundVisibility(titleAreaHidden ? .visible : .hidden, for: .navigationBar)
-            .navigationBarBackButtonHidden()
-            .toolbarBackground(Material.regular, for: .navigationBar)
+            .animation(.default, value: titleAreaHidden)
             .toolbar {
-                ToolbarItem(placement: .navigation) {
-                    Button {
-                        dismiss()
-                    } label: {
-                        if titleAreaHidden {
-                            Image(systemName: "chevron.backward.circle")
-                                .font(.title2)
-                                .labelStyle(.iconOnly)
-                        } else {
-                            Image(systemName: "chevron.backward.circle.fill")
-                                .font(.title2)
-                                .labelStyle(.iconOnly)
-                                .foregroundStyle(.accent, .regularMaterial)
-                        }
-                    }
-                }
-
                 ToolbarItem(placement: .automatic) {
                     Menu {
                         Button(
@@ -166,16 +147,9 @@ struct FileDetailView: View {
                             Label("Open in Browser", systemImage: "globe")
                         }
                     } label: {
-                        if titleAreaHidden {
-                            Image(systemName: "ellipsis.circle")
-                                .font(.title2)
-                                .labelStyle(.iconOnly)
-                        } else {
-                            Image(systemName: "ellipsis.circle.fill")
-                                .font(.title2)
-                                .labelStyle(.iconOnly)
-                                .foregroundStyle(.accent, Material.regular)
-                        }
+                        Image(systemName: "ellipsis")
+                            .font(.title2)
+                            .labelStyle(.iconOnly)
                     }
                 }
             }
@@ -237,19 +211,11 @@ struct FileDetailView: View {
 
     @ViewBuilder
     private var main: some View {
-        let targetGradientHeight = 170.0
-
         ScrollView(.vertical) {
             VStack(alignment: .leading) {
                 HStack {
                     Spacer(minLength: 0)
                     imageView
-                        .overlay(alignment: .top) {
-                            Color.clear.frame(height: targetGradientHeight)
-                                .onScrollVisibilityChange { visible in
-                                    gradientAreaHidden = !visible
-                                }
-                        }
                     Spacer(minLength: 0)
                 }
 
@@ -311,36 +277,6 @@ struct FileDetailView: View {
                 .padding(.vertical)
             }
             .padding([.horizontal, .bottom])
-        }
-        .scrollContentBackground(.hidden)
-        .background(alignment: .top) {
-            let isVisible = (!gradientAreaHidden && !titleAreaHidden)
-            let pixelClip = 7.0
-            LazyImage(request: mediaFileInfo.thumbRequest) { phase in
-                if let image = phase.image {
-                    image
-                        .resizable()
-                        .aspectRatio(contentMode: .fill)
-                        .frame(height: pixelClip, alignment: .top)
-                        .scaleEffect(1.1)
-                        .blur(radius: 25)
-                        .clipped()
-                }
-            }
-            .clipped()
-            .compositingGroup()
-            .geometryGroup()
-            .scaleEffect(y: targetGradientHeight / pixelClip, anchor: .top)
-            .frame(height: targetGradientHeight, alignment: .top)
-            .mask(
-                alignment: .top,
-                {
-                    LinearGradient(colors: [.black, .clear], startPoint: .top, endPoint: .bottom)
-                }
-            )
-            .ignoresSafeArea()
-            .opacity(isVisible ? 1 : 0)
-            .accessibilityHidden(true)
         }
         .groupBoxStyle(FileGroupBoxStyle())
     }
