@@ -1067,6 +1067,7 @@
       }
     },
     "Open Kartographer Map" : {
+      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {

@@ -23,11 +23,14 @@ nonisolated enum DraftAnalysis {
         let handler = ImageRequestHandler(fileURL)
         let exifData = draft.loadExifData()
 
-        let nearbyCategoryTask = Task<[Category], Never> { @concurrent [coordinate = exifData?.coordinate] in
-            var coordinate = coordinate
+        let coordinate: CLLocationCoordinate2D? =
             if case .userDefinedLocation(latitude: let lat, longitude: let lon, _) = draft.locationHandling {
-                coordinate = .init(latitude: lat, longitude: lon)
+                .init(latitude: lat, longitude: lon)
+            } else {
+                exifData?.coordinate
             }
+
+        let nearbyCategoryTask = Task<[Category], Never> { @concurrent in
             guard let coordinate else { return [] }
             let categories = await fetchNearbyCategories(
                 coordinate: coordinate,

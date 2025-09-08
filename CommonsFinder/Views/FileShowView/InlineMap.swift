@@ -11,7 +11,6 @@ import os.log
 
 struct InlineMap: View {
     let coordinate: CLLocationCoordinate2D
-    let fileTitle: String?
 
     @State private var mkMapItem: MKMapItem?
     @State private var humanReadableLocation: String?
@@ -27,16 +26,6 @@ struct InlineMap: View {
     private var osmLink: URL? {
         let zoomLevel: Int = 16
         return URL(string: "https://www.openstreetmap.org/#map=\(zoomLevel)/\(coordinate.latitude)/\(coordinate.longitude)")
-    }
-
-    // TODO: geohack url: return "https://geohack.toolforge.org/geohack.php?pagename=File:\(fileTitle)&params=052.440597_N_0013.532672_E_globe:Earth_type:camera_heading:156.11&language=de"
-
-    private var commonsMapLink: URL? {
-        if let fileTitle {
-            URL(string: "https://commons.wikimedia.org/wiki/File:\(fileTitle)#/maplink/0")
-        } else {
-            nil
-        }
     }
 
     private var genericGeoLink: URL? {
@@ -94,7 +83,6 @@ struct InlineMap: View {
         .task {
             do {
                 let itemRequest = MKMapItemRequest(placeDescriptor: .init(representations: [.coordinate(coordinate)], commonName: nil))
-
                 // TODO: potentially customize the mapItem
                 let mapItem = try await itemRequest.mapItem
                 self.humanReadableLocation = mapItem.address?.shortAddress ?? mapItem.name
@@ -145,11 +133,6 @@ struct InlineMap: View {
         }
 
         Menu("More...") {
-            if let commonsMapLink {
-                Link(destination: commonsMapLink) {
-                    Label("Open Kartographer Map", systemImage: "link")
-                }
-            }
             Button("Copy Coordinates", systemImage: "clipboard") {
                 UIPasteboard.general.string = coordinate.coordinateString
             }
@@ -167,5 +150,5 @@ extension CLLocationCoordinate2D {
 
 
 #Preview {
-    InlineMap(coordinate: .init(latitude: .init(48.8588), longitude: .init(2.2945)), fileTitle: nil)
+    InlineMap(coordinate: .init(latitude: .init(48.8588), longitude: .init(2.2945)))
 }

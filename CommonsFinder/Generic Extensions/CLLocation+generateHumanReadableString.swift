@@ -8,12 +8,12 @@
 import Foundation
 @preconcurrency import MapKit
 
-extension CLLocation {
+nonisolated extension CLLocationCoordinate2D {
     func generateHumanReadableString(includeCountry: Bool = true) async throws -> String? {
         let reverseRequest = MKReverseGeocodingRequest(
             location: .init(
-                latitude: coordinate.latitude,
-                longitude: coordinate.longitude
+                latitude: latitude,
+                longitude: longitude
             ))
 
         // TODO: replace deprecated CLPlacemeark with MKMapItem? but less controll over water/ocean etc.
@@ -38,5 +38,11 @@ extension CLLocation {
             .joined(separator: ", ")
 
         return humanReadableLocation
+    }
+}
+
+nonisolated extension CLLocation {
+    func generateHumanReadableString(includeCountry: Bool = true) async throws -> String? {
+        try await coordinate.generateHumanReadableString(includeCountry: includeCountry)
     }
 }
