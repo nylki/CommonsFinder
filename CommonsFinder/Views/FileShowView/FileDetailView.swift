@@ -203,28 +203,28 @@ struct FileDetailView: View {
                         logger.info("Resolving Tags finished.")
                     }
 
-                    if let coordinate = mediaFileInfo.mediaFile.coordinate {
+                    //                    if let coordinate = mediaFileInfo.mediaFile.coordinate {
 
 
-                        // NOTE: the following is unreliably and will skew the lookaround view
-                        // if it is eg. just the Wikidata item of a street
-                        // potential fix: only use wikidata items if they have a street adress (P6375) or "fullAddress" and use that address as well as the label
-                        //                        let clLocation = CLLocation(
-                        //                            latitude: coordinate.latitude,
-                        //                            longitude: coordinate.longitude
-                        //                        )
-                        //                        let closestWikidataCategory = resolvedTags.map(\.baseItem)
-                        //                            .sorted(by: { a, b in
-                        //                                sortCategoriesByDistance(to: clLocation, a: a, b: b)
-                        //                            }).first
-                        //
-                        //                        let commonName = closestWikidataCategory?.label ?? closestWikidataCategory?.commonsCategory
+                    // NOTE: the following is unreliably and will skew the lookaround view
+                    // if it is eg. just the Wikidata item of a street
+                    // potential fix: only use wikidata items if they have a street adress (P6375) or "fullAddress" and use that address as well as the label
+                    //                        let clLocation = CLLocation(
+                    //                            latitude: coordinate.latitude,
+                    //                            longitude: coordinate.longitude
+                    //                        )
+                    //                        let closestWikidataCategory = resolvedTags.map(\.baseItem)
+                    //                            .sorted(by: { a, b in
+                    //                                sortCategoriesByDistance(to: clLocation, a: a, b: b)
+                    //                            }).first
+                    //
+                    //                        let commonName = closestWikidataCategory?.label ?? closestWikidataCategory?.commonsCategory
 
-                        //                        placeDescriptor = PlaceDescriptor(
-                        //                            representations: [.coordinate(coordinate)],
-                        //                            commonName: nil
-                        //                        )
-                    }
+                    //                        placeDescriptor = PlaceDescriptor(
+                    //                            representations: [.coordinate(coordinate)],
+                    //                            commonName: nil
+                    //                        )
+                    //                    }
 
                 } catch {
                     logger.error("Failed to resolve MediaFile tags: \(error)")

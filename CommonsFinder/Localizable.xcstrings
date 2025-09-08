@@ -7,6 +7,16 @@
     "%@" : {
       "comment" : "Title in Intent FileEntity"
     },
+    "%@: %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@: %2$@"
+          }
+        }
+      }
+    },
     "%lf" : {
 
     },
@@ -370,6 +380,15 @@
 
     },
     "CC BY-SA" : {
+
+    },
+    "cc-by-4.0" : {
+
+    },
+    "cc-by-sa-4.0" : {
+
+    },
+    "cc0" : {
 
     },
     "CC0" : {
