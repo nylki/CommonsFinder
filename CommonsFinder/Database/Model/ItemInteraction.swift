@@ -10,7 +10,7 @@ import GRDB
 
 /// `ItemInteraction` stores interaction metada for MediaFile and Category
 ///  eg. `lastViewed` or `viewCount`, `isBookmarked`
-struct ItemInteraction: Equatable, Hashable, Sendable, Identifiable {
+nonisolated struct ItemInteraction: Equatable, Hashable, Sendable, Identifiable {
     var id: Int64?
 
     var lastViewed: Date?

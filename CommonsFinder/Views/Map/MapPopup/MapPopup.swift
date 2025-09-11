@@ -42,6 +42,7 @@ struct MapPopup: View {
     let rawCategories: [Category]
     /// rawMediaItems are not directly visualized, but passed to the pagination model to fetch the metadata including image url and caption
     let rawMediaItems: [GeoSearchFileItem]
+    @Binding var isPresented: Bool
 
     @State private var mediaPaginationModel: PaginatableMediaFiles? = nil
     @State private var resolvedCategories: [CategoryInfo] = []
@@ -59,19 +60,31 @@ struct MapPopup: View {
 
     var body: some View {
         VStack {
-            if selectedItemType != .empty, !rawCategories.isEmpty, !rawMediaItems.isEmpty {
-                Picker("", selection: $selectedItemType) {
-                    Text("Locations").tag(ItemType.wikiItem)
-                    Text("Images").tag(ItemType.mediaItem)
+            HStack {
+                if selectedItemType != .empty, !rawCategories.isEmpty, !rawMediaItems.isEmpty {
+                    Picker("", selection: $selectedItemType) {
+                        Text("Locations").tag(ItemType.wikiItem)
+                        Text("Images").tag(ItemType.mediaItem)
 
+                    }
+                    .pickerStyle(.segmented)
+                    .padding(.horizontal)
+                    .onChange(of: selectedItemType) {
+                        // TODO: set this implicitly in model or remember scrollPosition per type?
+                        scrollPosition = .init()
+                    }
                 }
-                .pickerStyle(.segmented)
-                .padding(.horizontal)
-                .onChange(of: selectedItemType) {
-                    // TODO: set this implicitly in model or remember scrollPosition per type?
-                    scrollPosition = .init()
+
+                Spacer()
+
+                Button("close", systemImage: "xmark") {
+                    isPresented = false
                 }
+                .buttonStyle(.glass)
+                .labelStyle(.iconOnly)
             }
+            .padding([.top, .trailing])
+
 
             if mediaPaginationModel?.mediaFileInfos.count == 1,
                 let mediaFileInfo = mediaPaginationModel?.mediaFileInfos.first
@@ -87,25 +100,31 @@ struct MapPopup: View {
                     }
             } else {
                 ScrollView(.horizontal) {
-                    switch selectedItemType {
-                    case .mediaItem:
-                        mediaList
-                            .frame(minWidth: 100)
-                            .safeAreaPadding(.vertical, 10)
-                            .safeAreaPadding(.horizontal, 120)
-                            .frame(height: 160)
-                            .scrollTargetLayout()
-                    case .wikiItem:
-                        wikiItemsList
-                            .frame(minWidth: 100)
-                            .safeAreaPadding(.vertical, 10)
-                            .safeAreaPadding(.horizontal, 120)
-                            .frame(height: 160)
-                            .scrollTargetLayout()
-                    case .empty:
-                        EmptyView()
+                    Group {
+                        switch selectedItemType {
+                        case .mediaItem:
+                            mediaList
+                                .containerShape(popupShape)
+                                .frame(minWidth: 100)
+                                .safeAreaPadding(.vertical, 10)
+                                .safeAreaPadding(.horizontal, 120)
+                                .frame(height: 160)
+                                .scrollTargetLayout()
+                        case .wikiItem:
+                            wikiItemsList
+                                .containerShape(popupShape)
+                                .frame(minWidth: 100)
+                                .safeAreaPadding(.vertical, 10)
+                                .safeAreaPadding(.horizontal, 120)
+                                .frame(height: 160)
+                                .scrollTargetLayout()
+                        case .empty:
+                            EmptyView()
+                        }
                     }
+
                 }
+
                 .onAppear {
                     if selectedItemType == .empty {
                         if !rawCategories.isEmpty {
@@ -129,18 +148,25 @@ struct MapPopup: View {
                 newValue.viewID != nil
             }
         )
-        .safeAreaInset(edge: .top) {
-            Capsule()
-                .frame(width: 40, height: 5)
-                .opacity(0.4)
-                .padding(.vertical, 10)
-        }
-        .background(Material.regular)
-        .clipShape(.rect(cornerRadius: 20))
+        //        .safeAreaInset(edge: .top) {
+        //            Capsule()
+        //                .frame(width: 40, height: 5)
+        //                .opacity(0.4)
+        //                .padding(.vertical, 10)
+        //        }
+        //        .containerShape(popupShape)
+        .clipShape(popupShape)
+        // NOTE: .glassEffect is glitchy in combination with image navigation
+        .background(.thinMaterial, in: popupShape)
+
         .padding()  // Outer padding to show the view behind
         .geometryGroup()
         .compositingGroup()
         .shadow(radius: 30)
+    }
+
+    private var popupShape: RoundedRectangle {
+        .rect(cornerRadius: 33)
     }
 
     @ViewBuilder
@@ -251,7 +277,8 @@ struct MapPopup: View {
     @Previewable @State var isShowing = false
     @Previewable @State var scrollPosition: ScrollPosition = .init()
 
-    Color.clear
+    LinearGradient(colors: [.blue, .red, .black, .yellow, .green, .white, .gray], startPoint: .bottomLeading, endPoint: .topTrailing)
+        .ignoresSafeArea()
         .pseudoSheet(isPresented: $isShowing) {
             MapPopup(
                 clusterIndex: 640_371_092_026_114_823, scrollPosition: $scrollPosition,
@@ -260,11 +287,43 @@ struct MapPopup: View {
                     //                .makeRandomUploaded(id: "1", .squareImage),
                     //                .makeRandomUploaded(id: "2", .horizontalImage),
                     //                .makeRandomUploaded(id: "3", .verticalImage)
-                ])
+                ], isPresented: $isShowing)
             //            MapPopup(scrollPosition: $scrollPosition, clusterIndex: 640371092026114823)
         }
         .task {
             try? await Task.sleep(for: .milliseconds(500))
             isShowing = true
         }
+}
+
+struct PlatterContainer<Content: View>: View {
+    @ViewBuilder var content: Content
+    var body: some View {
+        content
+            //            .padding()
+            .containerShape(shape)
+        //            .background(shape.fill(.background))
+    }
+    var shape: RoundedRectangle { RoundedRectangle(cornerRadius: 44) }
+}
+
+
+#Preview {
+    PlatterContainer {
+        ConcentricRectangle().fill(.red)
+        ConcentricRectangle().fill(.blue)
+
+        HStack {
+            Group {
+                ConcentricRectangle(corners: .concentric, isUniform: true).fill(.yellow)
+
+                ConcentricRectangle(corners: .concentric, isUniform: true).fill(.yellow)
+            }
+            .padding()
+        }
+        .background(ConcentricRectangle(corners: .concentric, isUniform: true).fill(.red))
+
+    }
+
+
 }

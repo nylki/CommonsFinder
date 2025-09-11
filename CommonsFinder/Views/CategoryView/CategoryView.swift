@@ -94,6 +94,16 @@ struct CategoryView: View {
                     //                            }
                     //                        }
                     subheadline
+                    if let coordinate = item?.base.coordinate {
+
+                        InlineMap(
+                            coordinate: coordinate,
+                            knownName: title,
+                            mapPinStyle: .pinOnly,
+                            details: .none
+                        )
+                        .padding(.vertical)
+                    }
                     relatedCategoriesView
                 }
                 .animation(.default, value: item)

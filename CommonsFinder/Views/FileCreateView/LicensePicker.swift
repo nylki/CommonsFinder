@@ -34,7 +34,7 @@ struct LicensePicker: View {
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .topBarLeading) {
-                    Link(destination: URL(string: "https://commons.wikimedia.org/wiki/Commons:Choosing_a_license")!) {
+                    Link(destination: URL(string: "https://commons.m.wikimedia.org/wiki/Commons:Choosing_a_license")!) {
                         Label("help", systemImage: "questionmark")
                     }
                 }

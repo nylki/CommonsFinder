@@ -51,8 +51,10 @@ struct SettingsView: View {
                         TipView(AccountTip(), arrowEdge: .bottom)
                         Button(action: navigation.openOnboarding) {
                             Label("Add Account", systemImage: "person.crop.circle")
+                                .frame(height: 40)
                         }
-                        .buttonStyle(ExpandingButtonStyle())
+                        .buttonStyle(.glassProminent)
+                        .labelStyle(ExpandingLabelStyle())
                     }
                 }
 

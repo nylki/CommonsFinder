@@ -21,10 +21,10 @@ import os.log
     private(set) var region: MKCoordinateRegion?
 
     @ObservationIgnored
-    private var refreshTask: Task<Void, Never>?
+    private var refreshTask: Task<Void, Error>?
     private var dbTask: Task<Void, Never>?
 
-    private var refreshRegionChannel: AsyncChannel<MKCoordinateRegion> = .init()
+    private var refreshRegionTask: Task<Void, Never>?
     private(set) var lastRefreshedRegions: OrderedSet<MKCoordinateRegion> = .init()
     private(set) var currentRefreshingRegion: MKCoordinateRegion?
     var isRefreshingMap: Bool { currentRefreshingRegion != nil }
@@ -131,32 +131,31 @@ import os.log
     }
 
     init() {
-        guard refreshTask == nil else { return }
 
-        refreshTask = Task<Void, Never> {
-            // TODO: optimize by remember regions that have been fully fetched (not hitting item limits)
-            // and then comparing if current region is significant not only against last region
-            // but ALL the regions..
+    }
 
-            // TODO: test actively tracking positions if the debounce every yields a refresh eg. when walking and user positions
-            for await region in refreshRegionChannel.debounce(for: .milliseconds(500), tolerance: .milliseconds(20)) {
-                currentRefreshingRegion = region
-                defer { currentRefreshingRegion = nil }
+    private func refreshRegion() {
+        guard let region else { return }
 
-                logger.info("Map: refreshing started...")
+        refreshTask?.cancel()
+        refreshTask = Task {
+            try await Task.sleep(for: .milliseconds(500))
+            currentRefreshingRegion = region
+            defer { currentRefreshingRegion = nil }
 
-                async let wikiItemsTask = fetchWikiItems(region: region, maxDiagonalMapLength: wikiItemVisibilityThreshold)
-                async let mediaTask = fetchMediaFiles(region: region, maxDiagonalMapLength: imageVisibilityThreshold)
-                let (wikidataItems, mediaItems) = await (wikiItemsTask, mediaTask)
+            logger.info("Map: refreshing started...")
 
-                let wikidataItemInfo: [Category] = wikidataItems
-                wikiItemClustering.add(wikidataItemInfo)
-                mediaClustering.add(mediaItems)
-                refreshClusters()
+            async let wikiItemsTask = fetchWikiItems(region: region, maxDiagonalMapLength: wikiItemVisibilityThreshold)
+            async let mediaTask = fetchMediaFiles(region: region, maxDiagonalMapLength: imageVisibilityThreshold)
+            let (wikidataItems, mediaItems) = await (wikiItemsTask, mediaTask)
 
-                lastRefreshedRegions.append(region)
-                logger.info("Map: refreshing finished.")
-            }
+            let wikidataItemInfo: [Category] = wikidataItems
+            wikiItemClustering.add(wikidataItemInfo)
+            mediaClustering.add(mediaItems)
+            await refreshClusters()
+
+            lastRefreshedRegions.append(region)
+            logger.info("Map: refreshing finished.")
         }
     }
 
@@ -209,9 +208,7 @@ import os.log
         }
         guard hasNotBeenFetched else { return }
 
-        Task<Void, Never> {
-            await refreshRegionChannel.send(context.region)
-        }
+        refreshRegion()
     }
 }
 

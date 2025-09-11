@@ -9,7 +9,9 @@ import CommonsAPI
 import Foundation
 import UniformTypeIdentifiers
 
-extension MediaFile {
+nonisolated
+    extension MediaFile
+{
     init(apiFileMetadata: RawFileMetadata) {
         let imageInfo = apiFileMetadata.pageData.imageinfo
         let thumbURL = try? imageInfo.thumburl ?? imageInfo.url.resizedCommonsImageURL(maxWidth: 620)

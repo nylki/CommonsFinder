@@ -352,7 +352,7 @@ extension Authentication {
             case .accountCreationThrottleLimit:
                 "Too many accounts registered in the last 24h via your current IP address."
             case .authenticationFailedOther(let string):
-                "authentication failed. \(string ?? "unknown reason.")"
+                "authentication failed. \n\(string ?? "unknown reason")"
             case .authenticationAdditionalSteps(let string):
                 "authentication was not succesful because it requires additional steps (UI, RESTART). details: \(string)"
             case .keychainActiveUsernameMissing:

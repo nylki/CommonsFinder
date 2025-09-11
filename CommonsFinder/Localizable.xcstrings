@@ -367,6 +367,7 @@
       }
     },
     "Category: %@" : {
+      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -434,6 +435,9 @@
         }
       }
     },
+    "close" : {
+
+    },
     "Close" : {
       "localizations" : {
         "de" : {
@@ -448,7 +452,6 @@
 
     },
     "Console" : {
-      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -467,6 +470,9 @@
           }
         }
       }
+    },
+    "Copy" : {
+
     },
     "Copy Coordinates" : {
       "localizations" : {
@@ -840,6 +846,7 @@
       }
     },
     "Logging in as %@" : {
+      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -848,6 +855,9 @@
           }
         }
       }
+    },
+    "logging in..." : {
+
     },
     "Login" : {
       "localizations" : {

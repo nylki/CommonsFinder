@@ -43,15 +43,16 @@ struct FileCreateView: View {
     }
 
     var body: some View {
-        NavigationView {
+        NavigationStack {
             VStack {
                 if model.fileCount == 0 {
-                    VStack {
+                    VStack(spacing: 20) {
                         ContentUnavailableView("No files added", systemImage: "photo")
 
                         Button("Add from Photos", systemImage: "photo.badge.plus") {
                             isPhotosPickerPresented = true
                         }
+
 
                         Button("Take new Photo", systemImage: "camera") {
                             isCameraPresented = true
@@ -63,12 +64,19 @@ struct FileCreateView: View {
 
                         Spacer()
                     }
-                    .buttonStyle(ExpandingButtonStyle())
+                    .buttonStyle(.glass)
                     .padding()
 
                 } else if model.editedDrafts.count == 1, let selectedID = model.selectedID, let singleSelectedModel = model.editedDrafts[selectedID] {
-                    singleImageView(model: singleSelectedModel)
+
+
                     MetadataEditForm(model: singleSelectedModel)
+                        .safeAreaBar(edge: .top) {
+                            singleImageView(model: singleSelectedModel)
+                                .padding(.bottom)
+                        }
+
+
                 } else if model.editedDrafts.count > 1 {
 
                     // TODO: Design specialized batch edit where you edit the title etc. for all images
@@ -107,10 +115,24 @@ struct FileCreateView: View {
                             Button("Delete", systemImage: "trash", role: .destructive) {
                                 isShowingDeleteDialog = true
                             }
+                            .confirmationDialog("Are you sure you want to delete the Draft?", isPresented: $isShowingDeleteDialog, titleVisibility: .visible) {
+                                Button("Delete", systemImage: "trash", role: .destructive) {
+                                    do {
+                                        try model.deleteDrafts()
+                                    } catch {
+                                        logger.error("Failed to delete drafts \(error)")
+                                    }
+                                    dismiss()
+                                }
+
+                                Button("Cancel", role: .cancel) {
+                                    isShowingDeleteDialog = false
+                                }
+                            }
                         }
                     }
 
-                    ToolbarItem(placement: .confirmationAction) {
+                    ToolbarItem(placement: .automatic) {
                         Button(model.draftsExistInDB ? "Save Changes" : "Save Draft", systemImage: "square.and.arrow.down") {
                             do {
                                 try model.saveAllChanges()
@@ -126,43 +148,29 @@ struct FileCreateView: View {
                         Button("Upload") {
                             isShowingUploadDialog = true
                         }
+                        .confirmationDialog("Start upload to Wikimedia Commons now?", isPresented: $isShowingUploadDialog, titleVisibility: .visible) {
+                            Button("Upload", systemImage: "square.and.arrow.up") {
+                                guard let username = account.activeUser?.username else {
+                                    assertionFailure()
+                                    return
+                                }
+                                do {
+                                    try model.saveAllChanges()
+                                    for (_, draftModel) in model.editedDrafts {
+                                        uploadManager.upload(draftModel.draft, username: username)
+                                    }
+                                    dismiss()
+                                } catch {
+                                    logger.error("Failed to initiate upload \(error)")
+                                }
+                            }
+
+                            Button("Cancel", role: .cancel) {
+                                isShowingDeleteDialog = false
+                            }
+                        }
                         .disabled(model.selectedDraft?.draft.canUpload != true || !model.canSafeDrafts || account.activeUser == nil)
                     }
-                }
-            }
-            .confirmationDialog("Are you sure you want to delete the Draft?", isPresented: $isShowingDeleteDialog, titleVisibility: .visible) {
-                Button("Delete", systemImage: "trash", role: .destructive) {
-                    do {
-                        try model.deleteDrafts()
-                    } catch {
-                        logger.error("Failed to delete drafts \(error)")
-                    }
-                    dismiss()
-                }
-
-                Button("Cancel", role: .cancel) {
-                    isShowingDeleteDialog = false
-                }
-            }
-            .confirmationDialog("Start upload to Wikimedia Commons now?", isPresented: $isShowingUploadDialog, titleVisibility: .visible) {
-                Button("Upload", systemImage: "square.and.arrow.up") {
-                    guard let username = account.activeUser?.username else {
-                        assertionFailure()
-                        return
-                    }
-                    do {
-                        try model.saveAllChanges()
-                        for (_, draftModel) in model.editedDrafts {
-                            uploadManager.upload(draftModel.draft, username: username)
-                        }
-                        dismiss()
-                    } catch {
-                        logger.error("Failed to initiate upload \(error)")
-                    }
-                }
-
-                Button("Cancel", role: .cancel) {
-                    isShowingDeleteDialog = false
                 }
             }
             #if !os(macOS)
@@ -223,9 +231,11 @@ struct FileCreateView: View {
                     Color.clear.background(.regularMaterial)
                 }
             }
+            .clipShape(.rect(cornerRadius: 23))
+            .frame(height: biggerImage ? 250 : 125, alignment: .top)
         }
         .buttonStyle(ImageButtonStyle())
-        .frame(height: biggerImage ? 400 : 125)
+
     }
 
 

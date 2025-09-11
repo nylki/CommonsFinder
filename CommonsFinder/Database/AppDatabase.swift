@@ -732,7 +732,7 @@ nonisolated extension AppDatabase {
         dbWriter
     }
 
-    func fetchMediaFileInfo(id: String) throws -> MediaFileInfo? {
+    nonisolated func fetchMediaFileInfo(id: String) throws -> MediaFileInfo? {
         try dbWriter.read { db in
             try MediaFile
                 .filter(id: id)

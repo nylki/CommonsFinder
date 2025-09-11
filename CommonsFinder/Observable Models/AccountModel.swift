@@ -187,6 +187,9 @@ final class AccountModel {
             try appDatabase
             .fetchAllFiles(byUsername: username, withNames: draftFinalFilenames)
             .map(\.name)
+            .filter { !$0.isEmpty }
+
+        guard !draftsToCleanup.isEmpty else { return }
 
         let deletedFileCount = try appDatabase.deleteDrafts(withFinalFilenames: draftsToCleanup)
         if deletedFileCount != 0 {

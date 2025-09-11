@@ -92,7 +92,7 @@ struct DraftFileListItem: View {
                     }
                 }
             }
-            .buttonStyle(DraftActionButtonStyle())
+            .buttonStyle(.glass)
             .padding()
         }
         .overlay {

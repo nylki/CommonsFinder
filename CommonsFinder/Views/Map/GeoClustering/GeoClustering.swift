@@ -17,7 +17,9 @@ nonisolated protocol GeoReferencable: Hashable, Equatable {
     var geoRefID: GeoRefID { get }
 }
 
-struct GeoClustering<Item: GeoReferencable> {
+nonisolated
+    struct GeoClustering<Item: GeoReferencable>
+{
     typealias Index = UInt64
     var items: [GeoReferencable.GeoRefID: Item]
     var h3IndexTree: [H3.Resolution: [Index: Set<Item.GeoRefID>]]

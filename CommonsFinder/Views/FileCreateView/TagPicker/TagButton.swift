@@ -25,9 +25,11 @@ struct TagButton: View {
                 TagLabel(tag: tag.tagItem)
             }
         )
+
         .onChange(of: isShowingPopover) {
             onFocused(isShowingPopover)
         }
+
         .popover(isPresented: $isShowingPopover) {
             let canUseAsCategory = tag.tagItem.possibleUsages.contains(.category)
             let canUseAsDepict = tag.tagItem.possibleUsages.contains(.depict)

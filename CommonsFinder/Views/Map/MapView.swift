@@ -69,7 +69,9 @@ struct MapView: View {
             .scenePadding()
         }
         .overlay(alignment: .bottomLeading) {
-            Text("\(mapModel.region?.diagonalMeters ?? 0.0)")
+            #if DEBUG
+                Text("\(mapModel.region?.diagonalMeters ?? 0.0)")
+            #endif
         }
         .mapStyle(
             .standard(
@@ -107,7 +109,8 @@ struct MapView: View {
                     clusterIndex: cellIndex,
                     scrollPosition: $mapModel.focusedClusterItem,
                     rawCategories: wikiItems,
-                    rawMediaItems: rawMediaItems
+                    rawMediaItems: rawMediaItems,
+                    isPresented: $mapModel.isSheetPresented
                 )
                 // the .id makes sure we don't retain state of the previous cell
                 // as this complicates things with scroll positions and selected states and is generally not desired for this custom sheet.
