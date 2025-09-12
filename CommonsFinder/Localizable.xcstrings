@@ -541,6 +541,9 @@
         }
       }
     },
+    "Delete Draft" : {
+
+    },
     "Depicted" : {
       "localizations" : {
         "de" : {
@@ -1360,6 +1363,7 @@
       }
     },
     "Save Changes" : {
+      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -1378,6 +1382,9 @@
           }
         }
       }
+    },
+    "Save draft for later or delete now?" : {
+
     },
     "Search" : {
       "localizations" : {

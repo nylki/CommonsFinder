@@ -26,6 +26,7 @@ struct FileCreateView: View {
     @State private var biggerImage = false
     @State private var isShowingDeleteDialog = false
     @State private var isShowingUploadDialog = false
+    @State private var isShowingCloseConfirmationDialog = false
 
 
     /// Initializes the FileEditView with a list of files. If files are empty, start with a blank view, where users add new files.
@@ -40,6 +41,25 @@ struct FileCreateView: View {
     /// - Parameter file: MediaFile
     init(appDatabase: AppDatabase, file: MediaFileDraft) {
         model = FileCreateViewModel(appDatabase: appDatabase, existingDrafts: [file])
+    }
+
+
+    private func saveChanges() {
+        do {
+            try model.saveAllChanges()
+            dismiss()
+        } catch {
+            logger.error("Failed to save all drafts \(error)")
+        }
+    }
+
+    private func deleteDraftAndDismiss() {
+        do {
+            try model.deleteDrafts()
+            dismiss()
+        } catch {
+            logger.error("Failed to delete drafts \(error)")
+        }
     }
 
     var body: some View {
@@ -105,73 +125,7 @@ struct FileCreateView: View {
                 .ignoresSafeArea(.container)
             }
             .toolbar {
-                ToolbarItem(placement: .cancellationAction) {
-                    Button("Cancel", action: dismiss.callAsFunction)
-                }
-
-                if !model.editedDrafts.isEmpty {
-                    if model.draftsExistInDB {
-                        ToolbarItem(placement: .destructiveAction) {
-                            Button("Delete", systemImage: "trash", role: .destructive) {
-                                isShowingDeleteDialog = true
-                            }
-                            .confirmationDialog("Are you sure you want to delete the Draft?", isPresented: $isShowingDeleteDialog, titleVisibility: .visible) {
-                                Button("Delete", systemImage: "trash", role: .destructive) {
-                                    do {
-                                        try model.deleteDrafts()
-                                    } catch {
-                                        logger.error("Failed to delete drafts \(error)")
-                                    }
-                                    dismiss()
-                                }
-
-                                Button("Cancel", role: .cancel) {
-                                    isShowingDeleteDialog = false
-                                }
-                            }
-                        }
-                    }
-
-                    ToolbarItem(placement: .automatic) {
-                        Button(model.draftsExistInDB ? "Save Changes" : "Save Draft", systemImage: "square.and.arrow.down") {
-                            do {
-                                try model.saveAllChanges()
-                                dismiss()
-                            } catch {
-                                logger.error("Failed to save all drafts \(error)")
-                            }
-                        }
-                        .disabled(!model.canSafeDrafts)
-                    }
-
-                    ToolbarItem(placement: .confirmationAction) {
-                        Button("Upload") {
-                            isShowingUploadDialog = true
-                        }
-                        .confirmationDialog("Start upload to Wikimedia Commons now?", isPresented: $isShowingUploadDialog, titleVisibility: .visible) {
-                            Button("Upload", systemImage: "square.and.arrow.up") {
-                                guard let username = account.activeUser?.username else {
-                                    assertionFailure()
-                                    return
-                                }
-                                do {
-                                    try model.saveAllChanges()
-                                    for (_, draftModel) in model.editedDrafts {
-                                        uploadManager.upload(draftModel.draft, username: username)
-                                    }
-                                    dismiss()
-                                } catch {
-                                    logger.error("Failed to initiate upload \(error)")
-                                }
-                            }
-
-                            Button("Cancel", role: .cancel) {
-                                isShowingDeleteDialog = false
-                            }
-                        }
-                        .disabled(model.selectedDraft?.draft.canUpload != true || !model.canSafeDrafts || account.activeUser == nil)
-                    }
-                }
+                toolbarContent
             }
             #if !os(macOS)
                 .navigationBarTitleDisplayMode(.inline)
@@ -209,6 +163,82 @@ struct FileCreateView: View {
             allowsMultipleSelection: false,
             onCompletion: model.handleFileImport(result:)
         )
+    }
+
+    @ToolbarContentBuilder
+    private var toolbarContent: some ToolbarContent {
+        ToolbarItem(placement: .navigation) {
+            let saveWithoutDialog = model.draftsExistInDB
+            Button("Close", systemImage: "xmark", role: saveWithoutDialog ? .close : nil) {
+                if saveWithoutDialog {
+                    saveChanges()
+                    dismiss()
+                } else {
+                    isShowingCloseConfirmationDialog = true
+                }
+            }
+            .labelStyle(.iconOnly)
+            .disabled(!model.canSafeDrafts)
+            .confirmationDialog(
+                "Save draft for later or delete now?",
+                isPresented: $isShowingCloseConfirmationDialog,
+                titleVisibility: .visible
+            ) {
+                Button("Save Draft", systemImage: "square.and.arrow.down", role: .confirm) {
+                    saveChanges()
+                    dismiss()
+                }
+                Button("Delete Draft", systemImage: "trash", role: .destructive) {
+                    deleteDraftAndDismiss()
+                }
+            }
+        }
+
+        if !model.editedDrafts.isEmpty, model.draftsExistInDB {
+            ToolbarItem(placement: .destructiveAction) {
+                Button("Delete", systemImage: "trash", role: .destructive) {
+                    isShowingDeleteDialog = true
+                }
+                .confirmationDialog(
+                    "Are you sure you want to delete the Draft?",
+                    isPresented: $isShowingDeleteDialog,
+                    titleVisibility: .visible
+                ) {
+                    Button("Delete", systemImage: "trash", role: .destructive, action: deleteDraftAndDismiss)
+
+                    Button("Cancel", role: .cancel) { isShowingDeleteDialog = false }
+                }
+            }
+
+
+            ToolbarItem(placement: .confirmationAction) {
+                Button("Upload", systemImage: "arrow.up") {
+                    isShowingUploadDialog = true
+                }
+                .confirmationDialog("Start upload to Wikimedia Commons now?", isPresented: $isShowingUploadDialog, titleVisibility: .visible) {
+                    Button("Upload", systemImage: "square.and.arrow.up", role: .confirm) {
+                        guard let username = account.activeUser?.username else {
+                            assertionFailure()
+                            return
+                        }
+                        do {
+                            try model.saveAllChanges()
+                            for (_, draftModel) in model.editedDrafts {
+                                uploadManager.upload(draftModel.draft, username: username)
+                            }
+                            dismiss()
+                        } catch {
+                            logger.error("Failed to initiate upload \(error)")
+                        }
+                    }
+
+                    Button("Cancel", role: .cancel) {
+                        isShowingDeleteDialog = false
+                    }
+                }
+                .disabled(model.selectedDraft?.draft.canUpload != true || !model.canSafeDrafts || account.activeUser == nil)
+            }
+        }
     }
 
 
@@ -298,6 +328,7 @@ struct FileCreateView: View {
         .frame(height: itemHeight)
     }
 }
+
 
 #Preview("Empty/Initial", traits: .previewEnvironment) {
     FileCreateView(appDatabase: .populatedPreviewDatabase())
