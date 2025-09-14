@@ -75,11 +75,11 @@ struct HomeView: View {
                 // animations when the first ScrollView content appears (eg. the Tip)
                 Color.clear.scaledToFill()
             }
+            .shadow(color: .black.opacity(0.125), radius: 10, y: 7)
+            .shadow(color: .black.opacity(0.075), radius: 100, y: 7)
             .padding(.top)
         }
         .frame(minWidth: 0, maxWidth: .infinity, minHeight: 0, maxHeight: .infinity)
-        .shadow(color: .black.opacity(0.125), radius: 10, y: 7)
-        .shadow(color: .black.opacity(0.075), radius: 100, y: 7)
         .animation(.default, value: drafts)
         .animation(.default, value: recentlyViewedFiles)
         .animation(.default, value: account.activeUser)
