@@ -194,22 +194,23 @@ struct FileCreateView: View {
             }
         }
 
-        if !model.editedDrafts.isEmpty, model.draftsExistInDB {
-            ToolbarItem(placement: .destructiveAction) {
-                Button("Delete", systemImage: "trash", role: .destructive) {
-                    isShowingDeleteDialog = true
-                }
-                .confirmationDialog(
-                    "Are you sure you want to delete the Draft?",
-                    isPresented: $isShowingDeleteDialog,
-                    titleVisibility: .visible
-                ) {
-                    Button("Delete", systemImage: "trash", role: .destructive, action: deleteDraftAndDismiss)
+        if !model.editedDrafts.isEmpty {
+            if model.draftsExistInDB {
+                ToolbarItem(placement: .destructiveAction) {
+                    Button("Delete", systemImage: "trash", role: .destructive) {
+                        isShowingDeleteDialog = true
+                    }
+                    .confirmationDialog(
+                        "Are you sure you want to delete the Draft?",
+                        isPresented: $isShowingDeleteDialog,
+                        titleVisibility: .visible
+                    ) {
+                        Button("Delete", systemImage: "trash", role: .destructive, action: deleteDraftAndDismiss)
 
-                    Button("Cancel", role: .cancel) { isShowingDeleteDialog = false }
+                        Button("Cancel", role: .cancel) { isShowingDeleteDialog = false }
+                    }
                 }
             }
-
 
             ToolbarItem(placement: .confirmationAction) {
                 Button("Upload", systemImage: "arrow.up") {
