@@ -52,7 +52,7 @@ extension DraftMediaLicense {
         "\(abbreviation): \(name)"
     }
 
-    var wikitext: LocalizedStringResource {
+    var wikitext: String {
         switch self {
         //        case .CC_PUBLIC_DOMAIN:
         //            "cc-pd"
