@@ -60,6 +60,9 @@
         }
       }
     },
+    "About" : {
+
+    },
     "Accept" : {
       "localizations" : {
         "de" : {
@@ -683,6 +686,9 @@
           }
         }
       }
+    },
+    "General" : {
+
     },
     "help" : {
       "localizations" : {
@@ -1683,6 +1689,9 @@
           }
         }
       }
+    },
+    "User actions" : {
+
     },
     "Username" : {
       "localizations" : {

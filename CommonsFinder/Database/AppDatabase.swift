@@ -347,9 +347,14 @@ extension AppDatabase {
         try dbWriter.write(imageModel.delete)
     }
 
-    /// Deletes all files.
-    func deleteAllImageModels() throws -> Int {
-        try dbWriter.write(MediaFile.deleteAll)
+    func deleteLogoutRelatedItems() throws {
+        let deletedMediaFilesCount = try dbWriter.write(MediaFile.deleteAll)
+        let deletedCategoriesCount = try dbWriter.write(Category.deleteAll)
+        let deletedInteractionCount = try dbWriter.write(ItemInteraction.deleteAll)
+
+        logger.debug("Deleted \(deletedMediaFilesCount) media files")
+        logger.debug("Deleted \(deletedCategoriesCount) categories")
+        logger.debug("Deleted \(deletedInteractionCount) interactions")
     }
 }
 

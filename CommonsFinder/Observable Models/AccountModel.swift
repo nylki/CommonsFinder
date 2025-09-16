@@ -67,10 +67,11 @@ final class AccountModel {
 
     func logout() throws {
         postLoginTask?.cancel()
+        postLoginTask = nil
+        recurringSyncTask?.cancel()
+        recurringSyncTask = nil
         activeUser = nil
-        let deletedCount = try appDatabase.deleteAllImageModels()
-        // FIXME: also delete categories and all interactions
-        logger.info("Deleted \(deletedCount) items on-logout")
+        try appDatabase.deleteLogoutRelatedItems()
         try Authentication.clearKeychain()
     }
 
