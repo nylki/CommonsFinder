@@ -46,7 +46,8 @@ extension MediaFileUploadable {
         let wikitextDate: String = draft.inceptionDate.formatted(.iso8601.year().month().day())
         let wikitextSource: String
         let wikitextAuthor: String
-        let wikitextLicense = "{{\(license.wikitext)}}"
+        // TODO: differentite "self" if not actually self
+        let wikitextLicense = "{{self|\(license.wikitext)}}"
         let wikitextLocation: String
 
         // created WikidataClaims from Draft data (Structured-Data statements)
