@@ -46,7 +46,8 @@ extension MediaFileUploadable {
         let wikitextDate: String = draft.inceptionDate.formatted(.iso8601.year().month().day())
         let wikitextSource: String
         let wikitextAuthor: String
-        // TODO: differentite "self" if not actually self
+
+        // TODO: differentiate prefix ("self") if not actually "self" when that is possible in UI
         let wikitextLicense = "{{self|\(license.wikitext)}}"
         let wikitextLocation: String
 
