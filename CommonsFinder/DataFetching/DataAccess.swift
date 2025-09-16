@@ -110,6 +110,7 @@ enum DataAccess {
         let fetchedCategories: [Category]
         let redirectedIDs: [Category.WikidataID: Category.WikidataID]
     }
+
     static func fetchCategoriesFromAPI(wikidataIDs: [String], shouldCache: Bool, appDatabase: AppDatabase) async throws -> CategoryFetchResult {
 
         let apiFetchLimit = 50

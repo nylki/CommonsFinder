@@ -16,6 +16,6 @@ enum AuthNavigationDestination: Int, Hashable, Identifiable, Sendable {
     var id: Int { rawValue }
 }
 //
-//@Observable @MainActor final class AuthNavigationModel {
+//@Observable final class AuthNavigationModel {
 //    private(set) var path: [AuthNavigationDestination] = []
 //}

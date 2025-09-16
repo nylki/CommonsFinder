@@ -24,9 +24,9 @@ struct TagsContainerView: View {
                 }
             }
         }
+        .groupBoxStyle(FileGroupBoxStyle())
     }
 }
-
 
 #Preview {
     TagsContainerView(tags: [.init(.earth, pickedUsages: [.depict])])

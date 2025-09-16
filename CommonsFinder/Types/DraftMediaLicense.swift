@@ -22,7 +22,7 @@ enum DraftMediaLicense: String, Codable, Hashable, Equatable, CaseIterable {
 }
 
 extension DraftMediaLicense {
-    var name: LocalizedStringKey {
+    var name: LocalizedStringResource {
         switch self {
         //        case .CC_PUBLIC_DOMAIN:
         //            "Public domain"
@@ -35,7 +35,7 @@ extension DraftMediaLicense {
         }
     }
 
-    var abbreviation: LocalizedStringKey {
+    var abbreviation: LocalizedStringResource {
         switch self {
         //        case .CC_PUBLIC_DOMAIN:
         //            "CC Public Domain Mark 1.0"
@@ -48,7 +48,11 @@ extension DraftMediaLicense {
         }
     }
 
-    var wikitext: String {
+    var shortDescription: LocalizedStringResource {
+        "\(abbreviation): \(name)"
+    }
+
+    var wikitext: LocalizedStringResource {
         switch self {
         //        case .CC_PUBLIC_DOMAIN:
         //            "cc-pd"
@@ -61,7 +65,7 @@ extension DraftMediaLicense {
         }
     }
 
-    var explanation: LocalizedStringKey {
+    var explanation: LocalizedStringResource {
         switch self {
         case .CC0:
             "no rights reserved – public domain or waiver if the PD release is invalidated"

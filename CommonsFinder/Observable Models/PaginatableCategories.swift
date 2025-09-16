@@ -14,7 +14,7 @@ import os.log
 
 /// Since This is a specialized pagination model for Category searches
 /// where commons category searches and wikidata searches are combines into an interleaving pagination
-@Observable @MainActor class PaginatableCategorySearch {
+@Observable class PaginatableCategorySearch {
     let searchString: String
     var status: PaginationStatus = .unknown
     let sort: SearchOrder

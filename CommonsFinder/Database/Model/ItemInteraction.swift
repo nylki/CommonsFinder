@@ -10,7 +10,7 @@ import GRDB
 
 /// `ItemInteraction` stores interaction metada for MediaFile and Category
 ///  eg. `lastViewed` or `viewCount`, `isBookmarked`
-struct ItemInteraction: Equatable, Hashable, Sendable, Identifiable {
+nonisolated struct ItemInteraction: Equatable, Hashable, Sendable, Identifiable {
     var id: Int64?
 
     var lastViewed: Date?
@@ -57,8 +57,8 @@ extension ItemInteraction {
 // MARK: - Database
 
 /// See <https://github.com/groue/GRDB.swift/blob/master/README.md#records>
-extension ItemInteraction: Codable, FetchableRecord, MutablePersistableRecord {
-    enum Columns {
+nonisolated extension ItemInteraction: Codable, FetchableRecord, MutablePersistableRecord {
+    nonisolated enum Columns {
         static let id = Column(CodingKeys.id)
         static let lastViewed = Column(CodingKeys.lastViewed)
         static let viewCount = Column(CodingKeys.viewCount)

@@ -11,7 +11,7 @@ import OrderedCollections
 import SwiftUI
 import os.log
 
-@Observable @MainActor
+@Observable
 final class TagPickerModel {
 
     private var _searchText = ""

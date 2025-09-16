@@ -142,52 +142,44 @@ struct RegisterView: View {
     }
 
     var body: some View {
-        ScrollView(.vertical) {
-            VStack {
-                usernameField
-                passwordField
+        Form {
+            usernameField
+            passwordField
 
-                //                emailField
+            emailField
 
-                Divider()
+            captchaView
 
-                captchaView
-
-                Button(action: register) {
-                    if isValidating {
-                        Label {
-                            Text("validating...")
-                        } icon: {
-                            ProgressView().progressViewStyle(.circular)
-                        }
-                    } else if isRegistering {
-                        Label {
-                            Text("Creating Account...")
-                        } icon: {
-                            ProgressView().progressViewStyle(.circular)
-                        }
-                    } else if allFieldsValid {
-                        Label("Register", systemImage: "person.crop.circle")
-                            .contentTransition(.symbolEffect)
-                    } else {
-                        Label("Register", systemImage: "person.crop.circle")
-                            .contentTransition(.symbolEffect)
+            Button(action: register) {
+                if isValidating {
+                    Label {
+                        Text("validating...")
+                    } icon: {
+                        ProgressView().progressViewStyle(.circular)
                     }
+                } else if isRegistering {
+                    Label {
+                        Text("Creating Account...")
+                    } icon: {
+                        ProgressView().progressViewStyle(.circular)
+                    }
+                } else if allFieldsValid {
+                    Label("Register", systemImage: "person.crop.circle")
+                        .contentTransition(.symbolEffect)
+                } else {
+                    Label("Register", systemImage: "person.crop.circle")
+                        .contentTransition(.symbolEffect)
                 }
-                .contentTransition(.symbolEffect)
-                .backgroundStyle(allFieldsValid ? Color.accentColor : Color.clear)
-                .buttonStyle(ExpandingButtonStyle())
-                .padding(.vertical)
-                .disabled(registerButtonDisabled)
-
-                Spacer()
-
             }
+            .contentTransition(.symbolEffect)
+            .backgroundStyle(allFieldsValid ? Color.accentColor : Color.clear)
+            .padding(.vertical)
+            .disabled(registerButtonDisabled)
+
             #if !os(macOS)
                 .textInputAutocapitalization(.never)
             #endif
             .disableAutocorrection(true)
-            .padding()
             .animation(.default, value: isValidating)
             .animation(.default, value: usernameValidation)
             .animation(.default, value: passwordValidation)
@@ -227,11 +219,12 @@ struct RegisterView: View {
                     focus = .password
                 }
                 .textFieldStyle(
-                    OutlinedTextFieldStyle(errorStyle: isInvalid)
+                    OutlinedTextFieldStyle(errorStyle: isInvalid, message: usernameValidation?.message)
                 )
-            if isInvalid, let message = usernameValidation?.message {
-                fieldErrorText(message)
-            }
+
+            //            if isInvalid, let message = usernameValidation?.message {
+            //                fieldErrorText(message)
+            //            }
         }
 
     }
@@ -254,12 +247,8 @@ struct RegisterView: View {
                     focus = .email
                 }
                 .textFieldStyle(
-                    OutlinedTextFieldStyle(errorStyle: isInvalid)
+                    OutlinedTextFieldStyle(errorStyle: isInvalid, message: passwordValidation?.message)
                 )
-
-            if isInvalid, let message = passwordValidation?.message {
-                fieldErrorText(message)
-            }
         }
     }
 
@@ -280,29 +269,13 @@ struct RegisterView: View {
                     }
                 }
                 .textFieldStyle(
-                    OutlinedTextFieldStyle(errorStyle: isInvalid)
+                    OutlinedTextFieldStyle(
+                        errorStyle: isInvalid,
+                        message: emailValidation?.message
+                    )
                 )
-
-            if isInvalid, let message = emailValidation?.message {
-                fieldErrorText(message)
-            }
         }
 
-    }
-
-    private func fieldErrorText(_ message: LocalizedStringResource?) -> some View {
-        HStack {
-            Image(systemName: "exclamationmark.shield")
-                .transition(.scale.animation(.bouncy))
-            if let message {
-                Text(message)
-                    .font(.caption)
-            }
-            Spacer(minLength: 0)
-        }
-        .foregroundStyle(.red)
-        .frame(minWidth: 50, maxWidth: .infinity)
-        .padding(.bottom)
     }
 
 
@@ -344,12 +317,8 @@ struct RegisterView: View {
                         .autocorrectionDisabled()
                         .autocapitalization(.none)
                         .textFieldStyle(
-                            OutlinedTextFieldStyle(errorStyle: isInvalid)
+                            OutlinedTextFieldStyle(errorStyle: isInvalid, message: captchaValidation?.message)
                         )
-
-                    if isInvalid, let message = captchaValidation?.message {
-                        fieldErrorText(message)
-                    }
                 }
             }
         } else {
@@ -480,9 +449,9 @@ private struct ValidationStatus: Equatable {
 
 
 extension OutlinedTextFieldStyle {
-    fileprivate init(errorStyle: Bool?) {
+    fileprivate init(errorStyle: Bool?, message: LocalizedStringResource?) {
         if errorStyle == true {
-            self = .init(style: .error)
+            self = .init(style: .error, message: message)
         } else {
             self = .init()
         }

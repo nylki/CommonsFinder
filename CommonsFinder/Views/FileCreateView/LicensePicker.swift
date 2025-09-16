@@ -19,7 +19,7 @@ struct LicensePicker: View {
     //                    .scaledToFit()
 
     var body: some View {
-        NavigationView {
+        NavigationStack {
             VStack(alignment: .leading, spacing: 20) {
                 ForEach(DraftMediaLicense.allCases, id: \.rawValue) { license in
                     LicenseButton(license: license, isSelected: license == selectedLicense) {
@@ -34,13 +34,13 @@ struct LicensePicker: View {
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .topBarLeading) {
-                    Link(destination: URL(string: "https://commons.wikimedia.org/wiki/Commons:Choosing_a_license")!) {
-                        Label("help", systemImage: "questionmark.circle.fill")
+                    Link(destination: URL(string: "https://commons.m.wikimedia.org/wiki/Commons:Choosing_a_license")!) {
+                        Label("help", systemImage: "questionmark")
                     }
                 }
 
                 ToolbarItem(placement: .confirmationAction) {
-                    Button("Close", action: dismiss.callAsFunction)
+                    Button("Close", systemImage: "checkmark", role: .confirm, action: dismiss.callAsFunction)
                 }
             }
             .frame(minHeight: 0, maxHeight: .infinity)
@@ -60,10 +60,8 @@ private struct LicenseButton: View {
     var body: some View {
         Button(action: action) {
             VStack(alignment: .leading, spacing: 10) {
-                Text(license.abbreviation).bold()
-                    + Text(": ").bold()
-                    + Text(license.name).bold()
 
+                Text(license.shortDescription).bold()
                 Text(license.explanation)
             }
             .multilineTextAlignment(.leading)
@@ -72,11 +70,10 @@ private struct LicenseButton: View {
             .padding()
             .background {
                 RoundedRectangle(cornerRadius: 15)
-                    .fill(isSelected ? Color.accentColor : Color.buttonBackground)
+                    .fill(isSelected ? Color.accentColor : Color.clear)
                     .stroke(Color.accentColor, lineWidth: 2)
-
-
             }
+            .contentShape(.rect)
         }
         .buttonStyle(.plain)
     }
@@ -84,7 +81,9 @@ private struct LicenseButton: View {
 
 #Preview("LicensePicker") {
     @Previewable @State var selected: DraftMediaLicense? = nil
-    LicensePicker(selectedLicense: $selected)
+    Color.clear.sheet(isPresented: .constant(true)) {
+        LicensePicker(selectedLicense: $selected)
+    }
 }
 
 

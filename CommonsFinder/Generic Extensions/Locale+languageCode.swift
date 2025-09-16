@@ -7,7 +7,7 @@
 
 import Foundation
 
-extension Locale {
+nonisolated extension Locale {
     var wikiLanguageCodeIdentifier: String {
         language.languageCode?.identifier ?? "en"
     }

@@ -14,7 +14,7 @@ import os.log
 //always paginate both wikidata, and category search when pagination is required and unique/ results // as necessary. eg.
 
 
-enum APIUtils {
+nonisolated enum APIUtils {
     static func searchCategories(for searchText: String) async throws -> [Category] {
         let languageCode = Locale.current.language.languageCode?.identifier ?? "en"
 

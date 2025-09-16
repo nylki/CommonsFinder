@@ -24,25 +24,25 @@ struct MapPopupMediaFileTeaser: View {
                         image
                             .resizable()
                             .aspectRatio(contentMode: .fill)
-                            .clipShape(.rect(cornerRadius: 16))
+                            .clipShape(.containerRelative)
 
                     } else {
-                        Rectangle()
+                        ContainerRelativeShape()
                             .fill(Material.thick)
                             .aspectRatio(contentMode: .fill)
-                            .clipShape(.rect(cornerRadius: 16))
                     }
                 }
             }
             .frame(width: height, height: height)
-            .clipShape(.rect(cornerRadius: 16))
-            .contentShape([.contextMenuPreview, .interaction], .rect(cornerRadius: 16))
+            .clipShape(.containerRelative)
+            .contentShape([.contextMenuPreview, .interaction], .containerRelative)
             .geometryGroup()
             .matchedTransitionSource(id: mediaFileInfo.id, in: namespace)
             .padding(2)
             .overlay {
                 if isSelected {
-                    RoundedRectangle(cornerRadius: 18).stroke(Color.accent, lineWidth: 1)
+                    ContainerRelativeShape()
+                        .stroke(Color.accent, lineWidth: 1)
                 }
             }
             .padding(2)

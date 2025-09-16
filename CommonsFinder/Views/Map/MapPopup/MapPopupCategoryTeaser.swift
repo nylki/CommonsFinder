@@ -38,7 +38,7 @@ struct MapPopupCategoryTeaser: View {
             }
             .shadow(color: hasBackgroundImage ? .black : .clear, radius: 2)
             .shadow(color: .black.opacity(0.7), radius: 7)
-            .padding(10)
+            .padding()
             .containerRelativeFrame(.horizontal, count: 5, span: 3, spacing: 0)
             .frame(minHeight: 0, maxHeight: .infinity)
             .background {
@@ -69,13 +69,14 @@ struct MapPopupCategoryTeaser: View {
                     }
 
             }
-            .clipShape(.rect(cornerRadius: 10))
-            .contentShape([.contextMenuPreview, .interaction], .rect(cornerRadius: 10))
+            .clipShape(.containerRelative)
+            .contentShape([.contextMenuPreview, .interaction], .containerRelative)
             .modifier(CategoryContextMenu(item: item))
             .padding(2)
             .overlay {
                 if isSelected {
-                    RoundedRectangle(cornerRadius: 12).stroke(Color.accent, lineWidth: 1)
+                    ContainerRelativeShape()
+                        .stroke(Color.accent, lineWidth: 1)
                 }
             }
             .padding(2)

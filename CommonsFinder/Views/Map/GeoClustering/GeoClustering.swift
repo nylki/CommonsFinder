@@ -10,14 +10,16 @@ import H3kit
 import MapKit
 import os.log
 
-protocol GeoReferencable: Hashable, Equatable {
+nonisolated protocol GeoReferencable: Hashable, Equatable {
     typealias GeoRefID = String
     var latitude: Double? { get }
     var longitude: Double? { get }
     var geoRefID: GeoRefID { get }
 }
 
-struct GeoClustering<Item: GeoReferencable> {
+nonisolated
+    struct GeoClustering<Item: GeoReferencable>
+{
     typealias Index = UInt64
     var items: [GeoReferencable.GeoRefID: Item]
     var h3IndexTree: [H3.Resolution: [Index: Set<Item.GeoRefID>]]

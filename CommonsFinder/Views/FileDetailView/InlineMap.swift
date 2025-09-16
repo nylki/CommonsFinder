@@ -1,3 +1,4 @@
+import GeoToolbox
 @preconcurrency import MapKit
 //
 //  InlineMap.swift
@@ -10,12 +11,28 @@ import os.log
 
 struct InlineMap: View {
     let coordinate: CLLocationCoordinate2D
-    let fileTitle: String?
+    var knownName: String? = nil
+    var mapPinStyle: MapPinStyle = .label
+    var details: DetailSection = .label
 
-    @State private var mkMapItem: MKMapItem?
-    @State private var humanReadableLocation: String?
+    enum MapPinStyle {
+        case label
+        case pinOnly
+    }
+
+    enum DetailSection {
+        case none
+        case label
+    }
+
+    @State private var geoReversedLabel: String?
     @State private var lookAroundScene: MKLookAroundScene?
     @State private var isLookAroundShowing = false
+    @State private var mapItem: MKMapItem?
+
+    private var label: String {
+        knownName ?? geoReversedLabel ?? "\(coordinate.latitude), \(coordinate.longitude)"
+    }
 
     @Environment(\.openURL) private var openURL
 
@@ -28,22 +45,12 @@ struct InlineMap: View {
         return URL(string: "https://www.openstreetmap.org/#map=\(zoomLevel)/\(coordinate.latitude)/\(coordinate.longitude)")
     }
 
-    // TODO: geohack url: return "https://geohack.toolforge.org/geohack.php?pagename=File:\(fileTitle)&params=052.440597_N_0013.532672_E_globe:Earth_type:camera_heading:156.11&language=de"
-
-    private var commonsMapLink: URL? {
-        if let fileTitle {
-            URL(string: "https://commons.wikimedia.org/wiki/File:\(fileTitle)#/maplink/0")
-        } else {
-            nil
-        }
-    }
-
     private var genericGeoLink: URL? {
         URL(string: "geo:\(coordinate.latitude),\(coordinate.longitude)")
     }
 
     private var omLink: URL? {
-        URL(string: "om://map?v=1&ll=\(coordinate.latitude),\(coordinate.longitude)&n=\(humanReadableLocation ?? "")")
+        URL(string: "om://map?v=1&ll=\(coordinate.latitude),\(coordinate.longitude)&n=\(label)")
     }
 
     private func openInMapApp() {
@@ -54,8 +61,8 @@ struct InlineMap: View {
         logger.info("supports OrganicMaps: \(canOpenOrganicMaps)")
         if canOpenOrganicMaps, let omLink {
             openURL(omLink)
-        } else if let mkMapItem {
-            mkMapItem.openInMaps()
+        } else {
+            MKMapItem(placemark: .init(location: location, name: label, postalAddress: nil)).openInMaps()
         }
     }
 
@@ -72,15 +79,20 @@ struct InlineMap: View {
                 map
             }
 
-            Menu {
-                mapMenuItems
-            } label: {
-                Text(humanReadableLocation ?? location.description)
-                    .multilineTextAlignment(.leading)
+            switch details {
+            case .none:
+                EmptyView()
+            case .label:
+                Menu {
+                    mapMenuItems
+                } label: {
+                    Text(label)
+                        .multilineTextAlignment(.leading)
+                }
+                .padding()
             }
-            .padding()
-        }
 
+        }
         .background(.thinMaterial)
         .clipShape(.rect(cornerRadius: 8))
 
@@ -92,18 +104,19 @@ struct InlineMap: View {
         )
         .task {
             do {
-                humanReadableLocation = try await location.generateHumanReadableString()
+                if knownName == nil {
+                    let request = MKReverseGeocodingRequest(location: .init(latitude: coordinate.latitude, longitude: coordinate.longitude))
 
-                let mapPlacemmark = MKPlacemark(
-                    location: location,
-                    name: humanReadableLocation,
-                    postalAddress: nil
-                )
-                self.mkMapItem = MKMapItem(placemark: mapPlacemmark)
 
+                    if let item = try await request?.mapItems.first {
+                        geoReversedLabel = item.address?.shortAddress ?? item.name
+                    }
+
+                }
             } catch {
 
             }
+
         }
 
     }
@@ -116,8 +129,11 @@ struct InlineMap: View {
             longitudinalMeters: 500
         )
         Map(initialPosition: .region(halfKmRadius)) {
-            if let mkMapItem {
-                Marker(item: mkMapItem)
+            switch mapPinStyle {
+            case .label:
+                Marker(label, coordinate: coordinate)
+            case .pinOnly:
+                Marker("", coordinate: coordinate)
             }
         }
         .mapControlVisibility(.hidden)
@@ -130,27 +146,22 @@ struct InlineMap: View {
         Button("Open in Map App", systemImage: "map", action: openInMapApp)
         Button("Look Around", systemImage: "binoculars", action: openLookAround)
             .task {
-                logger.debug("Look Around scene fetching for \(humanReadableLocation ?? "")...")
+                logger.debug("Look Around scene fetching for \(label)...")
                 let lookAroundSceneRequest = MKLookAroundSceneRequest(coordinate: coordinate)
                 lookAroundScene = try? await lookAroundSceneRequest.scene
-                logger.debug("Look Around scene fetched for \(humanReadableLocation ?? ""): \(lookAroundScene == nil ? "false" : "true")")
+                logger.debug("Look Around scene fetched for \(label): \(lookAroundScene == nil ? "false" : "true")")
             }
             .disabled(lookAroundScene == nil)
 
         Divider()
         if let osmLink {
             // TODO: use OSM-relation instead if it exists as structured-data statement!
-            ShareLink(item: osmLink, subject: Text(humanReadableLocation ?? location.description)) {
+            ShareLink(item: osmLink, subject: Text(label)) {
                 Label("Share OSM link...", systemImage: "square.and.arrow.up")
             }
         }
 
         Menu("More...") {
-            if let commonsMapLink {
-                Link(destination: commonsMapLink) {
-                    Label("Open Kartographer Map", systemImage: "link")
-                }
-            }
             Button("Copy Coordinates", systemImage: "clipboard") {
                 UIPasteboard.general.string = coordinate.coordinateString
             }
@@ -168,5 +179,5 @@ extension CLLocationCoordinate2D {
 
 
 #Preview {
-    InlineMap(coordinate: .init(latitude: .init(48.8588), longitude: .init(2.2945)), fileTitle: nil)
+    InlineMap(coordinate: .init(latitude: .init(48.8588), longitude: .init(2.2945)))
 }

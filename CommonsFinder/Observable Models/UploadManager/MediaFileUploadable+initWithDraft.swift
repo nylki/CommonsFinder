@@ -135,8 +135,11 @@ extension MediaFileUploadable {
                         GeoVectorMath.degrees(fromMeters: hPositioningError, atLatitude: exifCoordinate.latitude).latitudeDegrees
                     } else {
                         // If hPositioningError is missing for some reason we assign a low precision to this coordinate
-                        1.0
+                        // TODO: this should be user-tweakable
+                        0.1
                     }
+
+
                 statements.append(
                     .coordinatesOfViewpoint(
                         exifCoordinate,

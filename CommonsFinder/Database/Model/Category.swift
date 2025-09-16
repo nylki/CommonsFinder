@@ -9,7 +9,7 @@ import CoreLocation
 import Foundation
 import GRDB
 
-struct Category: Identifiable, Equatable, Hashable, Sendable, Codable {
+nonisolated struct Category: Identifiable, Equatable, Hashable, Sendable, Codable {
     typealias LanguageCode = String
     // todo used Tagged!?
     typealias WikidataID = String
@@ -90,7 +90,7 @@ struct Category: Identifiable, Equatable, Hashable, Sendable, Codable {
     }
 }
 
-extension Category {
+nonisolated extension Category {
     var coordinate: CLLocationCoordinate2D? {
         if let latitude, let longitude {
             CLLocationCoordinate2D(latitude: latitude, longitude: longitude)
@@ -115,8 +115,8 @@ extension Category {
     }
 }
 
-extension Category: FetchableRecord, MutablePersistableRecord {
-    enum Columns {
+nonisolated extension Category: FetchableRecord, MutablePersistableRecord {
+    nonisolated enum Columns {
         static let id = Column(CodingKeys.id)
         static let itemInteractiondID = Column(CodingKeys.itemInteractionID)
         static let wikidataId = Column(CodingKeys.wikidataId)
@@ -137,7 +137,7 @@ extension Category: FetchableRecord, MutablePersistableRecord {
         id = inserted.rowID
     }
 
-    static let itemInteraction = belongsTo(ItemInteraction.self)
+    nonisolated static let itemInteraction = belongsTo(ItemInteraction.self)
 
     var itemInteraction: QueryInterfaceRequest<ItemInteraction> {
         request(for: Self.itemInteraction)

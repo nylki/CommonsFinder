@@ -38,7 +38,7 @@ enum LoginSuccess {
 // and  dynamically queried in views via GRDB @Query so as little memory.
 
 
-@Observable @MainActor
+@Observable
 final class AccountModel {
     private(set) var activeUser: User?
 
@@ -67,10 +67,11 @@ final class AccountModel {
 
     func logout() throws {
         postLoginTask?.cancel()
+        postLoginTask = nil
+        recurringSyncTask?.cancel()
+        recurringSyncTask = nil
         activeUser = nil
-        let deletedCount = try appDatabase.deleteAllImageModels()
-        // FIXME: also delete categories and all interactions
-        logger.info("Deleted \(deletedCount) items on-logout")
+        try appDatabase.deleteLogoutRelatedItems()
         try Authentication.clearKeychain()
     }
 
@@ -187,6 +188,9 @@ final class AccountModel {
             try appDatabase
             .fetchAllFiles(byUsername: username, withNames: draftFinalFilenames)
             .map(\.name)
+            .filter { !$0.isEmpty }
+
+        guard !draftsToCleanup.isEmpty else { return }
 
         let deletedFileCount = try appDatabase.deleteDrafts(withFinalFilenames: draftsToCleanup)
         if deletedFileCount != 0 {

@@ -10,7 +10,7 @@ import Foundation
 /// returns a flat collection of elements that alternates between `a` and `b`
 /// eg.:  `zippedFlatMap([1, 2, 3, 4, 5], [8, 9]) = [1, 8, 2, 9, 3, 4, 5]`
 
-func zippedFlatMap<T>(_ a: [T], _ b: [T]) -> [T] {
+nonisolated func zippedFlatMap<T>(_ a: [T], _ b: [T]) -> [T] {
     var a = ArraySlice(a)
     var b = ArraySlice(b)
 

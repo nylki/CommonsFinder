@@ -8,7 +8,7 @@
 import Foundation
 
 enum ValidationUtils {
-    static func isValidEmailAddress(string: String) -> Bool {
+    nonisolated static func isValidEmailAddress(string: String) -> Bool {
         let detector = try? NSDataDetector(
             types: NSTextCheckingResult.CheckingType.link.rawValue
         )

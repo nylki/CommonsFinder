@@ -6,14 +6,14 @@
 //
 
 import CommonsAPI
+import CoreLocation
 import Foundation
 import Nuke
 import Vision
 import os.log
 
 /// Represents the data to allow editing either a DB-backed MediaFile or a newly created one.
-@Observable
-@MainActor final class MediaFileDraftModel: @preconcurrency Identifiable {
+@Observable final class MediaFileDraftModel: @preconcurrency Identifiable {
     typealias ID = String
     var id: ID
     var draft: MediaFileDraft
@@ -58,6 +58,20 @@ import os.log
         let result = await DraftAnalysis.analyze(draft: draft)
         logger.debug("analyzing draft image finished! \(result?.debugDescription ?? "")")
         self.analysisResult = result
+    }
+
+    var choosenCoordinate: CLLocationCoordinate2D? {
+        return switch draft.locationHandling {
+        case .userDefinedLocation(latitude: let lat, longitude: let lon, _):
+            .init(latitude: lat, longitude: lon)
+        case .exifLocation:
+            exifData?.coordinate
+        case .noLocation:
+            nil
+        case .none:
+            nil
+        }
+
     }
 }
 

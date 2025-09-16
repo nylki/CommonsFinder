@@ -7,7 +7,7 @@
 
 import CommonsAPI
 import FrameUp
-import MapKit
+@preconcurrency import MapKit
 import SwiftUI
 import TipKit
 import os.log
@@ -23,6 +23,7 @@ struct MetadataEditForm: View {
     @State private var filenameSelection: TextSelection?
     @State private var isLicensePickerShowing = false
     @State private var isTimezonePickerShowning = false
+    @State private var locationLabel: String?
 
     private enum FocusElement: Hashable {
         case title
@@ -82,6 +83,15 @@ struct MetadataEditForm: View {
         }
         .task {
             await model.analyzeImage()
+        }
+        .task(id: model.choosenCoordinate) {
+            locationLabel = nil
+            guard let coordinate = model.choosenCoordinate else { return }
+            do {
+                locationLabel = try await coordinate.generateHumanReadableString()
+            } catch {
+                logger.error("failed generateHumanReadableString \(error)")
+            }
         }
     }
 
@@ -275,12 +285,8 @@ struct MetadataEditForm: View {
                     if model.draft.locationEnabled == false {
                         Text("Location will be erased from the file metadata before uploading.")
                             .font(.caption)
-                    } else if let coordinate = model.exifData?.coordinate {
-                        FileLocationMapView(
-                            location: .init(
-                                latitude: coordinate.latitude,
-                                longitude: coordinate.longitude
-                            ))
+                    } else if let coordinate = model.choosenCoordinate {
+                        FileLocationMapView(coordinate: coordinate, label: locationLabel)
                     }
                 }
             }
@@ -370,40 +376,26 @@ struct MetadataEditForm: View {
 }
 
 struct FileLocationMapView: View {
-    let location: CLLocation
+    let coordinate: CLLocationCoordinate2D
+    var label: String?
 
-    @State private var mkMapItem: MKMapItem?
+    @State private var markerLabel: String?
+
     var body: some View {
         let halfKmRadius = MKCoordinateRegion(
-            center: location.coordinate,
+            center: coordinate,
             latitudinalMeters: 500,
             longitudinalMeters: 500
         )
 
         Map(initialPosition: .region(halfKmRadius)) {
-            if let mkMapItem {
-                Marker(item: mkMapItem)
-            }
+            Marker(label ?? "", coordinate: coordinate)
         }
         .mapControlVisibility(.automatic)
         .allowsHitTesting(false)
         .frame(height: 150)
         .clipShape(.rect(cornerRadius: 15))
-        .task {
-            do {
-                let humanReadableLocation = try await location.generateHumanReadableString()
 
-                let placemark = MKPlacemark(
-                    location: location,
-                    name: humanReadableLocation,
-                    postalAddress: nil
-                )
-
-                mkMapItem = .init(placemark: placemark)
-            } catch {
-                logger.error("Failed to construct MKMapItem \(error)")
-            }
-        }
 
     }
 }

@@ -10,21 +10,27 @@ import Algorithms
 import CommonsAPI
 import CoreLocation
 import Foundation
+import GeoToolbox
+import MapKit
+import RegexBuilder
 import Vision
 import os.log
 
-enum DraftAnalysis {
-    static func analyze(draft: MediaFileDraft) async -> DraftAnalysisResult? {
+nonisolated enum DraftAnalysis {
+    @concurrent static func analyze(draft: MediaFileDraft) async -> DraftAnalysisResult? {
 
         guard let fileURL = draft.localFileURL() else { return nil }
         let handler = ImageRequestHandler(fileURL)
         let exifData = draft.loadExifData()
 
-        let nearbyCategoryTask = Task<[Category], Never> {
-            var coordinate = exifData?.coordinate
+        let coordinate: CLLocationCoordinate2D? =
             if case .userDefinedLocation(latitude: let lat, longitude: let lon, _) = draft.locationHandling {
-                coordinate = .init(latitude: lat, longitude: lon)
+                .init(latitude: lat, longitude: lon)
+            } else {
+                exifData?.coordinate
             }
+
+        let nearbyCategoryTask = Task<[Category], Never> { @concurrent in
             guard let coordinate else { return [] }
             let categories = await fetchNearbyCategories(
                 coordinate: coordinate,
@@ -90,7 +96,7 @@ enum DraftAnalysis {
 
 
         do {
-            let results = try await imageRequestHandler.perform(request)
+            let results: () = try await imageRequestHandler.perform(request)
                 .filter { $0.hasMinimumRecall(0.01, forPrecision: 0.9) }
                 .forEach { observation in
                     logger.info("image classification: \(observation.identifier) (\(observation.confidence))")
@@ -140,7 +146,8 @@ enum DraftAnalysis {
     }
 
     private static func fetchCategories(in circles: any Collection<SearchCircle>) async -> [Category] {
-        await withTaskGroup(returning: [Category].self) { group in
+
+        let apiItems = await withTaskGroup(returning: [GenericWikidataItem].self) { @concurrent group in
             for circle in circles {
                 group.addTask {
                     do {
@@ -151,7 +158,6 @@ enum DraftAnalysis {
                                 limit: 50,
                                 languageCode: Locale.current.wikiLanguageCodeIdentifier
                             )
-                            .map(Category.init)
 
                         return categories
 
@@ -162,13 +168,15 @@ enum DraftAnalysis {
                 }
             }
 
-            var result: [Category] = []
+            var result: [GenericWikidataItem] = []
             for await taskResult in group {
                 // Set operation name as key and operation result as value
                 result.append(contentsOf: taskResult)
             }
-            return result.uniqued { ($0.wikidataId ?? $0.commonsCategory) }
+            return result.uniqued(on: \.id)
         }
+
+        return apiItems.map(Category.init)
     }
 
     private static func fetchCategoriesWithAreas(around coordinate: CLLocationCoordinate2D, radiusMeters: CLLocationDistance, minAreaQm: Double, limit: Int = 25) async -> [Category] {
@@ -231,28 +239,26 @@ enum DraftAnalysis {
 
     private static func fetchCategoriesByReverseMapKitGeocoding(coordinate: CLLocationCoordinate2D) async throws -> [Category] {
         let referenceCLLocation = CLLocation(latitude: coordinate.latitude, longitude: coordinate.longitude)
-        async let placemarkRequest = await GeoPlacemarkCache.shared.getPlacemark(
-            for: .init(latitude: coordinate.latitude, longitude: coordinate.longitude)
-        )
+        let geocodingRequest = MKReverseGeocodingRequest(location: referenceCLLocation)
+        async let mapItemRequest = await geocodingRequest?.mapItems.first
 
         var result: [Category] = []
 
-        if let placemark: CLPlacemark = await placemarkRequest {
+        if let item = try await mapItemRequest {
 
-
-            if let street = placemark.thoroughfare {
+            if let shortAddress = item.address?.shortAddress {
 
                 var streetCategories: [Category] = []
-                if let locality = placemark.locality {
-                    streetCategories += try await APIUtils.searchCategories(for: "\(street) \(locality)")
-                }
-                if streetCategories.isEmpty {
+                streetCategories += try await APIUtils.searchCategories(for: "shortAddress")
+
+                if streetCategories.isEmpty,
+                    let street = shortAddress.components(separatedBy: .decimalDigits).first
+                {
                     streetCategories += try await APIUtils.searchCategories(for: street)
                 }
 
                 streetCategories =
-                    streetCategories
-                    .filter {
+                    streetCategories.filter {
                         guard let latitude = $0.latitude, let longitude = $0.longitude else {
                             return false
                         }
@@ -266,9 +272,7 @@ enum DraftAnalysis {
                     })
 
                 result.insert(contentsOf: streetCategories.prefix(1), at: 0)
-            }
-
-            if let water = placemark.ocean ?? placemark.inlandWater {
+            } else if let water = item.placemark.ocean ?? item.placemark.inlandWater {
                 let waterCategories = try await APIUtils.searchCategories(for: water)
                     .filter { category in
                         // canal, river, lake, better to do it in the query with broader water filter
@@ -280,10 +284,20 @@ enum DraftAnalysis {
 
                 result.insert(contentsOf: waterCategories.prefix(1), at: 0)
 
-            } else if let areaOfInterest = placemark.areasOfInterest?.first {
-                // Parks, Landmarks etc.
-                var name = areaOfInterest
-                if let dashSplit = areaOfInterest.split(separator: " - ").first {
+            }
+
+            let relevantLargeAreaPOIs: [MKPointOfInterestCategory] = [
+                .airport, .amusementPark, .aquarium, .beach, .campground, .castle, .conventionCenter, .fairground, .foodMarket, .fortress, .golf, .goKart, .hiking, .kayaking, .landmark, .marina,
+                .museum, .musicVenue, .nationalMonument, .nationalPark, .park, .publicTransport, .rvPark, .skating, .skatePark, .spa, .soccer, .skiing, .stadium, .swimming, .surfing, .tennis,
+                .theater, .university, .volleyball, .zoo,
+            ]
+            // Parks, Landmarks, beach, zoo etc.
+            if let mkPOICategory = item.pointOfInterestCategory,
+                var name = item.name,
+                relevantLargeAreaPOIs.contains(mkPOICategory)
+            {
+
+                if let dashSplit = name.split(separator: " - ").first {
                     name = String(dashSplit)
                 }
                 let areaOfInterestCategories = try await APIUtils.searchCategories(for: name)
@@ -292,7 +306,6 @@ enum DraftAnalysis {
                     .sorted(by: { a, b in
                         sortCategoriesByDistance(to: referenceCLLocation, a: a, b: b)
                     })
-
 
                 if let areaOfInterest = areaOfInterestCategories.first,
                     let coord = areaOfInterest.coordinate
@@ -460,16 +473,6 @@ enum DraftAnalysis {
         return scoredCategories.sorted(by: \.score, .orderedDescending)
     }
 
-    private static func sortCategoriesByDistance(to location: CLLocation, a: Category, b: Category) -> Bool {
-        guard let aCoord = a.coordinate, let bCoord = b.coordinate else {
-            return false
-        }
-        let distA = CLLocation(latitude: aCoord.latitude, longitude: aCoord.longitude)
-            .distance(from: location)
-        let distB = CLLocation(latitude: bCoord.latitude, longitude: bCoord.longitude)
-            .distance(from: location)
-        return distA < distB
-    }
 }
 
 enum CategoryGeoSuggestionStrategy {
@@ -477,7 +480,7 @@ enum CategoryGeoSuggestionStrategy {
     case expandingCircle
 }
 
-extension [Category] {
+nonisolated extension [Category] {
     func filterByMaxDistance(maxDistance: CLLocationDistance, to location: CLLocation) -> Self {
         filter { category in
             guard let latitude = category.latitude, let longitude = category.longitude else {

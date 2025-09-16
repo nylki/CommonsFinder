@@ -16,7 +16,9 @@ import UniformTypeIdentifiers
 // Database Note:
 // The SQLite DB table for MediaFile is defined in "AppDatabase"
 
-struct MediaFile: Equatable, Hashable, Sendable, Identifiable {
+nonisolated
+    struct MediaFile: Equatable, Hashable, Sendable, Identifiable
+{
     typealias LanguageCode = String
 
     ///  pageID
@@ -120,9 +122,9 @@ struct MediaFile: Equatable, Hashable, Sendable, Identifiable {
 /// Make MediaFile a Codable Record.
 ///
 /// See <https://github.com/groue/GRDB.swift/blob/master/README.md#records>
-extension MediaFile: Codable, FetchableRecord, MutablePersistableRecord {
+nonisolated extension MediaFile: Codable, FetchableRecord, MutablePersistableRecord {
     // Define database columns from CodingKeys
-    enum Columns {
+    nonisolated enum Columns {
         static let id = Column(CodingKeys.id)
         static let itemInteractionID = Column(CodingKeys.itemInteractionID)
         static let username = Column(CodingKeys.username)
@@ -140,9 +142,9 @@ extension MediaFile: Codable, FetchableRecord, MutablePersistableRecord {
     }
 
     // itemInteractionId foreign key
-    static let itemInteraction = belongsTo(ItemInteraction.self)
+    static nonisolated let itemInteraction = belongsTo(ItemInteraction.self)
 
-    var itemInteraction: QueryInterfaceRequest<ItemInteraction> {
+    nonisolated var itemInteraction: QueryInterfaceRequest<ItemInteraction> {
         request(for: Self.itemInteraction)
     }
 
@@ -150,7 +152,7 @@ extension MediaFile: Codable, FetchableRecord, MutablePersistableRecord {
 
 // MARK: - Extensions
 
-extension MediaFile {
+nonisolated extension MediaFile {
 
     /// The unique name *with* "File:"-prefix as used in the action-API
     var apiName: String { "File:\(name)" }

@@ -14,17 +14,17 @@ import OrderedCollections
 import SwiftUI
 import os.log
 
-@Observable @MainActor final class MapModel {
+@Observable final class MapModel {
     var position: MapCameraPosition = .automatic
     var locale: Locale = .current
 
     private(set) var region: MKCoordinateRegion?
 
     @ObservationIgnored
-    private var refreshTask: Task<Void, Never>?
+    private var refreshTask: Task<Void, Error>?
     private var dbTask: Task<Void, Never>?
 
-    private var refreshRegionChannel: AsyncChannel<MKCoordinateRegion> = .init()
+    private var refreshRegionTask: Task<Void, Never>?
     private(set) var lastRefreshedRegions: OrderedSet<MKCoordinateRegion> = .init()
     private(set) var currentRefreshingRegion: MKCoordinateRegion?
     var isRefreshingMap: Bool { currentRefreshingRegion != nil }
@@ -44,8 +44,23 @@ import os.log
 
     private(set) var selectedCluster: H3Index?
 
-
-    var isSheetPresented = false
+    enum OverlayType {
+        case clusterSheet
+        case goToNearbyLocationPermission
+    }
+    var presentedOverlay: OverlayType?
+    var isClusterSheetPresented: Bool {
+        get {
+            presentedOverlay == .clusterSheet
+        }
+        set {
+            if newValue {
+                presentedOverlay = .clusterSheet
+            } else if presentedOverlay == .clusterSheet {
+                presentedOverlay = nil
+            }
+        }
+    }
     /// The item that is scrolled to inside the sheet when tapping on a cluster circle
     var focusedClusterItem = ScrollPosition(idType: GeoReferencable.GeoRefID.self)
 
@@ -54,6 +69,13 @@ import os.log
     private var locationTrackTrack: Task<Void, Never>?
 
     private var locationManager: CLLocationManager = .init()
+    var isLocationAuthorized: Bool {
+        switch locationManager.authorizationStatus {
+        case .authorizedAlways, .authorizedWhenInUse: true
+        case .notDetermined, .restricted, .denied: false
+        @unknown default: false
+        }
+    }
 
     /// in meter
     private let imageVisibilityThreshold: Double = 4000
@@ -74,7 +96,7 @@ import os.log
     func selectCluster(_ index: H3Index) {
         focusedClusterItem = .init()
         selectedCluster = index
-        isSheetPresented = true
+        presentedOverlay = .clusterSheet
         // TODO: fetch items in circle radius if items > max (500?)
     }
 
@@ -131,32 +153,31 @@ import os.log
     }
 
     init() {
-        guard refreshTask == nil else { return }
 
-        refreshTask = Task<Void, Never> {
-            // TODO: optimize by remember regions that have been fully fetched (not hitting item limits)
-            // and then comparing if current region is significant not only against last region
-            // but ALL the regions..
+    }
 
-            // TODO: test actively tracking positions if the debounce every yields a refresh eg. when walking and user positions
-            for await region in refreshRegionChannel.debounce(for: .milliseconds(500), tolerance: .milliseconds(20)) {
-                currentRefreshingRegion = region
-                defer { currentRefreshingRegion = nil }
+    private func refreshRegion() {
+        guard let region else { return }
 
-                logger.info("Map: refreshing started...")
+        refreshTask?.cancel()
+        refreshTask = Task {
+            try await Task.sleep(for: .milliseconds(500))
+            currentRefreshingRegion = region
+            defer { currentRefreshingRegion = nil }
 
-                async let wikiItemsTask = fetchWikiItems(region: region, maxDiagonalMapLength: wikiItemVisibilityThreshold)
-                async let mediaTask = fetchMediaFiles(region: region, maxDiagonalMapLength: imageVisibilityThreshold)
-                let (wikidataItems, mediaItems) = await (wikiItemsTask, mediaTask)
+            logger.info("Map: refreshing started...")
 
-                let wikidataItemInfo: [Category] = wikidataItems
-                wikiItemClustering.add(wikidataItemInfo)
-                mediaClustering.add(mediaItems)
-                refreshClusters()
+            async let wikiItemsTask = fetchWikiItems(region: region, maxDiagonalMapLength: wikiItemVisibilityThreshold)
+            async let mediaTask = fetchMediaFiles(region: region, maxDiagonalMapLength: imageVisibilityThreshold)
+            let (wikidataItems, mediaItems) = await (wikiItemsTask, mediaTask)
 
-                lastRefreshedRegions.append(region)
-                logger.info("Map: refreshing finished.")
-            }
+            let wikidataItemInfo: [Category] = wikidataItems
+            wikiItemClustering.add(wikidataItemInfo)
+            mediaClustering.add(mediaItems)
+            await refreshClusters()
+
+            lastRefreshedRegions.append(region)
+            logger.info("Map: refreshing finished.")
         }
     }
 
@@ -166,11 +187,11 @@ import os.log
     //    }
 
     /// Continuously tracks and follows tne position on the map (i.e. Navigation mode)
-    func followUserPosition() {
+    func goToUserLocation() {
         locationManager.activityType = .otherNavigation
         locationManager.distanceFilter = 7
         locationManager.requestWhenInUseAuthorization()
-        position = .userLocation(followsHeading: true, fallback: .automatic)
+        position = .userLocation(followsHeading: false, fallback: .automatic)
     }
 
     /// sets the user location once
@@ -209,9 +230,7 @@ import os.log
         }
         guard hasNotBeenFetched else { return }
 
-        Task<Void, Never> {
-            await refreshRegionChannel.send(context.region)
-        }
+        refreshRegion()
     }
 }
 

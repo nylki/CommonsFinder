@@ -9,7 +9,7 @@ import CommonsAPI
 import Foundation
 import SwiftUI
 
-@Observable @MainActor final class PaginatableSearchMediaFiles: PaginatableMediaFiles {
+@Observable final class PaginatableSearchMediaFiles: PaginatableMediaFiles {
     var searchString: String = ""
     var offset: Int?
     let sort: SearchOrder

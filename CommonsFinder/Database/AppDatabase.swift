@@ -20,7 +20,7 @@ enum DatabaseError: Error {
 /// The AppDatabase holding image models, drafts and user info.
 /// See https://github.com/groue/GRDBQuery/tree/main/Documentation for the reference demo implementations.
 
-final class AppDatabase: Sendable {
+nonisolated final class AppDatabase: Sendable {
     /// Access to the database.
     ///
     /// Application can use a `DatabasePool`, while SwiftUI previews and tests
@@ -243,7 +243,7 @@ final class AppDatabase: Sendable {
 // MARK: - Configuration
 
 extension AppDatabase {
-    private static let sqlLogger = OSLog(subsystem: Bundle.main.bundleIdentifier!, category: "SQL")
+    nonisolated private static let sqlLogger = OSLog(subsystem: Bundle.main.bundleIdentifier!, category: "SQL")
 
     /// Returns a database configuration suited for `AppDatabase`.
     ///
@@ -347,9 +347,14 @@ extension AppDatabase {
         try dbWriter.write(imageModel.delete)
     }
 
-    /// Deletes all files.
-    func deleteAllImageModels() throws -> Int {
-        try dbWriter.write(MediaFile.deleteAll)
+    func deleteLogoutRelatedItems() throws {
+        let deletedMediaFilesCount = try dbWriter.write(MediaFile.deleteAll)
+        let deletedCategoriesCount = try dbWriter.write(Category.deleteAll)
+        let deletedInteractionCount = try dbWriter.write(ItemInteraction.deleteAll)
+
+        logger.debug("Deleted \(deletedMediaFilesCount) media files")
+        logger.debug("Deleted \(deletedCategoriesCount) categories")
+        logger.debug("Deleted \(deletedInteractionCount) interactions")
     }
 }
 
@@ -726,13 +731,13 @@ extension AppDatabase {
 // gives an unrestricted read-only access to the rest of the application.
 // In your app, you are free to choose another path, and define focused
 // reading methods.
-extension AppDatabase {
+nonisolated extension AppDatabase {
     /// Provides a read-only access to the database.
     var reader: any GRDB.DatabaseReader {
         dbWriter
     }
 
-    func fetchMediaFileInfo(id: String) throws -> MediaFileInfo? {
+    nonisolated func fetchMediaFileInfo(id: String) throws -> MediaFileInfo? {
         try dbWriter.read { db in
             try MediaFile
                 .filter(id: id)
@@ -874,7 +879,7 @@ extension AppDatabase {
     }
 }
 
-extension MediaFileInfo {
+nonisolated extension MediaFileInfo {
     static func fetchAll(ids: [String], db: Database) throws -> [Self] {
         try MediaFile
             .filter(ids: ids)
@@ -884,7 +889,7 @@ extension MediaFileInfo {
     }
 }
 
-extension CategoryInfo {
+nonisolated extension CategoryInfo {
     /// takes redirections into account
     static func fetchAll(_ db: Database, wikidataIDs: [Category.WikidataID], resolveRedirections: Bool) throws -> [Self] {
         let ids: [Category.WikidataID]

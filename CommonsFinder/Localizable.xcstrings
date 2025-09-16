@@ -4,11 +4,18 @@
     "" : {
       "shouldTranslate" : false
     },
-    ": " : {
-
-    },
     "%@" : {
       "comment" : "Title in Intent FileEntity"
+    },
+    "%@: %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@: %2$@"
+          }
+        }
+      }
     },
     "%lf" : {
 
@@ -52,6 +59,9 @@
           }
         }
       }
+    },
+    "About" : {
+
     },
     "Accept" : {
       "localizations" : {
@@ -360,6 +370,7 @@
       }
     },
     "Category: %@" : {
+      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -373,6 +384,15 @@
 
     },
     "CC BY-SA" : {
+
+    },
+    "cc-by-4.0" : {
+
+    },
+    "cc-by-sa-4.0" : {
+
+    },
+    "cc0" : {
 
     },
     "CC0" : {
@@ -418,6 +438,9 @@
         }
       }
     },
+    "close" : {
+
+    },
     "Close" : {
       "localizations" : {
         "de" : {
@@ -450,6 +473,9 @@
           }
         }
       }
+    },
+    "Copy" : {
+
     },
     "Copy Coordinates" : {
       "localizations" : {
@@ -517,6 +543,9 @@
           }
         }
       }
+    },
+    "Delete Draft" : {
+
     },
     "Depicted" : {
       "localizations" : {
@@ -658,6 +687,9 @@
         }
       }
     },
+    "General" : {
+
+    },
     "help" : {
       "localizations" : {
         "de" : {
@@ -783,6 +815,7 @@
       }
     },
     "Locate Me" : {
+      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -823,6 +856,7 @@
       }
     },
     "Logging in as %@" : {
+      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -831,6 +865,9 @@
           }
         }
       }
+    },
+    "logging in..." : {
+
     },
     "Login" : {
       "localizations" : {
@@ -1070,6 +1107,7 @@
       }
     },
     "Open Kartographer Map" : {
+      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -1332,6 +1370,7 @@
       }
     },
     "Save Changes" : {
+      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -1350,6 +1389,9 @@
           }
         }
       }
+    },
+    "Save draft for later or delete now?" : {
+
     },
     "Search" : {
       "localizations" : {
@@ -1647,6 +1689,9 @@
           }
         }
       }
+    },
+    "User actions" : {
+
     },
     "Username" : {
       "localizations" : {
