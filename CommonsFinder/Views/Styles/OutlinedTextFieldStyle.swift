@@ -9,36 +9,54 @@ import SwiftUI
 
 struct OutlinedTextFieldStyle: TextFieldStyle {
     private let outlineColor: Color
-
+    private var message: LocalizedStringResource?
 
     enum ColorStyle {
         case `default`
         case error
     }
 
-    init(style: ColorStyle? = nil) {
+    init(style: ColorStyle? = nil, message: LocalizedStringResource? = nil) {
         outlineColor =
             switch style {
             case .default, .none: .primary
             case .error: .red
             }
+        self.message = message
     }
 
     func _body(configuration: TextField<Self._Label>) -> some View {
-        configuration
-            .padding()
-            .background(.regularMaterial, in: .buttonBorder)
-            .overlay {
-                RoundedRectangle(cornerRadius: 8)
-                    .stroke(outlineColor, lineWidth: 1)
+        VStack {
+            configuration
+
+            if let message {
+                fieldErrorText(message)
             }
+
+        }
+
+    }
+
+    private func fieldErrorText(_ message: LocalizedStringResource?) -> some View {
+        HStack {
+            Image(systemName: "exclamationmark.shield")
+                .transition(.scale.animation(.bouncy))
+            if let message {
+                Text(message)
+                    .font(.caption)
+            }
+            Spacer(minLength: 0)
+        }
+        .foregroundStyle(.red)
+        .frame(minWidth: 50, maxWidth: .infinity)
+        .padding(.bottom)
     }
 }
 
 #Preview {
     VStack {
         TextField("Preview", text: .constant(""))
-            .textFieldStyle(OutlinedTextFieldStyle())
+            .textFieldStyle(OutlinedTextFieldStyle(style: .error, message: "error"))
     }
     .padding()
 }

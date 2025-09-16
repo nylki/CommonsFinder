@@ -7,6 +7,7 @@
 
 import CommonsAPI
 import FrameUp
+import GRDB
 import GeoToolbox
 import Nuke
 import NukeUI
@@ -64,8 +65,6 @@ struct FileDetailView: View {
     @State private var isShowingEditSheet: MediaFileInfo?
     @State private var fullDescription: AttributedString?
     @State private var isDescriptionExpanded = false
-    @State private var titleAreaHidden = false
-    @State private var gradientAreaHidden = false
 
     @State private var resolvedTags: [TagItem] = []
 
@@ -91,6 +90,8 @@ struct FileDetailView: View {
         }
     }
 
+
+    @concurrent
     private func refreshFromNetwork() async {
         do {
             guard
@@ -101,17 +102,19 @@ struct FileDetailView: View {
             }
 
             let refreshedMediaFile = MediaFile(apiFileMetadata: result)
-            try appDatabase.upsert([refreshedMediaFile])
+            try await appDatabase.upsert([refreshedMediaFile])
 
-            guard let refreshedMediaFileInfo = try appDatabase.fetchMediaFileInfo(id: refreshedMediaFile.id) else {
+            guard let refreshedMediaFileInfo = try await appDatabase.fetchMediaFileInfo(id: refreshedMediaFile.id) else {
                 assertionFailure("MediaFileInfo nil although we just saved the underlying mediaFile.")
                 return
             }
 
             let refreshedTags = try await refreshedMediaFile.resolveTags(appDatabase: appDatabase)
 
-            updatedMediaFileInfo = refreshedMediaFileInfo
-            resolvedTags = refreshedTags
+            await MainActor.run {
+                self.updatedMediaFileInfo = refreshedMediaFileInfo
+                self.resolvedTags = refreshedTags
+            }
 
         } catch {
             logger.error("Failed to refresh media file \(error)")
@@ -127,65 +130,60 @@ struct FileDetailView: View {
         // let _ = Self._printChanges()
 
         main
-            .animation(.default, value: titleAreaHidden)
             .navigationTitle(navTitle)
-            .toolbarTitleDisplayMode(.inline)
-            .toolbar(removing: titleAreaHidden ? nil : .title)
-            .toolbarBackgroundVisibility(titleAreaHidden ? .visible : .hidden, for: .navigationBar)
-            .navigationBarBackButtonHidden()
-            .toolbarBackground(Material.regular, for: .navigationBar)
+            .navigationBarTitleDisplayMode(.inline)
+
             .toolbar {
-                ToolbarItem(placement: .navigation) {
-                    Button {
-                        dismiss()
-                    } label: {
-                        if titleAreaHidden {
-                            Image(systemName: "chevron.backward.circle")
-                                .font(.title2)
-                                .labelStyle(.iconOnly)
-                        } else {
-                            Image(systemName: "chevron.backward.circle.fill")
-                                .font(.title2)
-                                .labelStyle(.iconOnly)
-                                .foregroundStyle(.accent, .regularMaterial)
-                        }
+                ToolbarItem {
+                    Button(
+                        mediaFileInfo.isBookmarked ? "Remove Bookmark" : "Add Bookmark",
+                        systemImage: mediaFileInfo.isBookmarked ? "bookmark.fill" : "bookmark"
+                    ) {
+                        updateBookmark(!mediaFileInfo.isBookmarked)
                     }
                 }
-
                 ToolbarItem(placement: .automatic) {
                     Menu {
-                        Button(
-                            mediaFileInfo.isBookmarked ? "Remove Bookmark" : "Add Bookmark",
-                            systemImage: mediaFileInfo.isBookmarked ? "bookmark.fill" : "bookmark"
-                        ) {
-                            updateBookmark(!mediaFileInfo.isBookmarked)
-                        }
-
                         ShareLink(item: mediaFileInfo.mediaFile.descriptionURL)
                         Link(destination: mediaFileInfo.mediaFile.descriptionURL) {
                             Label("Open in Browser", systemImage: "globe")
                         }
                     } label: {
-                        if titleAreaHidden {
-                            Image(systemName: "ellipsis.circle")
-                                .font(.title2)
-                                .labelStyle(.iconOnly)
-                        } else {
-                            Image(systemName: "ellipsis.circle.fill")
-                                .font(.title2)
-                                .labelStyle(.iconOnly)
-                                .foregroundStyle(.accent, Material.regular)
-                        }
+                        Image(systemName: "ellipsis")
+                            .font(.title2)
+                            .labelStyle(.iconOnly)
                     }
                 }
             }
+            .toolbar(removing: .title)
             .navigationTransition(.zoom(sourceID: mediaFileInfo.mediaFile.id, in: navigationNamespace))
+            .task(id: mediaFileInfo.id) {
+                do {
+                    let id = mediaFileInfo.id
+                    let observation = ValueObservation.tracking { db in
+                        try MediaFile
+                            //  required, because we update `lastViewed` above.
+                            .including(optional: MediaFile.itemInteraction)
+                            .filter(id: id)
+                            .asRequest(of: MediaFileInfo.self)
+                            .fetchOne(db)
+                    }
+
+                    for try await updatedMediaFileInfo in observation.values(in: appDatabase.reader) {
+                        try Task.checkCancellation()
+
+                        self.updatedMediaFileInfo = updatedMediaFileInfo
+                    }
+                } catch {
+                    logger.error("CAT: Failed to observe MediaFileInfo changes \(error)")
+                }
+            }
             .task(id: mediaFileInfo.mediaFile.fullDescriptions, priority: .userInitiated) {
                 if let attributedString = mediaFileInfo.mediaFile.createAttributedStringDescription(locale: locale) {
                     fullDescription = attributedString
                 }
             }
-            .task(priority: .medium) {
+            .task(priority: .high) {
                 let timeIntervalSinceLastFetchDate = Date.now.timeIntervalSince(mediaFileInfo.mediaFile.fetchDate)
                 //            logger.info("Time since last fetch: \(timeIntervalSinceLastFetchDate)")
                 if timeIntervalSinceLastFetchDate > 20 {
@@ -237,19 +235,11 @@ struct FileDetailView: View {
 
     @ViewBuilder
     private var main: some View {
-        let targetGradientHeight = 170.0
-
         ScrollView(.vertical) {
             VStack(alignment: .leading) {
                 HStack {
                     Spacer(minLength: 0)
                     imageView
-                        .overlay(alignment: .top) {
-                            Color.clear.frame(height: targetGradientHeight)
-                                .onScrollVisibilityChange { visible in
-                                    gradientAreaHidden = !visible
-                                }
-                        }
                     Spacer(minLength: 0)
                 }
 
@@ -262,9 +252,6 @@ struct FileDetailView: View {
                     } else {
                         Color.clear.frame(height: 1).contentShape(.rect)
                     }
-                }
-                .onScrollVisibilityChange(threshold: 0.1) { visible in
-                    titleAreaHidden = !visible
                 }
 
                 if let fullDescription {
@@ -312,37 +299,6 @@ struct FileDetailView: View {
             }
             .padding([.horizontal, .bottom])
         }
-        .scrollContentBackground(.hidden)
-        .background(alignment: .top) {
-            let isVisible = (!gradientAreaHidden && !titleAreaHidden)
-            let pixelClip = 7.0
-            LazyImage(request: mediaFileInfo.thumbRequest) { phase in
-                if let image = phase.image {
-                    image
-                        .resizable()
-                        .aspectRatio(contentMode: .fill)
-                        .frame(height: pixelClip, alignment: .top)
-                        .scaleEffect(1.1)
-                        .blur(radius: 25)
-                        .clipped()
-                }
-            }
-            .clipped()
-            .compositingGroup()
-            .geometryGroup()
-            .scaleEffect(y: targetGradientHeight / pixelClip, anchor: .top)
-            .frame(height: targetGradientHeight, alignment: .top)
-            .mask(
-                alignment: .top,
-                {
-                    LinearGradient(colors: [.black, .clear], startPoint: .top, endPoint: .bottom)
-                }
-            )
-            .ignoresSafeArea()
-            .opacity(isVisible ? 1 : 0)
-            .accessibilityHidden(true)
-        }
-        .groupBoxStyle(FileGroupBoxStyle())
     }
 
     @ViewBuilder
@@ -485,17 +441,6 @@ struct FileDetailView: View {
     }
 }
 
-
-struct FileGroupBoxStyle: GroupBoxStyle {
-    func makeBody(configuration: Configuration) -> some View {
-        VStack(alignment: .leading) {
-            configuration.label.bold()
-            configuration.content
-        }
-        .padding(.vertical, 5)
-    }
-}
-
 struct FullscreenOnRotate: ViewModifier {
     @Environment(\.verticalSizeClass) private var verticalSizeClass
 
@@ -510,7 +455,7 @@ struct FullscreenOnRotate: ViewModifier {
     }
 }
 
-extension WikidataItemID {
+nonisolated extension WikidataItemID {
     static let preferredLicenses: [WikidataItemID] = [
         .CC0, .CC_BY_4_0, .CC_BY_SA_4_0, PDM_1_0,
     ]
@@ -546,7 +491,7 @@ extension WikidataItemID {
 
 
 struct VerticalLabelStyle: LabelStyle {
-    func makeBody(configuration: Configuration) -> some View {
+    func makeBody(configuration: Self.Configuration) -> some View {
         VStack {
             configuration.icon
             configuration.title

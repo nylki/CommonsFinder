@@ -20,53 +20,84 @@ struct SettingsView: View {
     @Environment(AccountModel.self) private var account
 
     @State private var isShowingLogoutDialog = false
+    @State private var isShowingUserDialog = false
 
     var body: some View {
-        ScrollView(.vertical) {
-            VStack {
-                Group {
-                    if let activeUser = account.activeUser {
-                        Menu(activeUser.username, systemImage: "person.crop.circle.fill") {
-                            if let userPage = activeUser.userPage {
-                                Link(destination: userPage) {
-                                    Label("Open Profile", systemImage: "safari")
-                                }
-                            }
-                            Button(
-                                "Logout",
-                                systemImage: "rectangle.portrait.and.arrow.forward",
-                                role: .destructive,
-                                action: { isShowingLogoutDialog = true }
-                            )
-                        }
-                        .buttonStyle(ExpandingButtonStyle())
-                        .confirmationDialog("Are you sure you want to log-out ?", isPresented: $isShowingLogoutDialog, titleVisibility: .visible) {
-                            Button("Logout User", systemImage: "square.and.arrow.up", role: .destructive, action: logout)
+        List {
+            if let activeUser = account.activeUser {
+                Section {
 
-                            Button("Cancel", role: .cancel) {
-                                isShowingLogoutDialog = false
+                    Button {
+                        isShowingUserDialog = true
+                    } label: {
+                        HStack {
+                            Image(systemName: "person.crop.circle.fill")
+
+                            VStack(alignment: .leading) {
+                                Text(activeUser.username)
+
+                                Text("Wikimedia Account")
+                                    .font(.caption)
+                                    .foregroundStyle(.secondary)
                             }
+                            .tint(.primary)
                         }
-                    } else {
-                        TipView(AccountTip(), arrowEdge: .bottom)
-                        Button(action: navigation.openOnboarding) {
-                            Label("Add Account", systemImage: "person.crop.circle")
-                        }
-                        .buttonStyle(ExpandingButtonStyle())
                     }
+                    .confirmationDialog("User actions", isPresented: $isShowingUserDialog) {
+
+                        if let userPage = activeUser.userPage {
+                            Link(destination: userPage) {
+                                Label("Open Profile", systemImage: "safari")
+                            }
+                        }
+                        Button(
+                            "Logout",
+                            systemImage: "rectangle.portrait.and.arrow.forward",
+                            role: .destructive,
+                            action: { isShowingLogoutDialog = true }
+                        )
+                    }
+                    .confirmationDialog("Are you sure you want to log-out ?", isPresented: $isShowingLogoutDialog, titleVisibility: .visible) {
+                        Button("Logout User", systemImage: "square.and.arrow.up", role: .destructive, action: logout)
+
+                        Button("Cancel", role: .cancel) {
+                            isShowingLogoutDialog = false
+                        }
+                    }
+
                 }
+                .imageScale(.large)
+                .animation(.default, value: account.activeUser)
+
+            } else {
+                TipView(AccountTip(), arrowEdge: .bottom)
+
+                Button(action: navigation.openOnboarding) {
+                    Label("Add Account", systemImage: "person.crop.circle")
+                        .bold()
+                        .foregroundStyle(.white)
+                }
+                .listRowBackground(Color.accentColor)
+
+            }
 
 
-                #if DEBUG
+            Section("General") {
+                Link(destination: URL(string: "https://github.com/nylki/CommonsFinder")!) {
+                    Label("About", systemImage: "info.circle")
+                }
+                .foregroundStyle(.primary)
+            }
+
+
+            #if DEBUG
+                Section {
                     NavigationLink(destination: PulseUI.ConsoleView.init()) {
                         Text("Console")
                     }
-                #endif
+                }
 
-                Spacer()
-            }
-            .animation(.default, value: account.activeUser)
-            .padding()
+            #endif
 
         }
         .navigationTitle("Settings")

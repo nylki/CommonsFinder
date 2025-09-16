@@ -17,7 +17,9 @@ enum ResizeCommonsImageURLError: Error {
     case urlDecodingError
 }
 
-extension URL {
+nonisolated
+    extension URL
+{
     func resizedCommonsImageURL(maxWidth: UInt) throws -> URL {
         // from: https://upload.wikimedia.org/wikipedia/commons/2/2c/Image_Title.jpg
         // to:   https://upload.wikimedia.org/wikipedia/commons/thumb/2/2c/Image_Title.jpg/320px-Image_Title.jpg

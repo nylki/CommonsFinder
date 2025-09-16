@@ -138,8 +138,8 @@ extension MediaFileUploadable {
                         // TODO: this should be user-tweakable
                         0.1
                     }
-                
-                
+
+
                 statements.append(
                     .coordinatesOfViewpoint(
                         exifCoordinate,

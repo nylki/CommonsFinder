@@ -60,6 +60,9 @@
         }
       }
     },
+    "About" : {
+
+    },
     "Accept" : {
       "localizations" : {
         "de" : {
@@ -367,6 +370,7 @@
       }
     },
     "Category: %@" : {
+      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -434,6 +438,9 @@
         }
       }
     },
+    "close" : {
+
+    },
     "Close" : {
       "localizations" : {
         "de" : {
@@ -466,6 +473,9 @@
           }
         }
       }
+    },
+    "Copy" : {
+
     },
     "Copy Coordinates" : {
       "localizations" : {
@@ -533,6 +543,9 @@
           }
         }
       }
+    },
+    "Delete Draft" : {
+
     },
     "Depicted" : {
       "localizations" : {
@@ -674,6 +687,9 @@
         }
       }
     },
+    "General" : {
+
+    },
     "help" : {
       "localizations" : {
         "de" : {
@@ -799,6 +815,7 @@
       }
     },
     "Locate Me" : {
+      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -839,6 +856,7 @@
       }
     },
     "Logging in as %@" : {
+      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -847,6 +865,9 @@
           }
         }
       }
+    },
+    "logging in..." : {
+
     },
     "Login" : {
       "localizations" : {
@@ -1349,6 +1370,7 @@
       }
     },
     "Save Changes" : {
+      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -1367,6 +1389,9 @@
           }
         }
       }
+    },
+    "Save draft for later or delete now?" : {
+
     },
     "Search" : {
       "localizations" : {
@@ -1664,6 +1689,9 @@
           }
         }
       }
+    },
+    "User actions" : {
+
     },
     "Username" : {
       "localizations" : {

@@ -62,57 +62,65 @@ struct LoginView: View {
     }
 
     var body: some View {
-        ZStack {
-            VStack {
-                if model.isPerformingLogin {
-                    Text("Logging in as \(model.username)")
-                    ProgressView()
-                        .progressViewStyle(.circular)
-                } else {
-                    switch model.loginState {
-                    case .usernameAndPassword:
-                        TextField("Username", text: $model.username)
-                            .focused($focus, equals: .username)
-                            .textContentType(.username)
-                            .submitLabel(.next)
-                            .onSubmit { focus = .password }
 
-                        SecureField("Password", text: $model.password)
-                            .focused($focus, equals: .password)
-                            .textContentType(.password)
-                            .submitLabel(.send)
-                            .onSubmit(login)
+        VStack {
 
+            Form {
+                switch model.loginState {
+                case .usernameAndPassword:
+                    TextField("Username", text: $model.username)
+                        .focused($focus, equals: .username)
+                        .textContentType(.username)
+                        .submitLabel(.next)
+                        .onSubmit { focus = .password }
+
+                    SecureField("Password", text: $model.password)
+                        .focused($focus, equals: .password)
+                        .textContentType(.password)
+                        .submitLabel(.send)
+                        .onSubmit(login)
+
+                    if model.isPerformingLogin {
+                        HStack {
+                            Text("logging in...")
+                            ProgressView()
+                                .progressViewStyle(.circular)
+                        }
+
+
+                    } else {
                         Button(action: login) {
                             Label("Login", systemImage: "key.horizontal")
                         }
                         .disabled(model.requiredFieldsMissing)
-                    case .oneTimeCode:
-                        let codeType = model.oneTimeCode.type
-                        Text(codeType.hintText)
-                            .multilineTextAlignment(.leading)
-
-                        TextField(codeType.title, text: $model.oneTimeCode.baseValue)
-                            .focused($focus, equals: .oneTimeCode)
-                            .textContentType(.oneTimeCode)
-                            .multilineTextAlignment(.center)
-                            .submitLabel(.next)
-                            .onSubmit(login)
-
-                        Button("Continue", action: login)
-                            .disabled(model.oneTimeCode.isEmpty)
                     }
+
+
+                case .oneTimeCode:
+                    let codeType = model.oneTimeCode.type
+                    Text(codeType.hintText)
+                        .multilineTextAlignment(.leading)
+
+                    TextField(codeType.title, text: $model.oneTimeCode.baseValue)
+                        .focused($focus, equals: .oneTimeCode)
+                        .textContentType(.oneTimeCode)
+                        .multilineTextAlignment(.center)
+                        .submitLabel(.next)
+                        .onSubmit(login)
+
+                    Button("Continue", action: login)
+                        .disabled(model.oneTimeCode.isEmpty)
                 }
             }
-            .buttonStyle(ExpandingButtonStyle())
-            .animation(.default, value: model.loginState)
-            .textFieldStyle(OutlinedTextFieldStyle())
-            #if !os(macOS)
-                .textInputAutocapitalization(.never)
-            #endif
-            .disableAutocorrection(true)
-            .padding()
         }
+        .buttonStyle(.glass)
+        .animation(.default, value: model.isPerformingLogin)
+        //            .textFieldStyle(OutlinedTextFieldStyle())
+        #if !os(macOS)
+            .textInputAutocapitalization(.never)
+        #endif
+        .disableAutocorrection(true)
+
         #if !os(macOS)
             .navigationBarTitleDisplayMode(.inline)
         #endif
@@ -170,5 +178,11 @@ struct LoginView: View {
 }
 
 #Preview(traits: .previewEnvironment) {
-    LoginView()
+    Color.clear.sheet(isPresented: .constant(true)) {
+        NavigationStack {
+            LoginView()
+
+        }
+
+    }
 }

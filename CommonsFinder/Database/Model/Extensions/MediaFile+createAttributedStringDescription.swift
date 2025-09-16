@@ -13,7 +13,9 @@ import os.log
 extension MediaFile {
     // TODO: should this be cached?
     // FIXME: maybe explicitly also run off main thread if allowed for AttributedString
-    func createAttributedStringDescription(font: Font = .body, locale: Locale) -> AttributedString? {
+    nonisolated
+        func createAttributedStringDescription(font: Font = .body, locale: Locale) -> AttributedString?
+    {
         let preferredLanguage = locale.wikiLanguageCodeIdentifier
         let languageString = fullDescriptions.first { $0.languageCode == preferredLanguage } ?? fullDescriptions.first { $0.languageCode == "en" }
         guard let localizedDescription = languageString?.string else {

@@ -18,25 +18,35 @@ struct CategoryLinkSection: View {
             {
                 Menu("Wikidata") {
                     Text(wikidataID)
-                    ShareLink("Share", item: wikidataURL)
-                    Link(destination: wikidataURL) {
-                        Label("Open in Browser", systemImage: "globe")
+
+                    ControlGroup {
+                        ShareLink("Share", item: wikidataURL)
+                        Link(destination: wikidataURL) {
+                            Label("Open in Browser", systemImage: "globe")
+                        }
+
+                        Button("Copy ID", systemImage: "document.on.document") {
+                            UIPasteboard.general.string = wikidataID
+                        }
                     }
 
-                    Button("Copy ID", systemImage: "document.on.document") {
-                        UIPasteboard.general.string = wikidataID
-                    }
                 }
             }
             if let commonsCategory = item.base.commonsCategory,
                 let url = item.base.commonsCategoryURL
             {
                 Menu("Commons") {
-                    Text("Category: \(commonsCategory)")
-                    ShareLink("Share", item: url)
-                    Link(destination: url) {
-                        Label("Open in Browser", systemImage: "globe")
+                    Text(commonsCategory)
+                    ControlGroup {
+                        Button("Copy", systemImage: "document.on.document") {
+                            UIPasteboard.general.string = commonsCategory
+                        }
+                        ShareLink("Share", item: url)
+                        Link(destination: url) {
+                            Label("Open in Browser", systemImage: "globe")
+                        }
                     }
+
                 }
             }
         }

@@ -38,8 +38,6 @@ struct ContentView: View {
                     HomeView()
                         .modifier(CommonNavigationDestination())
                 }
-
-
             }
             Tab("Map", systemImage: "binoculars", value: Navigation.TabItem.map) {
                 NavigationStack(path: $navigation.mapPath) {

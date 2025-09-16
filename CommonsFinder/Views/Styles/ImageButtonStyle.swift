@@ -10,7 +10,6 @@ import SwiftUI
 struct ImageButtonStyle: ButtonStyle {
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
-            .clipShape(.rect(cornerRadius: 15))
             .animation(.snappy) {
                 $0.scaleEffect(configuration.isPressed ? 0.95 : 1)
             }

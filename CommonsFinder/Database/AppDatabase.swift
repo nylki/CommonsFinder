@@ -347,9 +347,14 @@ extension AppDatabase {
         try dbWriter.write(imageModel.delete)
     }
 
-    /// Deletes all files.
-    func deleteAllImageModels() throws -> Int {
-        try dbWriter.write(MediaFile.deleteAll)
+    func deleteLogoutRelatedItems() throws {
+        let deletedMediaFilesCount = try dbWriter.write(MediaFile.deleteAll)
+        let deletedCategoriesCount = try dbWriter.write(Category.deleteAll)
+        let deletedInteractionCount = try dbWriter.write(ItemInteraction.deleteAll)
+
+        logger.debug("Deleted \(deletedMediaFilesCount) media files")
+        logger.debug("Deleted \(deletedCategoriesCount) categories")
+        logger.debug("Deleted \(deletedInteractionCount) interactions")
     }
 }
 
@@ -732,7 +737,7 @@ nonisolated extension AppDatabase {
         dbWriter
     }
 
-    func fetchMediaFileInfo(id: String) throws -> MediaFileInfo? {
+    nonisolated func fetchMediaFileInfo(id: String) throws -> MediaFileInfo? {
         try dbWriter.read { db in
             try MediaFile
                 .filter(id: id)

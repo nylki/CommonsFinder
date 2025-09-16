@@ -8,11 +8,11 @@
 import SwiftUI
 
 extension View {
-    func pseudoSheet<SheetContent: View>(
+    func draggablePseudoSheet<SheetContent: View>(
         isPresented: Binding<Bool>,
         @ViewBuilder content: @escaping () -> SheetContent
     ) -> some View {
-        modifier(PseudoSheet(isPresented: isPresented, sheetContent: content))
+        modifier(DraggablePseudoSheet(isPresented: isPresented, sheetContent: content))
     }
 }
 
@@ -22,47 +22,34 @@ private struct SheetDraggingTransactionKey: TransactionKey {
 }
 
 
-extension Transaction {
-    var isSheetDragging: Bool {
-        get { self[SheetDraggingTransactionKey.self] }
-        set { self[SheetDraggingTransactionKey.self] = newValue }
-    }
-}
-
-private struct PseudoSheet<SheetContent: View>: ViewModifier {
+private struct DraggablePseudoSheet<SheetContent: View>: ViewModifier {
     @Binding var isPresented: Bool
     @ViewBuilder var sheetContent: () -> SheetContent
 
     @GestureState private var verticalTranslation: Double = 0
 
     func body(content: Content) -> some View {
-        //        let dragGesture = DragGesture(minimumDistance: 5)
-        //            .updating($verticalTranslation) { value, state, transaction in
-        //                transaction.isSheetDragging = true
-        //                state = value.translation.height
-        //            }
-        //            .onEnded { value in
-        //                if value.predictedEndTranslation.height > 100 {
-        //                    isPresented = false
-        //                }
-        //            }
+        let dragGesture = DragGesture(minimumDistance: 5)
+            .updating($verticalTranslation) { value, state, transaction in
+                transaction.isSheetDragging = true
+                state = value.translation.height
+            }
+            .onEnded { value in
+                if value.predictedEndTranslation.height > 100 {
+                    isPresented = false
+                }
+            }
 
         content
             .overlay(alignment: .bottom) {
-
                 ZStack {
                     if isPresented {
                         sheetContent()
-                            .clipShape(ViewConstants.pseudoSheetShape)
-                            // NOTE: .glassEffect is glitchy in combination with image navigation
-                            .background(.thinMaterial, in: ViewConstants.pseudoSheetShape)
-                            .padding()  // Outer padding to show the view behind
                             .geometryGroup()
                             .compositingGroup()
-                            .shadow(radius: 30)
                             // This offset handles the interactive gesture/finger movement
                             .offset(y: verticalTranslation)
-                            //                            .gesture(dragGesture)
+                            .gesture(dragGesture)
                             .transaction(value: verticalTranslation) { transaction in
                                 if transaction.isSheetDragging {
                                     // During interactivity of the user, vertically dragging the sheet

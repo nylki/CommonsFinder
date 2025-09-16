@@ -39,14 +39,15 @@ struct OnboardingView: View {
                     Spacer()
                 }
             }
+            .disabled(true)
 
             Spacer()
         }
-        .buttonStyle(ExpandingButtonStyle())
+        .buttonStyle(.glass)
         .scenePadding(.horizontal)
         .navigationTitle("Wikimedia Account")
         .navigationBarTitleDisplayMode(.inline)
-        .presentationDetents([.fraction(0.4), .large])
+        .presentationDetents([.medium, .large])
     }
 }
 
