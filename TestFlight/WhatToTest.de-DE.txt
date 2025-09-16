@@ -1,4 +1,2 @@
-- Behebung eines Crashes in der Suche
-- schnelleres Laden von Ergebnissen in der Suche
-- Bildbeschreibungen können im Upload-Dialog nun (per Sprache) entfernt werden
-- In der Kategorie-Detailansicht wird nun auch die Commons-Category angezeigt, sofern sie sich vom Wikidata label unterscheidet
+- UX-Anpassungen für iOS 26
+- Uploads werden nun auch fortgeführt wenn die App in dem Hintergrund verschoben wird

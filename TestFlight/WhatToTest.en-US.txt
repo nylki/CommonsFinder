@@ -1,4 +1,2 @@
-- fixes a crash in the Search
-- fast result loading in the Search
-- image descriptions/captions can now be deleted (per language)
-- in the category detail view, the commons category is now displayed after the title, if it differs from the wikidata label
+- UX changes for iOS 26
+- uploads will now continue even when you move the app into background
