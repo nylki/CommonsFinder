@@ -44,8 +44,23 @@ import os.log
 
     private(set) var selectedCluster: H3Index?
 
-
-    var isSheetPresented = false
+    enum OverlayType {
+        case clusterSheet
+        case goToNearbyLocationPermission
+    }
+    var presentedOverlay: OverlayType?
+    var isClusterSheetPresented: Bool {
+        get {
+            presentedOverlay == .clusterSheet
+        }
+        set {
+            if newValue {
+                presentedOverlay = .clusterSheet
+            } else if presentedOverlay == .clusterSheet {
+                presentedOverlay = nil
+            }
+        }
+    }
     /// The item that is scrolled to inside the sheet when tapping on a cluster circle
     var focusedClusterItem = ScrollPosition(idType: GeoReferencable.GeoRefID.self)
 
@@ -54,6 +69,13 @@ import os.log
     private var locationTrackTrack: Task<Void, Never>?
 
     private var locationManager: CLLocationManager = .init()
+    var isLocationAuthorized: Bool {
+        switch locationManager.authorizationStatus {
+        case .authorizedAlways, .authorizedWhenInUse: true
+        case .notDetermined, .restricted, .denied: false
+        @unknown default: false
+        }
+    }
 
     /// in meter
     private let imageVisibilityThreshold: Double = 4000
@@ -74,7 +96,7 @@ import os.log
     func selectCluster(_ index: H3Index) {
         focusedClusterItem = .init()
         selectedCluster = index
-        isSheetPresented = true
+        presentedOverlay = .clusterSheet
         // TODO: fetch items in circle radius if items > max (500?)
     }
 
@@ -165,11 +187,11 @@ import os.log
     //    }
 
     /// Continuously tracks and follows tne position on the map (i.e. Navigation mode)
-    func followUserPosition() {
+    func goToUserLocation() {
         locationManager.activityType = .otherNavigation
         locationManager.distanceFilter = 7
         locationManager.requestWhenInUseAuthorization()
-        position = .userLocation(followsHeading: true, fallback: .automatic)
+        position = .userLocation(followsHeading: false, fallback: .automatic)
     }
 
     /// sets the user location once

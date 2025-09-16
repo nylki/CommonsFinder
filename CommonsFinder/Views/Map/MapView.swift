@@ -49,24 +49,34 @@ struct MapView: View {
                 MapScaleView(anchorEdge: .trailing)
                 // MapUserLocationButton doesnt ask for permissions and thus doesnt work, bug?
                 // check again maybe with iOS 19
-                // MapUserLocationButton()
+                if mapModel.isLocationAuthorized {
+                    MapUserLocationButton()
+                }
+            }
+        }
+        .overlay(alignment: .topTrailing) {
+            /// This is the replacement for the MapUserLocationButton in the mapControls
+            /// when the permission is not yet set
+            if !mapModel.isLocationAuthorized {
+                Button {
+                    mapModel.goToUserLocation()
+                } label: {
+                    Image(systemName: "location")
+                        .imageScale(.large)
+                        .frame(width: 25, height: 33)
+
+                }
+                .tint(.blue)
+                .buttonStyle(.glass)
+                .labelStyle(.iconOnly)
+                .scenePadding()
+                
             }
         }
         .overlay {
             if mapModel.isRefreshingMap {
                 ProgressView().progressViewStyle(.circular)
             }
-        }
-        .overlay(alignment: .bottomTrailing) {
-            Button(
-                "Locate Me",
-                systemImage: "location.circle.fill",
-                action: mapModel.followUserPosition
-            )
-            .labelStyle(.iconOnly)
-            .font(.largeTitle)
-            .foregroundStyle(Color.accentColor, .regularMaterial)
-            .scenePadding()
         }
         .overlay(alignment: .bottomLeading) {
             #if DEBUG
@@ -98,9 +108,7 @@ struct MapView: View {
         .navigationBarTitleDisplayMode(.inline)
         .toolbarVisibility(.hidden, for: .navigationBar)
         .toolbarVisibility(verticalSizeClass == .compact ? .hidden : .automatic, for: .tabBar)
-
-
-        .pseudoSheet(isPresented: $mapModel.isSheetPresented) {
+        .pseudoSheet(isPresented: $mapModel.isClusterSheetPresented) {
             if let cellIndex = mapModel.selectedCluster,
                 let rawMediaItems = mapModel.clusters[cellIndex]?.mediaItems,
                 let wikiItems = mapModel.clusters[cellIndex]?.wikiItems
@@ -110,13 +118,14 @@ struct MapView: View {
                     scrollPosition: $mapModel.focusedClusterItem,
                     rawCategories: wikiItems,
                     rawMediaItems: rawMediaItems,
-                    isPresented: $mapModel.isSheetPresented
+                    isPresented: $mapModel.isClusterSheetPresented
                 )
                 // the .id makes sure we don't retain state of the previous cell
                 // as this complicates things with scroll positions and selected states and is generally not desired for this custom sheet.
                 .id(cellIndex)
             }
         }
+
     }
 
 

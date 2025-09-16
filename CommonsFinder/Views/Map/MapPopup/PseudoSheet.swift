@@ -48,7 +48,7 @@ private struct PseudoSheet<SheetContent: View>: ViewModifier {
         //            }
 
         content
-            .safeAreaBar(edge: .bottom) {
+            .overlay(alignment: .bottom) {
 
                 ZStack {
                     if isPresented {
