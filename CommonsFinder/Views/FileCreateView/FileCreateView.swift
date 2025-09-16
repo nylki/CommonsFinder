@@ -168,9 +168,10 @@ struct FileCreateView: View {
     @ToolbarContentBuilder
     private var toolbarContent: some ToolbarContent {
         ToolbarItem(placement: .navigation) {
-            let saveWithoutDialog = model.draftsExistInDB
-            Button("Close", systemImage: "xmark", role: saveWithoutDialog ? .close : nil) {
-                if saveWithoutDialog {
+            Button("Close", systemImage: "xmark", role: .close) {
+                if model.editedDrafts.isEmpty {
+                    dismiss()
+                } else if model.draftsExistInDB {
                     saveChanges()
                     dismiss()
                 } else {
@@ -178,7 +179,6 @@ struct FileCreateView: View {
                 }
             }
             .labelStyle(.iconOnly)
-            .disabled(!model.canSafeDrafts)
             .confirmationDialog(
                 "Save draft for later or delete now?",
                 isPresented: $isShowingCloseConfirmationDialog,
