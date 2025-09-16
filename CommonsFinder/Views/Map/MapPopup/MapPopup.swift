@@ -104,7 +104,7 @@ struct MapPopup: View {
                         switch selectedItemType {
                         case .mediaItem:
                             mediaList
-                                .containerShape(popupShape)
+                                .containerShape(ViewConstants.pseudoSheetShape)
                                 .frame(minWidth: 100)
                                 .safeAreaPadding(.vertical, 10)
                                 .safeAreaPadding(.horizontal, 120)
@@ -112,7 +112,7 @@ struct MapPopup: View {
                                 .scrollTargetLayout()
                         case .wikiItem:
                             wikiItemsList
-                                .containerShape(popupShape)
+                                .containerShape(ViewConstants.pseudoSheetShape)
                                 .frame(minWidth: 100)
                                 .safeAreaPadding(.vertical, 10)
                                 .safeAreaPadding(.horizontal, 120)
@@ -148,25 +148,7 @@ struct MapPopup: View {
                 newValue.viewID != nil
             }
         )
-        //        .safeAreaInset(edge: .top) {
-        //            Capsule()
-        //                .frame(width: 40, height: 5)
-        //                .opacity(0.4)
-        //                .padding(.vertical, 10)
-        //        }
-        //        .containerShape(popupShape)
-        .clipShape(popupShape)
-        // NOTE: .glassEffect is glitchy in combination with image navigation
-        .background(.thinMaterial, in: popupShape)
 
-        .padding()  // Outer padding to show the view behind
-        .geometryGroup()
-        .compositingGroup()
-        .shadow(radius: 30)
-    }
-
-    private var popupShape: RoundedRectangle {
-        .rect(cornerRadius: 33)
     }
 
     @ViewBuilder

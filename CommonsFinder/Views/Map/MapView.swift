@@ -70,7 +70,7 @@ struct MapView: View {
                 .buttonStyle(.glass)
                 .labelStyle(.iconOnly)
                 .scenePadding()
-                
+
             }
         }
         .overlay {

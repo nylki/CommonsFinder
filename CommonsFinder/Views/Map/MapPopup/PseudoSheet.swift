@@ -53,8 +53,13 @@ private struct PseudoSheet<SheetContent: View>: ViewModifier {
                 ZStack {
                     if isPresented {
                         sheetContent()
+                            .clipShape(ViewConstants.pseudoSheetShape)
+                            // NOTE: .glassEffect is glitchy in combination with image navigation
+                            .background(.thinMaterial, in: ViewConstants.pseudoSheetShape)
+                            .padding()  // Outer padding to show the view behind
                             .geometryGroup()
                             .compositingGroup()
+                            .shadow(radius: 30)
                             // This offset handles the interactive gesture/finger movement
                             .offset(y: verticalTranslation)
                             //                            .gesture(dragGesture)

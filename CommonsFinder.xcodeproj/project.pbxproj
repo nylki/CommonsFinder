@@ -251,6 +251,7 @@
 				Views/Styles/OutlinedTextFieldStyle.swift,
 				Views/Styles/TagButtonStyle.swift,
 				Views/UploadsView/UploadsView.swift,
+				Views/ViewConstants.swift,
 			);
 			target = E2839FF72CA2DD910053C312 /* CommonsFinderTests */;
 		};
