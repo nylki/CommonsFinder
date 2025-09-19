@@ -5,6 +5,7 @@
 //  Created by Tom Brewe on 25.07.25.
 //
 
+import Accelerate
 import CoreLocation
 import Foundation
 import MapKit
@@ -104,6 +105,22 @@ nonisolated enum GeoVectorMath {
 
     static func meters(fromDegrees degrees: CLLocationDegrees) -> CLLocationDistance {
         degrees.degreesToRadians * earthRadius
+    }
+
+    static func calculateMeanCenter(coordinates: [CLLocationCoordinate2D]) -> CLLocationCoordinate2D {
+        var latVec: [Double] = []
+        var lonVec: [Double] = []
+
+        for coordinate in coordinates {
+            latVec.append(coordinate.latitude)
+            lonVec.append(coordinate.longitude)
+        }
+
+        let latMean = vDSP.mean(latVec)
+        let lonMean = vDSP.mean(lonVec)
+
+        return .init(latitude: latMean, longitude: lonMean)
+
     }
 }
 

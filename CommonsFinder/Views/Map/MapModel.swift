@@ -336,7 +336,7 @@ extension GeoSearchFileItem: GeoReferencable {
     var longitude: Double? { lon }
 }
 
-extension Category: GeoReferencable {
+nonisolated extension Category: GeoReferencable {
     var geoRefID: GeoRefID {
         let geoRefID = wikidataId ?? commonsCategory
         assert(geoRefID != nil)
