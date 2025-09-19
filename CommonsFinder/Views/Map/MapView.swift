@@ -5,6 +5,7 @@
 //  Created by Tom Brewe on 03.10.24.
 //
 
+import Accelerate
 import CommonsAPI
 import CoreLocation
 import H3kit
@@ -133,18 +134,27 @@ struct MapView: View {
     private var clusterLayer: some MapContent {
         ForEach(Array(mapModel.clusters.keys), id: \.self) { index in
             if let cluster = mapModel.clusters[index],
-                let centerCoordinate = try? CLLocationCoordinate2D.h3CellCenter(h3Index: index)
+                let h3CellCenter = try? CLLocationCoordinate2D.h3CellCenter(h3Index: index)
             {
+
+                let meanCenter = GeoVectorMath.calculateMeanCenter(
+                    coordinates:
+                        cluster.wikiItems.compactMap(\.coordinate) + cluster.mediaItems.compactMap(\.coordinate)
+                )
+
+
+                // FIXME: bound the meanCenter leave some padding for neighbor clusters
 
                 let isSelected = index == mapModel.selectedCluster
 
                 if isSelected {
-                    MapCircle(MKCircle(center: centerCoordinate, radius: mapModel.currentResolution.approxCircleRadius))
+                    // FIXME: render actual circle or even polygon, with convex hull or max of lat/lon of all items.
+                    MapCircle(MKCircle(center: h3CellCenter, radius: mapModel.currentResolution.approxCircleRadius))
                         .foregroundStyle(.clear)
                         .stroke(Color.accent, lineWidth: 2)
 
                 } else {
-                    Annotation("", coordinate: centerCoordinate, anchor: .center) {
+                    Annotation("", coordinate: meanCenter, anchor: .center) {
                         ClusterAnnotation(
                             mediaCount: cluster.mediaItems.count,
                             wikiItemCount: cluster.wikiItems.count,
