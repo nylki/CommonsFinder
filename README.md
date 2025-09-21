@@ -10,7 +10,7 @@ The project is **currently work-in-progress**, but several core features already
 
 - upload single images
 - save image-drafts for later uploading
-- search images
+- search images and categories (including wikidata items that are depicted in images)
 - view images and their metadata, including categories and depicted wikidata items
 - explore images and locations on a map
 - view a list of uploads of a user
