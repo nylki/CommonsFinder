@@ -42,7 +42,7 @@ I plan an implement more functionality in the next months and improve on the cur
 - [ ] fullscreen (and zoomable) view for images
 - [x] bookmark images and categories/items
 - [ ] improve map: better live-location experience, direct opening of single items on the map
-- [ ] improve search: search for categories, currently only images can be searched
+- [x] improve search: search for categories, currently only images can be searched
 - [x] when uploading, suggest nearby location categories/items to add
 - [ ] make upload more robust in some areas (eg. check if filename already exists)
 - [ ] editing of uploaded files (eg. changing the caption or adding categories)
