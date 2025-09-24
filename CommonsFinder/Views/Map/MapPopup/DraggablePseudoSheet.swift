@@ -21,7 +21,6 @@ private struct SheetDraggingTransactionKey: TransactionKey {
     static let defaultValue = false
 }
 
-
 private struct DraggablePseudoSheet<SheetContent: View>: ViewModifier {
     @Binding var isPresented: Bool
     @ViewBuilder var sheetContent: () -> SheetContent
@@ -31,7 +30,7 @@ private struct DraggablePseudoSheet<SheetContent: View>: ViewModifier {
     func body(content: Content) -> some View {
         let dragGesture = DragGesture(minimumDistance: 5)
             .updating($verticalTranslation) { value, state, transaction in
-                transaction.isSheetDragging = true
+                transaction.isDragging = true
                 state = value.translation.height
             }
             .onEnded { value in
@@ -51,7 +50,7 @@ private struct DraggablePseudoSheet<SheetContent: View>: ViewModifier {
                             .offset(y: verticalTranslation)
                             .gesture(dragGesture)
                             .transaction(value: verticalTranslation) { transaction in
-                                if transaction.isSheetDragging {
+                                if transaction.isDragging {
                                     // During interactivity of the user, vertically dragging the sheet
                                     // print("dragging")
                                     transaction.animation = .interactiveSpring()

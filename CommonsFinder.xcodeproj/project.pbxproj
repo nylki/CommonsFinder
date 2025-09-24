@@ -208,6 +208,7 @@
 				Views/FileDetailView/FileDetailView.swift,
 				Views/FileDetailView/FileGroupBoxStyle.swift,
 				Views/FileDetailView/FileLoadView.swift,
+				Views/FileDetailView/FullscreenImageView.swift,
 				Views/FileDetailView/InlineMap.swift,
 				Views/FileDetailView/TagsContainerView.swift,
 				Views/Home/DraftsSection.swift,
