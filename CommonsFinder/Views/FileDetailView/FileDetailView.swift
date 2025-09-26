@@ -51,6 +51,7 @@ struct FileDetailView: View {
 
     private let initialMediaFileInfo: MediaFileInfo
     private let navigationNamespace: Namespace.ID
+    @Namespace private var localNamespace
 
     @Environment(\.locale) private var locale
     @Environment(\.dismiss) private var dismiss
@@ -65,6 +66,8 @@ struct FileDetailView: View {
     @State private var isShowingEditSheet: MediaFileInfo?
     @State private var fullDescription: AttributedString?
     @State private var isDescriptionExpanded = false
+
+    @State private var isShowingFullscreenImage = false
 
     @State private var resolvedTags: [TagItem] = []
 
@@ -132,7 +135,7 @@ struct FileDetailView: View {
         main
             .navigationTitle(navTitle)
             .navigationBarTitleDisplayMode(.inline)
-
+            .fullscreenImageCover(mediaFileInfo: mediaFileInfo, namespace: localNamespace, isPresented: $isShowingFullscreenImage)
             .toolbar {
                 ToolbarItem {
                     Button(
@@ -438,7 +441,13 @@ struct FileDetailView: View {
         .frame(minWidth: 0, maxWidth: .infinity)
         .frame(minHeight: 0, maxHeight: .infinity)
         .modifier(FullscreenOnRotate())
+        .onTapGesture {
+            withAnimation {
+                isShowingFullscreenImage = true
+            }
+        }
     }
+
 }
 
 struct FullscreenOnRotate: ViewModifier {
