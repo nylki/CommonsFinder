@@ -20,6 +20,7 @@ struct CategoryTeaser: View {
 
         if withContextMenu {
             categoryTeaser
+                .contentShape(.contextMenuPreview, .rect(cornerRadius: 16))
                 .modifier(CategoryContextMenu(item: categoryInfo))
         } else {
             categoryTeaser
@@ -63,11 +64,9 @@ private struct CategoryTeaserBase: View {
             }
             .padding()
             .background {
-                background
-                    .scaledToFill()
-                    .contentShape(.contextMenuPreview, .rect(cornerRadius: 15))
+                background.scaledToFill()
             }
-            .clipShape(.rect(cornerRadius: 15))
+            .clipShape(.rect(cornerRadius: 16))
         }
         .frame(idealWidth: 260, idealHeight: 170)
     }

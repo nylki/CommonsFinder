@@ -83,19 +83,11 @@ struct CategoryView: View {
     var body: some View {
         ScrollView(.vertical) {
             VStack(alignment: .leading) {
-
                 VStack(alignment: .leading) {
                     Text(title)
                         .font(.largeTitle).bold()
-                    //                        .opacity(showTitleInToolbar ? 0 : 1)
-                    //                        .onScrollVisibilityChange(threshold: 0.01) { visible in
-                    //                            withAnimation {
-                    //                                showTitleInToolbar = !visible
-                    //                            }
-                    //                        }
                     subheadline
                     if let coordinate = item?.base.coordinate {
-
                         InlineMap(
                             coordinate: coordinate,
                             knownName: title,
@@ -150,7 +142,7 @@ struct CategoryView: View {
         .containerRelativeFrame(.horizontal)
         .animation(.default, value: paginationModel == nil)
         .navigationTitle(title)
-        .toolbar(removing: .title)
+        .navigationBarTitleDisplayMode(.inline)
         .toolbar {
             //            ToolbarItem(placement: .principal) {
             //                if showTitleInToolbar {
@@ -180,9 +172,8 @@ struct CategoryView: View {
                 }
                 .disabled(item == nil)
             }
-
-
         }
+        .toolbar(removing: .title)
     }
 
     @ViewBuilder private var relatedCategoriesView: some View {

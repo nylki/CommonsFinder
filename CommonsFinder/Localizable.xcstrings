@@ -4,6 +4,9 @@
     "" : {
       "shouldTranslate" : false
     },
+    "%.1fx" : {
+
+    },
     "%@" : {
       "comment" : "Title in Intent FileEntity"
     },
@@ -16,9 +19,6 @@
           }
         }
       }
-    },
-    "%lf" : {
-
     },
     "%lld categories" : {
       "localizations" : {
@@ -384,15 +384,6 @@
 
     },
     "CC BY-SA" : {
-
-    },
-    "cc-by-4.0" : {
-
-    },
-    "cc-by-sa-4.0" : {
-
-    },
-    "cc0" : {
 
     },
     "CC0" : {

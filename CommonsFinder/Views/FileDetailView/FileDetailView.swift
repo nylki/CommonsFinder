@@ -51,12 +51,11 @@ struct FileDetailView: View {
 
     private let initialMediaFileInfo: MediaFileInfo
     private let navigationNamespace: Namespace.ID
+    @Namespace private var localNamespace
 
     @Environment(\.locale) private var locale
     @Environment(\.dismiss) private var dismiss
     @Environment(Navigation.self) private var navigation
-    @Environment(SearchModel.self) private var searchModel
-    @Environment(\.isPresented) private var isPresented
     @Environment(\.appDatabase) private var appDatabase
 
     @State private var updatedMediaFileInfo: MediaFileInfo?
@@ -65,6 +64,8 @@ struct FileDetailView: View {
     @State private var isShowingEditSheet: MediaFileInfo?
     @State private var fullDescription: AttributedString?
     @State private var isDescriptionExpanded = false
+
+    @State private var isShowingFullscreenImage = false
 
     @State private var resolvedTags: [TagItem] = []
 
@@ -132,7 +133,7 @@ struct FileDetailView: View {
         main
             .navigationTitle(navTitle)
             .navigationBarTitleDisplayMode(.inline)
-
+            .fullscreenImageCover(mediaFileInfo: mediaFileInfo, namespace: localNamespace, isPresented: $isShowingFullscreenImage)
             .toolbar {
                 ToolbarItem {
                     Button(
@@ -200,30 +201,6 @@ struct FileDetailView: View {
                         self.resolvedTags = tags
                         logger.info("Resolving Tags finished.")
                     }
-
-                    //                    if let coordinate = mediaFileInfo.mediaFile.coordinate {
-
-
-                    // NOTE: the following is unreliably and will skew the lookaround view
-                    // if it is eg. just the Wikidata item of a street
-                    // potential fix: only use wikidata items if they have a street adress (P6375) or "fullAddress" and use that address as well as the label
-                    //                        let clLocation = CLLocation(
-                    //                            latitude: coordinate.latitude,
-                    //                            longitude: coordinate.longitude
-                    //                        )
-                    //                        let closestWikidataCategory = resolvedTags.map(\.baseItem)
-                    //                            .sorted(by: { a, b in
-                    //                                sortCategoriesByDistance(to: clLocation, a: a, b: b)
-                    //                            }).first
-                    //
-                    //                        let commonName = closestWikidataCategory?.label ?? closestWikidataCategory?.commonsCategory
-
-                    //                        placeDescriptor = PlaceDescriptor(
-                    //                            representations: [.coordinate(coordinate)],
-                    //                            commonName: nil
-                    //                        )
-                    //                    }
-
                 } catch {
                     logger.error("Failed to resolve MediaFile tags: \(error)")
                 }
@@ -236,69 +213,100 @@ struct FileDetailView: View {
     @ViewBuilder
     private var main: some View {
         ScrollView(.vertical) {
-            VStack(alignment: .leading) {
-                HStack {
-                    Spacer(minLength: 0)
-                    imageView
-                    Spacer(minLength: 0)
-                }
+            VStack {
+                imageView
 
-                ZStack {
-                    if let caption = mediaFileInfo.mediaFile.localizedDisplayCaption {
-                        Text(caption)
-                            .font(.title3)
-                            .bold()
-                            .multilineTextAlignment(.leading)
-                    } else {
-                        Color.clear.frame(height: 1).contentShape(.rect)
-                    }
-                }
-
-                if let fullDescription {
-                    ViewThatFits(in: .vertical) {
-                        if !isDescriptionExpanded {
-                            Text(fullDescription)
-                                .font(.body)
+                VStack(alignment: .leading) {
+                    ZStack {
+                        if let caption = mediaFileInfo.mediaFile.localizedDisplayCaption {
+                            Text(caption)
+                                .font(.title3)
+                                .bold()
                                 .multilineTextAlignment(.leading)
+                        } else {
+                            Color.clear.frame(height: 1).contentShape(.rect)
                         }
+                    }
 
-                        VStack(alignment: .leading, spacing: 2) {
-                            Text(fullDescription)
-                                .font(.body)
-                                .multilineTextAlignment(.leading)
-                                .lineLimit(isDescriptionExpanded ? 999 : 5)
-                                .padding(.bottom, 0)
-
-                            Button(isDescriptionExpanded ? "show less…" : "show more…") {
-                                isDescriptionExpanded.toggle()
+                    if let fullDescription {
+                        ViewThatFits(in: .vertical) {
+                            if !isDescriptionExpanded {
+                                Text(fullDescription)
+                                    .font(.body)
+                                    .multilineTextAlignment(.leading)
                             }
-                            .font(.caption)
+
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text(fullDescription)
+                                    .font(.body)
+                                    .multilineTextAlignment(.leading)
+                                    .lineLimit(isDescriptionExpanded ? 999 : 5)
+                                    .padding(.bottom, 0)
+
+                                Button(isDescriptionExpanded ? "show less…" : "show more…") {
+                                    isDescriptionExpanded.toggle()
+                                }
+                                .font(.caption)
+                            }
+                        }
+                        .frame(maxHeight: isDescriptionExpanded ? .infinity : 150)
+                        .animation(.easeInOut, value: isDescriptionExpanded)
+                    }
+
+                    if let inceptionDate = mediaFileInfo.mediaFile.inceptionDate {
+                        Text(inceptionDate, style: .date).font(.caption)
+                    }
+
+                    tagSection
+
+                    if let coordinate = mediaFileInfo.mediaFile.coordinate {
+                        InlineMap(coordinate: coordinate)
+                    }
+
+
+                    VStack(alignment: .leading, spacing: 20) {
+                        licenseAndCopyright
+                        uploaderAndUploadDate
+                    }
+                    .padding(.vertical)
+                }
+                .padding([.horizontal, .bottom])
+            }
+        }
+    }
+
+    @ViewBuilder
+    private var imageView: some View {
+        Button {
+            isShowingFullscreenImage = true
+        } label: {
+            LazyImage(request: mediaFileInfo.largeResizedRequest) { phase in
+                if let image = phase.image {
+                    image
+                        .resizable()
+                        .aspectRatio(contentMode: .fit)
+                } else if let thumbRequest = mediaFileInfo.thumbRequest {
+                    LazyImage(request: thumbRequest) { phase in
+                        Group {
+                            if let image = phase.image {
+                                image
+                                    .resizable()
+                                    .aspectRatio(contentMode: .fit)
+                            } else {
+                                Color.clear
+                            }
+                        }
+                        .overlay {
+                            ProgressView().progressViewStyle(.circular)
                         }
                     }
-                    .frame(maxHeight: isDescriptionExpanded ? .infinity : 150)
-                    .animation(.easeInOut, value: isDescriptionExpanded)
-
                 }
-
-                if let inceptionDate = mediaFileInfo.mediaFile.inceptionDate {
-                    Text(inceptionDate, style: .date).font(.caption)
-                }
-
-                tagSection
-
-                if let coordinate = mediaFileInfo.mediaFile.coordinate {
-                    InlineMap(coordinate: coordinate)
-                }
-
-
-                VStack(alignment: .leading, spacing: 20) {
-                    licenseAndCopyright
-                    uploaderAndUploadDate
-                }
-                .padding(.vertical)
             }
-            .padding([.horizontal, .bottom])
         }
+        .buttonStyle(ImageButtonStyle())
+        .frame(minWidth: 0, maxWidth: .infinity)
+        .frame(minHeight: 0, maxHeight: .infinity)
+        .modifier(LandscapeOrientationModifier())
     }
 
     @ViewBuilder
@@ -408,40 +416,9 @@ struct FileDetailView: View {
                 }
         }
     }
-
-    @ViewBuilder
-    private var imageView: some View {
-        LazyImage(request: mediaFileInfo.largeResizedRequest) { phase in
-            if let image = phase.image {
-                image
-                    .resizable()
-                    .aspectRatio(contentMode: .fit)
-            } else if let thumbRequest = mediaFileInfo.thumbRequest {
-                LazyImage(request: thumbRequest) { phase in
-                    Group {
-                        if let image = phase.image {
-                            image
-                                .resizable()
-                                .aspectRatio(contentMode: .fit)
-                        } else {
-                            Color.clear
-                        }
-                    }
-                    .overlay {
-                        ProgressView().progressViewStyle(.circular)
-                    }
-                }
-            }
-        }
-        .containerRelativeFrame(.horizontal)
-        .clipped()
-        .frame(minWidth: 0, maxWidth: .infinity)
-        .frame(minHeight: 0, maxHeight: .infinity)
-        .modifier(FullscreenOnRotate())
-    }
 }
 
-struct FullscreenOnRotate: ViewModifier {
+struct LandscapeOrientationModifier: ViewModifier {
     @Environment(\.verticalSizeClass) private var verticalSizeClass
 
     func body(content: Content) -> some View {
