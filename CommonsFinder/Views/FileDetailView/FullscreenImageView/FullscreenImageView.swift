@@ -17,15 +17,17 @@ struct FullscreenImageView: View {
     @Binding var isPresented: Bool
 
     @State private var isVisible = false
-    @State private var isHUDEnabled = false
+    @State private var isHudEnabled = false
 
     @GestureState private var currentClosingTranslation: CGSize?
     @State private var finalClosingTranslation: CGSize?
 
-    @State private var magnification: CGFloat = 1.0
+    @State private var zoom: CGFloat = 1.0
+    @State private var isZooming = false
     @State private var lastDoubleTap: CGPoint?
     @State private var closingThresholdTrigger = 0.0
 
+    let maxZoom = 5.0
 
     var closingTranslation: CGSize {
         currentClosingTranslation ?? finalClosingTranslation ?? .zero
@@ -34,12 +36,12 @@ struct FullscreenImageView: View {
     let closingTranslationThreshold = 100.0
 
     var userHasZoomedIn: Bool {
-        magnification != 1
+        zoom != 1
     }
 
     var closingScale: CGFloat {
-        if magnification != 1 {
-            return magnification
+        if zoom != 1 {
+            return zoom
         } else if closingTranslation != .zero {
             return 1 - closingTranslation.magnitude() / 600
         } else {
@@ -57,7 +59,7 @@ struct FullscreenImageView: View {
 
     var backgroundOpacity: Double {
         guard isVisible else { return 0 }
-        guard magnification == 1 else { return 1 }
+        guard zoom == 1 else { return 1 }
         guard let currentClosingTranslation else { return 1 }
 
         /// the threshold when the background is fully transparent (opacity = 0)
@@ -99,7 +101,7 @@ struct FullscreenImageView: View {
                 let endTranslation = value.predictedEndTranslation
 
                 if !userHasZoomedIn, endTranslation.magnitude() > closingTranslationThreshold {
-                    isHUDEnabled = false
+                    isHudEnabled = false
                     withAnimation {
                         finalClosingTranslation = endTranslation
                     }
@@ -114,17 +116,16 @@ struct FullscreenImageView: View {
         .onEnded { value in
             if let doupleTap = value.second {
                 lastDoubleTap = doupleTap.location
-                magnification = magnification == 1 ? 5 : 1
+                zoom = zoom == 1 ? maxZoom : 1
             } else {
-                isHUDEnabled.toggle()
+                isHudEnabled.toggle()
             }
         }
 
         ZStack {
             Color(white: 0, opacity: backgroundOpacity)
-            ZoomableScrollView(scale: $magnification, doubleTap: $lastDoubleTap) {
-                imageView
-                    .background(Color.clear)
+            ZoomableScrollView(zoom: $zoom, isZooming: $isZooming, doubleTap: $lastDoubleTap, maxZoom: maxZoom) {
+                imageView.background(Color.clear)
             }
             .offset(closingTranslation)
             //        .scaleEffect(closingScale)
@@ -152,14 +153,44 @@ struct FullscreenImageView: View {
             guard !isVisible else { return }
             withAnimation(.snappy) { isVisible = true }
         }
-        .animation(.easeInOut) { content in
-            let shouldRenderHUD =
-                isVisible && isHUDEnabled && closingTranslation == .zero
+        .animation(.default) { content in
+            let shouldRenderCloseButton =
+                isVisible && isHudEnabled && closingTranslation == .zero
 
-            content.overlay(alignment: .top) {
-                if shouldRenderHUD { HUD }
-            }
+            content
+                .overlay(alignment: .topTrailing) {
+                    if shouldRenderCloseButton {
+                        Button {
+                            exitFullscreen()
+                        } label: {
+                            Label("close", systemImage: "xmark")
+                                .frame(width: 26, height: 34)
+                        }
+                        .labelStyle(.iconOnly)
+                        .buttonStyle(.glass)
+                        .transition(.blurReplace)
+                        .padding(.horizontal)
+                    }
+                }
+                .overlay(alignment: .topLeading) {
+                    let shouldRenderZoomButton =
+                        isVisible && (isHudEnabled || isZooming) && closingTranslation == .zero
+
+                    if shouldRenderZoomButton {
+                        Button {
+                            zoom = zoom == 1 ? maxZoom : 1
+                        } label: {
+                            Text("\(zoom, specifier: "%.1f")x")
+                                .contentTransition(.numericText(value: zoom))
+                                .frame(height: 34)
+                        }
+                        .buttonStyle(.glass)
+                        .padding(.horizontal)
+                    }
+                }
+
         }
+
     }
 
     private var imageView: some View {
@@ -185,39 +216,6 @@ struct FullscreenImageView: View {
                 }
             }
         }
-    }
-
-    private var HUD: some View {
-        VStack {
-            HStack {
-                Button {
-                    magnification = magnification == 1 ? 5 : 1
-                } label: {
-                    Text("\(magnification, specifier: "%.1f")x")
-                        .contentTransition(.numericText(value: magnification))
-                }
-                .buttonStyle(.glass)
-                .padding()
-
-                Spacer()
-                Button {
-                    exitFullscreen()
-                } label: {
-                    Label("close", systemImage: "xmark")
-                        .frame(width: 26, height: 34)
-                }
-                .labelStyle(.iconOnly)
-                .buttonStyle(.glass)
-
-                .transition(.blurReplace)
-            }
-
-            Spacer()
-        }
-        .ignoresSafeArea()
-        .padding()
-
-
     }
 }
 

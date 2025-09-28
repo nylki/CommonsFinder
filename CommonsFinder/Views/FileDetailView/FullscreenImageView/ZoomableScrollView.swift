@@ -8,26 +8,24 @@
 import SwiftUI
 import UIKit
 
-// Kudos to this technique: https://github.com/Dimillian/IceCubesApp/blob/d22e7b93389c3407d2d95d74be99a5f3c6b75857/Packages/MediaUI/Sources/MediaUI/MediaUIZoomableContainer.swift#L30
+// Kudos to this technique (adapted) from: https://github.com/Dimillian/IceCubesApp/blob/d22e7b93389c3407d2d95d74be99a5f3c6b75857/Packages/MediaUI/Sources/MediaUI/MediaUIZoomableContainer.swift#L30
 // and also: https://stackoverflow.com/questions/74238414/is-there-an-easy-way-to-pinch-to-zoom-and-drag-any-view-in-swiftui
 
 struct ZoomableScrollView<Content: View>: UIViewRepresentable {
 
-    private var content: Content
-    @Binding private var doubleTap: CGPoint?
-    @Binding private var scale: CGFloat
+    @Binding var zoom: CGFloat
+    @Binding var isZooming: Bool
+    @Binding var doubleTap: CGPoint?
+    var maxZoom = 5.0
 
-    init(scale: Binding<CGFloat>, doubleTap: Binding<CGPoint?>, @ViewBuilder content: () -> Content) {
-        self._scale = scale
-        self._doubleTap = doubleTap
-        self.content = content()
-    }
+    @ViewBuilder var content: Content
+
 
     func makeUIView(context: Context) -> UIScrollView {
         let scrollView = UIScrollView()
         scrollView.backgroundColor = .clear
         scrollView.delegate = context.coordinator
-        scrollView.maximumZoomScale = 5
+        scrollView.maximumZoomScale = maxZoom
         scrollView.minimumZoomScale = 1
         scrollView.bouncesZoom = true
         scrollView.showsHorizontalScrollIndicator = false
@@ -48,7 +46,8 @@ struct ZoomableScrollView<Content: View>: UIViewRepresentable {
     func makeCoordinator() -> Coordinator {
         Coordinator(
             hostingController: UIHostingController(rootView: self.content),
-            scale: $scale
+            zoom: $zoom,
+            isZooming: $isZooming
         )
     }
 
@@ -56,13 +55,13 @@ struct ZoomableScrollView<Content: View>: UIViewRepresentable {
         context.coordinator.hostingController.rootView = content
 
         if uiView.zoomScale > uiView.minimumZoomScale {  // Scale out
-            uiView.setZoomScale(scale, animated: true)
+            uiView.setZoomScale(zoom, animated: true)
         } else if let doubleTap, doubleTap != .zero {  // Scale in to a specific point
             uiView.zoom(
                 to: zoomRect(for: uiView, scale: uiView.maximumZoomScale, center: doubleTap),
                 animated: true)
-        } else if uiView.zoomScale < scale {
-            uiView.setZoomScale(scale, animated: true)
+        } else if uiView.zoomScale < zoom {
+            uiView.setZoomScale(zoom, animated: true)
         }
         DispatchQueue.main.async { self.doubleTap = nil }
     }
@@ -83,23 +82,37 @@ struct ZoomableScrollView<Content: View>: UIViewRepresentable {
     class Coordinator: NSObject, UIScrollViewDelegate {
 
         var hostingController: UIHostingController<Content>
-        @Binding var scale: CGFloat
+        @Binding var zoom: CGFloat
+        @Binding var isZooming: Bool
 
-        init(hostingController: UIHostingController<Content>, scale: Binding<CGFloat>) {
+        init(hostingController: UIHostingController<Content>, zoom: Binding<CGFloat>, isZooming: Binding<Bool>) {
             self.hostingController = hostingController
-            self._scale = scale
+            self._zoom = zoom
+            self._isZooming = isZooming
         }
 
         func viewForZooming(in scrollView: UIScrollView) -> UIView? {
             return hostingController.view
         }
 
-        func scrollViewDidZoom(_ scrollView: UIScrollView) {
-            DispatchQueue.main.async { self.scale = scrollView.zoomScale }
+        func scrollViewWillBeginZooming(_ scrollView: UIScrollView, with view: UIView?) {
+            DispatchQueue.main.async {
+                self.isZooming = true
+            }
         }
 
+        func scrollViewDidZoom(_ scrollView: UIScrollView) {
+            DispatchQueue.main.async {
+                self.zoom = scrollView.zoomScale
+            }
+        }
+
+
         func scrollViewDidEndZooming(_ scrollView: UIScrollView, with view: UIView?, atScale scale: CGFloat) {
-            self.scale = scale
+            self.zoom = scale
+            DispatchQueue.main.async {
+                self.isZooming = false
+            }
         }
     }
 }
