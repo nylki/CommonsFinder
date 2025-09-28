@@ -32,6 +32,7 @@ struct CategoryContextMenu: ViewModifier {
                 }
             } preview: {
                 CategoryTeaser(categoryInfo: item, withContextMenu: false)
+                    .frame(width: 350, height: 250)
 
             }
     }

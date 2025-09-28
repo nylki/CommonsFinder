@@ -24,11 +24,14 @@ struct FullscreenImageView: View {
 
     @State private var magnification: CGFloat = 1.0
     @State private var lastDoubleTap: CGPoint?
+    @State private var closingThresholdTrigger = 0.0
 
 
     var closingTranslation: CGSize {
         currentClosingTranslation ?? finalClosingTranslation ?? .zero
     }
+
+    let closingTranslationThreshold = 100.0
 
     var userHasZoomedIn: Bool {
         magnification != 1
@@ -80,10 +83,22 @@ struct FullscreenImageView: View {
                 transaction.isDragging = true
                 state = value.translation
             }
+            .onChanged { value in
+                guard !userHasZoomedIn else { return }
+                let translation = value.translation.magnitude()
+
+                let passedOverThreshold =
+                    (translation > closingTranslationThreshold && closingThresholdTrigger < closingTranslationThreshold)
+                    || (translation < closingTranslationThreshold && closingThresholdTrigger > closingTranslationThreshold)
+
+                if passedOverThreshold {
+                    closingThresholdTrigger = translation
+                }
+            }
             .onEnded { value in
                 let endTranslation = value.predictedEndTranslation
 
-                if endTranslation.magnitude() > 100, !userHasZoomedIn {
+                if !userHasZoomedIn, endTranslation.magnitude() > closingTranslationThreshold {
                     isHUDEnabled = false
                     withAnimation {
                         finalClosingTranslation = endTranslation
@@ -115,6 +130,10 @@ struct FullscreenImageView: View {
             //        .scaleEffect(closingScale)
             .rotationEffect(closingRotation)
             .opacity(isVisible ? 1 : 0)
+            .sensoryFeedback(
+                .impact(flexibility: .soft, intensity: 0.5),
+                trigger: closingThresholdTrigger
+            )
             .highPriorityGesture(closingDragGesture, isEnabled: !userHasZoomedIn)
         }
         .gesture(combinedTapGestures)

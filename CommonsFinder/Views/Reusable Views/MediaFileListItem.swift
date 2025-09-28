@@ -23,11 +23,15 @@ struct MediaFileListItem: View {
 
     var body: some View {
         let navItem = NavigationStackItem.viewFile(mediaFileInfo, namespace: navigationNamespace)
-        NavigationLink(value: navItem) { label }
-            .buttonStyle(MediaCardButtonStyle())
-            .geometryGroup()
-            .matchedTransitionSource(id: mediaFileInfo.id, in: navigationNamespace)
-            .modifier(MediaFileContextMenu(mediaFileInfo: mediaFileInfo, namespace: navigationNamespace))
+        NavigationLink(value: navItem) {
+            label
+        }
+        .buttonStyle(MediaCardButtonStyle())
+        .modifier(MediaFileContextMenu(mediaFileInfo: mediaFileInfo, namespace: navigationNamespace))
+        .matchedTransitionSource(id: mediaFileInfo.id, in: navigationNamespace)
+        // .clipShape is redundant here as its already defined in the ButtonStyle, but apparently
+        // required, for the .zoom transition to properly settle back without hard corners
+        .clipShape(.rect(cornerRadius: 16))
     }
 
     var captionOrName: String {
