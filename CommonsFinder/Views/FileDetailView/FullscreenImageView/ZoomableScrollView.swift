@@ -96,13 +96,13 @@ struct ZoomableScrollView<Content: View>: UIViewRepresentable {
         }
 
         func scrollViewWillBeginZooming(_ scrollView: UIScrollView, with view: UIView?) {
-            DispatchQueue.main.async {
+            Task { @MainActor in
                 self.isZooming = true
             }
         }
 
         func scrollViewDidZoom(_ scrollView: UIScrollView) {
-            DispatchQueue.main.async {
+            Task { @MainActor in
                 self.zoom = scrollView.zoomScale
             }
         }
@@ -110,8 +110,16 @@ struct ZoomableScrollView<Content: View>: UIViewRepresentable {
 
         func scrollViewDidEndZooming(_ scrollView: UIScrollView, with view: UIView?, atScale scale: CGFloat) {
             self.zoom = scale
-            DispatchQueue.main.async {
-                self.isZooming = false
+            let rounded = scale.rounded()
+
+            Task { @MainActor in
+                if rounded == 1, rounded != scale, abs(rounded - scale) < 0.1 {
+                    // if we end up with a zoom factor of almost 1 but not quite,
+                    //we ease the zoom into that full number for better UX when dragging to close.
+                    scrollView.setZoomScale(rounded, animated: true)
+                } else {
+                    self.isZooming = false
+                }
             }
         }
     }

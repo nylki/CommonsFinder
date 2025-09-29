@@ -180,7 +180,8 @@ struct FullscreenImageView: View {
                         Button {
                             zoom = zoom == 1 ? maxZoom : 1
                         } label: {
-                            Text("\(zoom, specifier: "%.1f")x")
+                            let displayDecimalPlace = floor(zoom) != zoom
+                            Text("\(zoom, specifier: "%.\(displayDecimalPlace ? 1 : 0)f")\(Image(systemName: "multiply"))")
                                 .contentTransition(.numericText(value: zoom))
                                 .frame(height: 34)
                         }
@@ -222,8 +223,9 @@ struct FullscreenImageView: View {
 #Preview {
     @Previewable @State var isPresented = true
     @Previewable @Namespace var namespace
+    let image = MediaFile.makeRandomUploaded(id: "1", .verticalImage)
 
-    let mediaFileInfo = MediaFileInfo(mediaFile: .makeRandomUploaded(id: "1", .squareImage))
+    let mediaFileInfo = MediaFileInfo(mediaFile: image)
 
     VStack {
         LazyImage(request: mediaFileInfo.thumbRequest) {

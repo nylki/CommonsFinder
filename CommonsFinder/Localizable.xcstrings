@@ -4,9 +4,6 @@
     "" : {
       "shouldTranslate" : false
     },
-    "%.1fx" : {
-
-    },
     "%@" : {
       "comment" : "Title in Intent FileEntity"
     },
