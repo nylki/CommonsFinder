@@ -174,7 +174,7 @@ import os.log
             let wikidataItemInfo: [Category] = wikidataItems
             wikiItemClustering.add(wikidataItemInfo)
             mediaClustering.add(mediaItems)
-            await refreshClusters()
+            refreshClusters()
 
             lastRefreshedRegions.append(region)
             logger.info("Map: refreshing finished.")
@@ -285,7 +285,6 @@ private func fetchMediaFiles(region: MKCoordinateRegion, maxDiagonalMapLength: D
             return []
         }
 
-        print("fetched files: \(items.count)")
         return items
 
     } catch {
