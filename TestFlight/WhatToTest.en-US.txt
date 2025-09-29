@@ -1,2 +1,5 @@
 - UX changes for iOS 26
 - uploads will now continue even when you move the app into background
+- Uploads are now sorted into meta categories ("uploaded with CommonsFinder", "mobile upload")
+- Cluster buttons on the map are now easier to hit
+- Images can now be enlarged and zoomed within the detailed view
