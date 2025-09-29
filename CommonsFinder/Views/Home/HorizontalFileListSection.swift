@@ -47,8 +47,11 @@ struct HorizontalFileListSection: View {
                     NavigationLink(value: navItem) {
                         imageView(mediaFileInfo)
                     }
-                    .matchedTransitionSource(id: mediaFileInfo.id, in: namespace)
+                    .clipShape(.rect(cornerRadius: 16))
                     .contentShape([.contextMenuPreview, .interaction], .rect(cornerRadius: 16))
+                    .matchedTransitionSource(id: mediaFileInfo.id, in: namespace) {
+                        $0.clipShape(.rect(cornerRadius: 16))
+                    }
                     .modifier(MediaFileContextMenu(mediaFileInfo: mediaFileInfo, namespace: namespace))
                     .accessibilityLabel(accessibilityLabel)
                 }
@@ -73,8 +76,6 @@ struct HorizontalFileListSection: View {
             }
         }
         .frame(width: 150, height: 150)
-        .clipShape(.rect(cornerRadius: 16))
-        .geometryGroup()
     }
 }
 

@@ -17,15 +17,15 @@ extension View {
 }
 
 
-private struct SheetDraggingTransactionKey: TransactionKey {
+private struct DraggingTransactionKey: TransactionKey {
     static let defaultValue = false
 }
 
 
 extension Transaction {
-    var isSheetDragging: Bool {
-        get { self[SheetDraggingTransactionKey.self] }
-        set { self[SheetDraggingTransactionKey.self] = newValue }
+    var isDragging: Bool {
+        get { self[DraggingTransactionKey.self] }
+        set { self[DraggingTransactionKey.self] = newValue }
     }
 }
 
@@ -64,7 +64,7 @@ private struct PseudoSheet<SheetContent: View>: ViewModifier {
                             .offset(y: verticalTranslation)
                             //                            .gesture(dragGesture)
                             .transaction(value: verticalTranslation) { transaction in
-                                if transaction.isSheetDragging {
+                                if transaction.isDragging {
                                     // During interactivity of the user, vertically dragging the sheet
                                     // print("dragging")
                                     transaction.animation = .interactiveSpring()

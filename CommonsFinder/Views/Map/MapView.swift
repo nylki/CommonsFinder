@@ -79,9 +79,9 @@ struct MapView: View {
             }
         }
         .overlay(alignment: .bottomLeading) {
-            #if DEBUG
-                Text("\(mapModel.region?.diagonalMeters ?? 0.0)")
-            #endif
+            //            #if DEBUG
+            //                Text("\(mapModel.region?.diagonalMeters ?? 0.0)")
+            //            #endif
         }
         .mapStyle(
             .standard(
