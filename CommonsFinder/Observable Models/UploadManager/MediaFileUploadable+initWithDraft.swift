@@ -11,6 +11,7 @@ import CryptoKit
 import Foundation
 import UniformTypeIdentifiers
 import os.log
+import Algorithms
 
 extension MediaFileUploadable {
     init(_ draft: MediaFileDraft, appWikimediaUsername: String) throws(UploadManagerError) {
@@ -57,7 +58,7 @@ extension MediaFileUploadable {
         // The uneditable rest like exposureTime is extracted here into Wikidata Statements.
 
         var depictStatements: [WikidataClaim] = []
-        var categories: [String] = []
+        var categories: [String] = ["Uploaded with CommonsFinder", "Mobile upload"]
 
         for tag in draft.tags {
             lazy var wikidataItemID = tag.baseItem.wikidataItemID
@@ -244,12 +245,10 @@ extension MediaFileUploadable {
             wikitextDescriptions = "|description=\(formattedWikitextDescriptions)"
         }
 
-
-        let wikitextCategories =
-            categories
+        let wikitextCategories = categories
+            .uniqued()
             .map { "[[Category:\($0)]]" }
             .joined(separator: "\n")
-
 
         let testUploadString = ""
         // DEBUGGING NOTE: un-comment to mark uploads as test upload, eg when testing new upload functionality
