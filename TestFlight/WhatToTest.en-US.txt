@@ -3,3 +3,4 @@
 - Uploads are now sorted into meta categories ("uploaded with CommonsFinder", "mobile upload")
 - Cluster buttons on the map are now easier to hit
 - Images can now be enlarged and zoomed within the detailed view
+- more info when an upload failed
