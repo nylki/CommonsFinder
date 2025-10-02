@@ -22,11 +22,13 @@ final class MockUploadManager: UploadManager {
     private let uploadMockSimulation: UploadMockSimulation
 
     init(mockSimulation: UploadMockSimulation, appDatabase: AppDatabase) {
+        print("init MockUploadManager")
         self.uploadMockSimulation = mockSimulation
         super.init(appDatabase: appDatabase)
     }
 
     private func simulateRegularUpload(_ uploadable: MediaFileUploadable) {
+        print("simulateRegularUpload")
         Task {
             try? await Task.sleep(for: .milliseconds(100))
             uploadStatus[uploadable.id] = .uploading(0.01)
@@ -58,6 +60,7 @@ final class MockUploadManager: UploadManager {
     }
 
     private func simulateErrorUpload(_ uploadable: MediaFileUploadable) {
+        print("simulateErrorUpload")
         Task {
             try? await Task.sleep(for: .milliseconds(100))
             uploadStatus[uploadable.id] = .uploading(0.01)
@@ -66,11 +69,12 @@ final class MockUploadManager: UploadManager {
             uploadStatus[uploadable.id] = .uploading(0.1)
 
             try? await Task.sleep(for: .milliseconds(1000))
-            uploadStatus[uploadable.id] = .unspecifiedError("simulated uploading error")
+            uploadStatus[uploadable.id] = .uploadWarnings([.existsNormalized(normalizedName: "Some-similar-name.jpeg")])
         }
     }
 
     override func performUpload(_ uploadable: MediaFileUploadable) {
+        print("perform simulated upload")
         switch uploadMockSimulation {
         case .regular:
             simulateRegularUpload(uploadable)

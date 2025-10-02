@@ -1405,7 +1405,7 @@ LIMIT \(limit)
                     continuation.finish()
                 } catch {
                     logger.error("Failed uploading a file \(error)")
-                    continuation.yield(.unspecifiedError(error.localizedDescription))
+                    continuation.yield(.unspecifiedError(error))
                     continuation.finish()
                 }
             }

@@ -163,7 +163,7 @@ struct FullscreenImageView: View {
                         Button {
                             exitFullscreen()
                         } label: {
-                            Label("close", systemImage: "xmark")
+                            Label("Close", systemImage: "xmark")
                                 .frame(width: 26, height: 34)
                         }
                         .labelStyle(.iconOnly)

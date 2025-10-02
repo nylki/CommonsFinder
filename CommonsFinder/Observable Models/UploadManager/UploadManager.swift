@@ -15,7 +15,7 @@ import UIKit
 import UniformTypeIdentifiers
 import os.log
 
-enum UploadManagerStatus: Equatable, Sendable, CustomStringConvertible {
+enum UploadManagerStatus: Equatable, Sendable, Identifiable, CustomStringConvertible {
     case uploading(_ fractionCompleted: Double)
     case twoFactorCodeRequired
     case emailCodeRequired
@@ -23,8 +23,7 @@ enum UploadManagerStatus: Equatable, Sendable, CustomStringConvertible {
     case unstashingFile
     case published
     case uploadWarnings([FileUploadResponse.Warning])
-    case unspecifiedError(String)
-    case authenticationError(Error?)
+    case unspecifiedError(Error)
     case error(LocalizedError)
 
     var uploadProgress: Double? {
@@ -33,6 +32,10 @@ enum UploadManagerStatus: Equatable, Sendable, CustomStringConvertible {
         } else {
             nil
         }
+    }
+
+    var id: String {
+        description
     }
 
     var description: String {
@@ -51,14 +54,8 @@ enum UploadManagerStatus: Equatable, Sendable, CustomStringConvertible {
             "published"
         case .uploadWarnings(let array):
             "uploadWarnings \(array.description)"
-        case .unspecifiedError(let string):
-            "unspecifiedError \(string)"
-        case .authenticationError(let error):
-            if let error {
-                "authenticationError \(error)"
-            } else {
-                "authenticationError"
-            }
+        case .unspecifiedError(let error):
+            "unspecifiedError \(error.localizedDescription)"
         case .error(let localizedError):
             "error \(localizedError)"
         }
@@ -117,15 +114,15 @@ class UploadManager {
             performUpload(uploadable)
 
         } catch (.databaseErrorOnFinalFilenameUpdate(let error)) {
-            logger.fault("Failed to update draft in SQL DB with final filename! \(error)")
+            print("Failed to update draft in SQL DB with final filename! \(error)")
         } catch (.missingMimetypePreventedFinalFilenameGeneration) {
-            logger.warning("Failed to create uploadable because the final filename with file-ending (eg. .jpg) could be be generated because the mimeType is unknown \(nil)")
+            print("Failed to create uploadable because the final filename with file-ending (eg. .jpg) could be be generated because the mimeType is unknown")
         } catch (.fileURLMissing) {
-            logger.warning("Failed to create uploadable because fileURL field is missing \(nil)")
+            print("Failed to create uploadable because fileURL field is missing")
         } catch (.onlyDraftsCanBeUploaded) {
-            logger.warning("Failed to create uploadable because it must be a local draft. \(nil)")
+            print("Failed to create uploadable because it must be a local draft.")
         } catch (.failedToOverwriteExifLocation(let error)) {
-            logger.warning("Failed to overwrite exif location. \(error)")
+            print("Failed to overwrite exif location.")
         } catch {
             // Swift 6.0 compiler correctly produces warning: “Case will never be executed”
             // retry in XCode 16.3-4
@@ -176,7 +173,7 @@ class UploadManager {
                 } catch {
                     logger.error("failed to fetch CSRF token for upload: \(error)")
                     task.setTaskCompleted(success: false)
-                    uploadStatus[uploadable.id] = .authenticationError(error)
+                    uploadStatus[uploadable.id] = .unspecifiedError(error)
                     return
                 }
 
@@ -202,9 +199,9 @@ class UploadManager {
                     case .uploadWarnings(let warnings):
                         task.setTaskCompleted(success: false)
                         uploadStatus[uploadable.id] = .uploadWarnings(warnings)
-                    case .unspecifiedError(let errorMessage):
+                    case .unspecifiedError(let error):
                         task.setTaskCompleted(success: false)
-                        uploadStatus[uploadable.id] = .unspecifiedError(errorMessage)
+                        uploadStatus[uploadable.id] = .unspecifiedError(error)
                     }
 
                     try Task.checkCancellation()
