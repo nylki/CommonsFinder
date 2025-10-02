@@ -24,7 +24,7 @@ extension MediaFileDraft {
             id: "DEBUG-DRAFT-" + UUID().uuidString, addedDate: .now, name: Lorem.sentence, finalFilename: "", localFileName: "", mimeType: UTType.png.preferredMIMEType,
             captionWithDesc: [.init(languageCode: "en")], inceptionDate: date,
             timezone: "+01:00",
-            locationHandling: .exifLocation,
+            locationHandling: .noLocation,
             tags: [],
             license: nil,
             author: .appUser,

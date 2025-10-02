@@ -241,6 +241,7 @@
 				"Views/Reusable Views/PaginatableList/PaginatableList.swift",
 				"Views/Reusable Views/PaginatableList/PaginatableMediaList.swift",
 				"Views/Reusable Views/SearchBar.swift",
+				"Views/Reusable Views/UploadErrorDetailsSheet.swift",
 				Views/Search/Model/PaginatableSearchMediaFiles.swift,
 				Views/Search/Model/SearchModel.swift,
 				Views/Search/Model/SearchOrder.swift,
