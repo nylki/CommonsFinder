@@ -57,7 +57,11 @@ public enum ListLimit: Sendable {
     
 }
 
-public enum UploadStatus: Sendable, Equatable, Hashable {
+public enum UploadStatus: Sendable, Equatable, CustomStringConvertible {
+    public static func == (lhs: UploadStatus, rhs: UploadStatus) -> Bool {
+        lhs.description == rhs.description
+    }
+    
 
     /// Step 1: file is uploaded to the stash first (will be unstashed in Step 3.)
     case uploadingFile(Progress)
@@ -68,53 +72,115 @@ public enum UploadStatus: Sendable, Equatable, Hashable {
     // Step 4: the file is published and visible online
     case published
     case uploadWarnings([FileUploadResponse.Warning])
-    case unspecifiedError(String)
+    case unspecifiedError(Error)
     
     var isError: Bool {
         if case .uploadWarnings(_) = self { true } else { false }
     }
+    
+    
+    
+    public var description: String {
+        switch self {
+        case .uploadingFile(let progress):
+            "uploadingFile-\(progress)"
+        case .creatingWikidataClaims:
+            "creatingWikidataClaims"
+        case .unstashingFile:
+            "unstashingFile"
+        case .published:
+            "published"
+        case .uploadWarnings(let array):
+            "uploadWarnings \(array.hashValue)"
+        case .unspecifiedError(let error):
+            "unspecifiedError \(error.localizedDescription)"
+        }
+    }
+    
     
 }
 
 public struct FileUploadResponse: Decodable, Sendable {
     public let upload: Upload
 
-    public enum Warning: Error, Decodable, Equatable, Hashable, Sendable, CustomStringConvertible {
-        case exists(description: String)
-        case existsNormalized(description: String)
-        case wasDeleted(description: String)
-        case duplicate(description: String)
-        case duplicateArchive(description: String)
-        case badfilename(description: String)
+    public enum Warning: Error, Decodable, Identifiable, Equatable, Hashable, Sendable, CustomStringConvertible, CustomLocalizedStringResourceConvertible {
+        // see: https://github.com/wikimedia/mediawiki/blob/a8df7e081a4b231de43420f9e730a35d6aff0c27/includes/upload/UploadBase.php#L1349
+        // and: https://www.mediawiki.org/wiki/API:Upload
+        case exists
+        case existsNormalized(normalizedName: String)
+        case wasDeleted
+        case duplicate
+        case duplicateArchive
+        case badfilename
+        case thumb
+        case thumbName
+        case badPrefix
         
         public var description: String {
             switch self {
-            case let .exists(description): "exists: \(description)"
-            case let .existsNormalized(description): "exists-normalized: \(description)"
-            case let .wasDeleted(description): "wasDeleted: \(description)"
-            case let .duplicate(description): "duplicate: \(description)"
-            case let .duplicateArchive(description): "duplicateArchive: \(description)"
-            case let .badfilename(description): "badfilename: \(description)"
+            case .exists:
+                "exists"
+            case .existsNormalized(let normalizedName):
+                "exists-\(normalizedName)"
+            case .wasDeleted:
+                "wasDeleted"
+            case .duplicate:
+                "duplicate"
+            case .duplicateArchive:
+                "duplicateArchive"
+            case .badfilename:
+                "badfilename"
+            case .thumb:
+                "thumb"
+            case .thumbName:
+                "thumbName"
+            case .badPrefix:
+                "badPrefix"
+            }
+        }
+        
+        public var id: String {
+            description
+        }
+        
+        public var localizedStringResource: LocalizedStringResource {
+            switch self {
+            case .exists: "A file with the given name already exists."
+            case .existsNormalized(let normalizedFilename): "A file with the same (normalized) filename already exists: \(normalizedFilename)"
+            case .wasDeleted: "a file with the given name used to exist but has been deleted."
+            case .duplicate: "The uploaded file exists under a different (or the same) name."
+            case .duplicateArchive: 
+                "The uploaded file used to exist under a different (or the same) name but has been deleted. This may indicate that the file is inappropriate and should not be uploaded."
+            case .badfilename: "The file name is not acceptable, it may contain forbidden characters."
+            case .thumb: "A file with the given name already exists as a thumbnail image."
+            case .thumbName: "The file name must not contain pixel size information (like 50px- or 180px-), which is reserved for thumbnails and resized images."
+            case .badPrefix: "The file name has a camera-specific prefix that is not acceptable."
             }
         }
 
-        internal init?(withRawMediaWikiKey key: String, description: String) {
+        internal init?(withRawMediaWikiKey key: String, description: String? = nil) {
             switch key {
                 case "exists-normalized":
-                self = .exists(description: description)
+                self = .exists
                 case "exists":
-                    self = .exists(description: description)
+                    self = .exists
                 case "was-deleted":
-                    self = .wasDeleted(description: description)
+                    self = .wasDeleted
                 case "duplicate":
-                    self = .exists(description: description)
+                    self = .exists
                 case "duplicate-archive":
-                    self = .duplicateArchive(description: description)
+                    self = .duplicateArchive
                 case "badfilename":
-                    self = .badfilename(description: description)
-                default:
-                    assertionFailure("Missing MediaWiki upload warning key \(key). Add it to the initializier!")
-                    return nil
+                    self = .badfilename
+                case "thumb":
+                    self = .thumb
+                case "thumb-name":
+                    self = .thumbName
+                case "bad-prefix":
+                    self = .badPrefix
+            default:
+                assertionFailure("Missing MediaWiki upload warning key \(key). Add it to the initializier!")
+                return nil
             }
         }
     }

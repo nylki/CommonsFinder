@@ -30,7 +30,8 @@ struct PopulatedPreviewEnvironment: PreviewModifier {
         )
 
         account = AccountModel(
-            appDatabase: Self.previewDatabase
+            appDatabase: Self.previewDatabase,
+            withTestUser: .init(username: "DebugTester")
         )
 
         searchModel = SearchModel(

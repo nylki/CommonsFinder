@@ -23,12 +23,14 @@ struct DraftFileListItem: View {
 
     @State private var isShowingDeleteDialog = false
     @State private var isShowingUploadDialog = false
+    @State private var isShowingErrorSheet = false
 
 
     var body: some View {
         lazy var uploadStatus = uploadManager.uploadStatus[draft.id]
         let isUploading = uploadStatus != nil
         let canUpload = (account.activeUser != nil) && draft.canUpload && !isUploading
+        let disabled = account.activeUser == nil || uploadStatus != nil
 
         Button {
             navigationModel.editDrafts(drafts: [draft])
@@ -95,6 +97,7 @@ struct DraftFileListItem: View {
             .buttonStyle(.glass)
             .padding()
         }
+        .disabled(disabled)
         .overlay {
             uploadProgressOverlay
         }
@@ -164,7 +167,6 @@ struct DraftFileListItem: View {
     private var uploadProgressOverlay: some View {
 
         lazy var uploadStatus = uploadManager.uploadStatus[draft.id]
-        let disabled = account.activeUser == nil || uploadStatus != nil
 
         ZStack {
             if let uploadStatus {
@@ -179,57 +181,9 @@ struct DraftFileListItem: View {
                     }
                     .font(.title3)
                     .transition(.blurReplace.animation(.bouncy))
-
-                case .uploadWarnings(let warnings):
-                    Menu {
-                        ForEach(warnings, id: \.description) { warning in
-                            Label(
-                                warning.description,
-                                systemImage: "exclamationmark.triangle"
-                            )
-                        }
-                    } label: {
-                        Label("failed to upload", systemImage: "exclamationmark")
-                    }
-                    .transition(.blurReplace.animation(.bouncy))
-
-                case .unspecifiedError(let description):
-                    // Need to re-login?
-                    Label {
-                        Text(description)
-                    } icon: {
-                        Image(systemName: "exclamationmark.triangle")
-                            .contentTransition(.symbolEffect)
-                    }
-                    .font(.title3)
-                    .transition(.blurReplace.animation(.bouncy))
-                case .twoFactorCodeRequired, .emailCodeRequired:
-                    Label {
-                        Text("Verification Code required")
-                    } icon: {
-                        Image(systemName: "exclamationmark.triangle")
-                            .contentTransition(.symbolEffect)
-                    }
-                    .font(.title3)
-                    .transition(.blurReplace.animation(.bouncy))
-                case .authenticationError(let error):
-                    Label {
-                        Text("Authentication Error")
-                    } icon: {
-                        Image(systemName: "exclamationmark.triangle")
-                            .contentTransition(.symbolEffect)
-                    }
-                    .font(.title3)
-                    .transition(.blurReplace.animation(.bouncy))
-                case .error(let error):
-                    Label {
-                        Text(error.errorDescription ?? error.localizedDescription)
-                    } icon: {
-                        Image(systemName: "exclamationmark.triangle")
-                            .contentTransition(.symbolEffect)
-                    }
-                    .font(.title3)
-                    .transition(.blurReplace.animation(.bouncy))
+                case .uploadWarnings(_), .unspecifiedError(_), .twoFactorCodeRequired,
+                    .emailCodeRequired, .error(_):
+                    errorButton
                 }
             }
         }
@@ -237,34 +191,31 @@ struct DraftFileListItem: View {
         .padding()
         .background {
             switch uploadStatus {
-            case .published: Color.green.opacity(0.7)
-            case .unspecifiedError, .uploadWarnings: Color.orange.opacity(0.7)
+            case .published: Color.green.opacity(0.5)
+            case .unspecifiedError, .uploadWarnings: Color.orange.opacity(0.5)
             default: Color.clear
             }
         }
         .clipShape(.rect(cornerRadius: 16))
         .animation(.default, value: uploadStatus)
-        .disabled(disabled)
+        .uploadErrorDetailsSheet(uploadManager.uploadStatus[draft.id], isPresented: $isShowingErrorSheet)
+
     }
-}
 
 
-struct DraftActionButtonStyle: ButtonStyle {
-    func makeBody(configuration: Configuration) -> some View {
-        configuration.label
-            .font(.footnote)
-            .padding(.horizontal, 11)
-            .padding(.vertical, 9)
-            .background(Material.regular, in: Capsule())
-            .opacity(configuration.isPressed ? 0.5 : 1)
-    }
-}
+    private var errorButton: some View {
+        Button {
+            isShowingErrorSheet = true
+        } label: {
+            Label("upload failed", systemImage: "exclamationmark.triangle.fill")
+                .glassEffect()
+                .symbolRenderingMode(.hierarchical)
 
-#Preview {
-    Button(action: { print("Pressed") }) {
-        Label("Press Me", systemImage: "star")
+        }
+        .transition(.blurReplace.animation(.bouncy))
+        .foregroundStyle(.primary)
+        .buttonStyle(.glass)
     }
-    .buttonStyle(DraftActionButtonStyle())
 }
 
 

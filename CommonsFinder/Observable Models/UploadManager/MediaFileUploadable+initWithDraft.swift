@@ -5,13 +5,13 @@
 //  Created by Tom Brewe on 16.02.25.
 //
 
+import Algorithms
 import CommonsAPI
 import CoreLocation
 import CryptoKit
 import Foundation
 import UniformTypeIdentifiers
 import os.log
-import Algorithms
 
 extension MediaFileUploadable {
     init(_ draft: MediaFileDraft, appWikimediaUsername: String) throws(UploadManagerError) {
@@ -159,7 +159,7 @@ extension MediaFileUploadable {
 
                 wikitextLocation = "{{\(locationParts.joined(separator: "|"))}}"
             } else {
-                assertionFailure("Exif location was selected, but no exif location in exif data found.")
+                logger.warning("Exif location was selected, but no exif location in exif data found.")
                 wikitextLocation = ""
             }
         case .noLocation:
@@ -245,7 +245,8 @@ extension MediaFileUploadable {
             wikitextDescriptions = "|description=\(formattedWikitextDescriptions)"
         }
 
-        let wikitextCategories = categories
+        let wikitextCategories =
+            categories
             .uniqued()
             .map { "[[Category:\($0)]]" }
             .joined(separator: "\n")

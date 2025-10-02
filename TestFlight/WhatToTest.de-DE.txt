@@ -3,3 +3,4 @@
 - Uploads werden nun in Meta-Kategorien einsortiert ("uploaded with CommonsFinder", "mobile upload")
 - Cluster-Buttons auf der Karte können nun besser getroffen werden
 - Bilder können jetzt innerhalb der Detailansicht vergrößert und gezoomt werden
+- Mehr infos bei fehlgeschlagenen Uploads
