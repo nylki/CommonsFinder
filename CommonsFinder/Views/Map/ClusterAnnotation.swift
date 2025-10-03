@@ -37,42 +37,41 @@ struct ClusterAnnotation: View {
     }
 
     var body: some View {
-        Button(action: onTap) {
-            HStack(spacing: 0) {
-                if wikiItemCount != 0 {
-                    Text(numberText(count: wikiItemCount) ?? "\(wikiItemCount)")
-                        .padding(.vertical, 6)
-                        .padding(.horizontal, 8)
-                        .background(Color.purple.opacity(0.2))
-                }
 
-                if wikiItemCount != 0, mediaCount != 0 {
-                    Divider()
-                }
-
-                if mediaCount != 0 {
-                    Text(numberText(count: mediaCount) ?? "\(mediaCount)")
-                        .padding(.vertical, 6)
-                        .padding(.horizontal, 8)
-                        .background(Color.yellow.opacity(0.2))
-                }
+        HStack(spacing: 0) {
+            if wikiItemCount != 0 {
+                Text(numberText(count: wikiItemCount) ?? "\(wikiItemCount)")
+                    .padding(.vertical, 6)
+                    .padding(.horizontal, 8)
+                    .background(Color.purple.opacity(0.2))
             }
-            .font(.caption.bold())
-            .tint(.primary)
-            .background(.cardBackground)
-            .clipShape(.capsule)
-            .overlay {
-                Capsule().stroke(.background, lineWidth: isSelected ? 3 : 2)
-            }
-            .compositingGroup()
-            .shadow(color: Color.primary.opacity(0.4), radius: 2)
-            .padding()
-            //            .background(Color.red)
-            .clipShape(.capsule)
-            .animation(.default, value: isInteracting)
-            .animation(.default, value: isSelected)
 
+            if wikiItemCount != 0, mediaCount != 0 {
+                Divider()
+            }
+
+            if mediaCount != 0 {
+                Text(numberText(count: mediaCount) ?? "\(mediaCount)")
+                    .padding(.vertical, 6)
+                    .padding(.horizontal, 8)
+                    .background(Color.yellow.opacity(0.2))
+            }
         }
+        .font(.caption.bold())
+        .tint(.primary)
+        .background(.cardBackground)
+        .clipShape(.capsule)
+        .overlay {
+            Capsule().stroke(.background, lineWidth: isSelected ? 3 : 2)
+        }
+        .compositingGroup()
+        .shadow(color: Color.primary.opacity(0.4), radius: 2)
+        .padding()
+        //            .background(Color.red)
+        .clipShape(.capsule)
+        .onTapGesture(perform: onTap)
+        .animation(.default, value: isInteracting)
+        .animation(.default, value: isSelected)
 
 
     }
