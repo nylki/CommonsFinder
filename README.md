@@ -41,7 +41,7 @@ Here are some demo videos and screenshots representing the development state of 
 
 I plan an implement more functionality in the next months and improve on the current ones. The priority is on these topics next:
 
-- [ ] fullscreen (and zoomable) view for images
+- [x] fullscreen (and zoomable) view for images
 - [x] bookmark images and categories/items
 - [ ] improve map: better live-location experience, direct opening of single items on the map
 - [x] improve search: search for categories, currently only images can be searched
