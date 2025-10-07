@@ -113,7 +113,7 @@ struct LoginView: View {
                 }
             }
         }
-        .buttonStyle(.glass)
+        .glassButtonStyle()
         .animation(.default, value: model.isPerformingLogin)
         //            .textFieldStyle(OutlinedTextFieldStyle())
         #if !os(macOS)

@@ -100,7 +100,7 @@ private struct UploadErrorDetailsSheet: View {
             }
 
             ToolbarItem(placement: .cancellationAction) {
-                Button(role: .close, action: dismiss.callAsFunction)
+                Button("Close", role: .fallbackClose, action: dismiss.callAsFunction)
             }
         }
 
@@ -112,7 +112,7 @@ private struct UploadErrorDetailsSheet: View {
     Button("show error sheet") {
         isPresented = true
     }
-    .buttonStyle(.glass)
+    .glassButtonStyle()
     .uploadErrorDetailsSheet(
         .uploadWarnings([.duplicate, .badfilename]),
         isPresented: $isPresented
@@ -125,7 +125,7 @@ private struct UploadErrorDetailsSheet: View {
     Button("show error sheet") {
         isPresented = true
     }
-    .buttonStyle(.glass)
+    .glassButtonStyle()
     .uploadErrorDetailsSheet(
         .uploadWarnings([.duplicate]),
         isPresented: $isPresented
@@ -137,7 +137,7 @@ private struct UploadErrorDetailsSheet: View {
     Button("show error sheet") {
         isPresented = true
     }
-    .buttonStyle(.glass)
+    .glassButtonStyle()
     .uploadErrorDetailsSheet(
         .twoFactorCodeRequired,
         isPresented: $isPresented
@@ -149,7 +149,7 @@ private struct UploadErrorDetailsSheet: View {
     Button("show error sheet") {
         isPresented = true
     }
-    .buttonStyle(.glass)
+    .glassButtonStyle()
     .uploadErrorDetailsSheet(
         .unspecifiedError(PreviewDebugError.httpRequestDenied),
         isPresented: $isPresented

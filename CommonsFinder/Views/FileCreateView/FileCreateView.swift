@@ -84,17 +84,30 @@ struct FileCreateView: View {
 
                         Spacer()
                     }
-                    .buttonStyle(.glass)
+                    .glassButtonStyle()
                     .padding()
 
                 } else if model.editedDrafts.count == 1, let selectedID = model.selectedID, let singleSelectedModel = model.editedDrafts[selectedID] {
 
 
-                    MetadataEditForm(model: singleSelectedModel)
-                        .safeAreaBar(edge: .top) {
-                            singleImageView(model: singleSelectedModel)
+                    if #available(iOS 26.0, *) {
+                        MetadataEditForm(model: singleSelectedModel)
+                            .safeAreaBar(edge: .top) {
+                                singleImageView(model: singleSelectedModel)
+                                    .padding(.bottom)
+                            }
+                    } else {
+                        MetadataEditForm(model: singleSelectedModel)
+                            .safeAreaInset(edge: .top) {
+                                HStack {
+                                    Spacer(minLength: 0)
+                                    singleImageView(model: singleSelectedModel)
+                                    Spacer(minLength: 0)
+                                }
+                                .background(Material.ultraThin.opacity(0.92))
                                 .padding(.bottom)
-                        }
+                            }
+                    }
 
 
                 } else if model.editedDrafts.count > 1 {
@@ -168,7 +181,7 @@ struct FileCreateView: View {
     @ToolbarContentBuilder
     private var toolbarContent: some ToolbarContent {
         ToolbarItem(placement: .navigation) {
-            Button("Close", systemImage: "xmark", role: .close) {
+            Button("Close", systemImage: "xmark", role: .fallbackClose) {
                 if model.editedDrafts.isEmpty {
                     dismiss()
                 } else if model.draftsExistInDB {
@@ -184,7 +197,7 @@ struct FileCreateView: View {
                 isPresented: $isShowingCloseConfirmationDialog,
                 titleVisibility: .visible
             ) {
-                Button("Save Draft", systemImage: "square.and.arrow.down", role: .confirm) {
+                Button("Save Draft", systemImage: "square.and.arrow.down", role: .fallbackConfirm) {
                     saveChanges()
                     dismiss()
                 }
@@ -217,7 +230,7 @@ struct FileCreateView: View {
                     isShowingUploadDialog = true
                 }
                 .confirmationDialog("Start upload to Wikimedia Commons now?", isPresented: $isShowingUploadDialog, titleVisibility: .visible) {
-                    Button("Upload", systemImage: "square.and.arrow.up", role: .confirm) {
+                    Button("Upload", systemImage: "square.and.arrow.up", role: .fallbackConfirm) {
                         guard let username = account.activeUser?.username else {
                             assertionFailure()
                             return
