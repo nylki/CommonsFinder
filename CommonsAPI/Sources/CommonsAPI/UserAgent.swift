@@ -63,9 +63,9 @@ let userAgent: String = {
     
     let alamofireVersion = "Alamofire/\(AFInfo.version)"
     
-    let contactInfo = "https://github.com/nylki"
+    let contactInfo = "https://github.com/nylki/CommonsFinder"
     
-    let userAgent = "\(executable)/\(appVersion) (\(bundle); build:\(appBuild); \(osNameVersion); \(contactInfo);) \(alamofireVersion)"
+    let userAgent = "\(executable)/\(appVersion) (\(bundle); build:\(appBuild); \(osNameVersion); \(contactInfo) ) \(alamofireVersion)"
     
     return userAgent
 }()
