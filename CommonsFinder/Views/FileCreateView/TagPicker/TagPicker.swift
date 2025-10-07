@@ -287,7 +287,7 @@ private struct WrappedTagPicker: View {
                         }
                         .labelStyle(.iconOnly)
                         .buttonBorderShape(.circle)
-                        .buttonStyle(.glass)
+                        .glassButtonStyle()
                     }
                 }
 

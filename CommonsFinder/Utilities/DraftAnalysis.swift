@@ -239,17 +239,20 @@ nonisolated enum DraftAnalysis {
 
     private static func fetchCategoriesByReverseMapKitGeocoding(coordinate: CLLocationCoordinate2D) async throws -> [Category] {
         let referenceCLLocation = CLLocation(latitude: coordinate.latitude, longitude: coordinate.longitude)
-        let geocodingRequest = MKReverseGeocodingRequest(location: referenceCLLocation)
-        async let mapItemRequest = await geocodingRequest?.mapItems.first
+
+        let placemark = try await coordinate.reverseGeocodingRequest()
+        // TODO: in iOS 26 only, use MKReverseGeocodingRequest to access .address.shortAddress
+        //        async let mapItemRequest = await geocodingRequest?.mapItems.first
 
         var result: [Category] = []
 
-        if let item = try await mapItemRequest {
+        if let placemark {
 
-            if let shortAddress = item.address?.shortAddress {
+            if let thoroughfare = placemark.thoroughfare, let city = placemark.locality {
+                let shortAddress = "\(thoroughfare), \(city)"
 
                 var streetCategories: [Category] = []
-                streetCategories += try await APIUtils.searchCategories(for: "shortAddress")
+                streetCategories += try await APIUtils.searchCategories(for: shortAddress)
 
                 if streetCategories.isEmpty,
                     let street = shortAddress.components(separatedBy: .decimalDigits).first
@@ -272,7 +275,7 @@ nonisolated enum DraftAnalysis {
                     })
 
                 result.insert(contentsOf: streetCategories.prefix(1), at: 0)
-            } else if let water = item.placemark.ocean ?? item.placemark.inlandWater {
+            } else if let water = placemark.ocean ?? placemark.inlandWater {
                 let waterCategories = try await APIUtils.searchCategories(for: water)
                     .filter { category in
                         // canal, river, lake, better to do it in the query with broader water filter
@@ -291,35 +294,37 @@ nonisolated enum DraftAnalysis {
                 .museum, .musicVenue, .nationalMonument, .nationalPark, .park, .publicTransport, .rvPark, .skating, .skatePark, .spa, .soccer, .skiing, .stadium, .swimming, .surfing, .tennis,
                 .theater, .university, .volleyball, .zoo,
             ]
+
+            // TODO: use this with iOS 26 mapItem via MKReverseGeocodingRequest
             // Parks, Landmarks, beach, zoo etc.
-            if let mkPOICategory = item.pointOfInterestCategory,
-                var name = item.name,
-                relevantLargeAreaPOIs.contains(mkPOICategory)
-            {
-
-                if let dashSplit = name.split(separator: " - ").first {
-                    name = String(dashSplit)
-                }
-                let areaOfInterestCategories = try await APIUtils.searchCategories(for: name)
-                    .filterByMaxDistance(maxDistance: 3000, to: referenceCLLocation)
-                    //                    .filter(\.isSpecialOrLandmarkPlace)
-                    .sorted(by: { a, b in
-                        sortCategoriesByDistance(to: referenceCLLocation, a: a, b: b)
-                    })
-
-                if let areaOfInterest = areaOfInterestCategories.first,
-                    let coord = areaOfInterest.coordinate
-                {
-                    //Also include the best match as well as items that are (also) very close to the found item (eg. 100 meters)
-                    // This helps with landmarks that have multiple entries but are not quite the same (eg. older building vs. newer).
-                    let closeAreas = areaOfInterestCategories.filterByMaxDistance(
-                        maxDistance: 200,
-                        to: CLLocation(latitude: coord.latitude, longitude: coord.longitude)
-                    )
-                    result.insert(contentsOf: [areaOfInterest] + closeAreas, at: 0)
-                }
-
-            }
+            //            if let mkPOICategory = item.pointOfInterestCategory,
+            //                var name = item.name,
+            //                relevantLargeAreaPOIs.contains(mkPOICategory)
+            //            {
+            //
+            //                if let dashSplit = name.split(separator: " - ").first {
+            //                    name = String(dashSplit)
+            //                }
+            //                let areaOfInterestCategories = try await APIUtils.searchCategories(for: name)
+            //                    .filterByMaxDistance(maxDistance: 3000, to: referenceCLLocation)
+            //                    //                    .filter(\.isSpecialOrLandmarkPlace)
+            //                    .sorted(by: { a, b in
+            //                        sortCategoriesByDistance(to: referenceCLLocation, a: a, b: b)
+            //                    })
+            //
+            //                if let areaOfInterest = areaOfInterestCategories.first,
+            //                    let coord = areaOfInterest.coordinate
+            //                {
+            //                    //Also include the best match as well as items that are (also) very close to the found item (eg. 100 meters)
+            //                    // This helps with landmarks that have multiple entries but are not quite the same (eg. older building vs. newer).
+            //                    let closeAreas = areaOfInterestCategories.filterByMaxDistance(
+            //                        maxDistance: 200,
+            //                        to: CLLocation(latitude: coord.latitude, longitude: coord.longitude)
+            //                    )
+            //                    result.insert(contentsOf: [areaOfInterest] + closeAreas, at: 0)
+            //                }
+            //
+            //            }
         }
         return result
     }

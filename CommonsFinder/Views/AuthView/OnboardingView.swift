@@ -43,7 +43,7 @@ struct OnboardingView: View {
 
             Spacer()
         }
-        .buttonStyle(.glass)
+        .glassButtonStyle()
         .scenePadding(.horizontal)
         .navigationTitle("Wikimedia Account")
         .navigationBarTitleDisplayMode(.inline)

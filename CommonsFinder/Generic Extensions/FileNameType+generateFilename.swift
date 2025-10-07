@@ -57,15 +57,12 @@ nonisolated
 {
     var geoString: String?
     if let coordinate {
+        let location = CLLocation(
+            latitude: coordinate.latitude,
+            longitude: coordinate.longitude
+        )
         do {
-            let reverseRequest = MKReverseGeocodingRequest(
-                location: .init(
-                    latitude: coordinate.latitude,
-                    longitude: coordinate.longitude
-                ))
-            let mapItems = try await reverseRequest?.mapItems
-            geoString = mapItems?.first?.address?.shortAddress ?? mapItems?.first?.name
-
+            geoString = try await coordinate.generateHumanReadableString()
         } catch {
             logger.warning("Failed to reverse geo location")
         }

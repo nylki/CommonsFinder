@@ -80,7 +80,7 @@ struct MapPopup: View {
                 Button("Close", systemImage: "xmark") {
                     isPresented = false
                 }
-                .buttonStyle(.glass)
+                .glassButtonStyle()
                 .labelStyle(.iconOnly)
             }
             .padding([.top, .trailing])
@@ -287,25 +287,4 @@ struct PlatterContainer<Content: View>: View {
         //            .background(shape.fill(.background))
     }
     var shape: RoundedRectangle { RoundedRectangle(cornerRadius: 44) }
-}
-
-
-#Preview {
-    PlatterContainer {
-        ConcentricRectangle().fill(.red)
-        ConcentricRectangle().fill(.blue)
-
-        HStack {
-            Group {
-                ConcentricRectangle(corners: .concentric, isUniform: true).fill(.yellow)
-
-                ConcentricRectangle(corners: .concentric, isUniform: true).fill(.yellow)
-            }
-            .padding()
-        }
-        .background(ConcentricRectangle(corners: .concentric, isUniform: true).fill(.red))
-
-    }
-
-
 }

@@ -132,7 +132,15 @@ class UploadManager {
     }
 
     func performUpload(_ uploadable: MediaFileUploadable) {
+        if #available(iOS 26.0, *) {
+            performUploadWithBGTask(uploadable: uploadable)
+        } else {
+            performUploadImpl(uploadable: uploadable)
+        }
+    }
 
+    @available(iOS 26.0, *)
+    private func performUploadWithBGTask(uploadable: MediaFileUploadable) {
         let bgTaskIdentifier = "app.CommonsFinder.upload"
         let bgRequest = BGContinuedProcessingTaskRequest(
             identifier: bgTaskIdentifier,
@@ -143,70 +151,14 @@ class UploadManager {
 
         let bgTaskScheduler = BGTaskScheduler.shared
 
-        bgTaskScheduler.register(forTaskWithIdentifier: bgTaskIdentifier, using: .main) { [self] task in
-            guard let task = task as? BGContinuedProcessingTask else { return }
+        bgTaskScheduler.register(forTaskWithIdentifier: bgTaskIdentifier, using: .main) { [self] bgTask in
+            guard let bgTask = bgTask as? BGContinuedProcessingTask else { return }
 
-            task.expirationHandler = {
+            bgTask.expirationHandler = {
                 self.tasks[uploadable.id]?.cancel()
             }
 
-            tasks[uploadable.id] = Task<Void, Error> {
-                let csrfToken: String
-                do {
-                    let tokenAuthResult = try await Authentication.fetchCSRFToken()
-                    switch tokenAuthResult {
-                    case .twoFactorCodeRequired:
-                        // FIXME: actual trigger a re-login when auth failed (eg. due to 2fa, or password change)
-                        // and ability to retry/resume
-                        uploadStatus[uploadable.id] = .twoFactorCodeRequired
-                        task.setTaskCompleted(success: false)
-                        return
-                    case .emailCodeRequired:
-                        // FIXME: actual trigger a re-login when auth failed (eg. due to 2fa, or password change)
-                        // and ability to retry/resume
-                        uploadStatus[uploadable.id] = .emailCodeRequired
-                        task.setTaskCompleted(success: false)
-                        return
-                    case .tokenReceived(let token):
-                        csrfToken = token
-                    }
-                } catch {
-                    logger.error("failed to fetch CSRF token for upload: \(error)")
-                    task.setTaskCompleted(success: false)
-                    uploadStatus[uploadable.id] = .unspecifiedError(error)
-                    return
-                }
-
-                let request = await API.shared.publish(file: uploadable, csrfToken: csrfToken)
-
-                for await status in request {
-                    switch status {
-                    case .uploadingFile(let progress):
-                        uploadStatus[uploadable.id] = .uploading(progress.fractionCompleted)
-                        task.progress.completedUnitCount = progress.completedUnitCount
-                        task.updateTitle(bgRequest.title, subtitle: "\(UInt(progress.fractionCompleted * 100))% uploaded")
-                    case .creatingWikidataClaims:
-                        uploadStatus[uploadable.id] = .creatingWikidataClaims
-                        task.updateTitle(bgRequest.title, subtitle: "creating metadata...")
-                    case .unstashingFile:
-                        uploadStatus[uploadable.id] = .unstashingFile
-                        task.updateTitle(bgRequest.title, subtitle: "unstashing the file...")
-                    case .published:
-                        uploadStatus[uploadable.id] = .published
-                        task.updateTitle("upload succesfull", subtitle: "file was published")
-                        task.setTaskCompleted(success: true)
-                        didFinishUpload.send(uploadable.filename)
-                    case .uploadWarnings(let warnings):
-                        task.setTaskCompleted(success: false)
-                        uploadStatus[uploadable.id] = .uploadWarnings(warnings)
-                    case .unspecifiedError(let error):
-                        task.setTaskCompleted(success: false)
-                        uploadStatus[uploadable.id] = .unspecifiedError(error)
-                    }
-
-                    try Task.checkCancellation()
-                }
-            }
+            performUploadImpl(uploadable: uploadable, bgTask: bgTask, bgRequest: bgRequest)
         }
 
         do {
@@ -214,8 +166,94 @@ class UploadManager {
         } catch {
             print("Failed to submit request: \(error)")
         }
+    }
 
+    private func performUploadImpl(uploadable: MediaFileUploadable, bgTask: BGTask? = nil, bgRequest: BGTaskRequest? = nil) {
+        tasks[uploadable.id] = Task<Void, Error> {
+            let csrfToken: String
+            do {
+                let tokenAuthResult = try await Authentication.fetchCSRFToken()
+                switch tokenAuthResult {
+                case .twoFactorCodeRequired:
+                    // FIXME: actual trigger a re-login when auth failed (eg. due to 2fa, or password change)
+                    // and ability to retry/resume
+                    uploadStatus[uploadable.id] = .twoFactorCodeRequired
+                    bgTask?.setTaskCompleted(success: false)
+                    return
+                case .emailCodeRequired:
+                    // FIXME: actual trigger a re-login when auth failed (eg. due to 2fa, or password change)
+                    // and ability to retry/resume
+                    uploadStatus[uploadable.id] = .emailCodeRequired
+                    bgTask?.setTaskCompleted(success: false)
+                    return
+                case .tokenReceived(let token):
+                    csrfToken = token
+                }
+            } catch {
+                logger.error("failed to fetch CSRF token for upload: \(error)")
+                bgTask?.setTaskCompleted(success: false)
+                uploadStatus[uploadable.id] = .unspecifiedError(error)
+                return
+            }
 
+            let request = await API.shared.publish(file: uploadable, csrfToken: csrfToken)
+
+            for await status in request {
+                switch status {
+                case .uploadingFile(let progress):
+                    uploadStatus[uploadable.id] = .uploading(progress.fractionCompleted)
+                    if #available(iOS 26.0, *), let bgTask = bgTask as? BGContinuedProcessingTask {
+                        bgTask.updateTitle(
+                            bgTask.title,
+                            subtitle: "\(UInt(progress.fractionCompleted * 100))% uploaded"
+                        )
+                        bgTask.progress.completedUnitCount = progress.completedUnitCount
+                    }
+
+                case .creatingWikidataClaims:
+                    uploadStatus[uploadable.id] = .creatingWikidataClaims
+                    if #available(iOS 26.0, *), let bgTask = bgTask as? BGContinuedProcessingTask {
+                        bgTask.updateTitle(bgTask.title, subtitle: "creating metadata...")
+                    }
+
+                case .unstashingFile:
+                    uploadStatus[uploadable.id] = .unstashingFile
+                    if #available(iOS 26.0, *),
+                        let bgTask = bgTask as? BGContinuedProcessingTask,
+                        let bgRequest = bgRequest as? BGContinuedProcessingTaskRequest
+                    {
+                        bgTask.updateTitle(bgRequest.title, subtitle: "unstashing the file...")
+                    }
+
+                case .published:
+                    uploadStatus[uploadable.id] = .published
+                    if #available(iOS 26.0, *),
+                        let bgTask = bgTask as? BGContinuedProcessingTask
+                    {
+                        bgTask.updateTitle("upload succesfull", subtitle: "file was published")
+                        bgTask.setTaskCompleted(success: true)
+                    }
+
+                    didFinishUpload.send(uploadable.filename)
+
+                case .uploadWarnings(let warnings):
+                    if #available(iOS 26.0, *) {
+                        bgTask?.setTaskCompleted(success: false)
+                    }
+
+                    uploadStatus[uploadable.id] = .uploadWarnings(warnings)
+
+                case .unspecifiedError(let error):
+                    if #available(iOS 26.0, *) {
+                        bgTask?.setTaskCompleted(success: false)
+                    }
+
+                    uploadStatus[uploadable.id] = .unspecifiedError(error)
+                }
+
+                try Task.checkCancellation()
+            }
+        }
     }
 }
 

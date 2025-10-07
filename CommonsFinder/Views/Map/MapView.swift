@@ -67,7 +67,7 @@ struct MapView: View {
 
                 }
                 .tint(.blue)
-                .buttonStyle(.glass)
+                .glassButtonStyle()
                 .labelStyle(.iconOnly)
                 .scenePadding()
 
