@@ -1,6 +1,7 @@
-- UX changes for iOS 26
-- uploads will now continue even when you move the app into background
-- Uploads are now sorted into meta categories ("uploaded with CommonsFinder", "mobile upload")
-- Cluster buttons on the map are now easier to hit
-- Images can now be enlarged and zoomed within the detailed view
-- more info when an upload failed
+Support for iOS 18 restored!
+
+If you use iOS 18, you will now continue to enjoy the new features, fixes and adjustments of the last weeks and the coming weeks and months.
+
+However, the future focus will rather be on iOS 26, especially the uploading of files in the background is essential for batch/multi-uploads (as soon as I get to build the feature ;)
+
+That means, there may be a few rougher corners here and there with iOS 18 than in previous versions, since I can't always test all features and UI elements in parallel.
