@@ -40,7 +40,7 @@ struct LicensePicker: View {
                 }
 
                 ToolbarItem(placement: .confirmationAction) {
-                    Button("Close", systemImage: "checkmark", role: .confirm, action: dismiss.callAsFunction)
+                    Button("Close", systemImage: "checkmark", role: .fallbackConfirm, action: dismiss.callAsFunction)
                 }
             }
             .frame(minHeight: 0, maxHeight: .infinity)

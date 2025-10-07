@@ -9,15 +9,27 @@ import Foundation
 @preconcurrency import MapKit
 
 nonisolated extension CLLocationCoordinate2D {
-    func generateHumanReadableString(includeCountry: Bool = true) async throws -> String? {
-        let reverseRequest = MKReverseGeocodingRequest(
-            location: .init(
-                latitude: latitude,
-                longitude: longitude
-            ))
+    func reverseGeocodingRequest() async throws -> CLPlacemark? {
+        let location = CLLocation(
+            latitude: latitude,
+            longitude: longitude
+        )
 
-        // TODO: replace deprecated CLPlacemeark with MKMapItem? but less controll over water/ocean etc.
-        guard let placemark = try await reverseRequest?.mapItems.first?.placemark else { return nil }
+        if #available(iOS 26.0, *) {
+            let reverseRequest = MKReverseGeocodingRequest(location: location)
+            // TODO: replace deprecated CLPlacemeark with MKMapItem? but less controll over water/ocean etc.
+            return try await reverseRequest?.mapItems.first?.placemark
+        } else {
+            // Fallback on earlier versions
+            return try await CLGeocoder().reverseGeocodeLocation(location).first
+        }
+    }
+
+    func generateHumanReadableString(includeCountry: Bool = true) async throws -> String? {
+
+        guard let placemark = try await reverseGeocodingRequest() else {
+            return nil
+        }
 
         let primary: String? =
             if let water = placemark.ocean ?? placemark.inlandWater {

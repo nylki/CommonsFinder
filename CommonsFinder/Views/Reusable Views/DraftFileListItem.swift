@@ -30,7 +30,6 @@ struct DraftFileListItem: View {
         lazy var uploadStatus = uploadManager.uploadStatus[draft.id]
         let isUploading = uploadStatus != nil
         let canUpload = (account.activeUser != nil) && draft.canUpload && !isUploading
-        let disabled = account.activeUser == nil || uploadStatus != nil
 
         Button {
             navigationModel.editDrafts(drafts: [draft])
@@ -94,10 +93,10 @@ struct DraftFileListItem: View {
                     }
                 }
             }
-            .buttonStyle(.glass)
+            .glassButtonStyle()
             .padding()
         }
-        .disabled(disabled)
+        .disabled(isUploading)
         .overlay {
             uploadProgressOverlay
         }
@@ -208,13 +207,13 @@ struct DraftFileListItem: View {
             isShowingErrorSheet = true
         } label: {
             Label("upload failed", systemImage: "exclamationmark.triangle.fill")
-                .glassEffect()
+                .fallbackGlassEffect()
                 .symbolRenderingMode(.hierarchical)
 
         }
         .transition(.blurReplace.animation(.bouncy))
         .foregroundStyle(.primary)
-        .buttonStyle(.glass)
+        .glassButtonStyle()
     }
 }
 

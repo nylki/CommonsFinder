@@ -167,7 +167,7 @@ struct FullscreenImageView: View {
                                 .frame(width: 26, height: 34)
                         }
                         .labelStyle(.iconOnly)
-                        .buttonStyle(.glass)
+                        .glassButtonStyle()
                         .transition(.blurReplace)
                         .padding(.horizontal)
                     }
@@ -185,7 +185,7 @@ struct FullscreenImageView: View {
                                 .contentTransition(.numericText(value: zoom))
                                 .frame(height: 34)
                         }
-                        .buttonStyle(.glass)
+                        .glassButtonStyle()
                         .padding(.horizontal)
                     }
                 }

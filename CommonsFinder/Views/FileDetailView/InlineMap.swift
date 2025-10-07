@@ -105,13 +105,7 @@ struct InlineMap: View {
         .task {
             do {
                 if knownName == nil {
-                    let request = MKReverseGeocodingRequest(location: .init(latitude: coordinate.latitude, longitude: coordinate.longitude))
-
-
-                    if let item = try await request?.mapItems.first {
-                        geoReversedLabel = item.address?.shortAddress ?? item.name
-                    }
-
+                    geoReversedLabel = try await coordinate.generateHumanReadableString()
                 }
             } catch {
 

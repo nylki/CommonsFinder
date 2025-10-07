@@ -178,12 +178,12 @@ struct SearchView: View {
                 }
                 .padding(.horizontal, 11)
                 .padding(.vertical, 9)
-                .buttonStyle(.glass)
+                .glassButtonStyle()
                 //                .background(.regularMaterial, in: .capsule)
 
                 .font(.footnote)
                 .frame(minWidth: 100)
-                .glassEffect(in: .capsule)
+                .fallbackGlassEffect(in: .capsule)
                 .scenePadding(.horizontal)
                 .padding(.vertical, 5)
                 .padding(.top, isScrolledDown ? 5 : 0)
