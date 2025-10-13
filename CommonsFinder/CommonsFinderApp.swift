@@ -77,13 +77,16 @@ struct CommonsFinderApp: App {
                 .task {
                     postLaunchMaintennce()
 
-                    // Configure and load your tips at app launch.
+                    // Configure and load your TipKit tips at app launch.
                     do {
                         #if DEBUG
-                            try Tips.configure()
-                        //                            Tips.showAllTipsForTesting()
+
+//                            try Tips.configure()
+//                            Tips.showAllTipsForTesting()
                         #endif
+                        
                         try Tips.configure()
+
                     } catch {
                         // Handle TipKit errors
                         logger.error("Error initializing TipKit \(error.localizedDescription)")

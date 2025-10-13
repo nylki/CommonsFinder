@@ -133,7 +133,7 @@ struct FileDetailView: View {
         main
             .navigationTitle(navTitle)
             .navigationBarTitleDisplayMode(.inline)
-            .fullscreenImageCover(mediaFileInfo: mediaFileInfo, namespace: localNamespace, isPresented: $isShowingFullscreenImage)
+            .zoomableImageFullscreenCover(mediaFileInfo: mediaFileInfo, namespace: localNamespace, isPresented: $isShowingFullscreenImage)
             .toolbar {
                 ToolbarItem {
                     Button(
@@ -213,65 +213,68 @@ struct FileDetailView: View {
     @ViewBuilder
     private var main: some View {
         ScrollView(.vertical) {
-            VStack {
-                imageView
-
-                VStack(alignment: .leading) {
-                    ZStack {
-                        if let caption = mediaFileInfo.mediaFile.localizedDisplayCaption {
-                            Text(caption)
-                                .font(.title3)
-                                .bold()
-                                .multilineTextAlignment(.leading)
-                        } else {
-                            Color.clear.frame(height: 1).contentShape(.rect)
-                        }
-                    }
-
-                    if let fullDescription {
-                        ViewThatFits(in: .vertical) {
-                            if !isDescriptionExpanded {
-                                Text(fullDescription)
-                                    .font(.body)
-                                    .multilineTextAlignment(.leading)
-                            }
-
-                            VStack(alignment: .leading, spacing: 2) {
-                                Text(fullDescription)
-                                    .font(.body)
-                                    .multilineTextAlignment(.leading)
-                                    .lineLimit(isDescriptionExpanded ? 999 : 5)
-                                    .padding(.bottom, 0)
-
-                                Button(isDescriptionExpanded ? "show less…" : "show more…") {
-                                    isDescriptionExpanded.toggle()
-                                }
-                                .font(.caption)
-                            }
-                        }
-                        .frame(maxHeight: isDescriptionExpanded ? .infinity : 150)
-                        .animation(.easeInOut, value: isDescriptionExpanded)
-                    }
-
-                    if let inceptionDate = mediaFileInfo.mediaFile.inceptionDate {
-                        Text(inceptionDate, style: .date).font(.caption)
-                    }
-
-                    tagSection
-
-                    if let coordinate = mediaFileInfo.mediaFile.coordinate {
-                        InlineMap(coordinate: coordinate)
-                    }
-
-
-                    VStack(alignment: .leading, spacing: 20) {
-                        licenseAndCopyright
-                        uploaderAndUploadDate
-                    }
-                    .padding(.vertical)
-                }
-                .padding([.horizontal, .bottom])
+            VStack(alignment: .leading) {
+                imageView.frame(minWidth: 0, maxWidth: .infinity)
+                detailsView
+                    .padding(.horizontal)
             }
+        }
+    }
+
+    private var detailsView: some View {
+        VStack(alignment: .leading) {
+            VStack(alignment: .leading) {
+                if let caption = mediaFileInfo.mediaFile.localizedDisplayCaption {
+                    Text(caption)
+                        .font(.title3)
+                        .bold()
+                        .multilineTextAlignment(.leading)
+                } else {
+                    Color.clear.frame(height: 1).contentShape(.rect)
+                }
+            }
+
+            if let fullDescription {
+                ViewThatFits(in: .vertical) {
+                    if !isDescriptionExpanded {
+                        Text(fullDescription)
+                            .font(.body)
+                            .multilineTextAlignment(.leading)
+                    }
+
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text(fullDescription)
+                            .font(.body)
+                            .multilineTextAlignment(.leading)
+                            .lineLimit(isDescriptionExpanded ? 999 : 5)
+                            .padding(.bottom, 0)
+
+                        Button(isDescriptionExpanded ? "show less…" : "show more…") {
+                            isDescriptionExpanded.toggle()
+                        }
+                        .font(.caption)
+                    }
+                }
+                .frame(maxHeight: isDescriptionExpanded ? .infinity : 150)
+                .animation(.easeInOut, value: isDescriptionExpanded)
+            }
+
+            if let inceptionDate = mediaFileInfo.mediaFile.inceptionDate {
+                Text(inceptionDate, style: .date).font(.caption)
+            }
+
+            tagSection
+
+            if let coordinate = mediaFileInfo.mediaFile.coordinate {
+                InlineMap(coordinate: coordinate)
+            }
+
+
+            VStack(alignment: .leading, spacing: 20) {
+                licenseAndCopyright
+                uploaderAndUploadDate
+            }
+            .padding(.vertical)
         }
     }
 

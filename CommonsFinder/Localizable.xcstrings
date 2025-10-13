@@ -60,6 +60,16 @@
         }
       }
     },
+    "%lld×%lld pixel" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$lld×%2$lld pixel"
+          }
+        }
+      }
+    },
     "•" : {
 
     },
@@ -845,6 +855,22 @@
         }
       }
     },
+    "load original image" : {
+
+    },
+    "Load original image" : {
+
+    },
+    "Load original image %@ with a size of %@?" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Load original image %1$@ with a size of %2$@?"
+          }
+        }
+      }
+    },
     "Loading captcha..." : {
       "localizations" : {
         "de" : {
@@ -1168,6 +1194,9 @@
         }
       }
     },
+    "original" : {
+
+    },
     "Other License" : {
       "localizations" : {
         "de" : {
@@ -1400,6 +1429,9 @@
         }
       }
     },
+    "resized" : {
+
+    },
     "Restore EXIF-Date" : {
       "localizations" : {
         "de" : {
@@ -1533,6 +1565,9 @@
         }
       }
     },
+    "slow or expensive internet connection" : {
+
+    },
     "some rights reserved – attribution and sharing alike required" : {
       "localizations" : {
         "de" : {
@@ -1615,6 +1650,9 @@
         }
       }
     },
+    "The original full-sized image was not loaded automatically. Turn on Wifi or explicitly load the full image here." : {
+
+    },
     "The Password is invalid" : {
       "localizations" : {
         "de" : {
@@ -1677,6 +1715,9 @@
           }
         }
       }
+    },
+    "thumbnail" : {
+
     },
     "Two-factor token or recovery code" : {
       "localizations" : {

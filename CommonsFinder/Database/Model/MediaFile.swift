@@ -43,6 +43,9 @@ nonisolated
     var width: Int?
     var height: Int?
 
+    /// filesize (byte)
+    var size: Int?
+
     /// short structured data caption
     var captions: [LanguageString]
 
@@ -70,6 +73,7 @@ nonisolated
         thumbURL: URL? = nil,
         width: Int? = nil,
         height: Int? = nil,
+        size: Int? = nil,
         uploadDate: Date,
         caption: [LanguageString],
         fullDescription: [LanguageString],
@@ -105,6 +109,7 @@ nonisolated
         self.thumbURL = thumbURL
         self.width = width
         self.height = height
+        self.size = size
         self.uploadDate = uploadDate
         self.captions = caption
         self.fullDescriptions = fullDescription
@@ -134,6 +139,7 @@ nonisolated extension MediaFile: Codable, FetchableRecord, MutablePersistableRec
         static let thumbURL = Column(CodingKeys.thumbURL)
         static let width = Column(CodingKeys.width)
         static let height = Column(CodingKeys.height)
+        static let size = Column(CodingKeys.size)
         static let captions = Column(CodingKeys.captions)
         static let fullDescriptions = Column(CodingKeys.fullDescriptions)
         static let uploadDate = Column(CodingKeys.uploadDate)

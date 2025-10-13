@@ -177,6 +177,7 @@
 				Utilities/GeoPlacemarkCache.swift,
 				Utilities/GeoVectorMath.swift,
 				Utilities/Logging.swift,
+				Utilities/MediaDownloading.swift,
 				Utilities/ValidationUtils.swift,
 				Views/AuthView/AuthView.swift,
 				Views/AuthView/LoginView.swift,
@@ -210,7 +211,7 @@
 				Views/FileDetailView/FileDetailView.swift,
 				Views/FileDetailView/FileGroupBoxStyle.swift,
 				Views/FileDetailView/FileLoadView.swift,
-				Views/FileDetailView/FullscreenImageView/FullscreenImageView.swift,
+				Views/FileDetailView/FullscreenImageView/ZoomableImageView.swift,
 				Views/FileDetailView/InlineMap.swift,
 				Views/FileDetailView/TagsContainerView.swift,
 				Views/Home/DraftsSection.swift,
@@ -238,6 +239,7 @@
 				"Views/Reusable Views/CameraImagePicker.swift",
 				"Views/Reusable Views/CategoryTeaser.swift",
 				"Views/Reusable Views/DraftFileListItem.swift",
+				"Views/Reusable Views/MediaDowloadSheet.swift",
 				"Views/Reusable Views/MediaFileListItem.swift",
 				"Views/Reusable Views/PaginatableList/PaginatableCategoryList.swift",
 				"Views/Reusable Views/PaginatableList/PaginatableList.swift",
@@ -819,6 +821,7 @@
 				INFOPLIST_KEY_NSCameraUsageDescription = "Camera access is needed to take new photos to upload from within the app";
 				INFOPLIST_KEY_NSLocalNetworkUsageDescription = "Local network usage is enabled and required only for development purposes when building the app locally with XCode. It should not be prompted in TestFlight or AppStore releases.";
 				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "Location is used to position the user on the map and show nearby points-of-interests and other images by querying the wikimedia servers with a given radius around the location. The location is also used when taking a photo in-app to add useful GPS metadata to the draft.";
+				INFOPLIST_KEY_NSPhotoLibraryAddUsageDescription = "Users can download images to their Photos Library";
 				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphoneos*]" = YES;
 				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphonesimulator*]" = YES;
 				"INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents[sdk=iphoneos*]" = YES;
@@ -877,6 +880,7 @@
 				INFOPLIST_KEY_NSCameraUsageDescription = "Camera access is needed to take new photos to upload from within the app";
 				INFOPLIST_KEY_NSLocalNetworkUsageDescription = "Local network usage is enabled and required only for development purposes when building the app locally with XCode. It should not be prompted in TestFlight or AppStore releases.";
 				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "Location is used to position the user on the map and show nearby points-of-interests and other images by querying the wikimedia servers with a given radius around the location. The location is also used when taking a photo in-app to add useful GPS metadata to the draft.";
+				INFOPLIST_KEY_NSPhotoLibraryAddUsageDescription = "Users can download images to their Photos Library";
 				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphoneos*]" = YES;
 				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphonesimulator*]" = YES;
 				"INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents[sdk=iphoneos*]" = YES;
