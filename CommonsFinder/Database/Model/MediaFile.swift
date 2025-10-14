@@ -267,9 +267,9 @@ nonisolated extension MediaFile {
         let title = url.pathComponents[5]
         let hashAndTitle = "\(hashA)/\(hashB)/\(title)"
 
-        guard let thumbURL = URL(string: "https://upload.wikimedia.org/wikipedia/\(base)/thumb/\(hashAndTitle)/\(maxWidth)px-\(title)") else {
+        guard let resizedURL = URL(string: "https://upload.wikimedia.org/wikipedia/\(base)/thumb/\(hashAndTitle)/\(maxWidth)px-\(title)") else {
             return nil
         }
-        return thumbURL
+        return resizedURL
     }
 }

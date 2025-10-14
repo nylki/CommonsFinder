@@ -255,40 +255,22 @@ struct ZoomableImageView: View {
             guard !isVisible else { return }
             withAnimation(.snappy) { isVisible = true }
         }
-        .task {
-            guard !loadedImage.isOriginal else { return }
-            let networkMonitor = NWPathMonitor()
-            if networkMonitor.currentPath.isConstrained || networkMonitor.currentPath.isExpensive {
-                canShowBottomHUD = true
-            } else {
-                Task {
-                    try? await Task.sleep(for: .milliseconds(1000))
-                    canShowBottomHUD = true
-                }
+        .task(priority: .high) {
+            // If the original is cached, take the shortcut and directly show that instead of loading any fallback image
+            // see: // see: https://kean-docs.github.io/nuke/documentation/nuke/accessing-caches
+            do {
+                let cachedImageResponse = try await ImagePipeline.shared
+                    .imageTask(with: mediaFileInfo.originalImageRequest(cachePolicy: .returnCacheDataDontLoad))
+                    .response
+                
+                loadedImage = .original(cachedImageResponse.image)
+                logger.info("I: Loaded cached original")
+                return
+            } catch {
+                logger.log("I: Could not load cached original")
             }
 
-            for await path in networkMonitor {
-                let restricted = path.isConstrained || path.isExpensive
-                if path.status == .unsatisfied {
-                    networkStatus = .unsatisfied
-                } else {
-                    networkStatus = restricted ? .restricted : .ok
-                }
-
-                if !restricted, path.status != .unsatisfied {
-                    do {
-                        try await loadFullImage()
-                        // Once we have loaded the full image we are not interested in network updates anymore
-                        // so we simply return.
-                        networkMonitor.cancel()
-                        return
-                    } catch {
-                        logger.error("Failed to load full image \(error)")
-                    }
-                }
-            }
-        }
-        .task {
+            
             // Load both fallback images in parallel (usually already in cache)
             var resizedTask: Task<Void, Never>?
             var thumbTask: Task<Void, Never>?
@@ -321,7 +303,45 @@ struct ZoomableImageView: View {
 
 
         }
-        .task(id: explicitlyLoadFullImage) {
+        .task(priority: .medium) {
+            guard !loadedImage.isOriginal else { return }
+            let networkMonitor = NWPathMonitor()
+            if networkMonitor.currentPath.isConstrained || networkMonitor.currentPath.isExpensive {
+                canShowBottomHUD = true
+            } else {
+                Task {
+                    try? await Task.sleep(for: .milliseconds(1000))
+                    canShowBottomHUD = true
+                }
+            }
+
+            for await path in networkMonitor {
+                let restricted = path.isConstrained || path.isExpensive
+                if path.status == .unsatisfied {
+                    networkStatus = .unsatisfied
+                } else {
+                    networkStatus = restricted ? .restricted : .ok
+                }
+                guard !loadedImage.isOriginal else {
+                    networkMonitor.cancel()
+                    return
+                }
+
+                if !restricted, path.status != .unsatisfied {
+                    do {
+                        try await loadFullImage()
+                        // Once we have loaded the full image we are not interested in network updates anymore
+                        // so we simply return.
+                        networkMonitor.cancel()
+                        return
+                    } catch {
+                        logger.error("Failed to load full image \(error)")
+                    }
+                }
+            }
+        }
+
+        .task(id: explicitlyLoadFullImage, priority: .userInitiated) {
             if explicitlyLoadFullImage, originalImageTask == nil {
                 do {
                     try await loadFullImage()
@@ -374,13 +394,17 @@ struct ZoomableImageView: View {
                 h < ViewConstants.maxFullscreenLengthPx
             { true } else { false }
 
-        if canUseOriginalFile {
-            originalImageTask = ImagePipeline.shared.imageTask(with: mediaFileInfo.originalImageRequest)
+        let request: ImageRequest? = if canUseOriginalFile {
+            mediaFileInfo.originalImageRequest()
         } else if let request = mediaFileInfo.maxResizedRequest {
-            originalImageTask = ImagePipeline.shared.imageTask(with: request)
+            request
+        } else {
+            nil
         }
+        
+        guard let request else { return }
 
-        guard let originalImageTask else { return }
+        let originalImageTask = ImagePipeline.shared.imageTask(with: request)
 
         for await progress in originalImageTask.progress {
             guard !Task.isCancelled else {
@@ -394,8 +418,8 @@ struct ZoomableImageView: View {
             }
         }
 
-        if let image = try? await originalImageTask.image {
-            self.loadedImage = .original(image)
+        if let imageResponse = try? await originalImageTask.response {
+            self.loadedImage = .original(imageResponse.image)
         }
         canShowBottomHUD = true
 

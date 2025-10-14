@@ -14,7 +14,7 @@ import os.log
 
 extension MediaFileInfo {
     @concurrent func saveToPhotos() async throws {
-        let data = try await ImagePipeline.shared.data(for: originalImageRequest).0
+        let data = try await ImagePipeline.shared.data(for: originalImageRequest()).0
 
         let contentType: UTType? =
             if let mimeType = mediaFile.mimeType {
