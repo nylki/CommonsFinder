@@ -6,7 +6,6 @@
 //
 
 import SwiftUI
-import UIKit
 
 // Kudos to this technique (adapted) from: https://github.com/Dimillian/IceCubesApp/blob/d22e7b93389c3407d2d95d74be99a5f3c6b75857/Packages/MediaUI/Sources/MediaUI/MediaUIZoomableContainer.swift#L30
 // and also: https://stackoverflow.com/questions/74238414/is-there-an-easy-way-to-pinch-to-zoom-and-drag-any-view-in-swiftui
@@ -16,7 +15,7 @@ struct ZoomableScrollView<Content: View>: UIViewRepresentable {
     @Binding var zoom: CGFloat
     @Binding var isZooming: Bool
     @Binding var doubleTap: CGPoint?
-    var maxZoom = 5.0
+    let maxZoom: Double
 
     @ViewBuilder var content: Content
 
