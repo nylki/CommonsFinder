@@ -141,7 +141,7 @@ struct ZoomHUDButtonStyle: ButtonStyle {
 
         ResolutionButton(
             mediaFileInfo: .makeRandomUploaded(id: "1", .squareImage),
-            loadedImage: .resized(.debugDraft),
+            loadedImage: .resized(.zeroSymbol),
             networkStatus: .restricted,
             originalImageLoadedPercent: nil
         ) {
@@ -150,7 +150,7 @@ struct ZoomHUDButtonStyle: ButtonStyle {
 
         ResolutionButton(
             mediaFileInfo: .makeRandomUploaded(id: "1", .squareImage),
-            loadedImage: .resized(.debugDraft),
+            loadedImage: .resized(.zeroSymbol),
             networkStatus: .restricted,
             originalImageLoadedPercent: 30
         ) {
@@ -160,7 +160,7 @@ struct ZoomHUDButtonStyle: ButtonStyle {
 
         ResolutionButton(
             mediaFileInfo: .makeRandomUploaded(id: "1", .squareImage),
-            loadedImage: .resized(.debugDraft),
+            loadedImage: .resized(.zeroSymbol),
             networkStatus: .restricted,
             originalImageLoadedPercent: 74
         ) {
@@ -169,7 +169,7 @@ struct ZoomHUDButtonStyle: ButtonStyle {
 
         ResolutionButton(
             mediaFileInfo: .makeRandomUploaded(id: "1", .squareImage),
-            loadedImage: .original(.debugDraft),
+            loadedImage: .original(.zeroSymbol),
             networkStatus: .restricted,
             originalImageLoadedPercent: nil
         ) {

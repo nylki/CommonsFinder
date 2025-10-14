@@ -11,7 +11,7 @@ import Nuke
 
 extension MediaFileInfo {
     private static var imageImageTypesIgnoredForDirectRenderingInThumbnails = ["svg", "video", "mp4", "pdf", "ogv", "mpeg"]
-    
+
     private var isMimeTypeCompatibleForDirectRenderingInThumbnails: Bool {
         if let mimeType = mediaFile.mimeType {
             Self.imageImageTypesIgnoredForDirectRenderingInThumbnails.allSatisfy {
@@ -22,19 +22,20 @@ extension MediaFileInfo {
         }
 
     }
-    
+
     var thumbRequest: ImageRequest? {
         let max = 640
-        
+
         // shortcut to original image if that is smaller or same size as the thumb
         // this improves cachability, eg. when requesting the original in a zoom viewer.
         if let width = mediaFile.width, let height = mediaFile.height,
-           width <= max,
-           height <= max,
-           isMimeTypeCompatibleForDirectRenderingInThumbnails {
+            width <= max,
+            height <= max,
+            isMimeTypeCompatibleForDirectRenderingInThumbnails
+        {
             return originalImageRequest()
         }
-        
+
         if let thumbURL = mediaFile.thumbURL {
             let imageResize = ImageProcessors.Resize(size: .init(width: max, height: max))
             let urlRequest = URLRequest(url: thumbURL, cachePolicy: .returnCacheDataElseLoad)
@@ -47,16 +48,17 @@ extension MediaFileInfo {
     // are huge (eg. tif + large dimensions), but we don't need that for an un-zoomed image
     var largeResizedRequest: ImageRequest? {
         let max = 1280
-        
+
         // shortcut to original image if that is smaller or same size as the thumb
         // this improves cachability, eg. when requesting the original in a zoom viewer.
         if let width = mediaFile.width, let height = mediaFile.height,
-           width <= max,
-           height <= max,
-           isMimeTypeCompatibleForDirectRenderingInThumbnails {
+            width <= max,
+            height <= max,
+            isMimeTypeCompatibleForDirectRenderingInThumbnails
+        {
             return originalImageRequest()
         }
-        
+
         let w = min(max, mediaFile.width ?? max)
         if let resizedURL = try? mediaFile.url.resizedCommonsImageURL(maxWidth: w) {
             let imageResize = ImageProcessors.Resize(size: .init(width: w, height: w))

@@ -262,7 +262,7 @@ struct ZoomableImageView: View {
                 let cachedImageResponse = try await ImagePipeline.shared
                     .imageTask(with: mediaFileInfo.originalImageRequest(cachePolicy: .returnCacheDataDontLoad))
                     .response
-                
+
                 loadedImage = .original(cachedImageResponse.image)
                 logger.info("I: Loaded cached original")
                 return
@@ -270,7 +270,7 @@ struct ZoomableImageView: View {
                 logger.log("I: Could not load cached original")
             }
 
-            
+
             // Load both fallback images in parallel (usually already in cache)
             var resizedTask: Task<Void, Never>?
             var thumbTask: Task<Void, Never>?
@@ -394,14 +394,15 @@ struct ZoomableImageView: View {
                 h < ViewConstants.maxFullscreenLengthPx
             { true } else { false }
 
-        let request: ImageRequest? = if canUseOriginalFile {
-            mediaFileInfo.originalImageRequest()
-        } else if let request = mediaFileInfo.maxResizedRequest {
-            request
-        } else {
-            nil
-        }
-        
+        let request: ImageRequest? =
+            if canUseOriginalFile {
+                mediaFileInfo.originalImageRequest()
+            } else if let request = mediaFileInfo.maxResizedRequest {
+                request
+            } else {
+                nil
+            }
+
         guard let request else { return }
 
         let originalImageTask = ImagePipeline.shared.imageTask(with: request)

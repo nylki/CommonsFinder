@@ -98,11 +98,11 @@ struct CommonsFinderApp: App {
                         ImagePipeline.Configuration.isSignpostLoggingEnabled = true
                         (ImagePipeline.shared.configuration.dataLoader as? DataLoader)?.delegate = URLSessionProxyDelegate()
                     #endif
-                    
-                    ImageCache.shared.costLimit = 1024 * 1024 * 1000 // 1000 MB
-//                    ImageCache.shared.countLimit = 100
-                    ImageCache.shared.ttl = 60 * 10 // Invalidate images in memory cache after 10 minutes
-                    DataLoader.sharedUrlCache.diskCapacity = 1024 * 1024 * 500 // 500 MB
+
+                    ImageCache.shared.costLimit = 1024 * 1024 * 1000  // 1000 MB
+                    //                    ImageCache.shared.countLimit = 100
+                    ImageCache.shared.ttl = 60 * 10  // Invalidate images in memory cache after 10 minutes
+                    DataLoader.sharedUrlCache.diskCapacity = 1024 * 1024 * 500  // 500 MB
                     DataLoader.sharedUrlCache.memoryCapacity = 0
                 }
         }
