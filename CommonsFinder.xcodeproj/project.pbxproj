@@ -238,6 +238,7 @@
 				Views/RecentlyViewed/RecentlyViewedMediaView.swift,
 				"Views/Reusable Views/CameraImagePicker.swift",
 				"Views/Reusable Views/CategoryTeaser.swift",
+				"Views/Reusable Views/CircularProgressShape.swift",
 				"Views/Reusable Views/DraftFileListItem.swift",
 				"Views/Reusable Views/MediaDowloadSheet.swift",
 				"Views/Reusable Views/MediaFileListItem.swift",

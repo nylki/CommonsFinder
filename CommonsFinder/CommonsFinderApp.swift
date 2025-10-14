@@ -81,10 +81,10 @@ struct CommonsFinderApp: App {
                     do {
                         #if DEBUG
 
-//                            try Tips.configure()
-//                            Tips.showAllTipsForTesting()
+                            //                            try Tips.configure()
+                            //                            Tips.showAllTipsForTesting()
                         #endif
-                        
+
                         try Tips.configure()
 
                     } catch {

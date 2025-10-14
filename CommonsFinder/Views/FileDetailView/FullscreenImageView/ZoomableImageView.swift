@@ -21,7 +21,7 @@ enum NetworkStatus {
     case ok
 }
 
-private enum LoadedImageType: Equatable, Hashable {
+enum LoadedImageType: Equatable, Hashable {
     case none
     case thumbnail(PlatformImage)
     case resized(PlatformImage)
@@ -70,14 +70,12 @@ struct ZoomableImageView: View {
 
     @State private var networkStatus: NetworkStatus = .undetermined
 
-
     @State private var loadedImage: LoadedImageType = .none
     @State private var originalImageTask: ImageTask?
-    @State private var originalImageLoadedInPercent: Int = 0
+    @State private var originalImageLoadedPercent: Int?
 
     @State private var isShowingOriginalLoadConfirmation = false
     @State private var explicitlyLoadFullImage = false
-
 
     private var closingTranslation: CGSize {
         currentClosingTranslation ?? finalClosingTranslation ?? .zero
@@ -339,149 +337,27 @@ struct ZoomableImageView: View {
         // NOTE: unfortunatly the native .toolbar
         // when hidden/shown interferes with the gestures. Safe-Area offset?
         // Could investigate in the future.
-        let showExplicitLoadingButton =
-            !loadedImage.isOriginal && networkStatus == .restricted && !explicitlyLoadFullImage
-
-
         ZStack {
             if canShowBottomHUD, shouldShowHUD {
-                HStack {
-                    VStack(spacing: 1) {
-
-                        if loadedImage != .none,
-                            let width = loadedImage.width,
-                            let height = loadedImage.height
-                        {
-                            Group {
-                                switch loadedImage {
-                                case .none, .thumbnail(_):
-                                    Text("thumbnail")
-                                case .resized(_):
-                                    Text("resized")
-                                case .original(_):
-                                    Text("original")
-                                }
-                            }
-                            .font(.footnote)
-                            .foregroundStyle(.white.opacity(0.8))
-
-                            Text("\(width)×\(height) pixel")
-                                .font(.subheadline)
-
-                        }
-                    }
-                    .fixedSize()
-                    .padding(.horizontal, 17)
-                    .frame(minHeight: 50)
-                    .background(Color.init(white: 0.1))
-                    .clipShape(.capsule)
-                    .shadow(color: .white.opacity(0.7), radius: 1)
-
-                    let arrowDownCircle = Image(systemName: "arrow.down")
-                        .resizable()
-                        .aspectRatio(contentMode: .fit)
-                        .padding(12)
-                        .frame(width: 50, height: 50)
-                        .background(Color.init(white: 0.1), in: .circle)
-                        .clipShape(.circle)
-
-
-                    if showExplicitLoadingButton {
-                        Button {
-                            isShowingOriginalLoadConfirmation = true
-                        } label: {
-                            arrowDownCircle
-                                .shadow(color: .white.opacity(0.7), radius: 1)
-                        }
-                        .popoverTip(FullImageLoadingTip())
-                        .confirmationDialog("Load original image", isPresented: $isShowingOriginalLoadConfirmation) {
-                            Button("load original image", role: .fallbackConfirm) {
-                                FullImageLoadingTip.didLoadFullImageManually.sendDonation()
-                                explicitlyLoadFullImage = true
-                            }
-                        } message: {
-                            let byteStyle = ByteCountFormatStyle(style: .file, allowedUnits: [.kb, .mb, .gb, .tb])
-                            let fileSizeString: String =
-                                if let byte = mediaFileInfo.mediaFile.size {
-                                    byteStyle.format(Int64(byte))
-                                } else {
-                                    "unknown"
-                                }
-
-                            let dimensionString: String =
-                                if let w = mediaFileInfo.mediaFile.width, let h = mediaFileInfo.mediaFile.height {
-                                    "(\(w)×\(h)px)"
-                                } else {
-                                    ""
-                                }
-
-                            Text("Load original image \(dimensionString) with a size of \(fileSizeString)?")
-                        }
-
-
-                    } else if originalImageTask != nil {
-
-                        arrowDownCircle
-                            .padding(-1)
-                            .overlay {
-                                let progress = Double(originalImageLoadedInPercent) / 100.0
-
-                                CircularProgressShape(progress: progress)
-                                    .stroke(style: StrokeStyle(lineWidth: 2, lineCap: .round))
-                                    .foregroundStyle(.white)
-                                    .animation(.linear, value: progress)
-                            }
-
-
-                    }
-                }
-                .foregroundStyle(.white)
+                ResolutionButton(
+                    mediaFileInfo: mediaFileInfo,
+                    loadedImage: loadedImage,
+                    networkStatus: networkStatus,
+                    originalImageLoadedPercent: originalImageLoadedPercent,
+                    onLoadOriginalImage: { explicitlyLoadFullImage = true }
+                )
                 .padding(.bottom)
                 .transition(.offset(y: 20).combined(with: .blurReplace))
             }
 
 
         }
-        .animation(.default, value: showExplicitLoadingButton)
         .animation(.default, value: originalImageTask == nil)
         .animation(.default, value: shouldShowHUD)
         .animation(.default, value: canShowBottomHUD)
 
 
     }
-
-    // MARK: - Circular progress ring
-
-    @Animatable
-    struct CircularProgressShape: Shape {
-        /// 0...1
-        var progress: Double
-
-        func path(in rect: CGRect) -> Path {
-            var path = Path()
-
-            let clamped = max(0, min(1, progress))
-
-            let radius = min(rect.width, rect.height) / 2
-            let center = CGPoint(x: rect.midX, y: rect.midY)
-
-            let start = Angle.degrees(-90)
-            let end = Angle.degrees(-90 + 360 * clamped)
-
-
-            path.addArc(
-                center: center,
-                radius: radius,
-                startAngle: start,
-                endAngle: end,
-                clockwise: false
-            )
-
-            return path
-        }
-
-    }
-
 
     private func loadFullImage() async throws {
         guard originalImageTask == nil else { return }
@@ -512,9 +388,9 @@ struct ZoomableImageView: View {
                 return
             }
             let percent = Int(progress.fraction * 100)
-            if percent != self.originalImageLoadedInPercent {
-                self.originalImageLoadedInPercent = percent
-                logger.debug("\(percent)%")
+            if percent != self.originalImageLoadedPercent {
+                self.originalImageLoadedPercent = percent
+                logger.debug("\(percent)% loaded.")
             }
         }
 
@@ -522,6 +398,7 @@ struct ZoomableImageView: View {
             self.loadedImage = .original(image)
         }
         canShowBottomHUD = true
+
         self.originalImageTask = nil
     }
 }

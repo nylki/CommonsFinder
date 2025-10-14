@@ -13,7 +13,7 @@ struct HomeTip: Tip {
     var options: [any TipOption] {
         MaxDisplayCount(1)
     }
-    
+
     var title: Text {
         Text("Welcome!")
     }
