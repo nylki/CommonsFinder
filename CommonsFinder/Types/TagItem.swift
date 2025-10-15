@@ -5,6 +5,7 @@
 //  Created by Tom Brewe on 03.04.25.
 //
 
+nonisolated
 enum TagType: Codable, Equatable, Hashable {
     case category
     case depict
@@ -12,6 +13,7 @@ enum TagType: Codable, Equatable, Hashable {
 }
 
 /// combines categories, depict items and possible future statements like significant event
+nonisolated
 struct TagItem: Codable, Equatable, Hashable, Identifiable {
     let baseItem: Category
 

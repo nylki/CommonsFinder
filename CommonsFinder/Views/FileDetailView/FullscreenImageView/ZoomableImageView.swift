@@ -14,7 +14,7 @@ import TipKit
 import UIKit
 import os
 
-enum NetworkStatus {
+enum NetworkStatus: String, Equatable, Hashable {
     case unsatisfied
     case undetermined
     case restricted
@@ -25,17 +25,17 @@ enum LoadedImageType: Equatable, Hashable {
     case none
     case thumbnail(PlatformImage)
     case resized(PlatformImage)
-    case original(PlatformImage)
+    case original(PlatformImage, cached: Bool)
 
     var isThumbnail: Bool { if case .thumbnail(_) = self { true } else { false } }
     var isResized: Bool { if case .resized(_) = self { true } else { false } }
-    var isOriginal: Bool { if case .original(_) = self { true } else { false } }
+    var isOriginal: Bool { if case .original(_, _) = self { true } else { false } }
 
     var image: PlatformImage? {
         return switch self {
         case .thumbnail(let platformImage),
             .resized(let platformImage),
-            .original(let platformImage):
+            .original(let platformImage, _):
             platformImage
         case .none:
             nil
@@ -74,7 +74,6 @@ struct ZoomableImageView: View {
     @State private var originalImageTask: ImageTask?
     @State private var originalImageLoadedPercent: Int?
 
-    @State private var isShowingOriginalLoadConfirmation = false
     @State private var explicitlyLoadFullImage = false
 
     private var closingTranslation: CGSize {
@@ -263,7 +262,7 @@ struct ZoomableImageView: View {
                     .imageTask(with: mediaFileInfo.originalImageRequest(cachePolicy: .returnCacheDataDontLoad))
                     .response
 
-                loadedImage = .original(cachedImageResponse.image)
+                loadedImage = .original(cachedImageResponse.image, cached: true)
                 logger.info("I: Loaded cached original")
                 return
             } catch {
@@ -305,8 +304,21 @@ struct ZoomableImageView: View {
         }
         .task(priority: .medium) {
             guard !loadedImage.isOriginal else { return }
+
+            @MainActor
+            func setNetworkStatus(basedOnPath path: NWPath) {
+                let restricted = path.isConstrained || path.isExpensive
+                if  path.status == .unsatisfied {
+                    networkStatus = .unsatisfied
+                } else {
+                    networkStatus = restricted ? .restricted : .ok
+                }
+            }
+            
             let networkMonitor = NWPathMonitor()
-            if networkMonitor.currentPath.isConstrained || networkMonitor.currentPath.isExpensive {
+            setNetworkStatus(basedOnPath: networkMonitor.currentPath)
+            
+            if networkStatus == .restricted {
                 canShowBottomHUD = true
             } else {
                 Task {
@@ -316,18 +328,14 @@ struct ZoomableImageView: View {
             }
 
             for await path in networkMonitor {
-                let restricted = path.isConstrained || path.isExpensive
-                if path.status == .unsatisfied {
-                    networkStatus = .unsatisfied
-                } else {
-                    networkStatus = restricted ? .restricted : .ok
-                }
+                setNetworkStatus(basedOnPath: path)
                 guard !loadedImage.isOriginal else {
                     networkMonitor.cancel()
                     return
                 }
 
-                if !restricted, path.status != .unsatisfied {
+                if networkStatus == .ok {
+                    try? await Task.sleep(for: .milliseconds(100))
                     do {
                         try await loadFullImage()
                         // Once we have loaded the full image we are not interested in network updates anymore
@@ -420,7 +428,7 @@ struct ZoomableImageView: View {
         }
 
         if let imageResponse = try? await originalImageTask.response {
-            self.loadedImage = .original(imageResponse.image)
+            self.loadedImage = .original(imageResponse.image, cached: imageResponse.cacheType != nil)
         }
         canShowBottomHUD = true
 

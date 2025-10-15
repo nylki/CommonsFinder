@@ -716,8 +716,9 @@ extension AppDatabase {
     }
 
     func delete(_ drafts: [MediaFileDraft]) throws {
-        try dbWriter.write { db in
-            _ = try MediaFileDraft.deleteAll(db, ids: drafts.map(\.id))
+        let ids = drafts.map(\.id)
+        try dbWriter.write { [ids] db in
+            _ = try MediaFileDraft.deleteAll(db, ids: ids)
         }
     }
 

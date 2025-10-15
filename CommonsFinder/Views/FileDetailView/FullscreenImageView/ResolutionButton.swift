@@ -7,6 +7,7 @@
 
 import SwiftUI
 import TipKit
+import os.log
 
 struct ResolutionButton: View {
     let mediaFileInfo: MediaFileInfo
@@ -20,24 +21,65 @@ struct ResolutionButton: View {
 
 
     var body: some View {
-        let shouldShowIcon = !loadedImage.isOriginal && (networkStatus == .restricted || originalImageLoadedPercent != nil)
-
+        
+        let manualDownloadEnabled = !loadedImage.isOriginal && networkStatus == .restricted && originalImageLoadedPercent == nil
+        let shouldShowIcon = (!loadedImage.isOriginal && originalImageLoadedPercent != nil) || manualDownloadEnabled
+        let tip = FullImageLoadingTip()
+        let horizontalPadding = 17.0
+        
         Button {
-            isShowingOriginalLoadConfirmation = true
+            if manualDownloadEnabled {
+                isShowingOriginalLoadConfirmation = true
+            }
         } label: {
             HStack(spacing: 7) {
                 resolutionInfoText
 
                 if shouldShowIcon {
                     indicatorIcon
+                        .transition(.offset(x: -horizontalPadding).combined(with: .scale).combined(with: .opacity))
                 }
             }
-            .padding(.leading, 17)
-            .padding(.trailing, !shouldShowIcon ? 17 : 0)
+            .padding(.leading, horizontalPadding)
+            .padding(.trailing, !shouldShowIcon ? horizontalPadding : 0)
         }
         .buttonStyle(ZoomHUDButtonStyle())
         .geometryGroup()
         .compositingGroup()
+        .popoverTip(tip)
+        .onChange(of: networkStatus) { oldValue, newValue in
+            print("change of network status \(oldValue) -> \(newValue)")
+            // hide tip if user enabled WiFi in this view
+            if oldValue != .undetermined, oldValue != .ok, newValue == .ok {
+                logger.debug("Inhvalidate tip because user enabled in-expensive network (eg. wifi)")
+                tip.invalidate(reason: .actionPerformed)
+            }
+        }
+        .confirmationDialog("Load original image", isPresented: $isShowingOriginalLoadConfirmation) {
+            Button("load original image", role: .fallbackConfirm) {
+                FullImageLoadingTip.didLoadFullImageManually.sendDonation()
+                onLoadOriginalImage()
+            }
+        } message: {
+            let byteStyle = ByteCountFormatStyle(style: .file, allowedUnits: [.kb, .mb, .gb, .tb])
+            let fileSizeString: String =
+                if let byte = mediaFileInfo.mediaFile.size {
+                    byteStyle.format(Int64(byte))
+                } else {
+                    "unknown"
+                }
+
+            let dimensionString: String =
+                if let w = mediaFileInfo.mediaFile.width, let h = mediaFileInfo.mediaFile.height {
+                    "(\(w)×\(h)px)"
+                } else {
+                    ""
+                }
+
+            Text("Load original image \(dimensionString) with a size of \(fileSizeString) now?")
+        }
+        .animation(.default, value: networkStatus)
+        .animation(.default, value: shouldShowIcon)
     }
 
     @ViewBuilder private var resolutionInfoText: some View {
@@ -52,8 +94,9 @@ struct ResolutionButton: View {
                         Text("thumbnail")
                     case .resized(_):
                         Text("resized")
-                    case .original(_):
-                        Text("original")
+                    case .original(_, let isFromCache):
+                        Text("original\(isFromCache ? " (cache)" : "")")
+                        
                     }
                 }
                 .font(.footnote)
@@ -61,9 +104,9 @@ struct ResolutionButton: View {
 
                 Text("\(width)×\(height) pixel")
                     .font(.subheadline)
-
             }
         }
+        .animation(.default, value: loadedImage)
     }
 
     @ViewBuilder
@@ -85,30 +128,6 @@ struct ResolutionButton: View {
                         .animation(.linear, value: originalImageLoadedPercent)
                         .padding(11)
                 }
-            }
-            .popoverTip(FullImageLoadingTip())
-            .confirmationDialog("Load original image", isPresented: $isShowingOriginalLoadConfirmation) {
-                Button("load original image", role: .fallbackConfirm) {
-                    FullImageLoadingTip.didLoadFullImageManually.sendDonation()
-                    onLoadOriginalImage()
-                }
-            } message: {
-                let byteStyle = ByteCountFormatStyle(style: .file, allowedUnits: [.kb, .mb, .gb, .tb])
-                let fileSizeString: String =
-                    if let byte = mediaFileInfo.mediaFile.size {
-                        byteStyle.format(Int64(byte))
-                    } else {
-                        "unknown"
-                    }
-
-                let dimensionString: String =
-                    if let w = mediaFileInfo.mediaFile.width, let h = mediaFileInfo.mediaFile.height {
-                        "(\(w)×\(h)px)"
-                    } else {
-                        ""
-                    }
-
-                Text("Load original image \(dimensionString) with a size of \(fileSizeString)?")
             }
     }
 }
@@ -166,10 +185,19 @@ struct ZoomHUDButtonStyle: ButtonStyle {
         ) {
 
         }
+        
+        ResolutionButton(
+            mediaFileInfo: .makeRandomUploaded(id: "1", .squareImage),
+            loadedImage: .original(.zeroSymbol, cached: false),
+            networkStatus: .restricted,
+            originalImageLoadedPercent: nil
+        ) {
+
+        }
 
         ResolutionButton(
             mediaFileInfo: .makeRandomUploaded(id: "1", .squareImage),
-            loadedImage: .original(.zeroSymbol),
+            loadedImage: .original(.zeroSymbol, cached: true),
             networkStatus: .restricted,
             originalImageLoadedPercent: nil
         ) {
