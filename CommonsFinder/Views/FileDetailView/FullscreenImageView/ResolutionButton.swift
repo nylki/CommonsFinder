@@ -21,12 +21,12 @@ struct ResolutionButton: View {
 
 
     var body: some View {
-        
+
         let manualDownloadEnabled = !loadedImage.isOriginal && networkStatus == .restricted && originalImageLoadedPercent == nil
         let shouldShowIcon = (!loadedImage.isOriginal && originalImageLoadedPercent != nil) || manualDownloadEnabled
         let tip = FullImageLoadingTip()
         let horizontalPadding = 17.0
-        
+
         Button {
             if manualDownloadEnabled {
                 isShowingOriginalLoadConfirmation = true
@@ -96,7 +96,7 @@ struct ResolutionButton: View {
                         Text("resized")
                     case .original(_, let isFromCache):
                         Text("original\(isFromCache ? " (cache)" : "")")
-                        
+
                     }
                 }
                 .font(.footnote)
@@ -185,7 +185,7 @@ struct ZoomHUDButtonStyle: ButtonStyle {
         ) {
 
         }
-        
+
         ResolutionButton(
             mediaFileInfo: .makeRandomUploaded(id: "1", .squareImage),
             loadedImage: .original(.zeroSymbol, cached: false),

@@ -1802,7 +1802,7 @@
       "localizations" : {
         "de" : {
           "stringUnit" : {
-            "state" : "needs_review",
+            "state" : "translated",
             "value" : "überprüfe..."
           }
         }
@@ -1814,6 +1814,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Video"
+          }
+        }
+      }
+    },
+    "View in Full Screen" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Im Vollbildmodus öffnen"
           }
         }
       }
@@ -1849,7 +1859,14 @@
       }
     },
     "Wikidata" : {
-
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wikidata"
+          }
+        }
+      }
     },
     "Wikidata Items" : {
       "localizations" : {
@@ -1862,7 +1879,14 @@
       }
     },
     "Wikimedia Account" : {
-
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wikimedia Account"
+          }
+        }
+      }
     },
     "with existing account" : {
       "localizations" : {

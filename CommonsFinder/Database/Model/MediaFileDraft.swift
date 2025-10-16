@@ -22,7 +22,8 @@ import os.log
 
 
 nonisolated
-struct MediaFileDraft: Identifiable, Equatable, Hashable {
+    struct MediaFileDraft: Identifiable, Equatable, Hashable
+{
     // UUID-string
     let id: String
 
@@ -94,7 +95,8 @@ struct MediaFileDraft: Identifiable, Equatable, Hashable {
 }
 
 nonisolated
-extension MediaFileDraft {
+    extension MediaFileDraft
+{
     /// exifData is created lazily and is not saved into the DB
     nonisolated func loadExifData() -> ExifData? {
         if let url = self.localFileURL() {
@@ -129,7 +131,8 @@ extension MediaFileDraft.DraftCaptionWithDescription {
 /// See <https://github.com/groue/GRDB.swift/blob/master/README.md#records>
 ///
 nonisolated
-extension MediaFileDraft: Codable, FetchableRecord, MutablePersistableRecord {
+    extension MediaFileDraft: Codable, FetchableRecord, MutablePersistableRecord
+{
     enum CodingKeys: CodingKey {
         case id
         case addedDate
@@ -148,7 +151,7 @@ extension MediaFileDraft: Codable, FetchableRecord, MutablePersistableRecord {
         case width
         case height
     }
-    
+
     // Define database columns from CodingKeys
     enum Columns {
         static let id = Column(CodingKeys.id)
@@ -167,7 +170,7 @@ extension MediaFileDraft: Codable, FetchableRecord, MutablePersistableRecord {
         static let author = Column(CodingKeys.author)
         static let source = Column(CodingKeys.source)
     }
-    
+
 
     init(from decoder: any Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)

@@ -145,7 +145,15 @@ struct FileDetailView: View {
                 }
                 ToolbarItem(placement: .automatic) {
                     Menu {
+                        Button(
+                            "View in Full Screen",
+                            systemImage: "arrow.up.left.and.arrow.down.right.rectangle"
+                        ) {
+                            isShowingFullscreenImage = true
+                        }
+
                         ShareLink(item: mediaFileInfo.mediaFile.descriptionURL)
+
                         Link(destination: mediaFileInfo.mediaFile.descriptionURL) {
                             Label("Open in Browser", systemImage: "globe")
                         }

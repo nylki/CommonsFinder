@@ -308,16 +308,16 @@ struct ZoomableImageView: View {
             @MainActor
             func setNetworkStatus(basedOnPath path: NWPath) {
                 let restricted = path.isConstrained || path.isExpensive
-                if  path.status == .unsatisfied {
+                if path.status == .unsatisfied {
                     networkStatus = .unsatisfied
                 } else {
                     networkStatus = restricted ? .restricted : .ok
                 }
             }
-            
+
             let networkMonitor = NWPathMonitor()
             setNetworkStatus(basedOnPath: networkMonitor.currentPath)
-            
+
             if networkStatus == .restricted {
                 canShowBottomHUD = true
             } else {
