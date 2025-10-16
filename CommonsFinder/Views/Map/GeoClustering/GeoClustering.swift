@@ -17,6 +17,16 @@ nonisolated protocol GeoReferencable: Hashable, Equatable {
     var geoRefID: GeoRefID { get }
 }
 
+nonisolated extension GeoReferencable {
+    var coordinate: CLLocationCoordinate2D? {
+        if let latitude, let longitude {
+            CLLocationCoordinate2D(latitude: latitude, longitude: longitude)
+        } else {
+            nil
+        }
+    }
+}
+
 nonisolated
     struct GeoClustering<Item: GeoReferencable>
 {

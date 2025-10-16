@@ -91,13 +91,6 @@ nonisolated struct Category: Identifiable, Equatable, Hashable, Sendable, Codabl
 }
 
 nonisolated extension Category {
-    var coordinate: CLLocationCoordinate2D? {
-        if let latitude, let longitude {
-            CLLocationCoordinate2D(latitude: latitude, longitude: longitude)
-        } else {
-            nil
-        }
-    }
     var wikidataURL: URL? {
         if let wikidataId {
             URL(string: "https://www.wikidata.org/wiki/\(wikidataId)")
