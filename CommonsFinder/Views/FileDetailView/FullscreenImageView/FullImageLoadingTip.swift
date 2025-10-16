@@ -10,9 +10,18 @@ import TipKit
 struct FullImageLoadingTip: Tip {
     let id = "FullImageLoadingTip"
 
+    @Parameter static var isNetworkRestricted: Bool = false
+
+    init(isNetworkRestricted: Bool) {
+        Self.isNetworkRestricted = isNetworkRestricted
+    }
+
     static let didLoadFullImageManually: Event = Event(id: "didLoadFullImageManually")
 
     var rules: [Rule] {
+        #Rule(Self.$isNetworkRestricted) {
+            $0 == true
+        }
         #Rule(Self.didLoadFullImageManually) {
             $0.donations.donatedWithin(.weeks(4)).count < 1
         }

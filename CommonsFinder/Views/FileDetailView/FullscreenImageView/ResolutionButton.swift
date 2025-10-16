@@ -19,12 +19,11 @@ struct ResolutionButton: View {
 
     @State private var isShowingOriginalLoadConfirmation = false
 
-
     var body: some View {
 
         let manualDownloadEnabled = !loadedImage.isOriginal && networkStatus == .restricted && originalImageLoadedPercent == nil
         let shouldShowIcon = (!loadedImage.isOriginal && originalImageLoadedPercent != nil) || manualDownloadEnabled
-        let tip = FullImageLoadingTip()
+        let fullImageLoadingTip = FullImageLoadingTip(isNetworkRestricted: manualDownloadEnabled)
         let horizontalPadding = 17.0
 
         Button {
@@ -46,15 +45,7 @@ struct ResolutionButton: View {
         .buttonStyle(ZoomHUDButtonStyle())
         .geometryGroup()
         .compositingGroup()
-        .popoverTip(tip)
-        .onChange(of: networkStatus) { oldValue, newValue in
-            print("change of network status \(oldValue) -> \(newValue)")
-            // hide tip if user enabled WiFi in this view
-            if oldValue != .undetermined, oldValue != .ok, newValue == .ok {
-                logger.debug("Inhvalidate tip because user enabled in-expensive network (eg. wifi)")
-                tip.invalidate(reason: .actionPerformed)
-            }
-        }
+        .popoverTip(fullImageLoadingTip)
         .confirmationDialog("Load original image", isPresented: $isShowingOriginalLoadConfirmation) {
             Button("load original image", role: .fallbackConfirm) {
                 FullImageLoadingTip.didLoadFullImageManually.sendDonation()
