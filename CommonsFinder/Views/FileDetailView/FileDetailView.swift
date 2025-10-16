@@ -188,7 +188,7 @@ struct FileDetailView: View {
                 }
             }
             .task(id: mediaFileInfo.mediaFile.fullDescriptions, priority: .userInitiated) {
-                if let attributedString = mediaFileInfo.mediaFile.createAttributedStringDescription(locale: locale) {
+                if let attributedString = await mediaFileInfo.mediaFile.createAttributedStringDescription(locale: locale) {
                     fullDescription = attributedString
                 }
             }

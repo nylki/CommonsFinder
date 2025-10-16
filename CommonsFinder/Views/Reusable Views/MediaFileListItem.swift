@@ -20,6 +20,8 @@ struct MediaFileListItem: View {
     @Namespace private var navigationNamespace
     @Environment(\.locale) private var locale
 
+    @State private var captionOrName: String = ""
+
 
     var body: some View {
         let navItem = NavigationStackItem.viewFile(mediaFileInfo, namespace: navigationNamespace)
@@ -32,16 +34,19 @@ struct MediaFileListItem: View {
         // .clipShape is redundant here as its already defined in the ButtonStyle, but apparently
         // required, for the .zoom transition to properly settle back without hard corners
         .clipShape(.rect(cornerRadius: 16))
-    }
-
-    var captionOrName: String {
-        let mediaFileCaptions = mediaFileInfo.mediaFile.captions
-        if let preferredCaption = mediaFileCaptions.first(where: { $0.languageCode == locale.wikiLanguageCodeIdentifier }) {
-            return preferredCaption.string
-        } else if let anyCaption = mediaFileCaptions.first {
-            return anyCaption.string
-        } else {
-            return mediaFileInfo.mediaFile.displayName
+        .task(priority: .userInitiated) {
+            guard captionOrName.isEmpty else { return }
+            let captions = mediaFileInfo.mediaFile.captions
+            captionOrName =
+                if let preferredCaption = captions.first(where: { $0.languageCode == locale.wikiLanguageCodeIdentifier }) {
+                    preferredCaption.string
+                } else if let description = await mediaFileInfo.mediaFile.createAttributedStringDescription(locale: Locale.current)?.characters {
+                    String(description)
+                } else if let anyCaption = captions.first {
+                    anyCaption.string
+                } else {
+                    mediaFileInfo.mediaFile.displayName
+                }
         }
     }
 
@@ -66,6 +71,7 @@ struct MediaFileListItem: View {
             .lineLimit(3)
             .multilineTextAlignment(.leading)
             .padding(11)
+            .animation(.default, value: captionOrName)
         }
     }
 

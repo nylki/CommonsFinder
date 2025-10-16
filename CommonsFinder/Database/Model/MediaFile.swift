@@ -164,11 +164,7 @@ nonisolated extension MediaFile {
     var apiName: String { "File:\(name)" }
 
     var displayName: String {
-        if let nameWithoutFileEnding = name.split(separator: ".").first {
-            String(nameWithoutFileEnding)
-        } else {
-            name
-        }
+        name.fileName()
     }
 
     var coordinate: CLLocationCoordinate2D? {
