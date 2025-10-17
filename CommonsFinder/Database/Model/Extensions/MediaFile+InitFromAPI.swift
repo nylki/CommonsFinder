@@ -43,6 +43,7 @@ nonisolated
             thumbURL: thumbURL,
             width: imageInfo.width,
             height: imageInfo.height,
+            size: imageInfo.size,
             uploadDate: imageInfo.timestamp,
             caption: apiFileMetadata.structuredData.labels.map { .init($0.value, languageCode: $0.key) },
             fullDescription: fullDescription,

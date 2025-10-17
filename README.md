@@ -4,8 +4,6 @@ CommonsFinder is an iOS app to explore and upload media to [Wikimedia Commons](h
 
 The test version can be installed via TestFlight: https://testflight.apple.com/join/15KtE2Mn
 
-
-
 ## Features
 
 The project is **currently work-in-progress**, but several core features already work. You can:
@@ -23,7 +21,10 @@ The project is **currently work-in-progress**, but several core features already
 
 
 ## Demo videos and screenshots
-Here are some demo videos and screenshots representing the development state of ~ 2025-06-05.
+<img src="https://github.com/user-attachments/assets/c789461c-7b98-4a62-b5d5-6b96bdfc4815" height="500" />
+
+____________________________________
+Below are some demo videos the development state of ~ 2025-06-05:
 
 ### Drafts / Uploading
 [2025-06-05-CommonsFinder-drafting.webm](https://github.com/user-attachments/assets/de33119a-dfde-4492-bd2b-fd964601f079)
@@ -41,7 +42,7 @@ Here are some demo videos and screenshots representing the development state of 
 
 I plan an implement more functionality in the next months and improve on the current ones. The priority is on these topics next:
 
-- [ ] fullscreen (and zoomable) view for images
+- [x] fullscreen (and zoomable) view for images
 - [x] bookmark images and categories/items
 - [ ] improve map: better live-location experience, direct opening of single items on the map
 - [x] improve search: search for categories, currently only images can be searched

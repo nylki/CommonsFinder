@@ -21,7 +21,9 @@ import os.log
 // avoiding duplicates with wikidata structured data (eg. for location, date etc.)
 
 
-struct MediaFileDraft: Identifiable, Equatable, Hashable {
+nonisolated
+    struct MediaFileDraft: Identifiable, Equatable, Hashable
+{
     // UUID-string
     let id: String
 
@@ -92,7 +94,9 @@ struct MediaFileDraft: Identifiable, Equatable, Hashable {
     }
 }
 
-extension MediaFileDraft {
+nonisolated
+    extension MediaFileDraft
+{
     /// exifData is created lazily and is not saved into the DB
     nonisolated func loadExifData() -> ExifData? {
         if let url = self.localFileURL() {
@@ -126,7 +130,9 @@ extension MediaFileDraft.DraftCaptionWithDescription {
 ///
 /// See <https://github.com/groue/GRDB.swift/blob/master/README.md#records>
 ///
-extension MediaFileDraft: Codable {
+nonisolated
+    extension MediaFileDraft: Codable, FetchableRecord, MutablePersistableRecord
+{
     enum CodingKeys: CodingKey {
         case id
         case addedDate
@@ -145,6 +151,26 @@ extension MediaFileDraft: Codable {
         case width
         case height
     }
+
+    // Define database columns from CodingKeys
+    enum Columns {
+        static let id = Column(CodingKeys.id)
+        static let addedDate = Column(CodingKeys.addedDate)
+        static let name = Column(CodingKeys.name)
+        static let finalFilename = Column(CodingKeys.finalFilename)
+
+        static let captionWithDesc = Column(CodingKeys.captionWithDesc)
+        static let tags = Column(CodingKeys.tags)
+        static let inceptionDate = Column(CodingKeys.inceptionDate)
+
+        static let width = Column(CodingKeys.width)
+        static let height = Column(CodingKeys.height)
+
+        static let license = Column(CodingKeys.license)
+        static let author = Column(CodingKeys.author)
+        static let source = Column(CodingKeys.source)
+    }
+
 
     init(from decoder: any Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
@@ -173,26 +199,6 @@ extension MediaFileDraft: Codable {
     }
 }
 
-extension MediaFileDraft: FetchableRecord, MutablePersistableRecord {
-    // Define database columns from CodingKeys
-    nonisolated enum Columns {
-        static let id = Column(CodingKeys.id)
-        static let addedDate = Column(CodingKeys.addedDate)
-        static let name = Column(CodingKeys.name)
-        static let finalFilename = Column(CodingKeys.finalFilename)
-
-        static let captionWithDesc = Column(CodingKeys.captionWithDesc)
-        static let tags = Column(CodingKeys.tags)
-        static let inceptionDate = Column(CodingKeys.inceptionDate)
-
-        static let width = Column(CodingKeys.width)
-        static let height = Column(CodingKeys.height)
-
-        static let license = Column(CodingKeys.license)
-        static let author = Column(CodingKeys.author)
-        static let source = Column(CodingKeys.source)
-    }
-}
 
 // MARK: - Extensions
 

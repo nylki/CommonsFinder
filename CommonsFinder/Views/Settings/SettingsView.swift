@@ -24,9 +24,12 @@ struct SettingsView: View {
 
     var body: some View {
         List {
+            let tip = AccountTip()
+            if account.activeUser == nil {
+                TipView(tip, arrowEdge: .bottom)
+            }
             if let activeUser = account.activeUser {
                 Section {
-
                     Button {
                         isShowingUserDialog = true
                     } label: {
@@ -70,9 +73,10 @@ struct SettingsView: View {
                 .animation(.default, value: account.activeUser)
 
             } else {
-                TipView(AccountTip(), arrowEdge: .bottom)
-
-                Button(action: navigation.openOnboarding) {
+                Button {
+                    tip.invalidate(reason: .actionPerformed)
+                    navigation.openOnboarding()
+                } label: {
                     Label("Add Account", systemImage: "person.crop.circle")
                         .bold()
                         .foregroundStyle(.white)

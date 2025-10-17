@@ -9,6 +9,8 @@
 /* Begin PBXBuildFile section */
 		E2035C452D52544D0079235B /* CommonsAPI in Frameworks */ = {isa = PBXBuildFile; productRef = E2035C442D52544D0079235B /* CommonsAPI */; };
 		E20A8A642D75F24F00EA79C5 /* H3kit in Frameworks */ = {isa = PBXBuildFile; productRef = E20A8A632D75F24F00EA79C5 /* H3kit */; };
+		E213C6B92EA29F570085C60E /* SwiftSoup in Frameworks */ = {isa = PBXBuildFile; productRef = E213C6B82EA29F570085C60E /* SwiftSoup */; };
+		E213C6BC2EA2BA650085C60E /* LRUCache in Frameworks */ = {isa = PBXBuildFile; productRef = E213C6BB2EA2BA650085C60E /* LRUCache */; };
 		E22A913C2CF8B1AA00D3B8F9 /* Nuke in Frameworks */ = {isa = PBXBuildFile; productRef = E22A913B2CF8B1AA00D3B8F9 /* Nuke */; };
 		E22A913E2CF8B1AA00D3B8F9 /* NukeUI in Frameworks */ = {isa = PBXBuildFile; productRef = E22A913D2CF8B1AA00D3B8F9 /* NukeUI */; };
 		E24D3BFD2CF3ACDC003484CC /* FrameUp in Frameworks */ = {isa = PBXBuildFile; productRef = E24D3BFC2CF3ACDC003484CC /* FrameUp */; };
@@ -177,6 +179,7 @@
 				Utilities/GeoPlacemarkCache.swift,
 				Utilities/GeoVectorMath.swift,
 				Utilities/Logging.swift,
+				Utilities/MediaDownloading.swift,
 				Utilities/ValidationUtils.swift,
 				Views/AuthView/AuthView.swift,
 				Views/AuthView/LoginView.swift,
@@ -210,7 +213,7 @@
 				Views/FileDetailView/FileDetailView.swift,
 				Views/FileDetailView/FileGroupBoxStyle.swift,
 				Views/FileDetailView/FileLoadView.swift,
-				Views/FileDetailView/FullscreenImageView/FullscreenImageView.swift,
+				Views/FileDetailView/FullscreenImageView/ZoomableImageView.swift,
 				Views/FileDetailView/InlineMap.swift,
 				Views/FileDetailView/TagsContainerView.swift,
 				Views/Home/DraftsSection.swift,
@@ -237,7 +240,9 @@
 				Views/RecentlyViewed/RecentlyViewedMediaView.swift,
 				"Views/Reusable Views/CameraImagePicker.swift",
 				"Views/Reusable Views/CategoryTeaser.swift",
+				"Views/Reusable Views/CircularProgressShape.swift",
 				"Views/Reusable Views/DraftFileListItem.swift",
+				"Views/Reusable Views/MediaDowloadSheet.swift",
 				"Views/Reusable Views/MediaFileListItem.swift",
 				"Views/Reusable Views/PaginatableList/PaginatableCategoryList.swift",
 				"Views/Reusable Views/PaginatableList/PaginatableList.swift",
@@ -313,6 +318,7 @@
 				E2FF0A2E2D9EAA29008F915C /* GRDB in Frameworks */,
 				E290323A2D9EA52000A0CD8F /* Pulse in Frameworks */,
 				E2549B2D2CBD69C7005DFE14 /* OrderedCollections in Frameworks */,
+				E213C6BC2EA2BA650085C60E /* LRUCache in Frameworks */,
 				E2F1B9D52CD006C700410991 /* GRDB in Frameworks */,
 				E290323C2D9EA52000A0CD8F /* PulseUI in Frameworks */,
 				E26D503C2DA5A75F00621D1C /* CommonsAPI in Frameworks */,
@@ -326,6 +332,7 @@
 				E28B17662CB03CBB00D6FEA0 /* GRDBQuery in Frameworks */,
 				E24D3BFD2CF3ACDC003484CC /* FrameUp in Frameworks */,
 				E2549B232CBD6886005DFE14 /* AsyncAlgorithms in Frameworks */,
+				E213C6B92EA29F570085C60E /* SwiftSoup in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -443,6 +450,8 @@
 				E290323B2D9EA52000A0CD8F /* PulseUI */,
 				E290323E2D9EA84700A0CD8F /* GRDBQuery */,
 				E26D503B2DA5A75F00621D1C /* CommonsAPI */,
+				E213C6B82EA29F570085C60E /* SwiftSoup */,
+				E213C6BB2EA2BA650085C60E /* LRUCache */,
 			);
 			productName = CommonsFinder;
 			productReference = E2839FE72CA2DD900053C312 /* CommonsFinder.app */;
@@ -478,7 +487,7 @@
 			attributes = {
 				BuildIndependentTargetsInParallel = 1;
 				LastSwiftUpdateCheck = 1620;
-				LastUpgradeCheck = 2600;
+				LastUpgradeCheck = 2610;
 				TargetAttributes = {
 					E252D54E2D50DFF0002056B3 = {
 						CreatedOnToolsVersion = 16.2;
@@ -515,6 +524,8 @@
 				E29032382D9EA52000A0CD8F /* XCRemoteSwiftPackageReference "Pulse" */,
 				E290323D2D9EA84700A0CD8F /* XCRemoteSwiftPackageReference "GRDBQuery" */,
 				E26D503A2DA5A75F00621D1C /* XCLocalSwiftPackageReference "CommonsAPI" */,
+				E213C6B72EA29F570085C60E /* XCRemoteSwiftPackageReference "SwiftSoup" */,
+				E213C6BA2EA2BA650085C60E /* XCRemoteSwiftPackageReference "LRUCache" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = E2839FE82CA2DD900053C312 /* Products */;
@@ -713,6 +724,7 @@
 				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
 				MTL_FAST_MATH = YES;
 				ONLY_ACTIVE_ARCH = YES;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
 				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
 				SWIFT_APPROACHABLE_CONCURRENCY = YES;
 				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
@@ -777,6 +789,7 @@
 				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				MTL_FAST_MATH = YES;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
 				SWIFT_APPROACHABLE_CONCURRENCY = YES;
 				SWIFT_COMPILATION_MODE = wholemodule;
 				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
@@ -819,6 +832,7 @@
 				INFOPLIST_KEY_NSCameraUsageDescription = "Camera access is needed to take new photos to upload from within the app";
 				INFOPLIST_KEY_NSLocalNetworkUsageDescription = "Local network usage is enabled and required only for development purposes when building the app locally with XCode. It should not be prompted in TestFlight or AppStore releases.";
 				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "Location is used to position the user on the map and show nearby points-of-interests and other images by querying the wikimedia servers with a given radius around the location. The location is also used when taking a photo in-app to add useful GPS metadata to the draft.";
+				INFOPLIST_KEY_NSPhotoLibraryAddUsageDescription = "Users can download images to their Photos Library";
 				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphoneos*]" = YES;
 				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphonesimulator*]" = YES;
 				"INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents[sdk=iphoneos*]" = YES;
@@ -877,6 +891,7 @@
 				INFOPLIST_KEY_NSCameraUsageDescription = "Camera access is needed to take new photos to upload from within the app";
 				INFOPLIST_KEY_NSLocalNetworkUsageDescription = "Local network usage is enabled and required only for development purposes when building the app locally with XCode. It should not be prompted in TestFlight or AppStore releases.";
 				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "Location is used to position the user on the map and show nearby points-of-interests and other images by querying the wikimedia servers with a given radius around the location. The location is also used when taking a photo in-app to add useful GPS metadata to the draft.";
+				INFOPLIST_KEY_NSPhotoLibraryAddUsageDescription = "Users can download images to their Photos Library";
 				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphoneos*]" = YES;
 				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphonesimulator*]" = YES;
 				"INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents[sdk=iphoneos*]" = YES;
@@ -1002,6 +1017,22 @@
 /* End XCLocalSwiftPackageReference section */
 
 /* Begin XCRemoteSwiftPackageReference section */
+		E213C6B72EA29F570085C60E /* XCRemoteSwiftPackageReference "SwiftSoup" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/scinfu/SwiftSoup.git";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 2.11.1;
+			};
+		};
+		E213C6BA2EA2BA650085C60E /* XCRemoteSwiftPackageReference "LRUCache" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/nicklockwood/LRUCache.git";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 1.2.0;
+			};
+		};
 		E22A913A2CF8B1AA00D3B8F9 /* XCRemoteSwiftPackageReference "Nuke" */ = {
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/kean/Nuke";
@@ -1015,14 +1046,14 @@
 			repositoryURL = "https://github.com/ryanlintott/FrameUp";
 			requirement = {
 				kind = exactVersion;
-				version = 0.9.9;
+				version = 0.9.10;
 			};
 		};
 		E2549B212CBD6886005DFE14 /* XCRemoteSwiftPackageReference "swift-async-algorithms" */ = {
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/apple/swift-async-algorithms.git";
 			requirement = {
-				branch = 1.0.0;
+				branch = 1.0.4;
 				kind = branch;
 			};
 		};
@@ -1039,7 +1070,7 @@
 			repositoryURL = "https://github.com/apple/swift-collections.git";
 			requirement = {
 				kind = exactVersion;
-				version = 1.2.0;
+				version = 1.3.0;
 			};
 		};
 		E257E6BD2D2038F90049FFE8 /* XCRemoteSwiftPackageReference "Lock" */ = {
@@ -1071,7 +1102,7 @@
 			repositoryURL = "https://github.com/dm-zharov/swift-security";
 			requirement = {
 				kind = exactVersion;
-				version = 2.4.0;
+				version = 2.5.0;
 			};
 		};
 		E2F1B9D32CD006C700410991 /* XCRemoteSwiftPackageReference "GRDB.swift" */ = {
@@ -1079,7 +1110,7 @@
 			repositoryURL = "https://github.com/groue/GRDB.swift.git";
 			requirement = {
 				kind = exactVersion;
-				version = 7.6.1;
+				version = 7.8.0;
 			};
 		};
 		E2F9791F2D81D01D0088062F /* XCRemoteSwiftPackageReference "h3kit-ios" */ = {
@@ -1104,6 +1135,16 @@
 		E20A8A632D75F24F00EA79C5 /* H3kit */ = {
 			isa = XCSwiftPackageProductDependency;
 			productName = H3kit;
+		};
+		E213C6B82EA29F570085C60E /* SwiftSoup */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = E213C6B72EA29F570085C60E /* XCRemoteSwiftPackageReference "SwiftSoup" */;
+			productName = SwiftSoup;
+		};
+		E213C6BB2EA2BA650085C60E /* LRUCache */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = E213C6BA2EA2BA650085C60E /* XCRemoteSwiftPackageReference "LRUCache" */;
+			productName = LRUCache;
 		};
 		E22A913B2CF8B1AA00D3B8F9 /* Nuke */ = {
 			isa = XCSwiftPackageProductDependency;

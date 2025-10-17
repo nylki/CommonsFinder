@@ -8,7 +8,9 @@
 import Foundation
 import GRDB
 
-struct MediaFileInfo: FetchableRecord, Equatable, Hashable, Decodable {
+nonisolated
+    struct MediaFileInfo: FetchableRecord, Equatable, Hashable, Decodable
+{
     var mediaFile: MediaFile
     var itemInteraction: ItemInteraction?
 

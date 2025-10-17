@@ -236,6 +236,12 @@ nonisolated final class AppDatabase: Sendable {
             }
         }
 
+        migrator.registerMigration("add size (in byte) to mediaFile") { db in
+            try db.alter(table: "mediaFile") { t in
+                t.add(column: "size", .integer)
+            }
+        }
+
         return migrator
     }
 }
@@ -710,8 +716,9 @@ extension AppDatabase {
     }
 
     func delete(_ drafts: [MediaFileDraft]) throws {
-        try dbWriter.write { db in
-            _ = try MediaFileDraft.deleteAll(db, ids: drafts.map(\.id))
+        let ids = drafts.map(\.id)
+        try dbWriter.write { [ids] db in
+            _ = try MediaFileDraft.deleteAll(db, ids: ids)
         }
     }
 

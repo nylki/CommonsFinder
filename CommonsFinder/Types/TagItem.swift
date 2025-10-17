@@ -5,14 +5,18 @@
 //  Created by Tom Brewe on 03.04.25.
 //
 
-enum TagType: Codable, Equatable, Hashable {
+nonisolated
+    enum TagType: Codable, Equatable, Hashable
+{
     case category
     case depict
     // case significantEvent
 }
 
 /// combines categories, depict items and possible future statements like significant event
-struct TagItem: Codable, Equatable, Hashable, Identifiable {
+nonisolated
+    struct TagItem: Codable, Equatable, Hashable, Identifiable
+{
     let baseItem: Category
 
     // TODO: add support for qualifiers (eg. depicted part)

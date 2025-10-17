@@ -5,6 +5,7 @@
 //  Created by Tom Brewe on 11.11.24.
 //
 
+import Algorithms
 import CommonsAPI
 import Foundation
 import os.log
@@ -127,9 +128,12 @@ final class AccountModel {
             defer { postLoginTask = nil }
             do {
                 try await withThrowingDiscardingTaskGroup { taskGroup in
-                    taskGroup.addTask(operation: fetchMostRecentUploads)
+                    taskGroup.addTask {
+                        try await self.fetchMostRecentUploads()
+                    }
                     taskGroup.addTask(operation: fetchUserProfile)
                 }
+                UserDefaults.standard.set(Date.now, forKey: "lastSyncDate")
             } catch {
                 // FIXME: retry on error and somehow persist the information for re-launches
                 // eg.: lastSync: Date?
@@ -151,10 +155,22 @@ final class AccountModel {
             return
         }
 
+        var lastSyncDate = UserDefaults.standard.object(forKey: "lastSyncDate") as? Date
+
+        if let date = lastSyncDate {
+            if Date.now.timeIntervalSince(date) < 1 {
+                logger.info("Prevent syncing user data, as it was performed less than a second ago.")
+                return
+            }
+            // if we have a last sync date, go 1s into the past, just in case
+            lastSyncDate = date.addingTimeInterval(-1)
+        }
+
         recurringSyncTask = Task<Void, Never> {
             defer { recurringSyncTask = nil }
             do {
-                try await self.fetchMostRecentUploads()
+                try await fetchMostRecentUploads(end: lastSyncDate)
+                UserDefaults.standard.set(lastSyncDate, forKey: "lastSyncDate")
             } catch {
                 logger.error("sync task failed: \(error)")
             }
@@ -199,80 +215,35 @@ final class AccountModel {
     }
 
     /// Start paginating from most recent entry in DB up to Date.now
-    private func fetchMostRecentUploads() async throws {
+    private func fetchMostRecentUploads(end: Date? = nil) async throws {
         guard let username = activeUser?.username else {
             logger.warning("Tried to fetchMostRecentUploads, but no user logged in.")
             return
         }
 
-        let mostRecentUploadDate: Date? = try appDatabase.fetchMostRecentUploadDate(byUsername: username)
+        let response = try await API.shared.listUserImages(
+            of: username,
+            limit: .max,
+            start: nil,
+            end: end,
+            direction: .older,
+            continueString: nil
+        )
 
-        if let mostRecentUploadDate {
-            // Add 1s to the date, otherwise the newst upload will be fetched again.
-            // 1s is the smallest granularity for this API, everything smaller doesn't work.
-            // This should (hopefully) not miss any uploads that happen in between.
-            let startDate = mostRecentUploadDate.addingTimeInterval(1)
-            // Fully paginate from last know most recent uploaded file to newest
-            logger.info("fetchMostRecentUploads: last upload on \(mostRecentUploadDate).")
-            var continueString: String? = ""
-            var totalFetchCount = 0
-            while continueString != nil {
-                try Task.checkCancellation()
-                let response = try await API.shared.listUserImages(
-                    of: username,
-                    limit: .max,
-                    start: startDate,
-                    end: nil,
-                    direction: .newer,
-                    continueString: continueString
-                )
+        let titles = response.files.map(\.title)
+        guard titles.isEmpty == false else { return }
 
-                guard !response.files.isEmpty else {
-                    break
-                }
+        let apiFetchLimit = 50
+        let titlesChunked = titles.chunks(ofCount: apiFetchLimit)
 
-                let titles = response.files.map(\.title)
-                continueString = response.continueString
-
-
-                let mediaFiles = try await API.shared
-                    .fetchFullFileMetadata(fileNames: titles)
-                    .map(MediaFile.init)
-
-                _ = try appDatabase.upsert(mediaFiles)
-                totalFetchCount += mediaFiles.count
-                if let debugMostRecentDate = mediaFiles.sorted(by: \.uploadDate, .orderedDescending).first?.uploadDate {
-                    logger.info("fetchMostRecentUploads: fetched + upserted so far \(totalFetchCount), most recent one: \(debugMostRecentDate).")
-                } else {
-                    logger.info("fetchMostRecentUploads: No files, finished?")
-                }
-            }
-
-            logger.info("fetchMostRecentUploads: finished. total fetch count: \(totalFetchCount)")
-        } else {
-            // DB seems to be empty, do an initial fetch of a limited amount of user uploads
-            let limit = 50
-            logger.info("fetchMostRecentUploads: No files synced yet, fetch initial batch of \(limit) recent user uploads")
-
-            let response = try await API.shared.listUserImages(
-                of: username,
-                limit: .count(limit),
-                start: .now,
-                end: nil,
-                direction: .older,
-                continueString: nil
-            )
-
-            let titles = response.files.map(\.title)
-            guard titles.isEmpty == false else {
-                return
-            }
-
+        for titleChunk in titlesChunked {
             let mediaFiles = try await API.shared
-                .fetchFullFileMetadata(fileNames: titles)
+                .fetchFullFileMetadata(fileNames: Array(titleChunk))
                 .map(MediaFile.init)
 
             _ = try appDatabase.upsert(mediaFiles)
         }
+
+
     }
 }

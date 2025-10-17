@@ -412,7 +412,6 @@ public actor API {
     /// - Parameters:
     ///   - username: list items for this user
     ///   - limit: 1..50 (default: 50, for clients with higher limits, the max limit is: 500)
-    /// - Returns: [ListImageItem] which is aggregated from `action=query?list=allimages` and `action=wbgetentities`.
     public func listUserImages(
         of username: String,
         limit: ListLimit = .max,
@@ -430,21 +429,11 @@ public actor API {
             "ailimit": limit.apiString,
             "aiprop": "",
             "aisort": "timestamp",
-            "prop": "imageinfo|categories|info",
-            "cllimit": "max",
-            "clshow": "!hidden",
+            "prop": "info",
             "inprop": "protection",
-            "iilimit": 1,
-            "iiprop": "url|timestamp|user",
-            "iiurlwidth": 640,
-            "iiurlheight": 640,
             "format": "json",
             "formatversion": 2
         ]
-        
-        if let continueString, !continueString.isEmpty {
-            parameters["aicontinue"] = continueString
-        }
         
         if let start {
             parameters["aistart"] = start.ISO8601Format()
@@ -453,6 +442,12 @@ public actor API {
         if let end {
             parameters["aiend"] = end.ISO8601Format()
         }
+        
+        if let continueString, !continueString.isEmpty {
+            parameters["aicontinue"] = continueString
+        }
+        
+
 
         let request = session
             .request(commonsEndpoint, method: .get, parameters: parameters)
@@ -529,14 +524,9 @@ public actor API {
             "action": "query",
             "list": "categorymembers",
             "redirects": 1,
-            "prop": "imageinfo|categories|info",
+            "prop": "info",
             "clshow": "!hidden",
             "cllimit": "max",
-            "iilimit": 1,
-            "inprop": "protection",
-            "iiprop": "url|timestamp|user|dimensions",
-            "iiurlwidth": 640,
-            "iiurlheight": 640,
             "cmtitle": "Category:\(category)",
             "cmprop": "ids|title",
             "cmtype": "file",
@@ -631,7 +621,7 @@ public actor API {
             "cllimit": "max",
             "iilimit": 1,
             "inprop": "protection",
-            "iiprop": "url|timestamp|user|dimensions|extmetadata",
+            "iiprop": "url|timestamp|user|dimensions|extmetadata|size",
             "iiextmetadatafilter": "ImageDescription|Attribution",
             "iiurlwidth": 640,
             "iiurlheight": 640,
@@ -761,14 +751,9 @@ public actor API {
     
     public func searchFiles(for term: String, sort: SearchSort = .relevance, limit: ListLimit = .max, offset: Int? = nil) async throws -> GenericSearchQueryResponse {
         let additionalParams: Parameters = [
-            "prop": "imageinfo|categories|info",
+            "prop": "info",
             "clshow": "!hidden",
             "cllimit": "max",
-            "iilimit": 1,
-            "inprop": "protection",
-            "iiprop": "url|timestamp|user|dimensions",
-            "iiurlwidth": 640,
-            "iiurlheight": 640,
         ]
         return try await search(for: term, namespace: .file, sort: sort, limit: limit, additionalParams: additionalParams, offset: offset)
     }

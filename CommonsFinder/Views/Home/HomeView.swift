@@ -83,7 +83,6 @@ struct HomeView: View {
         .animation(.default, value: drafts)
         .animation(.default, value: recentlyViewedFiles)
         .animation(.default, value: account.activeUser)
-        .navigationTitle("Home")
         .toolbar {
             ToolbarItem(placement: .primaryAction) {
                 NavigationLink(value: NavigationStackItem.settings) {
@@ -94,6 +93,9 @@ struct HomeView: View {
                 Button("Add Image", systemImage: "plus", action: navigation.openNewDraft)
             }
         }
+        .navigationTitle("Home")
+        .navigationBarTitleDisplayMode(.inline)
+        //        .toolbar(removing: .title)
     }
 }
 

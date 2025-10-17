@@ -8,7 +8,9 @@
 import Foundation
 import UniformTypeIdentifiers
 
-extension String {
+nonisolated
+    extension String
+{
     func fileName() -> String {
         URL(filePath: self).deletingPathExtension().lastPathComponent
     }

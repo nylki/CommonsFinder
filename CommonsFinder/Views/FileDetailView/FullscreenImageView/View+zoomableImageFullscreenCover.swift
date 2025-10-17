@@ -1,5 +1,5 @@
 //
-//  FullscreenImageOverlay.swift
+//  View+zoomableImageFullscreenCover.swift
 //  CommonsFinder
 //
 //  Created by Tom Brewe on 25.09.25.
@@ -9,7 +9,7 @@ import NukeUI
 import SwiftUI
 
 extension View {
-    func fullscreenImageCover(
+    func zoomableImageFullscreenCover(
         mediaFileInfo: MediaFileInfo,
         namespace: Namespace.ID,
         isPresented: Binding<Bool>
@@ -34,7 +34,7 @@ private struct FullscreenImageOverlay: ViewModifier {
     func body(content: Content) -> some View {
         content
             .fullScreenCover(isPresented: $isPresented) {
-                FullscreenImageView(mediaFileInfo: mediaFileInfo, namespace: namespace, isPresented: $isPresented)
+                ZoomableImageView(mediaFileInfo: mediaFileInfo, namespace: namespace, isPresented: $isPresented)
             }
             .transaction(value: isPresented) {
                 /// Opens the fullscreenCover without the regular animation
