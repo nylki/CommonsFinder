@@ -1,7 +1,9 @@
-Support für iOS 18 wiederhergestellt!
-Wenn du iOS 18 benutzt, kommst du nun auch weiterhin in den Genuss der neuen Features, Fixes und Anpassungen der letzen Wochen und der kommenden Wochen und Monate.
-Allerdings wird der zukünftige Fokus schon eher auf iOS 26 liegen, insbesondere das Hochladen von Dateien im Hintergrund ist
-essentiell für Batch/Multi-Uploads (sobald ich dazu komme, das Feature zu bauen ;)
+- fixed: Fehler beim syncen von bisherigen Uploads des eingeloggten Users behoben
 
-Das heißt es kann ein paar vielleicht rohere Ecken mit iOS 18 geben, als in vorherigen Versionen, da ich nicht alle Features und UI-Elemente immer parallel testen kann.
+- feature: Im zoombaren Vollbildmodus wird jetzt auch das Originalbild in voller Auflösung geladen und angezeigt, sofern man mit Wifi verbunden ist (ansonsten manuell)
 
+- feature: neuer "Vollbildmodus Öffnen"-Button im "..."-Menu einer Bild-Detailseite
+
+- fixed: Fehler in Bildbeschreibung in Listenansichten behoben, wodurch die Beschreibung abgeschnitten waren, wenn sie einen Punkt (".") enthielte
+
+- perf: effizienteres Verarbeiten von Bildbeschreibungen die html/wikitext enthalten
