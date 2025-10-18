@@ -252,14 +252,13 @@ struct CategoryView: View {
             #endif
             do {
                 if let wikidataID = item.base.wikidataId {
-                    if let apiItem = try await CommonsAPI.API.shared
-                        .findCategoriesForWikidataItems([wikidataID], languageCode: locale.wikiLanguageCodeIdentifier)
-                        .first
-                    {
-                        let fetchedCategory = Category(apiItem: apiItem)
+                    let result = try await DataAccess.fetchCategoriesFromAPI(
+                        wikidataIDs: [wikidataID],
+                        shouldCache: true,
+                        appDatabase: appDatabase
+                    )
 
-                        try appDatabase.upsert(fetchedCategory)
-
+                    if let fetchedCategory = result.fetchedCategories.first {
                         if let commonsCategory = fetchedCategory.commonsCategory {
                             try await resolveCategoryDetails(category: commonsCategory)
                         }

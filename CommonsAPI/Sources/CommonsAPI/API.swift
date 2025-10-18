@@ -1263,9 +1263,8 @@ LIMIT \(limit)
             "languagefallback": "1",
             "ids": ids.joined(separator: "|"),
             "formatversion": 2,
-            // Allow long cache times for these relatively static strings
-            "smaxage": 24 * 3600,
-            "maxage": 24 * 3600,
+            "smaxage": 60,
+            "maxage": 60,
             "format": "json"
         ]
         
