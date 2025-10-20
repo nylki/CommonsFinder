@@ -32,17 +32,17 @@ import os.log
     // FIXME: constantly filling the cluster collections may end up eating all memory
     // we need to prune them when they get too big, based to distance to current region
     @ObservationIgnored
-    private(set) var mediaClustering: GeoClustering<GeoSearchFileItem> = .init()
-    @ObservationIgnored
-    private(set) var wikiItemClustering: GeoClustering<Category> = .init()
+    private(set) var geoClusterTree = GeoClusterTree()
 
-    private(set) var clusters:
-        [UInt64: (
-            mediaItems: [GeoSearchFileItem],
-            wikiItems: [Category]
-        )] = .init()
-
-    private(set) var selectedCluster: H3Index?
+    private(set) var clusters: [H3Index: GeoCluster] = .init()
+    private(set) var selectedClusterIdx: H3Index?
+    var selectedCluster: GeoCluster? {
+        if let selectedClusterIdx {
+            clusters[selectedClusterIdx]
+        } else {
+            nil
+        }
+    }
 
     enum OverlayType {
         case clusterSheet
@@ -56,8 +56,9 @@ import os.log
         set {
             if newValue {
                 presentedOverlay = .clusterSheet
-            } else if presentedOverlay == .clusterSheet {
+            } else {
                 presentedOverlay = nil
+                selectedClusterIdx = nil
             }
         }
     }
@@ -95,9 +96,15 @@ import os.log
 
     func selectCluster(_ index: H3Index) {
         focusedClusterItem = .init()
-        selectedCluster = index
+        selectedClusterIdx = index
         presentedOverlay = .clusterSheet
         // TODO: fetch items in circle radius if items > max (500?)
+    }
+
+    func resetClusterSelection() {
+        focusedClusterItem = .init()
+        selectedClusterIdx = nil
+        presentedOverlay = .clusterSheet
     }
 
     func refreshClusters() {
@@ -106,42 +113,12 @@ import os.log
         let clock = ContinuousClock()
         let elapsed = clock.measure {
 
+            clusters = geoClusterTree.clusters(
+                topLeft: region.boundingBox.topLeft,
+                bottomRight: region.boundingBox.bottomRight,
+                resolution: currentResolution
+            )
 
-            var mediaClusters: [UInt64: [GeoSearchFileItem]] = .init()
-            var wikiItemClusters: [UInt64: [Category]] = .init()
-
-            if region.diagonalMeters < imageVisibilityThreshold {
-                mediaClusters = mediaClustering.clusters(
-                    topLeft: region.boundingBox.topLeft,
-                    bottomRight: region.boundingBox.bottomRight,
-                    resolution: currentResolution
-                )
-            }
-
-            if region.diagonalMeters < wikiItemVisibilityThreshold {
-                wikiItemClusters = wikiItemClustering.clusters(
-                    topLeft: region.boundingBox.topLeft,
-                    bottomRight: region.boundingBox.bottomRight,
-                    resolution: currentResolution
-                )
-            }
-
-            let clusterIndices = Set(mediaClusters.keys).union(wikiItemClusters.keys)
-            var clusterDict = [
-                UInt64: (
-                    mediaItems: [GeoSearchFileItem],
-                    wikiItems: [Category]
-                )
-            ]()
-
-            for index in clusterIndices {
-                clusterDict[index] = (
-                    mediaClusters[index] ?? [],
-                    wikiItemClusters[index] ?? []
-                )
-            }
-
-            clusters = clusterDict
         }
 
         //        logger.debug("refreshClusters took \(elapsed)")
@@ -171,9 +148,16 @@ import os.log
             async let mediaTask = fetchMediaFiles(region: region, maxDiagonalMapLength: imageVisibilityThreshold)
             let (wikidataItems, mediaItems) = await (wikiItemsTask, mediaTask)
 
-            let wikidataItemInfo: [Category] = wikidataItems
-            wikiItemClustering.add(wikidataItemInfo)
-            mediaClustering.add(mediaItems)
+            var items: [GeoItem] = []
+
+            for wikidataItem in wikidataItems {
+                items.append(.category(wikidataItem))
+            }
+            for mediaItem in mediaItems {
+                items.append(.media(mediaItem))
+            }
+
+            geoClusterTree.add(items)
             refreshClusters()
 
             lastRefreshedRegions.append(region)
@@ -327,7 +311,9 @@ private func isRegionDiffSignificant(oldRegion: MKCoordinateRegion?, newRegion: 
 
 }
 
-extension GeoSearchFileItem: GeoReferencable {
+nonisolated
+    extension GeoSearchFileItem: GeoReferencable
+{
     var geoRefID: GeoRefID {
         self.id
     }

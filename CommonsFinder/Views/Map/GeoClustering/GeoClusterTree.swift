@@ -1,5 +1,5 @@
 //
-//  GeoClustering.swift
+//  GeoClusterTree.swift
 //  CommonsFinder
 //
 //  Created by Tom Brewe on 24.02.25.
@@ -10,30 +10,12 @@ import H3kit
 import MapKit
 import os.log
 
-nonisolated protocol GeoReferencable: Hashable, Equatable {
-    typealias GeoRefID = String
-    var latitude: Double? { get }
-    var longitude: Double? { get }
-    var geoRefID: GeoRefID { get }
-}
+nonisolated final class GeoClusterTree {
+    var items: [GeoReferencable.GeoRefID: GeoItem]
+    var h3IndexTree: [H3.Resolution: [H3Index: Set<GeoReferencable.GeoRefID>]]
 
-nonisolated extension GeoReferencable {
-    var coordinate: CLLocationCoordinate2D? {
-        if let latitude, let longitude {
-            CLLocationCoordinate2D(latitude: latitude, longitude: longitude)
-        } else {
-            nil
-        }
-    }
-}
-
-nonisolated
-    struct GeoClustering<Item: GeoReferencable>
-{
-    typealias Index = UInt64
-    var items: [GeoReferencable.GeoRefID: Item]
-    var h3IndexTree: [H3.Resolution: [Index: Set<Item.GeoRefID>]]
-
+    /// this gets cleared whenever `items` is modified
+    private var currentClusterCache: [H3Index: GeoCluster] = [:]
 
     init() {
         self.items = [:]
@@ -48,7 +30,7 @@ nonisolated
         topLeft: CLLocationCoordinate2D,
         bottomRight: CLLocationCoordinate2D,
         resolution: H3.Resolution
-    ) -> [Index: [Item]] {
+    ) -> [H3Index: GeoCluster] {
         let latMax = topLeft.latitude
         let latMin = bottomRight.latitude
         let lonMin = topLeft.longitude
@@ -56,10 +38,10 @@ nonisolated
 
         guard let indexTreeForPrecision = h3IndexTree[resolution] else {
             assertionFailure()
-
             return .init()
         }
-        let matchingClusters: [(Index, [Item])] =
+
+        let matchingClusters: [(H3Index, GeoCluster)] =
             indexTreeForPrecision.filter { index, itemIds in
 
                 // The decoded hash coordinates could be memoized
@@ -73,55 +55,55 @@ nonisolated
                 return isInBoundingBox
             }
             .compactMap { (index, ids) in
+
+                if let cachedCluster = currentClusterCache[index] {
+                    //                    logger.debug("M: use cached GeoCluster")
+                    return (index, cachedCluster)
+                }
+
                 let resolvedItems = ids.compactMap { items[$0] }
-                return (index, resolvedItems)
+                let resolvedMediaItems = resolvedItems.compactMap { $0.media }
+                let resolvedCategoryItems = resolvedItems.compactMap { $0.category }
+
+                let cluster = try? GeoCluster(h3Index: index, mediaItems: resolvedMediaItems, categoryItems: resolvedCategoryItems)
+                self.currentClusterCache[index] = cluster
+                //                logger.debug("M: create new GeoCluster")
+
+                if let cluster {
+                    return (index, cluster)
+                } else {
+                    return nil
+                }
             }
 
         return Dictionary(uniqueKeysWithValues: matchingClusters)
     }
 
-
-    func items(forResolution resolution: H3.Resolution) -> [Index: [Item]] {
-        guard let hashesForPrecision = h3IndexTree[resolution] else {
-            return [:]
-        }
-        return hashesForPrecision.mapValues { ids in
-            ids.compactMap { items[$0] }
-        }
-    }
-
-    mutating func add(_ items: [Item]) {
+    func add(_ items: [GeoItem]) {
+        currentClusterCache.removeAll()
         for item in items {
-            _ = add(item)
-        }
-    }
+            guard let longitude = item.longitude,
+                let latitude = item.latitude
+            else { continue }
 
-    mutating func add(_ item: Item) -> Bool {
-        guard let latRad = item.latitude?.degreesToRadians,
-            let lngRad = item.longitude?.degreesToRadians
-        else {
-            return false
-        }
+            self.items[item.geoRefID] = item
 
-        items[item.geoRefID] = item
-        for resolution in H3.Resolution.allCases {
-            do {
-                let index = try H3.latLngToCell(lat: latRad, lng: lngRad, resolution: resolution)
+            let latRad = latitude.degreesToRadians
+            let lngRad = longitude.degreesToRadians
 
-                if h3IndexTree[resolution]?[index] == nil {
-                    h3IndexTree[resolution]?[index] = .init()
+            for resolution in H3.Resolution.allCases {
+                do {
+                    let index = try H3.latLngToCell(lat: latRad, lng: lngRad, resolution: resolution)
+
+                    if h3IndexTree[resolution]?[index] == nil {
+                        h3IndexTree[resolution]?[index] = .init()
+                    }
+                    h3IndexTree[resolution]?[index]?.insert(item.geoRefID)
+                } catch {
+                    logger.error("Failed to add coordinate \(error)")
                 }
-                h3IndexTree[resolution]?[index]?.insert(item.geoRefID)
-            } catch {
-                logger.error("Failed to add coordinate \(error)")
             }
-
         }
-        return true
-    }
-
-    func remove(_ item: Item) {
-
     }
 }
 
