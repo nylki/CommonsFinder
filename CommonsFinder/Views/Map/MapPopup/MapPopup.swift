@@ -78,6 +78,7 @@ struct MapPopup: View {
                 Spacer()
 
                 Button("Close", systemImage: "xmark") {
+                    scrollPosition = .init()
                     isPresented = false
                 }
                 .glassButtonStyle()
@@ -145,7 +146,8 @@ struct MapPopup: View {
         .sensoryFeedback(
             .selection, trigger: scrollPosition,
             condition: { oldValue, newValue in
-                newValue.viewID != nil
+                if oldValue.viewID == nil { return false }
+                return newValue.viewID != nil
             }
         )
 

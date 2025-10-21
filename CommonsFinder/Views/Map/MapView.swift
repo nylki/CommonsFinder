@@ -26,12 +26,12 @@ struct MapView: View {
     @Environment(\.scenePhase) private var scenePhase
 
     /// this is either a media item or a wiki item
-    private var scrollClusterItem: (any GeoReferencable)? {
+    private var scrollClusterItem: GeoItem? {
         guard let id = mapModel.focusedClusterItem.viewID(type: String.self) else {
             return nil
         }
 
-        return mapModel.wikiItemClustering.items[id] ?? mapModel.mediaClustering.items[id]
+        return mapModel.geoClusterTree.items[id]
     }
 
     var body: some View {
@@ -110,9 +110,9 @@ struct MapView: View {
         .toolbarVisibility(.hidden, for: .navigationBar)
         .toolbarVisibility(verticalSizeClass == .compact ? .hidden : .automatic, for: .tabBar)
         .pseudoSheet(isPresented: $mapModel.isClusterSheetPresented) {
-            if let cellIndex = mapModel.selectedCluster,
+            if let cellIndex = mapModel.selectedClusterIdx,
                 let rawMediaItems = mapModel.clusters[cellIndex]?.mediaItems,
-                let wikiItems = mapModel.clusters[cellIndex]?.wikiItems
+                let wikiItems = mapModel.clusters[cellIndex]?.categoryItems
             {
                 MapPopup(
                     clusterIndex: cellIndex,
@@ -132,63 +132,57 @@ struct MapView: View {
 
     @MapContentBuilder
     private var clusterLayer: some MapContent {
-        ForEach(Array(mapModel.clusters.keys), id: \.self) { index in
-            if let cluster = mapModel.clusters[index],
-                let h3CellCenter = try? CLLocationCoordinate2D.h3CellCenter(h3Index: index)
-            {
+        let clusters: ArraySlice<GeoCluster> = ArraySlice(mapModel.clusters.values)
+        ForEach(clusters) { cluster in
 
-                let meanCenter = GeoVectorMath.calculateMeanCenter(
-                    coordinates:
-                        cluster.wikiItems.compactMap(\.coordinate) + cluster.mediaItems.compactMap(\.coordinate)
-                )
+            // FIXME: bound the meanCenter leave some padding for neighbor clusters
 
+            let isSelected: Bool = mapModel.selectedClusterIdx == cluster.h3Index
 
-                // FIXME: bound the meanCenter leave some padding for neighbor clusters
-
-                let isSelected = index == mapModel.selectedCluster
-
-                if isSelected {
-                    // FIXME: render actual circle or even polygon, with convex hull or max of lat/lon of all items.
-                    MapCircle(MKCircle(center: h3CellCenter, radius: mapModel.currentResolution.approxCircleRadius))
+            if isSelected {
+                if let hull = mapModel.selectedCluster?.hullPolygon {
+                    MapPolygon(hull)
                         .foregroundStyle(.clear)
                         .stroke(Color.accent, lineWidth: 2)
-
                 } else {
-                    Annotation("", coordinate: meanCenter, anchor: .center) {
-                        ClusterAnnotation(
-                            mediaCount: cluster.mediaItems.count,
-                            wikiItemCount: cluster.wikiItems.count,
-                            isSelected: isSelected
-                        ) {
-                            mapModel.selectCluster(index)
-                        }
-                        .tag(index)
-                    }
+                    MapCircle(MKCircle(center: cluster.h3Center, radius: mapModel.currentResolution.approxCircleRadius))
+                        .foregroundStyle(.clear)
+                        .stroke(Color.accent, lineWidth: 2)
                 }
-
-
             } else {
-                EmptyMapContent()
+                Annotation("", coordinate: cluster.meanCenter, anchor: .center) {
+                    ClusterAnnotation(
+                        mediaCount: cluster.mediaItems.count,
+                        wikiItemCount: cluster.categoryItems.count,
+                        isSelected: isSelected
+                    ) {
+                        mapModel.selectCluster(cluster.h3Index)
+                    }
+                    .tag(cluster.h3Index)
+                }
             }
+
+
         }
         .annotationTitles(.hidden)
     }
 }
 
 private struct ItemAnnotation: MapContent {
-    let item: any GeoReferencable
+    let item: GeoItem
 
     var body: some MapContent {
         if let lat = item.latitude, let lon = item.longitude {
             Annotation("", coordinate: .init(latitude: lat, longitude: lon), anchor: .center) {
-                if let category = item as? Category {
-                    WikiAnnotationView(item: category)
-                        .id(category.geoRefID)
-
-                } else if let imageItem = item as? GeoSearchFileItem {
-                    MediaAnnotationView(item: imageItem)
-                        .id(imageItem.geoRefID)
+                switch item {
+                case .media(let mediaGeoItem):
+                    MediaAnnotationView(item: mediaGeoItem)
+                        .id(mediaGeoItem.geoRefID)
+                case .category(let categoryGeoItem):
+                    WikiAnnotationView(item: categoryGeoItem)
+                        .id(categoryGeoItem.geoRefID)
                 }
+
             }
         }
     }

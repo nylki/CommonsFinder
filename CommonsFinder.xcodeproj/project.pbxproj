@@ -26,6 +26,20 @@
 		E290323F2D9EA84700A0CD8F /* GRDBQuery in Frameworks */ = {isa = PBXBuildFile; productRef = E290323E2D9EA84700A0CD8F /* GRDBQuery */; };
 		E29112B62DF34733007A3998 /* WhatToTest.de-DE.txt in Resources */ = {isa = PBXBuildFile; fileRef = E29112B52DF3463E007A3998 /* WhatToTest.de-DE.txt */; };
 		E29112B72DF34733007A3998 /* WhatToTest.en-US.txt in Resources */ = {isa = PBXBuildFile; fileRef = E29112B42DF344F0007A3998 /* WhatToTest.en-US.txt */; };
+		E2D7EF412EA692080058BE29 /* Intersect.swift in Sources */ = {isa = PBXBuildFile; fileRef = E2D7EF3D2EA692080058BE29 /* Intersect.swift */; };
+		E2D7EF422EA692080058BE29 /* Hull.swift in Sources */ = {isa = PBXBuildFile; fileRef = E2D7EF3B2EA692080058BE29 /* Hull.swift */; };
+		E2D7EF442EA692080058BE29 /* HullHelper.swift in Sources */ = {isa = PBXBuildFile; fileRef = E2D7EF3C2EA692080058BE29 /* HullHelper.swift */; };
+		E2D7EF452EA692080058BE29 /* Convex.swift in Sources */ = {isa = PBXBuildFile; fileRef = E2D7EF382EA692080058BE29 /* Convex.swift */; };
+		E2D7EF462EA692080058BE29 /* Grid.swift in Sources */ = {isa = PBXBuildFile; fileRef = E2D7EF3A2EA692080058BE29 /* Grid.swift */; };
+		E2D7EF482EA692080058BE29 /* LICENSE in Resources */ = {isa = PBXBuildFile; fileRef = E2D7EF3E2EA692080058BE29 /* LICENSE */; };
+		E2D7EF492EA692080058BE29 /* Intersect.swift in Sources */ = {isa = PBXBuildFile; fileRef = E2D7EF3D2EA692080058BE29 /* Intersect.swift */; };
+		E2D7EF4A2EA692080058BE29 /* Hull.swift in Sources */ = {isa = PBXBuildFile; fileRef = E2D7EF3B2EA692080058BE29 /* Hull.swift */; };
+		E2D7EF4C2EA692080058BE29 /* HullHelper.swift in Sources */ = {isa = PBXBuildFile; fileRef = E2D7EF3C2EA692080058BE29 /* HullHelper.swift */; };
+		E2D7EF4D2EA692080058BE29 /* Convex.swift in Sources */ = {isa = PBXBuildFile; fileRef = E2D7EF382EA692080058BE29 /* Convex.swift */; };
+		E2D7EF4E2EA692080058BE29 /* Grid.swift in Sources */ = {isa = PBXBuildFile; fileRef = E2D7EF3A2EA692080058BE29 /* Grid.swift */; };
+		E2D7EF502EA692080058BE29 /* LICENSE in Resources */ = {isa = PBXBuildFile; fileRef = E2D7EF3E2EA692080058BE29 /* LICENSE */; };
+		E2D7EF522EA69DDF0058BE29 /* README.md in Sources */ = {isa = PBXBuildFile; fileRef = E2D7EF512EA69DDA0058BE29 /* README.md */; };
+		E2D7EF532EA69DDF0058BE29 /* README.md in Sources */ = {isa = PBXBuildFile; fileRef = E2D7EF512EA69DDA0058BE29 /* README.md */; };
 		E2E2BFD52D8718AE00751949 /* Algorithms in Frameworks */ = {isa = PBXBuildFile; productRef = E2E2BFD42D8718AE00751949 /* Algorithms */; };
 		E2F19BC62CA43C6400E19DCD /* SwiftSecurity in Frameworks */ = {isa = PBXBuildFile; productRef = E2F19BC52CA43C6400E19DCD /* SwiftSecurity */; };
 		E2F1B9D52CD006C700410991 /* GRDB in Frameworks */ = {isa = PBXBuildFile; productRef = E2F1B9D42CD006C700410991 /* GRDB */; };
@@ -82,6 +96,13 @@
 		E2839FF82CA2DD910053C312 /* CommonsFinderTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = CommonsFinderTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		E29112B42DF344F0007A3998 /* WhatToTest.en-US.txt */ = {isa = PBXFileReference; lastKnownFileType = text; path = "WhatToTest.en-US.txt"; sourceTree = "<group>"; };
 		E29112B52DF3463E007A3998 /* WhatToTest.de-DE.txt */ = {isa = PBXFileReference; lastKnownFileType = text; path = "WhatToTest.de-DE.txt"; sourceTree = "<group>"; };
+		E2D7EF382EA692080058BE29 /* Convex.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Convex.swift; sourceTree = "<group>"; };
+		E2D7EF3A2EA692080058BE29 /* Grid.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Grid.swift; sourceTree = "<group>"; };
+		E2D7EF3B2EA692080058BE29 /* Hull.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Hull.swift; sourceTree = "<group>"; };
+		E2D7EF3C2EA692080058BE29 /* HullHelper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HullHelper.swift; sourceTree = "<group>"; };
+		E2D7EF3D2EA692080058BE29 /* Intersect.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Intersect.swift; sourceTree = "<group>"; };
+		E2D7EF3E2EA692080058BE29 /* LICENSE */ = {isa = PBXFileReference; lastKnownFileType = text; path = LICENSE; sourceTree = "<group>"; };
+		E2D7EF512EA69DDA0058BE29 /* README.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
 		E2F19BC72CA45AF600E19DCD /* CommonsAPI */ = {isa = PBXFileReference; lastKnownFileType = wrapper; path = CommonsAPI; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -225,7 +246,9 @@
 				Views/iOS18FallbackSupport/FallbackButtonRoles.swift,
 				Views/iOS18FallbackSupport/GlassFallbackButtonStyle.swift,
 				Views/Map/ClusterAnnotation.swift,
-				Views/Map/GeoClustering/GeoClustering.swift,
+				Views/Map/GeoClustering/GeoCluster.swift,
+				Views/Map/GeoClustering/GeoClusterTree.swift,
+				Views/Map/GeoClustering/GeoItem.swift,
 				"Views/Map/GeoClustering/H3+Convenience.swift",
 				Views/Map/MapModel.swift,
 				Views/Map/MapPopup/DraggablePseudoSheet.swift,
@@ -364,6 +387,7 @@
 				E2839FE82CA2DD900053C312 /* Products */,
 				E2F19BC72CA45AF600E19DCD /* CommonsAPI */,
 				E2035C432D52544D0079235B /* Frameworks */,
+				E2D7EF402EA692080058BE29 /* Libraries */,
 			);
 			sourceTree = "<group>";
 		};
@@ -384,6 +408,28 @@
 				E29112B42DF344F0007A3998 /* WhatToTest.en-US.txt */,
 			);
 			path = TestFlight;
+			sourceTree = "<group>";
+		};
+		E2D7EF3F2EA692080058BE29 /* ConcaveHull */ = {
+			isa = PBXGroup;
+			children = (
+				E2D7EF512EA69DDA0058BE29 /* README.md */,
+				E2D7EF382EA692080058BE29 /* Convex.swift */,
+				E2D7EF3A2EA692080058BE29 /* Grid.swift */,
+				E2D7EF3B2EA692080058BE29 /* Hull.swift */,
+				E2D7EF3C2EA692080058BE29 /* HullHelper.swift */,
+				E2D7EF3D2EA692080058BE29 /* Intersect.swift */,
+				E2D7EF3E2EA692080058BE29 /* LICENSE */,
+			);
+			path = ConcaveHull;
+			sourceTree = "<group>";
+		};
+		E2D7EF402EA692080058BE29 /* Libraries */ = {
+			isa = PBXGroup;
+			children = (
+				E2D7EF3F2EA692080058BE29 /* ConcaveHull */,
+			);
+			path = Libraries;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -552,6 +598,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				E29112B62DF34733007A3998 /* WhatToTest.de-DE.txt in Resources */,
+				E2D7EF482EA692080058BE29 /* LICENSE in Resources */,
 				E29112B72DF34733007A3998 /* WhatToTest.en-US.txt in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -560,6 +607,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				E2D7EF502EA692080058BE29 /* LICENSE in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -577,6 +625,12 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				E2D7EF522EA69DDF0058BE29 /* README.md in Sources */,
+				E2D7EF412EA692080058BE29 /* Intersect.swift in Sources */,
+				E2D7EF422EA692080058BE29 /* Hull.swift in Sources */,
+				E2D7EF442EA692080058BE29 /* HullHelper.swift in Sources */,
+				E2D7EF452EA692080058BE29 /* Convex.swift in Sources */,
+				E2D7EF462EA692080058BE29 /* Grid.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -584,6 +638,12 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				E2D7EF492EA692080058BE29 /* Intersect.swift in Sources */,
+				E2D7EF4A2EA692080058BE29 /* Hull.swift in Sources */,
+				E2D7EF4C2EA692080058BE29 /* HullHelper.swift in Sources */,
+				E2D7EF4D2EA692080058BE29 /* Convex.swift in Sources */,
+				E2D7EF4E2EA692080058BE29 /* Grid.swift in Sources */,
+				E2D7EF532EA69DDF0058BE29 /* README.md in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
