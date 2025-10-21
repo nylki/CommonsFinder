@@ -78,6 +78,7 @@ struct MapPopup: View {
                 Spacer()
 
                 Button("Close", systemImage: "xmark") {
+                    scrollPosition = .init()
                     isPresented = false
                 }
                 .glassButtonStyle()
