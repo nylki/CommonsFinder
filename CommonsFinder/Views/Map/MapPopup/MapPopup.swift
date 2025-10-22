@@ -36,17 +36,12 @@ struct MapPopup: View {
     @Environment(\.locale) private var locale
 
 
-    let clusterIndex: H3Index
+    let cluster: GeoCluster
     @Binding var scrollPosition: ScrollPosition
-    /// wikidataItems are directly visualized
-    let rawCategories: [Category]
-    /// rawMediaItems are not directly visualized, but passed to the pagination model to fetch the metadata including image url and caption
-    let rawMediaItems: [GeoSearchFileItem]
     @Binding var isPresented: Bool
 
     @State private var mediaPaginationModel: PaginatableMediaFiles? = nil
     @State private var resolvedCategories: [CategoryInfo] = []
-
 
     @Environment(\.appDatabase) private var appDatabase
 
@@ -59,39 +54,39 @@ struct MapPopup: View {
     @State private var selectedItemType: ItemType = .empty
 
     var body: some View {
-        let selectedMediaIdx = rawMediaItems.firstIndex {
+        let selectedMediaIdx = cluster.mediaItems.firstIndex {
             $0.geoRefID == scrollPosition.viewID(type: String.self)
         }
-        let selectedCategoryIdx = rawCategories.firstIndex {
+        let selectedCategoryIdx = cluster.categoryItems.firstIndex {
             $0.geoRefID == scrollPosition.viewID(type: String.self)
         }
+        
+        let categoryCount = cluster.categoryItems.count
+        let mediaCount = cluster.mediaItems.count
 
         VStack {
             HStack {
-                if selectedItemType != .empty, !rawCategories.isEmpty, !rawMediaItems.isEmpty {
-
-                    let mediaPickerLabel =
-                        if let selectedMediaIdx {
-                            Text("Images (\(selectedMediaIdx + 1)/\(rawMediaItems.count))")
-                        } else {
-                            Text("Images (\(rawMediaItems.count))")
-                        }
-
-
-                    let locationPickerLabel =
-                        if let selectedCategoryIdx {
-                            Text("Locations (\(selectedCategoryIdx + 1)/\(rawCategories.count))")
-                        } else {
-                            Text("Locations (\(rawCategories.count))")
-                        }
-
-
+                if selectedItemType != .empty, categoryCount != 0, mediaCount != 0 {
                     Picker("", selection: $selectedItemType) {
-                        locationPickerLabel.tag(ItemType.wikiItem)
-                        mediaPickerLabel.tag(ItemType.mediaItem)
+                        let locationPickerLabel = if let selectedCategoryIdx {
+                            Label("Locations (\(selectedCategoryIdx + 1)/\(categoryCount))", systemImage: "mappin")
+                        } else {
+                            Label("Locations (\(categoryCount))", systemImage: "mappin")
+                        }
+                        let mediaPickerLabel = if let selectedMediaIdx {
+                            Label("Images (\(selectedMediaIdx + 1)/\(mediaCount))", systemImage: "photo.stack")
+                        } else {
+                            Label("Images (\(mediaCount))", systemImage: "photo.stack")
+                        }
+                        
+                        locationPickerLabel
+                            .tag(ItemType.wikiItem)
+                            
+                        mediaPickerLabel
+                            .tag(ItemType.mediaItem)
                     }
-                    .animation(.default, value: selectedItemType)
                     .pickerStyle(.segmented)
+                    .frame(minWidth: 0, maxWidth: .infinity)
                     .padding(.horizontal)
                     .onChange(of: selectedItemType) {
                         // TODO: set this implicitly in model or remember scrollPosition per type?
@@ -149,17 +144,6 @@ struct MapPopup: View {
                     }
 
                 }
-
-                .onAppear {
-                    if selectedItemType == .empty {
-                        if !rawCategories.isEmpty {
-                            selectedItemType = .wikiItem
-                        } else if !rawMediaItems.isEmpty {
-                            selectedItemType = .mediaItem
-                        }
-                    }
-
-                }
                 .scrollIndicators(.hidden)
                 .clipped()
                 // FIXME: scrollTargetBehavior glitches when scrolling distance is too forward+short
@@ -174,6 +158,15 @@ struct MapPopup: View {
                 return newValue.viewID != nil
             }
         )
+        .onChange(of: cluster, initial: true) {
+            if selectedItemType == .empty {
+                if categoryCount != 0 {
+                    selectedItemType = .wikiItem
+                } else if mediaCount != 0 {
+                    selectedItemType = .mediaItem
+                }
+            }
+        }
 
     }
 
@@ -194,9 +187,11 @@ struct MapPopup: View {
                 scrollPosition = .init(id: firstItem.id)
             }
         }
-        .task(id: rawCategories) {
+        .task(id: cluster.categoryItems) {
             do {
-                let wikidataIDs: [Category.WikidataID] = rawCategories.compactMap(\.wikidataId)
+                let wikidataIDs = cluster.categoryItems
+                    .compactMap(\.wikidataId)
+                
                 let observation = ValueObservation.tracking { db in
                     try CategoryInfo
                         .fetchAll(db, wikidataIDs: wikidataIDs, resolveRedirections: true)
@@ -206,15 +201,15 @@ struct MapPopup: View {
                         result
                         .grouped(by: \.base.wikidataId)
 
-                    let originalCategories =
-                        rawCategories
+                    let originalCategories = cluster.categoryItems
                         .map { CategoryInfo($0, itemInteraction: nil) }
                         .grouped(by: \.base.wikidataId)
 
                     resolvedCategories = wikidataIDs.compactMap { wikidataID in
-                        (fetchedCategories[wikidataID]?.first ?? originalCategories[wikidataID]?.first)
+                        fetchedCategories[wikidataID]?.first ??
+                        originalCategories[wikidataID]?.first
+                        
                     }
-
                 }
             } catch {
                 logger.error("Failed to observe Category changes in MapPopup \(error)")
@@ -267,7 +262,7 @@ struct MapPopup: View {
             }
 
             do {
-                mediaPaginationModel = try await .init(appDatabase: appDatabase, initialTitles: rawMediaItems.map(\.title))
+                mediaPaginationModel = try await .init(appDatabase: appDatabase, initialTitles: cluster.mediaItems.map(\.title))
                 mediaPaginationModel?.paginate()
             } catch {
                 logger.error("Failed to init file pagination \(error)")
@@ -290,14 +285,19 @@ struct MapPopup: View {
         .ignoresSafeArea()
         .pseudoSheet(isPresented: $isShowing) {
             MapPopup(
-                clusterIndex: 640_371_092_026_114_823, scrollPosition: $scrollPosition,
-                rawCategories: [.randomItem(id: "1"), .randomItem(id: "2"), .randomItem(id: "3"), .randomItem(id: "4"), .randomItem(id: "5"), .randomItem(id: "5")],
-                rawMediaItems: [
-                    //                .makeRandomUploaded(id: "1", .squareImage),
-                    //                .makeRandomUploaded(id: "2", .horizontalImage),
-                    //                .makeRandomUploaded(id: "3", .verticalImage)
-                ], isPresented: $isShowing)
-            //            MapPopup(scrollPosition: $scrollPosition, clusterIndex: 640371092026114823)
+                cluster: try! .init(
+                    h3Index: 640_371_092_026_114_823,
+                    mediaItems: [],
+                    categoryItems: [
+                        .randomItem(id: "1"),
+                        .randomItem(id: "2"),
+                        .randomItem(id: "3"),
+                        .randomItem(id: "4"),
+                        .randomItem(id: "5"),
+                        .randomItem(id: "6")
+                    ]),
+                scrollPosition: $scrollPosition,
+                isPresented: $isShowing)
         }
         .task {
             try? await Task.sleep(for: .milliseconds(500))

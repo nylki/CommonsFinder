@@ -35,14 +35,8 @@ import os.log
     private(set) var geoClusterTree = GeoClusterTree()
 
     private(set) var clusters: [H3Index: GeoCluster] = .init()
-    private(set) var selectedClusterIdx: H3Index?
-    var selectedCluster: GeoCluster? {
-        if let selectedClusterIdx {
-            clusters[selectedClusterIdx]
-        } else {
-            nil
-        }
-    }
+    private(set) var selectedCluster: GeoCluster?
+
 
     enum OverlayType {
         case clusterSheet
@@ -58,7 +52,7 @@ import os.log
                 presentedOverlay = .clusterSheet
             } else {
                 presentedOverlay = nil
-                selectedClusterIdx = nil
+                selectedCluster = nil
             }
         }
     }
@@ -96,14 +90,14 @@ import os.log
 
     func selectCluster(_ index: H3Index) {
         focusedClusterItem = .init()
-        selectedClusterIdx = index
+        selectedCluster = clusters[index]
         presentedOverlay = .clusterSheet
         // TODO: fetch items in circle radius if items > max (500?)
     }
 
     func resetClusterSelection() {
         focusedClusterItem = .init()
-        selectedClusterIdx = nil
+        selectedCluster = nil
         presentedOverlay = .clusterSheet
     }
 
@@ -118,6 +112,12 @@ import os.log
                 bottomRight: region.boundingBox.bottomRight,
                 resolution: currentResolution
             )
+            
+            /// update data of selected cluster if we refresh the cluster info (eg. more items) otherwise if the bbox cluster don't have
+            /// it (eg. zoomed in), we retain it for display and to let the user keep interacting with it.
+            if let selectedIdx = selectedCluster?.h3Index, let updatedSelectedCluster = clusters[selectedIdx] {
+                selectedCluster = updatedSelectedCluster
+            }
 
         }
 
@@ -126,7 +126,6 @@ import os.log
         if elapsed > .milliseconds(4) {
             logger.critical("refreshClusters took long! \(elapsed)")
         }
-
     }
 
     init() {

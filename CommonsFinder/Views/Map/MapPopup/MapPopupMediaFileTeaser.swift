@@ -13,12 +13,15 @@ struct MapPopupMediaFileTeaser: View {
     let namespace: Namespace.ID
     let mediaFileInfo: MediaFileInfo
     let isSelected: Bool
+    
+    @Environment(Navigation.self) private var navigation
 
 
     var body: some View {
         HeightReader(alignment: .center) { height in
-
-            NavigationLink(value: NavigationStackItem.viewFile(mediaFileInfo, namespace: namespace)) {
+            Button {
+                navigation.viewFile(mediaFile: mediaFileInfo, namespace: namespace)
+            } label: {
                 LazyImage(request: mediaFileInfo.thumbRequest, transaction: .init(animation: .linear)) { imageState in
                     if let image = imageState.image {
                         image

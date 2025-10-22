@@ -38,11 +38,10 @@ struct MapView: View {
         MapReader { mapProxy in
             Map(position: $mapModel.position) {
                 clusterLayer
-
+                
                 if let scrollClusterItem {
                     ItemAnnotation(item: scrollClusterItem)
                 }
-
                 UserAnnotation()
             }
             .mapControls {
@@ -109,41 +108,43 @@ struct MapView: View {
         .navigationBarTitleDisplayMode(.inline)
         .toolbarVisibility(.hidden, for: .navigationBar)
         .toolbarVisibility(verticalSizeClass == .compact ? .hidden : .automatic, for: .tabBar)
-        .pseudoSheet(isPresented: $mapModel.isClusterSheetPresented) {
-            if let cellIndex = mapModel.selectedClusterIdx,
-                let rawMediaItems = mapModel.clusters[cellIndex]?.mediaItems,
-                let wikiItems = mapModel.clusters[cellIndex]?.categoryItems
-            {
+        .sheet(isPresented: $mapModel.isClusterSheetPresented) {
+            if let selectedCluster = mapModel.selectedCluster {
                 MapPopup(
-                    clusterIndex: cellIndex,
+                    cluster: selectedCluster,
                     scrollPosition: $mapModel.focusedClusterItem,
-                    rawCategories: wikiItems,
-                    rawMediaItems: rawMediaItems,
                     isPresented: $mapModel.isClusterSheetPresented
                 )
                 // the .id makes sure we don't retain state of the previous cell
                 // as this complicates things with scroll positions and selected states and is generally not desired for this custom sheet.
-                .id(cellIndex)
+                .presentationDetents([.fraction(0.3), .large])
+                .presentationBackgroundInteraction(.enabled)
+                .id(selectedCluster.id)
+
             }
         }
-
     }
 
 
     @MapContentBuilder
     private var clusterLayer: some MapContent {
-        let clusters: ArraySlice<GeoCluster> = ArraySlice(mapModel.clusters.values)
+        let clusters: ArraySlice<GeoCluster> = if let selectedCluster = mapModel.selectedCluster {
+            ArraySlice([selectedCluster] + mapModel.clusters.values)
+        } else {
+            ArraySlice(mapModel.clusters.values)
+        }
+
         ForEach(clusters) { cluster in
 
             // FIXME: bound the meanCenter leave some padding for neighbor clusters
 
-            let isSelected: Bool = mapModel.selectedClusterIdx == cluster.h3Index
+            let isSelected: Bool = mapModel.selectedCluster?.h3Index == cluster.h3Index
 
             if isSelected {
                 if let hull = mapModel.selectedCluster?.hullPolygon {
                     MapPolygon(hull)
                         .foregroundStyle(.clear)
-                        .stroke(Color.accent, style: .init(lineWidth: 2, dash: [2, 2]))
+                        .stroke(Color.accent, style: .init(lineWidth: 2, lineCap: .round, dash: [2, 6]))
                 } else {
                     MapCircle(MKCircle(center: cluster.h3Center, radius: mapModel.currentResolution.approxCircleRadius))
                         .foregroundStyle(.clear)
