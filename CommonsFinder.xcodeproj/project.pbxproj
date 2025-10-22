@@ -27,13 +27,13 @@
 		E29112B62DF34733007A3998 /* WhatToTest.de-DE.txt in Resources */ = {isa = PBXBuildFile; fileRef = E29112B52DF3463E007A3998 /* WhatToTest.de-DE.txt */; };
 		E29112B72DF34733007A3998 /* WhatToTest.en-US.txt in Resources */ = {isa = PBXBuildFile; fileRef = E29112B42DF344F0007A3998 /* WhatToTest.en-US.txt */; };
 		E2D7EF412EA692080058BE29 /* Intersect.swift in Sources */ = {isa = PBXBuildFile; fileRef = E2D7EF3D2EA692080058BE29 /* Intersect.swift */; };
-		E2D7EF422EA692080058BE29 /* Hull.swift in Sources */ = {isa = PBXBuildFile; fileRef = E2D7EF3B2EA692080058BE29 /* Hull.swift */; };
+		E2D7EF422EA692080058BE29 /* ConcaveHull.swift in Sources */ = {isa = PBXBuildFile; fileRef = E2D7EF3B2EA692080058BE29 /* ConcaveHull.swift */; };
 		E2D7EF442EA692080058BE29 /* HullHelper.swift in Sources */ = {isa = PBXBuildFile; fileRef = E2D7EF3C2EA692080058BE29 /* HullHelper.swift */; };
 		E2D7EF452EA692080058BE29 /* Convex.swift in Sources */ = {isa = PBXBuildFile; fileRef = E2D7EF382EA692080058BE29 /* Convex.swift */; };
 		E2D7EF462EA692080058BE29 /* Grid.swift in Sources */ = {isa = PBXBuildFile; fileRef = E2D7EF3A2EA692080058BE29 /* Grid.swift */; };
 		E2D7EF482EA692080058BE29 /* LICENSE in Resources */ = {isa = PBXBuildFile; fileRef = E2D7EF3E2EA692080058BE29 /* LICENSE */; };
 		E2D7EF492EA692080058BE29 /* Intersect.swift in Sources */ = {isa = PBXBuildFile; fileRef = E2D7EF3D2EA692080058BE29 /* Intersect.swift */; };
-		E2D7EF4A2EA692080058BE29 /* Hull.swift in Sources */ = {isa = PBXBuildFile; fileRef = E2D7EF3B2EA692080058BE29 /* Hull.swift */; };
+		E2D7EF4A2EA692080058BE29 /* ConcaveHull.swift in Sources */ = {isa = PBXBuildFile; fileRef = E2D7EF3B2EA692080058BE29 /* ConcaveHull.swift */; };
 		E2D7EF4C2EA692080058BE29 /* HullHelper.swift in Sources */ = {isa = PBXBuildFile; fileRef = E2D7EF3C2EA692080058BE29 /* HullHelper.swift */; };
 		E2D7EF4D2EA692080058BE29 /* Convex.swift in Sources */ = {isa = PBXBuildFile; fileRef = E2D7EF382EA692080058BE29 /* Convex.swift */; };
 		E2D7EF4E2EA692080058BE29 /* Grid.swift in Sources */ = {isa = PBXBuildFile; fileRef = E2D7EF3A2EA692080058BE29 /* Grid.swift */; };
@@ -98,7 +98,7 @@
 		E29112B52DF3463E007A3998 /* WhatToTest.de-DE.txt */ = {isa = PBXFileReference; lastKnownFileType = text; path = "WhatToTest.de-DE.txt"; sourceTree = "<group>"; };
 		E2D7EF382EA692080058BE29 /* Convex.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Convex.swift; sourceTree = "<group>"; };
 		E2D7EF3A2EA692080058BE29 /* Grid.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Grid.swift; sourceTree = "<group>"; };
-		E2D7EF3B2EA692080058BE29 /* Hull.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Hull.swift; sourceTree = "<group>"; };
+		E2D7EF3B2EA692080058BE29 /* ConcaveHull.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConcaveHull.swift; sourceTree = "<group>"; };
 		E2D7EF3C2EA692080058BE29 /* HullHelper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HullHelper.swift; sourceTree = "<group>"; };
 		E2D7EF3D2EA692080058BE29 /* Intersect.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Intersect.swift; sourceTree = "<group>"; };
 		E2D7EF3E2EA692080058BE29 /* LICENSE */ = {isa = PBXFileReference; lastKnownFileType = text; path = LICENSE; sourceTree = "<group>"; };
@@ -416,7 +416,7 @@
 				E2D7EF512EA69DDA0058BE29 /* README.md */,
 				E2D7EF382EA692080058BE29 /* Convex.swift */,
 				E2D7EF3A2EA692080058BE29 /* Grid.swift */,
-				E2D7EF3B2EA692080058BE29 /* Hull.swift */,
+				E2D7EF3B2EA692080058BE29 /* ConcaveHull.swift */,
 				E2D7EF3C2EA692080058BE29 /* HullHelper.swift */,
 				E2D7EF3D2EA692080058BE29 /* Intersect.swift */,
 				E2D7EF3E2EA692080058BE29 /* LICENSE */,
@@ -627,7 +627,7 @@
 			files = (
 				E2D7EF522EA69DDF0058BE29 /* README.md in Sources */,
 				E2D7EF412EA692080058BE29 /* Intersect.swift in Sources */,
-				E2D7EF422EA692080058BE29 /* Hull.swift in Sources */,
+				E2D7EF422EA692080058BE29 /* ConcaveHull.swift in Sources */,
 				E2D7EF442EA692080058BE29 /* HullHelper.swift in Sources */,
 				E2D7EF452EA692080058BE29 /* Convex.swift in Sources */,
 				E2D7EF462EA692080058BE29 /* Grid.swift in Sources */,
@@ -639,7 +639,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				E2D7EF492EA692080058BE29 /* Intersect.swift in Sources */,
-				E2D7EF4A2EA692080058BE29 /* Hull.swift in Sources */,
+				E2D7EF4A2EA692080058BE29 /* ConcaveHull.swift in Sources */,
 				E2D7EF4C2EA692080058BE29 /* HullHelper.swift in Sources */,
 				E2D7EF4D2EA692080058BE29 /* Convex.swift in Sources */,
 				E2D7EF4E2EA692080058BE29 /* Grid.swift in Sources */,

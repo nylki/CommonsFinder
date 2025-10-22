@@ -143,7 +143,7 @@ struct MapView: View {
                 if let hull = mapModel.selectedCluster?.hullPolygon {
                     MapPolygon(hull)
                         .foregroundStyle(.clear)
-                        .stroke(Color.accent, lineWidth: 2)
+                        .stroke(Color.accent, style: .init(lineWidth: 2, dash: [2, 2]))
                 } else {
                     MapCircle(MKCircle(center: cluster.h3Center, radius: mapModel.currentResolution.approxCircleRadius))
                         .foregroundStyle(.clear)

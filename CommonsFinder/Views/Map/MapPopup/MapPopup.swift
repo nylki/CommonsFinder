@@ -59,14 +59,38 @@ struct MapPopup: View {
     @State private var selectedItemType: ItemType = .empty
 
     var body: some View {
+        let selectedMediaIdx = rawMediaItems.firstIndex {
+            $0.geoRefID == scrollPosition.viewID(type: String.self)
+        }
+        let selectedCategoryIdx = rawCategories.firstIndex {
+            $0.geoRefID == scrollPosition.viewID(type: String.self)
+        }
+
         VStack {
             HStack {
                 if selectedItemType != .empty, !rawCategories.isEmpty, !rawMediaItems.isEmpty {
-                    Picker("", selection: $selectedItemType) {
-                        Text("Locations").tag(ItemType.wikiItem)
-                        Text("Images").tag(ItemType.mediaItem)
 
+                    let mediaPickerLabel =
+                        if let selectedMediaIdx {
+                            Text("Images (\(selectedMediaIdx + 1)/\(rawMediaItems.count))")
+                        } else {
+                            Text("Images (\(rawMediaItems.count))")
+                        }
+
+
+                    let locationPickerLabel =
+                        if let selectedCategoryIdx {
+                            Text("Locations (\(selectedCategoryIdx + 1)/\(rawCategories.count))")
+                        } else {
+                            Text("Locations (\(rawCategories.count))")
+                        }
+
+
+                    Picker("", selection: $selectedItemType) {
+                        locationPickerLabel.tag(ItemType.wikiItem)
+                        mediaPickerLabel.tag(ItemType.mediaItem)
                     }
+                    .animation(.default, value: selectedItemType)
                     .pickerStyle(.segmented)
                     .padding(.horizontal)
                     .onChange(of: selectedItemType) {
@@ -205,10 +229,6 @@ struct MapPopup: View {
         LazyHStack {
             if let mediaPaginationModel {
                 let mediaFileInfos = mediaPaginationModel.mediaFileInfos
-                if mediaFileInfos.isEmpty {
-                    ProgressView()
-                        .frame(width: 100).progressViewStyle(.circular)
-                }
                 ForEach(mediaFileInfos) { mediaFileInfo in
                     let isSelected = mediaFileInfo.id == scrollPosition.viewID(type: String.self)
                     MapPopupMediaFileTeaser(namespace: namespace, mediaFileInfo: mediaFileInfo, isSelected: isSelected)
@@ -222,6 +242,11 @@ struct MapPopup: View {
                                 mediaPaginationModel.paginate()
                             }
                         }
+                }
+
+                if mediaPaginationModel.status == .isPaginating {
+                    ProgressView()
+                        .frame(width: 100).progressViewStyle(.circular)
                 }
             } else {
                 ProgressView()
