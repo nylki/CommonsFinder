@@ -10,6 +10,7 @@
 //
 
 import Foundation
+import os.log
 
 
 nonisolated class Grid {
@@ -33,6 +34,10 @@ nonisolated class Grid {
     }
 
     func point2CellXY(_ point: Point) -> [Int] {
+        guard cellSize != 0 else {
+            logger.error("cellSize is 0!")
+            return []
+        }
         let x = Int(point.x / cellSize)
         let y = Int(point.y / cellSize)
         return [x, y]

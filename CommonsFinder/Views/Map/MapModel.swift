@@ -14,11 +14,29 @@ import OrderedCollections
 import SwiftUI
 import os.log
 
+@Observable final class ClusterModel {
+    // FIXME: maybe move these mapSheet vars into a sub-model?
+    var cluster: GeoCluster
+    var mapSheetMediaPaginationModel: PaginatableMediaFiles? = nil
+    var mapSheetResolvedCategories: [CategoryInfo] = []
+    var mapSheetSelectedItemType: MapPopup.ItemType = .empty
+    var selectedDetent: PresentationDetent = .fraction(250)
+    @ObservationIgnored
+    let possibleDetents: Set<PresentationDetent> = [.height(250), .large]
+
+
+    /// The item that is scrolled to inside the sheet when tapping on a cluster circle
+    var mapSheetFocusedClusterItem = ScrollPosition(idType: GeoReferencable.GeoRefID.self)
+
+    init(cluster: GeoCluster) {
+        self.cluster = cluster
+    }
+}
+
 @Observable final class MapModel {
     var position: MapCameraPosition = .automatic
-    var locale: Locale = .current
-
     private(set) var region: MKCoordinateRegion?
+    private(set) var navigation: Navigation?
 
     @ObservationIgnored
     private var refreshTask: Task<Void, Error>?
@@ -35,29 +53,26 @@ import os.log
     private(set) var geoClusterTree = GeoClusterTree()
 
     private(set) var clusters: [H3Index: GeoCluster] = .init()
-    private(set) var selectedCluster: GeoCluster?
+    private var isMapSheetPresented: Bool = false
+    var isMapSheetPresentedBinding: Binding<Bool> {
+        .init(
+            get: {
+                self.isMapSheetPresented && self.navigation?.mapPath.isEmpty == true
+            },
+            set: { newValue in
+                if self.navigation?.mapPath.isEmpty == true {
+                    self.isMapSheetPresented = newValue
+                }
+            })
+    }
+
+    private(set) var selectedCluster: ClusterModel?
 
 
-    enum OverlayType {
-        case clusterSheet
-        case goToNearbyLocationPermission
+    func setNavigation(_ navigation: Navigation) {
+        guard self.navigation == nil else { return }
+        self.navigation = navigation
     }
-    var presentedOverlay: OverlayType?
-    var isClusterSheetPresented: Bool {
-        get {
-            presentedOverlay == .clusterSheet
-        }
-        set {
-            if newValue {
-                presentedOverlay = .clusterSheet
-            } else {
-                presentedOverlay = nil
-                selectedCluster = nil
-            }
-        }
-    }
-    /// The item that is scrolled to inside the sheet when tapping on a cluster circle
-    var focusedClusterItem = ScrollPosition(idType: GeoReferencable.GeoRefID.self)
 
 
     @ObservationIgnored
@@ -88,17 +103,21 @@ import os.log
         self.region = region
     }
 
+
     func selectCluster(_ index: H3Index) {
-        focusedClusterItem = .init()
-        selectedCluster = clusters[index]
-        presentedOverlay = .clusterSheet
+        guard let cluster = clusters[index] else {
+            assertionFailure()
+            return
+        }
+
+        selectedCluster = .init(cluster: cluster)
+        isMapSheetPresented = true
         // TODO: fetch items in circle radius if items > max (500?)
     }
 
     func resetClusterSelection() {
-        focusedClusterItem = .init()
+        isMapSheetPresented = false
         selectedCluster = nil
-        presentedOverlay = .clusterSheet
     }
 
     func refreshClusters() {
@@ -112,11 +131,11 @@ import os.log
                 bottomRight: region.boundingBox.bottomRight,
                 resolution: currentResolution
             )
-            
+
             /// update data of selected cluster if we refresh the cluster info (eg. more items) otherwise if the bbox cluster don't have
             /// it (eg. zoomed in), we retain it for display and to let the user keep interacting with it.
-            if let selectedIdx = selectedCluster?.h3Index, let updatedSelectedCluster = clusters[selectedIdx] {
-                selectedCluster = updatedSelectedCluster
+            if let selectedIdx = selectedCluster?.cluster.h3Index, let updatedSelectedCluster = clusters[selectedIdx] {
+                selectedCluster?.cluster = updatedSelectedCluster
             }
 
         }
@@ -126,10 +145,6 @@ import os.log
         if elapsed > .milliseconds(4) {
             logger.critical("refreshClusters took long! \(elapsed)")
         }
-    }
-
-    init() {
-
     }
 
     private func refreshRegion() {

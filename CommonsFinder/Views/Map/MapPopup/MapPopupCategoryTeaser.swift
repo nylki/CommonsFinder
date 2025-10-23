@@ -15,10 +15,14 @@ struct MapPopupCategoryTeaser: View {
     let isSelected: Bool
     let namespace: Namespace.ID
 
+    @Environment(Navigation.self) private var navigation
+
     var body: some View {
         let hasBackgroundImage = item.base.thumbnailImage != nil
 
-        NavigationLink(value: NavigationStackItem.wikidataItem(item)) {
+        Button {
+            navigation.viewCategory(item)
+        } label: {
             HStack {
                 VStack(alignment: .leading) {
                     Spacer()
@@ -81,7 +85,6 @@ struct MapPopupCategoryTeaser: View {
             }
             .padding(2)
         }
-
         .animation(.default, value: isSelected)
     }
 

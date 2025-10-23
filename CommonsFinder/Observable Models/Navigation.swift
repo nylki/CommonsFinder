@@ -135,6 +135,10 @@ extension Navigation {
         path[selectedTab]?.append(.loadFile(title: title, namespace: namespace))
     }
 
+    func viewCategory(_ categoryInfo: CategoryInfo) {
+        path[selectedTab]?.append(.wikidataItem(categoryInfo))
+    }
+
     func openOnboarding() {
         isAuthSheetOpen = .onboardingChoice
     }

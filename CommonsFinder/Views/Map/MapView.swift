@@ -27,7 +27,7 @@ struct MapView: View {
 
     /// this is either a media item or a wiki item
     private var scrollClusterItem: GeoItem? {
-        guard let id = mapModel.focusedClusterItem.viewID(type: String.self) else {
+        guard let id = mapModel.selectedCluster?.mapSheetFocusedClusterItem.viewID(type: String.self) else {
             return nil
         }
 
@@ -35,10 +35,11 @@ struct MapView: View {
     }
 
     var body: some View {
+        @Bindable var navigation = navigation
         MapReader { mapProxy in
             Map(position: $mapModel.position) {
                 clusterLayer
-                
+
                 if let scrollClusterItem {
                     ItemAnnotation(item: scrollClusterItem)
                 }
@@ -53,6 +54,9 @@ struct MapView: View {
                     MapUserLocationButton()
                 }
             }
+        }
+        .onAppear {
+            mapModel.setNavigation(navigation)
         }
         .overlay(alignment: .topTrailing) {
             /// This is the replacement for the MapUserLocationButton in the mapControls
@@ -99,49 +103,51 @@ struct MapView: View {
             mapModel.setRegion(region: context.region)
             mapModel.refreshClusters()
         }
-        .onChange(of: locale) {
-            mapModel.locale = locale
-        }
         // Hide navigation title to have a larger map but still set it for accessibility reasons
         // (eg. for Navigation or Screen Reader)
         .navigationTitle("Map")
         .navigationBarTitleDisplayMode(.inline)
         .toolbarVisibility(.hidden, for: .navigationBar)
         .toolbarVisibility(verticalSizeClass == .compact ? .hidden : .automatic, for: .tabBar)
-        .sheet(isPresented: $mapModel.isClusterSheetPresented) {
-            if let selectedCluster = mapModel.selectedCluster {
-                MapPopup(
-                    cluster: selectedCluster,
-                    scrollPosition: $mapModel.focusedClusterItem,
-                    isPresented: $mapModel.isClusterSheetPresented
-                )
-                // the .id makes sure we don't retain state of the previous cell
-                // as this complicates things with scroll positions and selected states and is generally not desired for this custom sheet.
-                .presentationDetents([.fraction(0.3), .large])
-                .presentationBackgroundInteraction(.enabled)
-                .id(selectedCluster.id)
 
+        .sheet(
+            isPresented: mapModel.isMapSheetPresentedBinding,
+            onDismiss: {
+                if navigation.mapPath.isEmpty {
+                    // only clear the selected cluster if the dismiss comes from actively dismissing
+                    // by the user, and not indirectly when a navigation mapPath update was pushed (eg. viewing an image)
+                    mapModel.resetClusterSelection()
+                }
             }
+        ) {
+            if let model = mapModel.selectedCluster {
+                @Bindable var model = model
+                MapPopup(model: model, onClose: mapModel.resetClusterSelection)
+                    .id(model.cluster.id)
+                    .presentationDetents(model.possibleDetents, selection: $model.selectedDetent)
+            }
+
         }
     }
 
 
     @MapContentBuilder
     private var clusterLayer: some MapContent {
-        let clusters: ArraySlice<GeoCluster> = if let selectedCluster = mapModel.selectedCluster {
-            ArraySlice([selectedCluster] + mapModel.clusters.values)
-        } else {
-            ArraySlice(mapModel.clusters.values)
-        }
+        let clusters: ArraySlice<GeoCluster> =
+            if let selectedCluster = mapModel.selectedCluster?.cluster {
+                ArraySlice([selectedCluster] + mapModel.clusters.values)
+            } else {
+                ArraySlice(mapModel.clusters.values)
+            }
 
         ForEach(clusters) { cluster in
 
             // FIXME: bound the meanCenter leave some padding for neighbor clusters
 
-            let isSelected: Bool = mapModel.selectedCluster?.h3Index == cluster.h3Index
+            let isSelected: Bool = mapModel.selectedCluster?.cluster.h3Index == cluster.h3Index
 
             if isSelected {
-                if let hull = mapModel.selectedCluster?.hullPolygon {
+                if let hull = mapModel.selectedCluster?.cluster.hullPolygon {
                     MapPolygon(hull)
                         .foregroundStyle(.clear)
                         .stroke(Color.accent, style: .init(lineWidth: 2, lineCap: .round, dash: [2, 6]))
@@ -162,8 +168,6 @@ struct MapView: View {
                     .tag(cluster.h3Index)
                 }
             }
-
-
         }
         .annotationTitles(.hidden)
     }

@@ -13,43 +13,42 @@ struct MapPopupMediaFileTeaser: View {
     let namespace: Namespace.ID
     let mediaFileInfo: MediaFileInfo
     let isSelected: Bool
-    
+
     @Environment(Navigation.self) private var navigation
 
 
     var body: some View {
-        HeightReader(alignment: .center) { height in
-            Button {
-                navigation.viewFile(mediaFile: mediaFileInfo, namespace: namespace)
-            } label: {
-                LazyImage(request: mediaFileInfo.thumbRequest, transaction: .init(animation: .linear)) { imageState in
-                    if let image = imageState.image {
-                        image
-                            .resizable()
-                            .aspectRatio(contentMode: .fill)
-                            .clipShape(.containerRelative)
+        Button {
+            navigation.viewFile(mediaFile: mediaFileInfo, namespace: namespace)
+        } label: {
+            LazyImage(request: mediaFileInfo.thumbRequest, transaction: .init(animation: .linear)) { imageState in
+                if let image = imageState.image {
+                    image
+                        .resizable()
+                        .aspectRatio(contentMode: .fill)
+                        .clipShape(.containerRelative)
 
-                    } else {
-                        ContainerRelativeShape()
-                            .fill(Material.thick)
-                            .aspectRatio(contentMode: .fill)
-                    }
-                }
-            }
-            .frame(width: height, height: height)
-            .clipShape(.containerRelative)
-            .contentShape([.contextMenuPreview, .interaction], .containerRelative)
-            .geometryGroup()
-            .matchedTransitionSource(id: mediaFileInfo.id, in: namespace)
-            .padding(2)
-            .overlay {
-                if isSelected {
+                } else {
                     ContainerRelativeShape()
-                        .stroke(Color.accent, lineWidth: 1)
+                        .fill(Material.thick)
+                        .aspectRatio(contentMode: .fill)
                 }
             }
-            .padding(2)
         }
+        .frame(width: 160, height: 160)
+        .clipShape(.containerRelative)
+        .contentShape([.contextMenuPreview, .interaction], .containerRelative)
+        .geometryGroup()
+        .matchedTransitionSource(id: mediaFileInfo.id, in: namespace)
+        .padding(2)
+        .overlay {
+            if isSelected {
+                ContainerRelativeShape()
+                    .stroke(Color.accent, lineWidth: 1)
+            }
+        }
+        .padding(2)
+
         .modifier(MediaFileContextMenu(mediaFileInfo: mediaFileInfo, namespace: namespace))
         .animation(.default, value: isSelected)
 

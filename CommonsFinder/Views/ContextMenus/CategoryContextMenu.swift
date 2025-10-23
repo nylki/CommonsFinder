@@ -13,13 +13,16 @@ import os.log
 struct CategoryContextMenu: ViewModifier {
     let item: CategoryInfo
     @Environment(\.appDatabase) private var appDatabase
+    @Environment(Navigation.self) private var navigation
     @Namespace private var namespace
 
     func body(content: Content) -> some View {
         content
             .contextMenu {
                 VStack {
-                    NavigationLink("Open Details", value: NavigationStackItem.wikidataItem(item))
+                    Button("Open Details") {
+                        navigation.viewCategory(item)
+                    }
 
                     Button(
                         item.isBookmarked ? "Remove Bookmark" : "Add Bookmark",
