@@ -13,13 +13,15 @@ struct MediaFileContextMenu: ViewModifier {
     let mediaFileInfo: MediaFileInfo
     let namespace: Namespace.ID
     @Environment(\.appDatabase) private var appDatabase
+    @Environment(Navigation.self) private var navigation
 
     func body(content: Content) -> some View {
         content
             .contextMenu {
                 VStack {
-                    let navItem = NavigationStackItem.viewFile(mediaFileInfo, namespace: namespace)
-                    NavigationLink("Open Details", value: navItem)
+                    Button("Open Details") {
+                        navigation.viewFile(mediaFile: mediaFileInfo, namespace: namespace)
+                    }
                     Button(
                         mediaFileInfo.isBookmarked ? "Remove Bookmark" : "Add Bookmark",
                         systemImage: mediaFileInfo.isBookmarked ? "bookmark.fill" : "bookmark"

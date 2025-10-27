@@ -5,6 +5,7 @@
 //  Created by Tom Brewe on 03.10.24.
 //
 
+import Accelerate
 import CommonsAPI
 import CoreLocation
 import H3kit
@@ -25,15 +26,16 @@ struct MapView: View {
     @Environment(\.scenePhase) private var scenePhase
 
     /// this is either a media item or a wiki item
-    private var scrollClusterItem: (any GeoReferencable)? {
-        guard let id = mapModel.focusedClusterItem.viewID(type: String.self) else {
+    private var scrollClusterItem: GeoItem? {
+        guard let id = mapModel.selectedCluster?.mapSheetFocusedClusterItem.viewID(type: String.self) else {
             return nil
         }
 
-        return mapModel.wikiItemClustering.items[id] ?? mapModel.mediaClustering.items[id]
+        return mapModel.geoClusterTree.items[id]
     }
 
     var body: some View {
+        @Bindable var navigation = navigation
         MapReader { mapProxy in
             Map(position: $mapModel.position) {
                 clusterLayer
@@ -41,7 +43,6 @@ struct MapView: View {
                 if let scrollClusterItem {
                     ItemAnnotation(item: scrollClusterItem)
                 }
-
                 UserAnnotation()
             }
             .mapControls {
@@ -53,6 +54,9 @@ struct MapView: View {
                     MapUserLocationButton()
                 }
             }
+        }
+        .onAppear {
+            mapModel.setNavigation(navigation)
         }
         .overlay(alignment: .topTrailing) {
             /// This is the replacement for the MapUserLocationButton in the mapControls
@@ -99,66 +103,70 @@ struct MapView: View {
             mapModel.setRegion(region: context.region)
             mapModel.refreshClusters()
         }
-        .onChange(of: locale) {
-            mapModel.locale = locale
-        }
         // Hide navigation title to have a larger map but still set it for accessibility reasons
         // (eg. for Navigation or Screen Reader)
         .navigationTitle("Map")
         .navigationBarTitleDisplayMode(.inline)
         .toolbarVisibility(.hidden, for: .navigationBar)
         .toolbarVisibility(verticalSizeClass == .compact ? .hidden : .automatic, for: .tabBar)
-        .pseudoSheet(isPresented: $mapModel.isClusterSheetPresented) {
-            if let cellIndex = mapModel.selectedCluster,
-                let rawMediaItems = mapModel.clusters[cellIndex]?.mediaItems,
-                let wikiItems = mapModel.clusters[cellIndex]?.wikiItems
-            {
-                MapPopup(
-                    clusterIndex: cellIndex,
-                    scrollPosition: $mapModel.focusedClusterItem,
-                    rawCategories: wikiItems,
-                    rawMediaItems: rawMediaItems,
-                    isPresented: $mapModel.isClusterSheetPresented
-                )
-                // the .id makes sure we don't retain state of the previous cell
-                // as this complicates things with scroll positions and selected states and is generally not desired for this custom sheet.
-                .id(cellIndex)
-            }
-        }
 
+        .sheet(
+            isPresented: mapModel.isMapSheetPresentedBinding,
+            onDismiss: {
+                if navigation.mapPath.isEmpty {
+                    // only clear the selected cluster if the dismiss comes from actively dismissing
+                    // by the user, and not indirectly when a navigation mapPath update was pushed (eg. viewing an image)
+                    mapModel.resetClusterSelection()
+                }
+            }
+        ) {
+            if let model = mapModel.selectedCluster {
+                @Bindable var model = model
+                MapPopup(model: model, onClose: mapModel.resetClusterSelection)
+                    .id(model.cluster.id)
+                    .presentationDetents(model.possibleDetents, selection: $model.selectedDetent)
+            }
+
+        }
     }
 
 
     @MapContentBuilder
     private var clusterLayer: some MapContent {
-        ForEach(Array(mapModel.clusters.keys), id: \.self) { index in
-            if let cluster = mapModel.clusters[index],
-                let centerCoordinate = try? CLLocationCoordinate2D.h3CellCenter(h3Index: index)
-            {
+        let clusters: ArraySlice<GeoCluster> =
+            if let selectedCluster = mapModel.selectedCluster?.cluster {
+                ArraySlice([selectedCluster] + mapModel.clusters.values)
+            } else {
+                ArraySlice(mapModel.clusters.values)
+            }
 
-                let isSelected = index == mapModel.selectedCluster
+        ForEach(clusters) { cluster in
 
-                if isSelected {
-                    MapCircle(MKCircle(center: centerCoordinate, radius: mapModel.currentResolution.approxCircleRadius))
+            // FIXME: bound the meanCenter leave some padding for neighbor clusters
+
+            let isSelected: Bool = mapModel.selectedCluster?.cluster.h3Index == cluster.h3Index
+
+            if isSelected {
+                if let hull = mapModel.selectedCluster?.cluster.hullPolygon {
+                    MapPolygon(hull)
+                        .foregroundStyle(.clear)
+                        .stroke(Color.accent, style: .init(lineWidth: 2, lineCap: .round, dash: [2, 6]))
+                } else {
+                    MapCircle(MKCircle(center: cluster.h3Center, radius: mapModel.currentResolution.approxCircleRadius))
                         .foregroundStyle(.clear)
                         .stroke(Color.accent, lineWidth: 2)
-
-                } else {
-                    Annotation("", coordinate: centerCoordinate, anchor: .center) {
-                        ClusterAnnotation(
-                            mediaCount: cluster.mediaItems.count,
-                            wikiItemCount: cluster.wikiItems.count,
-                            isSelected: isSelected
-                        ) {
-                            mapModel.selectCluster(index)
-                        }
-                        .tag(index)
-                    }
                 }
-
-
             } else {
-                EmptyMapContent()
+                Annotation("", coordinate: cluster.meanCenter, anchor: .center) {
+                    ClusterAnnotation(
+                        mediaCount: cluster.mediaItems.count,
+                        wikiItemCount: cluster.categoryItems.count,
+                        isSelected: isSelected
+                    ) {
+                        mapModel.selectCluster(cluster.h3Index)
+                    }
+                    .tag(cluster.h3Index)
+                }
             }
         }
         .annotationTitles(.hidden)
@@ -166,19 +174,20 @@ struct MapView: View {
 }
 
 private struct ItemAnnotation: MapContent {
-    let item: any GeoReferencable
+    let item: GeoItem
 
     var body: some MapContent {
         if let lat = item.latitude, let lon = item.longitude {
             Annotation("", coordinate: .init(latitude: lat, longitude: lon), anchor: .center) {
-                if let category = item as? Category {
-                    WikiAnnotationView(item: category)
-                        .id(category.geoRefID)
-
-                } else if let imageItem = item as? GeoSearchFileItem {
-                    MediaAnnotationView(item: imageItem)
-                        .id(imageItem.geoRefID)
+                switch item {
+                case .media(let mediaGeoItem):
+                    MediaAnnotationView(item: mediaGeoItem)
+                        .id(mediaGeoItem.geoRefID)
+                case .category(let categoryGeoItem):
+                    WikiAnnotationView(item: categoryGeoItem)
+                        .id(categoryGeoItem.geoRefID)
                 }
+
             }
         }
     }

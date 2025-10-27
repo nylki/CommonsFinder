@@ -7,6 +7,7 @@
 
 import Algorithms
 import CommonsAPI
+import FrameUp
 import GRDB
 import H3kit
 import NukeUI
@@ -27,25 +28,14 @@ extension ClusterTab {
             "Media"
         }
     }
-
 }
-
 
 struct MapPopup: View {
     @Namespace private var namespace: Namespace.ID
     @Environment(\.locale) private var locale
 
-
-    let clusterIndex: H3Index
-    @Binding var scrollPosition: ScrollPosition
-    /// wikidataItems are directly visualized
-    let rawCategories: [Category]
-    /// rawMediaItems are not directly visualized, but passed to the pagination model to fetch the metadata including image url and caption
-    let rawMediaItems: [GeoSearchFileItem]
-    @Binding var isPresented: Bool
-
-    @State private var mediaPaginationModel: PaginatableMediaFiles? = nil
-    @State private var resolvedCategories: [CategoryInfo] = []
+    let model: ClusterModel
+    let onClose: () -> Void
 
 
     @Environment(\.appDatabase) private var appDatabase
@@ -56,32 +46,68 @@ struct MapPopup: View {
         case mediaItem
     }
 
-    @State private var selectedItemType: ItemType = .empty
+    var resolvedCategories: [CategoryInfo] {
+        model.mapSheetResolvedCategories
+    }
+    var mediaPaginationModel: PaginatableMediaFiles? {
+        model.mapSheetMediaPaginationModel
+    }
+
+    var cluster: GeoCluster {
+        model.cluster
+    }
 
     var body: some View {
+        @Bindable var mapModel = model
+        let selectedMediaIdx = cluster.mediaItems.firstIndex {
+            $0.geoRefID == mapModel.mapSheetFocusedClusterItem.viewID(type: String.self)
+        }
+        let selectedCategoryIdx = cluster.categoryItems.firstIndex {
+            $0.geoRefID == mapModel.mapSheetFocusedClusterItem.viewID(type: String.self)
+        }
+
+        let categoryCount = cluster.categoryItems.count
+        let mediaCount = cluster.mediaItems.count
+
         VStack {
             HStack {
-                if selectedItemType != .empty, !rawCategories.isEmpty, !rawMediaItems.isEmpty {
-                    Picker("", selection: $selectedItemType) {
-                        Text("Locations").tag(ItemType.wikiItem)
-                        Text("Images").tag(ItemType.mediaItem)
+                if mapModel.mapSheetSelectedItemType != .empty,
+                    categoryCount != 0, mediaCount != 0
+                {
+                    Picker("", selection: $mapModel.mapSheetSelectedItemType) {
+                        let locationPickerLabel =
+                            if let selectedCategoryIdx {
+                                Label("Locations (\(selectedCategoryIdx + 1)/\(categoryCount))", systemImage: "mappin")
+                            } else {
+                                Label("Locations (\(categoryCount))", systemImage: "mappin")
+                            }
+                        let mediaPickerLabel =
+                            if let selectedMediaIdx {
+                                Label("Images (\(selectedMediaIdx + 1)/\(mediaCount))", systemImage: "photo.stack")
+                            } else {
+                                Label("Images (\(mediaCount))", systemImage: "photo.stack")
+                            }
 
+                        locationPickerLabel
+                            .tag(ItemType.wikiItem)
+
+                        mediaPickerLabel
+                            .tag(ItemType.mediaItem)
                     }
                     .pickerStyle(.segmented)
+                    .frame(minWidth: 0, maxWidth: .infinity)
                     .padding(.horizontal)
-                    .onChange(of: selectedItemType) {
+                    .onChange(of: mapModel.mapSheetSelectedItemType) {
                         // TODO: set this implicitly in model or remember scrollPosition per type?
-                        scrollPosition = .init()
+                        mapModel.mapSheetFocusedClusterItem = .init()
                     }
                 }
 
                 Spacer()
 
-                Button("Close", systemImage: "xmark") {
-                    isPresented = false
-                }
-                .glassButtonStyle()
-                .labelStyle(.iconOnly)
+                Button("Close", systemImage: "xmark", action: onClose)
+                    .glassButtonStyle()
+                    .labelStyle(.iconOnly)
             }
             .padding([.top, .trailing])
 
@@ -93,61 +119,73 @@ struct MapPopup: View {
                 // TODO: this is temporary workaround and will change when single items are tappable directly on the map!
                 MapPopupMediaFileTeaser(namespace: namespace, mediaFileInfo: mediaFileInfo, isSelected: true)
                     .padding(.vertical, 10)
-                    .frame(height: 160)
+                    .frame(height: 180)
                     .frame(minWidth: 0, maxWidth: .infinity)
                     .onAppear {
-                        scrollPosition = .init(id: mediaFileInfo.id)
+                        mapModel.mapSheetFocusedClusterItem = .init(id: mediaFileInfo.id)
                     }
             } else {
-                ScrollView(.horizontal) {
-                    Group {
-                        switch selectedItemType {
-                        case .mediaItem:
-                            mediaList
-                                .containerShape(ViewConstants.pseudoSheetShape)
-                                .frame(minWidth: 100)
-                                .safeAreaPadding(.vertical, 10)
-                                .safeAreaPadding(.horizontal, 120)
-                                .frame(height: 160)
-                                .scrollTargetLayout()
-                        case .wikiItem:
-                            wikiItemsList
-                                .containerShape(ViewConstants.pseudoSheetShape)
-                                .frame(minWidth: 100)
-                                .safeAreaPadding(.vertical, 10)
-                                .safeAreaPadding(.horizontal, 120)
-                                .frame(height: 160)
-                                .scrollTargetLayout()
-                        case .empty:
-                            EmptyView()
-                        }
+
+
+                switch mapModel.mapSheetSelectedItemType {
+                case .mediaItem:
+                    ScrollView(.horizontal) {
+                        mediaList
+                            .containerShape(ViewConstants.pseudoSheetShape)
+                            .frame(minWidth: 100)
+                            .safeAreaPadding(.vertical, 10)
+                            .safeAreaPadding(.horizontal, 120)
+                            .frame(height: 180)
+                            .scrollTargetLayout()
                     }
+                    .scrollIndicators(.hidden)
+                    .clipped()
+                    .padding(.vertical, 5)
+                    // FIXME: scrollTargetBehavior glitches when scrolling distance is too forward+short
+                    //                .scrollTargetBehavior(.viewAligned)
+                    .scrollPosition($mapModel.mapSheetFocusedClusterItem, anchor: .center)
 
-                }
-
-                .onAppear {
-                    if selectedItemType == .empty {
-                        if !rawCategories.isEmpty {
-                            selectedItemType = .wikiItem
-                        } else if !rawMediaItems.isEmpty {
-                            selectedItemType = .mediaItem
-                        }
+                case .wikiItem:
+                    ScrollView(.horizontal) {
+                        wikiItemsList
+                            .containerShape(ViewConstants.pseudoSheetShape)
+                            .frame(minWidth: 100)
+                            .safeAreaPadding(.vertical, 10)
+                            .safeAreaPadding(.horizontal, 120)
+                            .frame(height: 180)
+                            .scrollTargetLayout()
                     }
+                    .scrollIndicators(.hidden)
+                    .clipped()
+                    .padding(.vertical, 5)
+                    // FIXME: scrollTargetBehavior glitches when scrolling distance is too forward+short
+                    //                .scrollTargetBehavior(.viewAligned)
+                    .scrollPosition($mapModel.mapSheetFocusedClusterItem, anchor: .center)
 
+
+                case .empty:
+                    EmptyView()
                 }
-                .scrollIndicators(.hidden)
-                .clipped()
-                // FIXME: scrollTargetBehavior glitches when scrolling distance is too forward+short
-                //                .scrollTargetBehavior(.viewAligned)
-                .scrollPosition($scrollPosition, anchor: .center)
             }
+
         }
+        .presentationBackgroundInteraction(.enabled)
         .sensoryFeedback(
-            .selection, trigger: scrollPosition,
+            .selection, trigger: mapModel.mapSheetFocusedClusterItem,
             condition: { oldValue, newValue in
-                newValue.viewID != nil
+                if oldValue.viewID == nil { return false }
+                return newValue.viewID != nil
             }
         )
+        .onChange(of: cluster, initial: true) {
+            if mapModel.mapSheetSelectedItemType == .empty {
+                if categoryCount != 0 {
+                    mapModel.mapSheetSelectedItemType = .wikiItem
+                } else if mediaCount != 0 {
+                    mapModel.mapSheetSelectedItemType = .mediaItem
+                }
+            }
+        }
 
     }
 
@@ -155,22 +193,24 @@ struct MapPopup: View {
     private var wikiItemsList: some View {
         LazyHStack {
             ForEach(resolvedCategories) { item in
-                let isSelected = item.id == scrollPosition.viewID(type: String.self)
+                let isSelected = item.id == model.mapSheetFocusedClusterItem.viewID(type: String.self)
                 MapPopupCategoryTeaser(item: item, isSelected: isSelected, namespace: namespace)
             }
         }
-        .scrollTargetLayout()
-        .onChange(of: resolvedCategories, initial: true) { oldValue, newValue in
+        // FIXME: asdasdas
+        .onChange(of: resolvedCategories, initial: true) {
             // set scroll position to first image if not yet
-            if scrollPosition.viewID == nil,
-                let firstItem = newValue.first
+            if model.mapSheetFocusedClusterItem.viewID == nil,
+                let firstItem = resolvedCategories.first
             {
-                scrollPosition = .init(id: firstItem.id)
+                model.mapSheetFocusedClusterItem = .init(id: firstItem.id)
             }
         }
-        .task(id: rawCategories) {
+        .task(id: cluster.categoryItems) {
             do {
-                let wikidataIDs: [Category.WikidataID] = rawCategories.compactMap(\.wikidataId)
+                let wikidataIDs = cluster.categoryItems
+                    .compactMap(\.wikidataId)
+
                 let observation = ValueObservation.tracking { db in
                     try CategoryInfo
                         .fetchAll(db, wikidataIDs: wikidataIDs, resolveRedirections: true)
@@ -180,15 +220,14 @@ struct MapPopup: View {
                         result
                         .grouped(by: \.base.wikidataId)
 
-                    let originalCategories =
-                        rawCategories
+                    let originalCategories = cluster.categoryItems
                         .map { CategoryInfo($0, itemInteraction: nil) }
                         .grouped(by: \.base.wikidataId)
 
-                    resolvedCategories = wikidataIDs.compactMap { wikidataID in
-                        (fetchedCategories[wikidataID]?.first ?? originalCategories[wikidataID]?.first)
-                    }
+                    model.mapSheetResolvedCategories = wikidataIDs.compactMap { wikidataID in
+                        fetchedCategories[wikidataID]?.first ?? originalCategories[wikidataID]?.first
 
+                    }
                 }
             } catch {
                 logger.error("Failed to observe Category changes in MapPopup \(error)")
@@ -203,16 +242,13 @@ struct MapPopup: View {
         LazyHStack {
             if let mediaPaginationModel {
                 let mediaFileInfos = mediaPaginationModel.mediaFileInfos
-                if mediaFileInfos.isEmpty {
-                    ProgressView()
-                        .frame(width: 100).progressViewStyle(.circular)
-                }
                 ForEach(mediaFileInfos) { mediaFileInfo in
-                    let isSelected = mediaFileInfo.id == scrollPosition.viewID(type: String.self)
+                    let isSelected = mediaFileInfo.id == model.mapSheetFocusedClusterItem.viewID(type: String.self)
                     MapPopupMediaFileTeaser(namespace: namespace, mediaFileInfo: mediaFileInfo, isSelected: isSelected)
                         .onScrollVisibilityChange { visible in
-                            guard visible else { return }
-                            let threshold = min(mediaFileInfos.count - 1, max(0, mediaFileInfos.count - 5))
+                            // FIXME: debounce
+                            guard visible, mediaPaginationModel.status != .idle(reachedEnd: true), mediaPaginationModel.status != .isPaginating else { return }
+                            let threshold = min(mediaFileInfos.count - 1, max(0, mediaFileInfos.count - 1))
                             guard threshold > 0 else { return }
                             let thresholdItem = mediaFileInfos[threshold]
 
@@ -221,6 +257,11 @@ struct MapPopup: View {
                             }
                         }
                 }
+
+                if mediaPaginationModel.status == .isPaginating {
+                    ProgressView()
+                        .frame(width: 100).progressViewStyle(.circular)
+                }
             } else {
                 ProgressView()
                     .frame(width: 100).progressViewStyle(.circular)
@@ -228,63 +269,29 @@ struct MapPopup: View {
         }
         .onChange(of: mediaPaginationModel?.mediaFileInfos, initial: true) { oldValue, newValue in
             // set scroll position to first image if not yet
-            if scrollPosition.viewID == nil,
+            if model.mapSheetFocusedClusterItem.viewID == nil,
                 let firstMediaFile = newValue?.first
             {
-                scrollPosition = .init(id: firstMediaFile.id)
+                model.mapSheetFocusedClusterItem = .init(id: firstMediaFile.id)
             }
         }
         .task {
+
             guard mediaPaginationModel == nil else {
+                //                try? await Task.sleep(for: .milliseconds(200))
+                //                model.mapSheetFocusedClusterItem.scrollTo(id: model.mapSheetFocusedClusterItem.viewID(type: String.self), anchor: .center)
                 return
             }
 
             do {
-                mediaPaginationModel = try await .init(appDatabase: appDatabase, initialTitles: rawMediaItems.map(\.title))
+                model.mapSheetMediaPaginationModel = try await .init(appDatabase: appDatabase, initialTitles: cluster.mediaItems.map(\.title))
                 mediaPaginationModel?.paginate()
             } catch {
                 logger.error("Failed to init file pagination \(error)")
             }
+
+
         }
 
     }
-}
-
-//#Preview(traits: .previewEnvironment) {
-//    @Previewable @State var scrollPosition: ScrollPosition = .init()
-//    MapPopup(scrollPosition: $scrollPosition, clusterIndex: 640371092026114823)
-//}
-
-#Preview("Interactive Sheet-Behaviour", traits: .previewEnvironment) {
-    @Previewable @State var isShowing = false
-    @Previewable @State var scrollPosition: ScrollPosition = .init()
-
-    LinearGradient(colors: [.blue, .red, .black, .yellow, .green, .white, .gray], startPoint: .bottomLeading, endPoint: .topTrailing)
-        .ignoresSafeArea()
-        .pseudoSheet(isPresented: $isShowing) {
-            MapPopup(
-                clusterIndex: 640_371_092_026_114_823, scrollPosition: $scrollPosition,
-                rawCategories: [.randomItem(id: "1"), .randomItem(id: "2"), .randomItem(id: "3"), .randomItem(id: "4"), .randomItem(id: "5"), .randomItem(id: "5")],
-                rawMediaItems: [
-                    //                .makeRandomUploaded(id: "1", .squareImage),
-                    //                .makeRandomUploaded(id: "2", .horizontalImage),
-                    //                .makeRandomUploaded(id: "3", .verticalImage)
-                ], isPresented: $isShowing)
-            //            MapPopup(scrollPosition: $scrollPosition, clusterIndex: 640371092026114823)
-        }
-        .task {
-            try? await Task.sleep(for: .milliseconds(500))
-            isShowing = true
-        }
-}
-
-struct PlatterContainer<Content: View>: View {
-    @ViewBuilder var content: Content
-    var body: some View {
-        content
-            //            .padding()
-            .containerShape(shape)
-        //            .background(shape.fill(.background))
-    }
-    var shape: RoundedRectangle { RoundedRectangle(cornerRadius: 44) }
 }

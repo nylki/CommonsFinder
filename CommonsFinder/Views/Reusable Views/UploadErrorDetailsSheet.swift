@@ -24,7 +24,7 @@ private struct UploadErrorDetailsSheetModifier: ViewModifier {
                 NavigationStack {
                     UploadErrorDetailsSheet(status: status)
                 }
-                .presentationDetents([.fraction(0.3), .medium])
+                .presentationDetents([.fraction(0.33), .medium])
             }
     }
 }

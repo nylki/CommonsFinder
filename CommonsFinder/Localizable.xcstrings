@@ -757,11 +757,25 @@
       }
     },
     "Images" : {
+      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Bilder"
+          }
+        }
+      }
+    },
+    "Images (%lld)" : {
+
+    },
+    "Images (%lld/%lld)" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Images (%1$lld/%2$lld)"
           }
         }
       }
@@ -893,11 +907,25 @@
       }
     },
     "Locations" : {
+      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Orte"
+          }
+        }
+      }
+    },
+    "Locations (%lld)" : {
+
+    },
+    "Locations (%lld/%lld)" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Locations (%1$lld/%2$lld)"
           }
         }
       }

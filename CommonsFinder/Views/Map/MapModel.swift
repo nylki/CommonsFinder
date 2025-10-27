@@ -14,11 +14,29 @@ import OrderedCollections
 import SwiftUI
 import os.log
 
+@Observable final class ClusterModel {
+    // FIXME: maybe move these mapSheet vars into a sub-model?
+    var cluster: GeoCluster
+    var mapSheetMediaPaginationModel: PaginatableMediaFiles? = nil
+    var mapSheetResolvedCategories: [CategoryInfo] = []
+    var mapSheetSelectedItemType: MapPopup.ItemType = .empty
+    var selectedDetent: PresentationDetent = .fraction(250)
+    @ObservationIgnored
+    let possibleDetents: Set<PresentationDetent> = [.height(250), .large]
+
+
+    /// The item that is scrolled to inside the sheet when tapping on a cluster circle
+    var mapSheetFocusedClusterItem = ScrollPosition(idType: GeoReferencable.GeoRefID.self)
+
+    init(cluster: GeoCluster) {
+        self.cluster = cluster
+    }
+}
+
 @Observable final class MapModel {
     var position: MapCameraPosition = .automatic
-    var locale: Locale = .current
-
     private(set) var region: MKCoordinateRegion?
+    private(set) var navigation: Navigation?
 
     @ObservationIgnored
     private var refreshTask: Task<Void, Error>?
@@ -32,37 +50,29 @@ import os.log
     // FIXME: constantly filling the cluster collections may end up eating all memory
     // we need to prune them when they get too big, based to distance to current region
     @ObservationIgnored
-    private(set) var mediaClustering: GeoClustering<GeoSearchFileItem> = .init()
-    @ObservationIgnored
-    private(set) var wikiItemClustering: GeoClustering<Category> = .init()
+    private(set) var geoClusterTree = GeoClusterTree()
 
-    private(set) var clusters:
-        [UInt64: (
-            mediaItems: [GeoSearchFileItem],
-            wikiItems: [Category]
-        )] = .init()
-
-    private(set) var selectedCluster: H3Index?
-
-    enum OverlayType {
-        case clusterSheet
-        case goToNearbyLocationPermission
+    private(set) var clusters: [H3Index: GeoCluster] = .init()
+    private var isMapSheetPresented: Bool = false
+    var isMapSheetPresentedBinding: Binding<Bool> {
+        .init(
+            get: {
+                self.isMapSheetPresented && self.navigation?.mapPath.isEmpty == true
+            },
+            set: { newValue in
+                if self.navigation?.mapPath.isEmpty == true {
+                    self.isMapSheetPresented = newValue
+                }
+            })
     }
-    var presentedOverlay: OverlayType?
-    var isClusterSheetPresented: Bool {
-        get {
-            presentedOverlay == .clusterSheet
-        }
-        set {
-            if newValue {
-                presentedOverlay = .clusterSheet
-            } else if presentedOverlay == .clusterSheet {
-                presentedOverlay = nil
-            }
-        }
+
+    private(set) var selectedCluster: ClusterModel?
+
+
+    func setNavigation(_ navigation: Navigation) {
+        guard self.navigation == nil else { return }
+        self.navigation = navigation
     }
-    /// The item that is scrolled to inside the sheet when tapping on a cluster circle
-    var focusedClusterItem = ScrollPosition(idType: GeoReferencable.GeoRefID.self)
 
 
     @ObservationIgnored
@@ -93,11 +103,21 @@ import os.log
         self.region = region
     }
 
+
     func selectCluster(_ index: H3Index) {
-        focusedClusterItem = .init()
-        selectedCluster = index
-        presentedOverlay = .clusterSheet
+        guard let cluster = clusters[index] else {
+            assertionFailure()
+            return
+        }
+
+        selectedCluster = .init(cluster: cluster)
+        isMapSheetPresented = true
         // TODO: fetch items in circle radius if items > max (500?)
+    }
+
+    func resetClusterSelection() {
+        isMapSheetPresented = false
+        selectedCluster = nil
     }
 
     func refreshClusters() {
@@ -106,42 +126,18 @@ import os.log
         let clock = ContinuousClock()
         let elapsed = clock.measure {
 
+            clusters = geoClusterTree.clusters(
+                topLeft: region.boundingBox.topLeft,
+                bottomRight: region.boundingBox.bottomRight,
+                resolution: currentResolution
+            )
 
-            var mediaClusters: [UInt64: [GeoSearchFileItem]] = .init()
-            var wikiItemClusters: [UInt64: [Category]] = .init()
-
-            if region.diagonalMeters < imageVisibilityThreshold {
-                mediaClusters = mediaClustering.clusters(
-                    topLeft: region.boundingBox.topLeft,
-                    bottomRight: region.boundingBox.bottomRight,
-                    resolution: currentResolution
-                )
+            /// update data of selected cluster if we refresh the cluster info (eg. more items) otherwise if the bbox cluster don't have
+            /// it (eg. zoomed in), we retain it for display and to let the user keep interacting with it.
+            if let selectedIdx = selectedCluster?.cluster.h3Index, let updatedSelectedCluster = clusters[selectedIdx] {
+                selectedCluster?.cluster = updatedSelectedCluster
             }
 
-            if region.diagonalMeters < wikiItemVisibilityThreshold {
-                wikiItemClusters = wikiItemClustering.clusters(
-                    topLeft: region.boundingBox.topLeft,
-                    bottomRight: region.boundingBox.bottomRight,
-                    resolution: currentResolution
-                )
-            }
-
-            let clusterIndices = Set(mediaClusters.keys).union(wikiItemClusters.keys)
-            var clusterDict = [
-                UInt64: (
-                    mediaItems: [GeoSearchFileItem],
-                    wikiItems: [Category]
-                )
-            ]()
-
-            for index in clusterIndices {
-                clusterDict[index] = (
-                    mediaClusters[index] ?? [],
-                    wikiItemClusters[index] ?? []
-                )
-            }
-
-            clusters = clusterDict
         }
 
         //        logger.debug("refreshClusters took \(elapsed)")
@@ -149,11 +145,6 @@ import os.log
         if elapsed > .milliseconds(4) {
             logger.critical("refreshClusters took long! \(elapsed)")
         }
-
-    }
-
-    init() {
-
     }
 
     private func refreshRegion() {
@@ -171,9 +162,16 @@ import os.log
             async let mediaTask = fetchMediaFiles(region: region, maxDiagonalMapLength: imageVisibilityThreshold)
             let (wikidataItems, mediaItems) = await (wikiItemsTask, mediaTask)
 
-            let wikidataItemInfo: [Category] = wikidataItems
-            wikiItemClustering.add(wikidataItemInfo)
-            mediaClustering.add(mediaItems)
+            var items: [GeoItem] = []
+
+            for wikidataItem in wikidataItems {
+                items.append(.category(wikidataItem))
+            }
+            for mediaItem in mediaItems {
+                items.append(.media(mediaItem))
+            }
+
+            geoClusterTree.add(items)
             refreshClusters()
 
             lastRefreshedRegions.append(region)
@@ -327,7 +325,9 @@ private func isRegionDiffSignificant(oldRegion: MKCoordinateRegion?, newRegion: 
 
 }
 
-extension GeoSearchFileItem: GeoReferencable {
+nonisolated
+    extension GeoSearchFileItem: GeoReferencable
+{
     var geoRefID: GeoRefID {
         self.id
     }
@@ -336,7 +336,7 @@ extension GeoSearchFileItem: GeoReferencable {
     var longitude: Double? { lon }
 }
 
-extension Category: GeoReferencable {
+nonisolated extension Category: GeoReferencable {
     var geoRefID: GeoRefID {
         let geoRefID = wikidataId ?? commonsCategory
         assert(geoRefID != nil)
