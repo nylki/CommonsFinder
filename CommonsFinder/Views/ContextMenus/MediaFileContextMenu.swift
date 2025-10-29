@@ -10,7 +10,7 @@ import SwiftUI
 import os.log
 
 struct MediaFileContextMenu: ViewModifier {
-    let mediaFileInfo: MediaFileInfo
+    var mediaFileInfo: MediaFileInfo?
     let namespace: Namespace.ID
     @Environment(\.appDatabase) private var appDatabase
     @Environment(Navigation.self) private var navigation
@@ -18,33 +18,39 @@ struct MediaFileContextMenu: ViewModifier {
     func body(content: Content) -> some View {
         content
             .contextMenu {
-                VStack {
-                    Button("Open Details") {
-                        navigation.viewFile(mediaFile: mediaFileInfo, namespace: namespace)
-                    }
-                    Button(
-                        mediaFileInfo.isBookmarked ? "Remove Bookmark" : "Add Bookmark",
-                        systemImage: mediaFileInfo.isBookmarked ? "bookmark.fill" : "bookmark"
-                    ) {
-                        do {
-                            _ = try appDatabase.updateBookmark(mediaFileInfo, bookmark: !mediaFileInfo.isBookmarked)
-                        } catch {
-                            logger.error("Failed to update bookmark on \(mediaFileInfo.mediaFile.name): \(error)")
+                if let mediaFileInfo {
+                    VStack {
+                        Button("Open Details") {
+                            navigation.viewFile(mediaFile: mediaFileInfo, namespace: namespace)
                         }
+                        Button(
+                            mediaFileInfo.isBookmarked ? "Remove Bookmark" : "Add Bookmark",
+                            systemImage: mediaFileInfo.isBookmarked ? "bookmark.fill" : "bookmark"
+                        ) {
+                            do {
+                                _ = try appDatabase.updateBookmark(mediaFileInfo, bookmark: !mediaFileInfo.isBookmarked)
+                            } catch {
+                                logger.error("Failed to update bookmark on \(mediaFileInfo.mediaFile.name): \(error)")
+                            }
+                        }
+                        ShareLink(item: mediaFileInfo.mediaFile.descriptionURL)
                     }
-                    ShareLink(item: mediaFileInfo.mediaFile.descriptionURL)
                 }
+
             } preview: {
-                LazyImage(request: mediaFileInfo.thumbRequest) {
+                LazyImage(request: mediaFileInfo?.thumbRequest) {
                     if let image = $0.image {
                         image
                             .resizable()
                             .aspectRatio(contentMode: .fit)
                     } else {
-                        Color.clear.frame(
-                            width: Double(mediaFileInfo.mediaFile.width ?? 256),
-                            height: Double(mediaFileInfo.mediaFile.height ?? 256)
-                        )
+                        if let mediaFile = mediaFileInfo?.mediaFile {
+                            Color.clear.frame(
+                                width: Double(mediaFile.width ?? 256),
+                                height: Double(mediaFile.height ?? 256)
+                            )
+                        }
+
                     }
                 }
             }

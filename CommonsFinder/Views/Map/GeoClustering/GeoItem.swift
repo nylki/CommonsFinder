@@ -19,6 +19,20 @@ nonisolated protocol GeoReferencable: Hashable, Equatable {
     var geoRefID: GeoRefID { get }
 }
 
+nonisolated extension MediaGeoItem {
+    /// non-prefixed filename (without FILE:)
+    var fileName: String? {
+        if let nonPrefixed = title.split(separator: "File:").first {
+            String(nonPrefixed)
+        } else {
+            nil
+        }
+    }
+    var coordinate: CLLocationCoordinate2D {
+        .init(latitude: lat, longitude: lon)
+    }
+}
+
 nonisolated extension GeoReferencable {
     var coordinate: CLLocationCoordinate2D? {
         if let latitude, let longitude {

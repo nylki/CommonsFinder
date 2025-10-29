@@ -33,8 +33,12 @@ extension ClusterTab {
 struct MapPopup: View {
     @Namespace private var namespace: Namespace.ID
     @Environment(\.locale) private var locale
+    @Environment(Navigation.self) private var navigation
+    @Environment(MediaFileReactiveCache.self) private var mediaFileCache
+    @Environment(\.verticalSizeClass) private var verticalSizeClass
 
     let model: ClusterModel
+    let mapAnimationNamespace: Namespace.ID
     let onClose: () -> Void
 
 
@@ -47,10 +51,10 @@ struct MapPopup: View {
     }
 
     var resolvedCategories: [CategoryInfo] {
-        model.mapSheetResolvedCategories
+        model.resolvedCategories
     }
     var mediaPaginationModel: PaginatableMediaFiles? {
-        model.mapSheetMediaPaginationModel
+        model.mediaPaginationModel
     }
 
     var cluster: GeoCluster {
@@ -70,11 +74,12 @@ struct MapPopup: View {
         let mediaCount = cluster.mediaItems.count
 
         VStack {
+            Text(model.selectedDetent == .large ? "Large" : "small")
             HStack {
-                if mapModel.mapSheetSelectedItemType != .empty,
+                if mapModel.showingItemType != .empty,
                     categoryCount != 0, mediaCount != 0
                 {
-                    Picker("", selection: $mapModel.mapSheetSelectedItemType) {
+                    Picker("", selection: $mapModel.showingItemType) {
                         let locationPickerLabel =
                             if let selectedCategoryIdx {
                                 Label("Locations (\(selectedCategoryIdx + 1)/\(categoryCount))", systemImage: "mappin")
@@ -97,7 +102,7 @@ struct MapPopup: View {
                     .pickerStyle(.segmented)
                     .frame(minWidth: 0, maxWidth: .infinity)
                     .padding(.horizontal)
-                    .onChange(of: mapModel.mapSheetSelectedItemType) {
+                    .onChange(of: mapModel.showingItemType) {
                         // TODO: set this implicitly in model or remember scrollPosition per type?
                         mapModel.mapSheetFocusedClusterItem = .init()
                     }
@@ -117,17 +122,23 @@ struct MapPopup: View {
             {
                 // Don't show a scroll view for a single item
                 // TODO: this is temporary workaround and will change when single items are tappable directly on the map!
-                MapPopupMediaFileTeaser(namespace: namespace, mediaFileInfo: mediaFileInfo, isSelected: true)
-                    .padding(.vertical, 10)
-                    .frame(height: 180)
-                    .frame(minWidth: 0, maxWidth: .infinity)
-                    .onAppear {
-                        mapModel.mapSheetFocusedClusterItem = .init(id: mediaFileInfo.id)
+                MapPopupMediaFileTeaser(namespace: mapAnimationNamespace, mediaFileInfo: mediaFileInfo, isSelected: true) {
+                    // FIXME: if the map annotation is already rendered before (with 0 opacity), we won't need to
+                    // to a delayed Task for the zoom transition to work.
+                    mapModel.mapSheetFocusedClusterItem = .init(id: mediaFileInfo.id)
+                    Task {
+                        try? await Task.sleep(for: .milliseconds(25))
+                        navigation.viewFile(mediaFile: mediaFileInfo, namespace: mapAnimationNamespace)
                     }
+                }
+                .padding(.vertical, 10)
+                .frame(height: 180)
+                .frame(minWidth: 0, maxWidth: .infinity)
+                .onAppear {
+                    mapModel.mapSheetFocusedClusterItem = .init(id: mediaFileInfo.id)
+                }
             } else {
-
-
-                switch mapModel.mapSheetSelectedItemType {
+                switch mapModel.showingItemType {
                 case .mediaItem:
                     ScrollView(.horizontal) {
                         mediaList
@@ -141,8 +152,6 @@ struct MapPopup: View {
                     .scrollIndicators(.hidden)
                     .clipped()
                     .padding(.vertical, 5)
-                    // FIXME: scrollTargetBehavior glitches when scrolling distance is too forward+short
-                    //                .scrollTargetBehavior(.viewAligned)
                     .scrollPosition($mapModel.mapSheetFocusedClusterItem, anchor: .center)
 
                 case .wikiItem:
@@ -158,8 +167,6 @@ struct MapPopup: View {
                     .scrollIndicators(.hidden)
                     .clipped()
                     .padding(.vertical, 5)
-                    // FIXME: scrollTargetBehavior glitches when scrolling distance is too forward+short
-                    //                .scrollTargetBehavior(.viewAligned)
                     .scrollPosition($mapModel.mapSheetFocusedClusterItem, anchor: .center)
 
 
@@ -168,7 +175,10 @@ struct MapPopup: View {
                 }
             }
 
+            Spacer()
+
         }
+        .animation(.default, value: model.selectedDetent)
         .presentationBackgroundInteraction(.enabled)
         .sensoryFeedback(
             .selection, trigger: mapModel.mapSheetFocusedClusterItem,
@@ -178,15 +188,14 @@ struct MapPopup: View {
             }
         )
         .onChange(of: cluster, initial: true) {
-            if mapModel.mapSheetSelectedItemType == .empty {
+            if mapModel.showingItemType == .empty {
                 if categoryCount != 0 {
-                    mapModel.mapSheetSelectedItemType = .wikiItem
+                    mapModel.showingItemType = .wikiItem
                 } else if mediaCount != 0 {
-                    mapModel.mapSheetSelectedItemType = .mediaItem
+                    mapModel.showingItemType = .mediaItem
                 }
             }
         }
-
     }
 
     @ViewBuilder
@@ -194,10 +203,9 @@ struct MapPopup: View {
         LazyHStack {
             ForEach(resolvedCategories) { item in
                 let isSelected = item.id == model.mapSheetFocusedClusterItem.viewID(type: String.self)
-                MapPopupCategoryTeaser(item: item, isSelected: isSelected, namespace: namespace)
+                MapPopupCategoryTeaser(item: item, isSelected: isSelected, namespace: mapAnimationNamespace)
             }
         }
-        // FIXME: asdasdas
         .onChange(of: resolvedCategories, initial: true) {
             // set scroll position to first image if not yet
             if model.mapSheetFocusedClusterItem.viewID == nil,
@@ -224,7 +232,7 @@ struct MapPopup: View {
                         .map { CategoryInfo($0, itemInteraction: nil) }
                         .grouped(by: \.base.wikidataId)
 
-                    model.mapSheetResolvedCategories = wikidataIDs.compactMap { wikidataID in
+                    model.resolvedCategories = wikidataIDs.compactMap { wikidataID in
                         fetchedCategories[wikidataID]?.first ?? originalCategories[wikidataID]?.first
 
                     }
@@ -244,18 +252,24 @@ struct MapPopup: View {
                 let mediaFileInfos = mediaPaginationModel.mediaFileInfos
                 ForEach(mediaFileInfos) { mediaFileInfo in
                     let isSelected = mediaFileInfo.id == model.mapSheetFocusedClusterItem.viewID(type: String.self)
-                    MapPopupMediaFileTeaser(namespace: namespace, mediaFileInfo: mediaFileInfo, isSelected: isSelected)
-                        .onScrollVisibilityChange { visible in
-                            // FIXME: debounce
-                            guard visible, mediaPaginationModel.status != .idle(reachedEnd: true), mediaPaginationModel.status != .isPaginating else { return }
-                            let threshold = min(mediaFileInfos.count - 1, max(0, mediaFileInfos.count - 1))
-                            guard threshold > 0 else { return }
-                            let thresholdItem = mediaFileInfos[threshold]
-
-                            if mediaFileInfo == thresholdItem {
-                                mediaPaginationModel.paginate()
-                            }
+                    MapPopupMediaFileTeaser(namespace: mapAnimationNamespace, mediaFileInfo: mediaFileInfo, isSelected: isSelected) {
+                        model.mapSheetFocusedClusterItem = .init(id: mediaFileInfo.id)
+                        Task {
+                            try? await Task.sleep(for: .milliseconds(25))
+                            navigation.viewFile(mediaFile: mediaFileInfo, namespace: mapAnimationNamespace)
                         }
+                    }
+                    .onScrollVisibilityChange { visible in
+                        // FIXME: debounce
+                        guard visible, mediaPaginationModel.status != .idle(reachedEnd: true), mediaPaginationModel.status != .isPaginating else { return }
+                        let threshold = min(mediaFileInfos.count - 1, max(0, mediaFileInfos.count - 1))
+                        guard threshold > 0 else { return }
+                        let thresholdItem = mediaFileInfos[threshold]
+
+                        if mediaFileInfo == thresholdItem {
+                            mediaPaginationModel.paginate()
+                        }
+                    }
                 }
 
                 if mediaPaginationModel.status == .isPaginating {
@@ -268,6 +282,12 @@ struct MapPopup: View {
             }
         }
         .onChange(of: mediaPaginationModel?.mediaFileInfos, initial: true) { oldValue, newValue in
+            if let newValue {
+                for mediaFileInfo in newValue {
+                    mediaFileCache.cache(mediaFileInfo)
+                }
+            }
+
             // set scroll position to first image if not yet
             if model.mapSheetFocusedClusterItem.viewID == nil,
                 let firstMediaFile = newValue?.first
@@ -284,7 +304,7 @@ struct MapPopup: View {
             }
 
             do {
-                model.mapSheetMediaPaginationModel = try await .init(appDatabase: appDatabase, initialTitles: cluster.mediaItems.map(\.title))
+                model.mediaPaginationModel = try await .init(appDatabase: appDatabase, initialTitles: cluster.mediaItems.map(\.title))
                 mediaPaginationModel?.paginate()
             } catch {
                 logger.error("Failed to init file pagination \(error)")

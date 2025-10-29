@@ -810,6 +810,9 @@
         }
       }
     },
+    "Large" : {
+
+    },
     "License" : {
       "localizations" : {
         "de" : {
@@ -1570,6 +1573,9 @@
           }
         }
       }
+    },
+    "small" : {
+
     },
     "some rights reserved – attribution and sharing alike required" : {
       "localizations" : {

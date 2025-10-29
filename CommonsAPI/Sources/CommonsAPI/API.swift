@@ -563,8 +563,8 @@ public actor API {
     /// Augment existing partial file info with structured data
     public func fetchFileMetadata(fileMetadataList: [FileMetadata]) async throws -> [RawFileMetadata] {
         
-//        async let pageQueryTask = fetchImageMetadata(forImageTitles: titles)
-        let structuredData = try await fetchStructuredData(forMediaTitles: fileMetadataList.map(\.title))
+        async let pageQueryTask = fetchImageMetadata(.pageids(fileMetadataList.map(\.id)))
+        let structuredData = try await fetchStructuredData(.pageids(fileMetadataList.map(\.id)))
         var result: [RawFileMetadata] = []
         
         for fileMetadata in fileMetadataList {
@@ -578,12 +578,14 @@ public actor API {
     }
     
     /// fetch file info and  structured data to form a RawFileMetadata
-    public func fetchFullFileMetadata(fileNames: [String]) async throws -> [RawFileMetadata] {
+    public func fetchFullFileMetadata(_ identifiers: FileIdentifierList) async throws -> [RawFileMetadata] {
         
-        async let pageQueryTask = fetchImageMetadata(forMediaTitles: fileNames)
-        async let structuredDataTask = fetchStructuredData(forMediaTitles: fileNames)
+        async let pageQueryTask = fetchImageMetadata(identifiers)
+        async let structuredDataTask = fetchStructuredData(identifiers)
         
         let (fileMetadataList, structuredDataItems) = try await (pageQueryTask, structuredDataTask)
+        
+        // dict on either pageid or title as key
         var result: [String: RawFileMetadata] = [:]
         
         for fileMetadata in fileMetadataList {
@@ -591,30 +593,48 @@ public actor API {
                 logger.warning("We expect to find a wikidata entry for each page, \(fileMetadata.id) doesnt have one. Failed upload?")
                 continue
             }
-            result[fileMetadata.title] = .init(
+            let item = RawFileMetadata(
                 title: fileMetadata.title,
                 pageid: fileMetadata.pageid,
                 pageData: fileMetadata,
                 structuredData: structuredData
             )
+            
+            switch identifiers {
+            case .titles(_):
+                result[item.title] = item
+            case .pageids(_):
+                result[item.id] = item
+            }
         }
-        
+
         // Mapping the result based on the original order, since the fetch order is not guaranteed
-        return fileNames.compactMap { result[$0] }
+        return identifiers.items.compactMap { result[$0] }
+        
+
+        
+        
+
+    }
+    
+    public enum FileIdentifierList: Sendable {
+        case titles([String])
+        case pageids([String])
+        
+        var items: [String] {
+            switch self {
+            case .titles(let array), .pageids(let array):
+                array
+            }
+        }
     }
     
     // Example: https://commons.wikimedia.org/w/api.php?action=query&format=json&prop=imageinfo&titles=File%3The_Earth_seen_from_Apollo_17.jpg&formatversion=2&iiprop=url%7Cextmetadata&iiurlwidth=640&iiurlheight=640&iiextmetadatamultilang=1
-    internal func fetchImageMetadata(forMediaTitles titles: [String]) async throws -> [FileMetadata] {
-        var titles = titles
-        if titles.count >= 50 {
-            logger.warning("Trying to fetch metadata for \(titles.count) titles. However only 50 are supported at one time. Will be limited to 10.")
-            titles = Array(titles.prefix(50))
-        }
-        let parameters: Parameters = [
+    internal func fetchImageMetadata(_ identifiers: FileIdentifierList) async throws -> [FileMetadata] {
+        var parameters: Parameters = [
             "action": "query",
             "curtimestamp": 1,
             "prop": "imageinfo|categories|info",
-            "titles": titles.joined(separator: "|"),
             "exportschema": "0.11",
             "formatversion": 2,
             "clshow": "!hidden",
@@ -629,7 +649,21 @@ public actor API {
             "maxage": 60,
             "format": "json"
         ]
-    
+        
+        switch identifiers {
+        case .titles(var titles):
+            if titles.count >= 50 {
+                logger.warning("Trying to fetch metadata for \(titles.count) titles. However only 50 are supported at one time. Will be limited to 10.")
+                titles = Array(titles.prefix(50))
+            }
+            parameters["titles"] = titles.joined(separator: "|")
+        case .pageids(var pageIDs):
+            if pageIDs.count >= 50 {
+                logger.warning("Trying to fetch metadata for \(pageIDs.count) titles. However only 50 are supported at one time. Will be limited to 10.")
+                pageIDs = Array(pageIDs.prefix(50))
+            }
+            parameters["pageids"] = pageIDs.joined(separator: "|")
+        }
         
         let request = session.request(commonsEndpoint, method: .get, parameters: parameters)
             .serializingDecodable(QueryResponse<FileMetadataListResponse>.self, decoder: jsonDecoder)
@@ -1220,20 +1254,27 @@ LIMIT \(limit)
     // see "snak": http://www.wikidata.org/entity/Wikidata:Glossary
     // https://commons.wikimedia.org/w/api.php?action=wbgetentities&format=json&curtimestamp=1&sites=commonswiki&titles=File%3AThe_Earth_seen_from_Apollo_17.jpg&redirects=yes&props=info%7Clabels%7Cclaims&languages=&sitefilter=&callback=&formatversion=2
     /// Returns a dictionary of entities where the key is the wikibase formatted pageID (string with "M" suffix), eg. "M148014716" for pageID 148014716.
-    public func fetchStructuredData(forMediaTitles titles: [String]) async throws -> [String: WikidataFileEntity] {
+    public func fetchStructuredData(_ identifiers: FileIdentifierList) async throws -> [String: WikidataFileEntity] {
         // NOTE: In contrast to Q-Items and Properties (P) where only limited language translations are fetched,
         // for files we don't want a reduced language set when calling "wbgetentities" for easier editing.
-        let parameters: Parameters = [
+        
+        var parameters: Parameters = [
             "action": "wbgetentities",
             "curtimestamp": 1,
             "sites": "commonswiki",
-            "titles": titles.joined(separator: "|"),
             "exportschema": "0.11",
             "formatversion": 2,
             "smaxage": 60,
             "maxage": 60,
             "format": "json"
         ]
+        
+        switch identifiers {
+        case .titles(let titles):
+            parameters["titles"] = titles.joined(separator: "|")
+        case .pageids(let pageids):
+            parameters["ids"] = pageids.map{ "M\($0)" }.joined(separator: "|")
+        }
         
         let request = session.request(commonsEndpoint, method: .get, parameters: parameters)
             .serializingDecodable(FileEntitiesResponse.self, decoder: jsonDecoder)

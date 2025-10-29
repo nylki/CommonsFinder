@@ -238,7 +238,7 @@ final class AccountModel {
 
         for titleChunk in titlesChunked {
             let mediaFiles = try await API.shared
-                .fetchFullFileMetadata(fileNames: Array(titleChunk))
+                .fetchFullFileMetadata(.titles(Array(titleChunk)))
                 .map(MediaFile.init)
 
             _ = try appDatabase.upsert(mediaFiles)

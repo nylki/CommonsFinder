@@ -24,7 +24,7 @@ struct FileLoadView: View {
             ProgressView().progressViewStyle(.circular)
                 .task {
                     do {
-                        guard let rawFileMetadata = try await CommonsAPI.API().fetchFullFileMetadata(fileNames: [title]).first else {
+                        guard let rawFileMetadata = try await CommonsAPI.API().fetchFullFileMetadata(.titles([title])).first else {
                             return
                         }
                         let mediaFile = MediaFile(apiFileMetadata: rawFileMetadata)

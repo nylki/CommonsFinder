@@ -117,7 +117,7 @@ import os.log
                 }
 
                 let fetchedMediaFiles: [MediaFile] = try await CommonsAPI.API.shared
-                    .fetchFullFileMetadata(fileNames: titlesToFetch)
+                    .fetchFullFileMetadata(.titles(titlesToFetch))
                     .map(MediaFile.init)
 
                 // upsert newly fetched base MediaFile DB, in case it was updated,
