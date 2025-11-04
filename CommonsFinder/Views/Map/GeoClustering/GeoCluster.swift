@@ -21,7 +21,10 @@ nonisolated
     let allCoordinates: [CLLocationCoordinate2D]
     let h3Center: CLLocationCoordinate2D
     let meanCenter: CLLocationCoordinate2D
-    let hullPolygon: MKPolygon
+    let meanCenterMedia: CLLocationCoordinate2D
+    let meanCenterCategories: CLLocationCoordinate2D
+    let mediaHull: MKPolygon
+    let categoryHull: MKPolygon
 
     var id: H3Index { h3Index }
 
@@ -33,9 +36,14 @@ nonisolated
         let (latRad, lonRad) = try H3.cellToLatLng(h3Index: h3Index)
         let lat = latRad.radiansToDegrees
         let lon = lonRad.radiansToDegrees
-        allCoordinates = mediaItems.compactMap(\.coordinate) + categoryItems.compactMap(\.coordinate)
+        let mediaCoordinates = mediaItems.compactMap(\.coordinate)
+        let categoryCoordinates = categoryItems.compactMap(\.coordinate)
+        allCoordinates = mediaCoordinates + categoryCoordinates
         h3Center = CLLocationCoordinate2D(latitude: lat, longitude: lon)
         meanCenter = GeoVectorMath.calculateMeanCenter(coordinates: allCoordinates)
+        meanCenterMedia = GeoVectorMath.calculateMeanCenter(coordinates: mediaCoordinates)
+        meanCenterCategories = GeoVectorMath.calculateMeanCenter(coordinates: categoryCoordinates)
+
         let concavity: Double
 
         if allCoordinates.count > 50, let res = H3.getResolution(index: h3Index) {
@@ -45,7 +53,9 @@ nonisolated
             concavity = 20
         }
 
-        let hullCoordinates = ConcaveHull.calculateHull(coordinates: allCoordinates, concavity: concavity)
-        hullPolygon = MKPolygon(coordinates: hullCoordinates, count: hullCoordinates.count)
+        let categoryHullCoordinates = ConcaveHull.calculateHull(coordinates: categoryCoordinates, concavity: concavity)
+        let mediaHullCoordinates = ConcaveHull.calculateHull(coordinates: mediaCoordinates, concavity: concavity)
+        categoryHull = MKPolygon(coordinates: categoryHullCoordinates, count: categoryHullCoordinates.count)
+        mediaHull = MKPolygon(coordinates: mediaHullCoordinates, count: mediaHullCoordinates.count)
     }
 }

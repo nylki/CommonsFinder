@@ -40,9 +40,14 @@ struct CircularProgressShape: Shape {
 
 #Preview {
     VStack {
+
         CircularProgressShape(progress: 0.0)
+            .stroke(style: .init(lineWidth: 1))
         CircularProgressShape(progress: 1 / 3)
+            .stroke(style: .init(lineWidth: 1))
         CircularProgressShape(progress: 0.5)
+            .stroke(style: .init(lineWidth: 1))
         CircularProgressShape(progress: 0.9)
+            .stroke(style: .init(lineWidth: 1))
     }
 }

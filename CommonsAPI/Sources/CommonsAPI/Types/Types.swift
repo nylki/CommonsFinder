@@ -284,11 +284,23 @@ public struct RawFileMetadata: Sendable, Identifiable {
 public struct GeoSearchFileItem: Decodable, Equatable, Hashable, Sendable, Identifiable {
     public let pageid: Int64
     public let ns: MediawikiNamespace
+    /// the title with the FILE:-prefix
     public let title: String
     public let lat: Double
     public let lon: Double
     public let dist: Double
+    /// if the lat/lon is the primary location of that file
     public let primary: Bool
+    
+    public init(pageid: Int64, ns: MediawikiNamespace, title: String, lat: Double, lon: Double, dist: Double, primary: Bool) {
+        self.pageid = pageid
+        self.ns = ns
+        self.title = title
+        self.lat = lat
+        self.lon = lon
+        self.dist = dist
+        self.primary = primary
+    }
     
     public var id: String { String(pageid) }
 }

@@ -13,13 +13,12 @@ struct MapPopupMediaFileTeaser: View {
     let namespace: Namespace.ID
     let mediaFileInfo: MediaFileInfo
     let isSelected: Bool
-
-    @Environment(Navigation.self) private var navigation
+    let onTap: () -> Void
 
 
     var body: some View {
         Button {
-            navigation.viewFile(mediaFile: mediaFileInfo, namespace: namespace)
+            onTap()
         } label: {
             LazyImage(request: mediaFileInfo.thumbRequest, transaction: .init(animation: .linear)) { imageState in
                 if let image = imageState.image {
@@ -58,9 +57,9 @@ struct MapPopupMediaFileTeaser: View {
 #Preview("MapPopupMediaItem") {
     @Previewable @Namespace var namespace
     HStack {
-        MapPopupMediaFileTeaser(namespace: namespace, mediaFileInfo: .makeRandomUploaded(id: "1", .squareImage), isSelected: false)
-        MapPopupMediaFileTeaser(namespace: namespace, mediaFileInfo: .makeRandomUploaded(id: "2", .horizontalImage), isSelected: true)
-        MapPopupMediaFileTeaser(namespace: namespace, mediaFileInfo: .makeRandomUploaded(id: "3", .verticalImage), isSelected: false)
+        MapPopupMediaFileTeaser(namespace: namespace, mediaFileInfo: .makeRandomUploaded(id: "1", .squareImage), isSelected: false) {}
+        MapPopupMediaFileTeaser(namespace: namespace, mediaFileInfo: .makeRandomUploaded(id: "2", .horizontalImage), isSelected: true) {}
+        MapPopupMediaFileTeaser(namespace: namespace, mediaFileInfo: .makeRandomUploaded(id: "3", .verticalImage), isSelected: false) {}
     }
     .frame(height: 160)
 }

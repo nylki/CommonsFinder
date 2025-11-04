@@ -1,46 +1,34 @@
-import AsyncAlgorithms
-import CommonsAPI
-import CoreLocation
-import H3kit
-import MapKit
-import Nuke
-import OrderedCollections
 //
 //  MapModel.swift
 //  CommonsFinder
 //
 //  Created by Tom Brewe on 28.02.25.
 //
+
+import AsyncAlgorithms
+import CommonsAPI
+import CoreLocation
+import H3kit
+import LRUCache
+import MapKit
+import Nuke
+import OrderedCollections
 import SwiftUI
 import os.log
-
-@Observable final class ClusterModel {
-    // FIXME: maybe move these mapSheet vars into a sub-model?
-    var cluster: GeoCluster
-    var mapSheetMediaPaginationModel: PaginatableMediaFiles? = nil
-    var mapSheetResolvedCategories: [CategoryInfo] = []
-    var mapSheetSelectedItemType: MapPopup.ItemType = .empty
-    var selectedDetent: PresentationDetent = .fraction(250)
-    @ObservationIgnored
-    let possibleDetents: Set<PresentationDetent> = [.height(250), .large]
-
-
-    /// The item that is scrolled to inside the sheet when tapping on a cluster circle
-    var mapSheetFocusedClusterItem = ScrollPosition(idType: GeoReferencable.GeoRefID.self)
-
-    init(cluster: GeoCluster) {
-        self.cluster = cluster
-    }
-}
 
 @Observable final class MapModel {
     var position: MapCameraPosition = .automatic
     private(set) var region: MKCoordinateRegion?
-    private(set) var navigation: Navigation?
+
+    private let navigation: Navigation
+
+    private let appDatabase: AppDatabase
+
+    var pickedItemType: MapItemType = .wikiItem
 
     @ObservationIgnored
-    private var refreshTask: Task<Void, Error>?
-    private var dbTask: Task<Void, Never>?
+    private var fetchTask: Task<Void, Error>?
+    private var mediaFetchTask: Task<Void, Never>?
 
     private var refreshRegionTask: Task<Void, Never>?
     private(set) var lastRefreshedRegions: OrderedSet<MKCoordinateRegion> = .init()
@@ -54,25 +42,26 @@ import os.log
 
     private(set) var clusters: [H3Index: GeoCluster] = .init()
     private var isMapSheetPresented: Bool = false
+
+    init(appDatabase: AppDatabase, navigation: Navigation) {
+        self.appDatabase = appDatabase
+        self.navigation = navigation
+    }
+
+    /// To be used as the binding in the sheet initializer
     var isMapSheetPresentedBinding: Binding<Bool> {
         .init(
             get: {
-                self.isMapSheetPresented && self.navigation?.mapPath.isEmpty == true
+                self.isMapSheetPresented && self.navigation.mapPath.isEmpty == true
             },
             set: { newValue in
-                if self.navigation?.mapPath.isEmpty == true {
+                if self.navigation.mapPath.isEmpty == true {
                     self.isMapSheetPresented = newValue
                 }
             })
     }
 
     private(set) var selectedCluster: ClusterModel?
-
-
-    func setNavigation(_ navigation: Navigation) {
-        guard self.navigation == nil else { return }
-        self.navigation = navigation
-    }
 
 
     @ObservationIgnored
@@ -147,11 +136,11 @@ import os.log
         }
     }
 
-    private func refreshRegion() {
+    private func fetchDataForCurrentRegion() {
         guard let region else { return }
 
-        refreshTask?.cancel()
-        refreshTask = Task {
+        fetchTask?.cancel()
+        fetchTask = Task {
             try await Task.sleep(for: .milliseconds(500))
             currentRefreshingRegion = region
             defer { currentRefreshingRegion = nil }
@@ -228,7 +217,7 @@ import os.log
         }
         guard hasNotBeenFetched else { return }
 
-        refreshRegion()
+        fetchDataForCurrentRegion()
     }
 }
 
@@ -326,7 +315,7 @@ private func isRegionDiffSignificant(oldRegion: MKCoordinateRegion?, newRegion: 
 }
 
 nonisolated
-    extension GeoSearchFileItem: GeoReferencable
+    extension MediaGeoItem: GeoReferencable
 {
     var geoRefID: GeoRefID {
         self.id

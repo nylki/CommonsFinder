@@ -9,9 +9,11 @@ import MapKit
 import SwiftUI
 
 struct ClusterAnnotation: View {
+    let pickedItemType: MapItemType
     let mediaCount: Int
     let wikiItemCount: Int
     let isSelected: Bool
+
     let onTap: () -> Void
 
     @Namespace private var namespace
@@ -36,75 +38,89 @@ struct ClusterAnnotation: View {
         }
     }
 
+    var shape: AnyShape {
+        pickedItemType == .mediaItem ? AnyShape(RoundedRectangle(cornerRadius: 4, style: .continuous)) : AnyShape(.circle)
+    }
+
     var body: some View {
 
         HStack(spacing: 0) {
-            if wikiItemCount != 0 {
+            switch pickedItemType {
+            case .mediaItem:
+                Text(numberText(count: mediaCount) ?? "\(mediaCount)")
+                    .padding(.vertical, 10)
+                    .padding(.horizontal, 12)
+                    .background(Color.yellow.opacity(0.2))
+            case .wikiItem:
                 Text(numberText(count: wikiItemCount) ?? "\(wikiItemCount)")
-                    .padding(.vertical, 6)
-                    .padding(.horizontal, 8)
+                    .padding(.vertical, 10)
+                    .padding(.horizontal, 12)
                     .background(Color.purple.opacity(0.2))
             }
-
-            if wikiItemCount != 0, mediaCount != 0 {
-                Divider()
-            }
-
-            if mediaCount != 0 {
-                Text(numberText(count: mediaCount) ?? "\(mediaCount)")
-                    .padding(.vertical, 6)
-                    .padding(.horizontal, 8)
-                    .background(Color.yellow.opacity(0.2))
-            }
         }
-        .font(.caption.bold())
+        .font(.system(size: 12).bold())
         .tint(.primary)
         .background(.cardBackground)
-        .clipShape(.capsule)
+        .clipShape(shape)
         .overlay {
-            Capsule().stroke(.background, lineWidth: isSelected ? 3 : 2)
+            shape.stroke(.background, lineWidth: isSelected ? 3 : 2)
         }
         .compositingGroup()
         .shadow(color: Color.primary.opacity(0.4), radius: 2)
         .padding()
         //            .background(Color.red)
-        .clipShape(.capsule)
+        .clipShape(shape)
         .onTapGesture(perform: onTap)
         .animation(.default, value: isInteracting)
         .animation(.default, value: isSelected)
+        .animation(.default, value: pickedItemType)
 
 
     }
 }
 
 #Preview(traits: .previewEnvironment) {
+    @Previewable @State var pickedItemType = MapItemType.mediaItem
     let onTap = {
         print("tap")
     }
     Map {
         Annotation("", coordinate: .init(latitude: 50, longitude: 2)) {
-            ClusterAnnotation(mediaCount: 5, wikiItemCount: 1, isSelected: false, onTap: onTap)
+            ClusterAnnotation(pickedItemType: pickedItemType, mediaCount: 5, wikiItemCount: 1, isSelected: false, onTap: onTap)
         }
 
         Annotation("", coordinate: .init(latitude: 50.01, longitude: 2.01)) {
-            ClusterAnnotation(mediaCount: 999, wikiItemCount: 10, isSelected: true, onTap: onTap)
+            ClusterAnnotation(pickedItemType: pickedItemType, mediaCount: 999, wikiItemCount: 10, isSelected: true, onTap: onTap)
         }
 
         Annotation("", coordinate: .init(latitude: 50.015, longitude: 2.012)) {
-            ClusterAnnotation(mediaCount: 0, wikiItemCount: 10, isSelected: true, onTap: onTap)
+            ClusterAnnotation(pickedItemType: pickedItemType, mediaCount: 0, wikiItemCount: 10, isSelected: true, onTap: onTap)
         }
 
         Annotation("", coordinate: .init(latitude: 49.995, longitude: 2.005)) {
-            ClusterAnnotation(mediaCount: 1, wikiItemCount: 10000, isSelected: false, onTap: onTap)
+            ClusterAnnotation(pickedItemType: pickedItemType, mediaCount: 1, wikiItemCount: 10000, isSelected: false, onTap: onTap)
         }
 
         Annotation("", coordinate: .init(latitude: 50.005, longitude: 1.999)) {
-            ClusterAnnotation(mediaCount: 3111, wikiItemCount: 0, isSelected: false, onTap: onTap)
+            ClusterAnnotation(pickedItemType: pickedItemType, mediaCount: 3111, wikiItemCount: 0, isSelected: false, onTap: onTap)
         }
 
         Annotation("", coordinate: .init(latitude: 50.02, longitude: 2.02)) {
-            ClusterAnnotation(mediaCount: 124567, wikiItemCount: 5, isSelected: false, onTap: onTap)
+            ClusterAnnotation(pickedItemType: pickedItemType, mediaCount: 124567, wikiItemCount: 5, isSelected: false, onTap: onTap)
         }
+    }
+    .overlay(alignment: .top) {
+        Picker("", selection: $pickedItemType) {
+
+            Text("Locations")
+                .tag(MapItemType.wikiItem)
+
+            Text("Images")
+                .tag(MapItemType.mediaItem)
+        }
+        .pickerStyle(.segmented)
+        .frame(minWidth: 0, maxWidth: .infinity)
+        .padding(.horizontal)
     }
 
 

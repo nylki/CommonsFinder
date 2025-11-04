@@ -97,7 +97,7 @@ struct FileDetailView: View {
         do {
             guard
                 let result = try await CommonsAPI.API()
-                    .fetchFullFileMetadata(fileNames: [mediaFileInfo.mediaFile.apiName]).first
+                    .fetchFullFileMetadata(.pageids([mediaFileInfo.mediaFile.id])).first
             else {
                 return
             }

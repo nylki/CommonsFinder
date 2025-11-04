@@ -25,7 +25,9 @@ struct MediaFileListItem: View {
 
     var body: some View {
         let navItem = NavigationStackItem.viewFile(mediaFileInfo, namespace: navigationNamespace)
-        NavigationLink(value: navItem) {
+        Button {
+            navigationModel.viewFile(mediaFile: mediaFileInfo, namespace: navigationNamespace)
+        } label: {
             label
         }
         .buttonStyle(MediaCardButtonStyle())
