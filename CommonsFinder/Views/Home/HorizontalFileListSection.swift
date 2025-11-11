@@ -39,7 +39,7 @@ struct HorizontalFileListSection: View {
         ScrollView(.horizontal) {
             LazyHStack {
                 ForEach(mediaFileInfos.prefix(50)) { mediaFileInfo in
-                    let accessibilityLabel = Text(mediaFileInfo.mediaFile.localizedDisplayCaption ?? mediaFileInfo.mediaFile.displayName)
+                    let accessibilityLabel = Text(mediaFileInfo.mediaFile.bestShortTitle)
 
                     let navItem = NavigationStackItem.viewFile(
                         mediaFileInfo, namespace: namespace

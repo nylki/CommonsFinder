@@ -19,8 +19,12 @@ nonisolated class Grid {
 
     init(_ points: [Point], _ cellSize: Double) {
         self.cellSize = cellSize
+        guard cellSize != 0 else {
+            return
+        }
         for point in points {
             let cellXY = point2CellXY(point)
+            guard cellXY.count == 2 else { continue }
             let x = cellXY[0]
             let y = cellXY[1]
             if cells[x] == nil {

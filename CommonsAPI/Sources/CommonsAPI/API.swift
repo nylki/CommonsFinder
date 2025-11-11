@@ -1172,8 +1172,7 @@ GROUP BY ?item ?commonsCategory ?location ?label ?description ?image ?area
 LIMIT \(limit)
 """
         
-        print(sparqlQuery)
-        
+
         let parameters: Parameters = [
             "query": sparqlQuery,
             "format": "json"

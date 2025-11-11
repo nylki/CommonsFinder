@@ -62,7 +62,6 @@ struct FileDetailView: View {
     private var mediaFileInfo: MediaFileInfo { updatedMediaFileInfo ?? initialMediaFileInfo }
 
     @State private var isShowingEditSheet: MediaFileInfo?
-    @State private var fullDescription: AttributedString?
     @State private var isDescriptionExpanded = false
 
     @State private var isShowingFullscreenImage = false
@@ -187,11 +186,6 @@ struct FileDetailView: View {
                     logger.error("CAT: Failed to observe MediaFileInfo changes \(error)")
                 }
             }
-            .task(id: mediaFileInfo.mediaFile.fullDescriptions, priority: .userInitiated) {
-                if let attributedString = await mediaFileInfo.mediaFile.createAttributedStringDescription(locale: locale) {
-                    fullDescription = attributedString
-                }
-            }
             .task(priority: .high) {
                 let timeIntervalSinceLastFetchDate = Date.now.timeIntervalSince(mediaFileInfo.mediaFile.fetchDate)
                 //            logger.info("Time since last fetch: \(timeIntervalSinceLastFetchDate)")
@@ -242,7 +236,7 @@ struct FileDetailView: View {
                 }
             }
 
-            if let fullDescription {
+            if let fullDescription = mediaFileInfo.mediaFile.attributedStringDescription {
                 ViewThatFits(in: .vertical) {
                     if !isDescriptionExpanded {
                         Text(fullDescription)

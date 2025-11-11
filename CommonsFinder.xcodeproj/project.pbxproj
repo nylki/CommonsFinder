@@ -8,12 +8,14 @@
 
 /* Begin PBXBuildFile section */
 		E2035C452D52544D0079235B /* CommonsAPI in Frameworks */ = {isa = PBXBuildFile; productRef = E2035C442D52544D0079235B /* CommonsAPI */; };
-		E20A8A642D75F24F00EA79C5 /* H3kit in Frameworks */ = {isa = PBXBuildFile; productRef = E20A8A632D75F24F00EA79C5 /* H3kit */; };
+		E206777A2EBE52FF00981A79 /* H3kit in Frameworks */ = {isa = PBXBuildFile; productRef = E20677792EBE52FF00981A79 /* H3kit */; };
 		E213C6B92EA29F570085C60E /* SwiftSoup in Frameworks */ = {isa = PBXBuildFile; productRef = E213C6B82EA29F570085C60E /* SwiftSoup */; };
-		E213C6BC2EA2BA650085C60E /* LRUCache in Frameworks */ = {isa = PBXBuildFile; productRef = E213C6BB2EA2BA650085C60E /* LRUCache */; };
 		E22A913C2CF8B1AA00D3B8F9 /* Nuke in Frameworks */ = {isa = PBXBuildFile; productRef = E22A913B2CF8B1AA00D3B8F9 /* Nuke */; };
 		E22A913E2CF8B1AA00D3B8F9 /* NukeUI in Frameworks */ = {isa = PBXBuildFile; productRef = E22A913D2CF8B1AA00D3B8F9 /* NukeUI */; };
+		E2390F962EBCC64C0013F0FC /* ObservableLRUCache in Frameworks */ = {isa = PBXBuildFile; productRef = E2390F952EBCC64C0013F0FC /* ObservableLRUCache */; };
+		E2390F982EBCC7250013F0FC /* ObservableLRUCache in Frameworks */ = {isa = PBXBuildFile; productRef = E2390F972EBCC7250013F0FC /* ObservableLRUCache */; };
 		E24D3BFD2CF3ACDC003484CC /* FrameUp in Frameworks */ = {isa = PBXBuildFile; productRef = E24D3BFC2CF3ACDC003484CC /* FrameUp */; };
+		E252BF862EC09ABF00467A7C /* H3kit in Frameworks */ = {isa = PBXBuildFile; productRef = E20A8A5D2D75F1D200EA79C5 /* H3kit */; };
 		E252D5592D50DFF0002056B3 /* CommonsFinderShareExtension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = E252D54F2D50DFF0002056B3 /* CommonsFinderShareExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		E2549B232CBD6886005DFE14 /* AsyncAlgorithms in Frameworks */ = {isa = PBXBuildFile; productRef = E2549B222CBD6886005DFE14 /* AsyncAlgorithms */; };
 		E2549B262CBD68B9005DFE14 /* Algorithms in Frameworks */ = {isa = PBXBuildFile; productRef = E2549B252CBD68B9005DFE14 /* Algorithms */; };
@@ -45,8 +47,6 @@
 		E2F1B9D52CD006C700410991 /* GRDB in Frameworks */ = {isa = PBXBuildFile; productRef = E2F1B9D42CD006C700410991 /* GRDB */; };
 		E2FF0A2E2D9EAA29008F915C /* GRDB in Frameworks */ = {isa = PBXBuildFile; productRef = E25278722CB03FAF00D00640 /* GRDB */; };
 		E2FF0A2F2D9EAA29008F915C /* GRDBQuery in Frameworks */ = {isa = PBXBuildFile; productRef = E25278752CB03FBB00D00640 /* GRDBQuery */; };
-		E2FF0A302D9EAA29008F915C /* H3kit in Frameworks */ = {isa = PBXBuildFile; productRef = E20A8A5D2D75F1D200EA79C5 /* H3kit */; };
-		E2FF0A312D9EAA29008F915C /* H3kit in Frameworks */ = {isa = PBXBuildFile; productRef = E2F979202D81D01D0088062F /* H3kit */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -168,9 +168,11 @@
 				"Generic Extensions/FileNameType+generateFilename.swift",
 				"Generic Extensions/FloatingPoint+interpolateRanges.swift",
 				"Generic Extensions/Locale+languageCode.swift",
+				"Generic Extensions/MKCoordinateRegion+extras.swift",
 				"Generic Extensions/Sequence+sortedByKeyPath.swift",
 				"Generic Extensions/String+CapitalizedFirstLetter.swift",
 				"Generic Extensions/String+FileExtension.swift",
+				"Generic Extensions/String+truncated.swift",
 				"Generic Extensions/Uint64+Identifiable.swift",
 				"Generic Extensions/URL+resizedCommonsImageURL.swift",
 				"Generic Extensions/URL+staticUrls.swift",
@@ -217,6 +219,7 @@
 				Views/CategoryView/RelatedCategoryView.swift,
 				Views/ContextMenus/CategoryContextMenu.swift,
 				Views/ContextMenus/MediaFileContextMenu.swift,
+				"Views/Extensions/CLLocationManager+isLocationAutorized.swift",
 				"Views/Extensions/MediaFile+localizedDisplayCaption.swift",
 				Views/FileCreateView/FileCreateView.swift,
 				Views/FileCreateView/FilenameTip.swift,
@@ -251,14 +254,17 @@
 				Views/Map/GeoClustering/GeoClusterTree.swift,
 				Views/Map/GeoClustering/GeoItem.swift,
 				"Views/Map/GeoClustering/H3+Convenience.swift",
+				Views/Map/MapLayerMode.swift,
 				Views/Map/MapModel.swift,
+				Views/Map/MapPitchButtonCustom.swift,
+				Views/Map/MapPopup/CategoryClusterSheet.swift,
 				Views/Map/MapPopup/DraggablePseudoSheet.swift,
-				Views/Map/MapPopup/MapItemType.swift,
-				Views/Map/MapPopup/MapPopup.swift,
 				Views/Map/MapPopup/MapPopupCategoryTeaser.swift,
 				Views/Map/MapPopup/MapPopupMediaFileTeaser.swift,
+				Views/Map/MapPopup/MediaClusterSheet.swift,
 				Views/Map/MapPopup/PseudoSheet.swift,
 				Views/Map/MapPopup/VerticalMediaList.swift,
+				Views/Map/MapUserLocateButtonCustom.swift,
 				Views/Map/MapView.swift,
 				Views/Map/MediaAnnotationView.swift,
 				Views/Map/MediaFileReactiveCache.swift,
@@ -270,6 +276,7 @@
 				"Views/Reusable Views/CameraImagePicker.swift",
 				"Views/Reusable Views/CategoryTeaser.swift",
 				"Views/Reusable Views/CircularProgressShape.swift",
+				"Views/Reusable Views/CounterView.swift",
 				"Views/Reusable Views/DraftFileListItem.swift",
 				"Views/Reusable Views/MediaDowloadSheet.swift",
 				"Views/Reusable Views/MediaFileListItem.swift",
@@ -305,6 +312,13 @@
 			);
 			target = E2839FE62CA2DD900053C312 /* CommonsFinder */;
 		};
+		E2EF15932EBCF16D00813C45 /* Exceptions for "CommonsFinder" folder in "CommonsFinderShareExtension" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				"Generic Extensions/String+truncated.swift",
+			);
+			target = E252D54E2D50DFF0002056B3 /* CommonsFinderShareExtension */;
+		};
 /* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
@@ -323,6 +337,7 @@
 			exceptions = (
 				E2DC53012D146B78009EF370 /* Exceptions for "CommonsFinder" folder in "CommonsFinder" target */,
 				E27850F12CB0381D0053C6D5 /* Exceptions for "CommonsFinder" folder in "CommonsFinderTests" target */,
+				E2EF15932EBCF16D00813C45 /* Exceptions for "CommonsFinder" folder in "CommonsFinderShareExtension" target */,
 			);
 			path = CommonsFinder;
 			sourceTree = "<group>";
@@ -341,26 +356,26 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				E2FF0A312D9EAA29008F915C /* H3kit in Frameworks */,
-				E2FF0A302D9EAA29008F915C /* H3kit in Frameworks */,
+				E252BF862EC09ABF00467A7C /* H3kit in Frameworks */,
 				E2FF0A2F2D9EAA29008F915C /* GRDBQuery in Frameworks */,
 				E2FF0A2E2D9EAA29008F915C /* GRDB in Frameworks */,
 				E290323A2D9EA52000A0CD8F /* Pulse in Frameworks */,
 				E2549B2D2CBD69C7005DFE14 /* OrderedCollections in Frameworks */,
-				E213C6BC2EA2BA650085C60E /* LRUCache in Frameworks */,
 				E2F1B9D52CD006C700410991 /* GRDB in Frameworks */,
 				E290323C2D9EA52000A0CD8F /* PulseUI in Frameworks */,
+				E2390F962EBCC64C0013F0FC /* ObservableLRUCache in Frameworks */,
 				E26D503C2DA5A75F00621D1C /* CommonsAPI in Frameworks */,
 				E2549B262CBD68B9005DFE14 /* Algorithms in Frameworks */,
-				E20A8A642D75F24F00EA79C5 /* H3kit in Frameworks */,
 				E22A913E2CF8B1AA00D3B8F9 /* NukeUI in Frameworks */,
 				E290323F2D9EA84700A0CD8F /* GRDBQuery in Frameworks */,
 				E22A913C2CF8B1AA00D3B8F9 /* Nuke in Frameworks */,
+				E206777A2EBE52FF00981A79 /* H3kit in Frameworks */,
 				E2F19BC62CA43C6400E19DCD /* SwiftSecurity in Frameworks */,
 				E257E6BF2D2038F90049FFE8 /* Lock in Frameworks */,
 				E28B17662CB03CBB00D6FEA0 /* GRDBQuery in Frameworks */,
 				E24D3BFD2CF3ACDC003484CC /* FrameUp in Frameworks */,
 				E2549B232CBD6886005DFE14 /* AsyncAlgorithms in Frameworks */,
+				E2390F982EBCC7250013F0FC /* ObservableLRUCache in Frameworks */,
 				E213C6B92EA29F570085C60E /* SwiftSoup in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -496,14 +511,14 @@
 				E22A913D2CF8B1AA00D3B8F9 /* NukeUI */,
 				E257E6BE2D2038F90049FFE8 /* Lock */,
 				E20A8A5D2D75F1D200EA79C5 /* H3kit */,
-				E20A8A632D75F24F00EA79C5 /* H3kit */,
-				E2F979202D81D01D0088062F /* H3kit */,
 				E29032392D9EA52000A0CD8F /* Pulse */,
 				E290323B2D9EA52000A0CD8F /* PulseUI */,
 				E290323E2D9EA84700A0CD8F /* GRDBQuery */,
 				E26D503B2DA5A75F00621D1C /* CommonsAPI */,
 				E213C6B82EA29F570085C60E /* SwiftSoup */,
-				E213C6BB2EA2BA650085C60E /* LRUCache */,
+				E2390F952EBCC64C0013F0FC /* ObservableLRUCache */,
+				E2390F972EBCC7250013F0FC /* ObservableLRUCache */,
+				E20677792EBE52FF00981A79 /* H3kit */,
 			);
 			productName = CommonsFinder;
 			productReference = E2839FE72CA2DD900053C312 /* CommonsFinder.app */;
@@ -572,12 +587,12 @@
 				E24D3BFB2CF3ACDC003484CC /* XCRemoteSwiftPackageReference "FrameUp" */,
 				E22A913A2CF8B1AA00D3B8F9 /* XCRemoteSwiftPackageReference "Nuke" */,
 				E257E6BD2D2038F90049FFE8 /* XCRemoteSwiftPackageReference "Lock" */,
-				E2F9791F2D81D01D0088062F /* XCRemoteSwiftPackageReference "h3kit-ios" */,
 				E29032382D9EA52000A0CD8F /* XCRemoteSwiftPackageReference "Pulse" */,
 				E290323D2D9EA84700A0CD8F /* XCRemoteSwiftPackageReference "GRDBQuery" */,
 				E26D503A2DA5A75F00621D1C /* XCLocalSwiftPackageReference "CommonsAPI" */,
 				E213C6B72EA29F570085C60E /* XCRemoteSwiftPackageReference "SwiftSoup" */,
-				E213C6BA2EA2BA650085C60E /* XCRemoteSwiftPackageReference "LRUCache" */,
+				E2390F942EBCC64C0013F0FC /* XCLocalSwiftPackageReference "../../gits/ObservableLRUCache" */,
+				E20677782EBE52FF00981A79 /* XCRemoteSwiftPackageReference "h3kit-ios" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = E2839FE82CA2DD900053C312 /* Products */;
@@ -1076,6 +1091,10 @@
 /* End XCConfigurationList section */
 
 /* Begin XCLocalSwiftPackageReference section */
+		E2390F942EBCC64C0013F0FC /* XCLocalSwiftPackageReference "../../gits/ObservableLRUCache" */ = {
+			isa = XCLocalSwiftPackageReference;
+			relativePath = ../../gits/ObservableLRUCache;
+		};
 		E26D503A2DA5A75F00621D1C /* XCLocalSwiftPackageReference "CommonsAPI" */ = {
 			isa = XCLocalSwiftPackageReference;
 			relativePath = CommonsAPI;
@@ -1083,20 +1102,20 @@
 /* End XCLocalSwiftPackageReference section */
 
 /* Begin XCRemoteSwiftPackageReference section */
+		E20677782EBE52FF00981A79 /* XCRemoteSwiftPackageReference "h3kit-ios" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/nylki/h3kit-ios";
+			requirement = {
+				branch = main;
+				kind = branch;
+			};
+		};
 		E213C6B72EA29F570085C60E /* XCRemoteSwiftPackageReference "SwiftSoup" */ = {
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/scinfu/SwiftSoup.git";
 			requirement = {
 				kind = upToNextMajorVersion;
 				minimumVersion = 2.11.1;
-			};
-		};
-		E213C6BA2EA2BA650085C60E /* XCRemoteSwiftPackageReference "LRUCache" */ = {
-			isa = XCRemoteSwiftPackageReference;
-			repositoryURL = "https://github.com/nicklockwood/LRUCache.git";
-			requirement = {
-				kind = upToNextMajorVersion;
-				minimumVersion = 1.2.0;
 			};
 		};
 		E22A913A2CF8B1AA00D3B8F9 /* XCRemoteSwiftPackageReference "Nuke" */ = {
@@ -1179,14 +1198,6 @@
 				version = 7.8.0;
 			};
 		};
-		E2F9791F2D81D01D0088062F /* XCRemoteSwiftPackageReference "h3kit-ios" */ = {
-			isa = XCRemoteSwiftPackageReference;
-			repositoryURL = "https://github.com/nylki/h3kit-ios";
-			requirement = {
-				branch = main;
-				kind = branch;
-			};
-		};
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
@@ -1194,11 +1205,12 @@
 			isa = XCSwiftPackageProductDependency;
 			productName = CommonsAPI;
 		};
-		E20A8A5D2D75F1D200EA79C5 /* H3kit */ = {
+		E20677792EBE52FF00981A79 /* H3kit */ = {
 			isa = XCSwiftPackageProductDependency;
+			package = E20677782EBE52FF00981A79 /* XCRemoteSwiftPackageReference "h3kit-ios" */;
 			productName = H3kit;
 		};
-		E20A8A632D75F24F00EA79C5 /* H3kit */ = {
+		E20A8A5D2D75F1D200EA79C5 /* H3kit */ = {
 			isa = XCSwiftPackageProductDependency;
 			productName = H3kit;
 		};
@@ -1206,11 +1218,6 @@
 			isa = XCSwiftPackageProductDependency;
 			package = E213C6B72EA29F570085C60E /* XCRemoteSwiftPackageReference "SwiftSoup" */;
 			productName = SwiftSoup;
-		};
-		E213C6BB2EA2BA650085C60E /* LRUCache */ = {
-			isa = XCSwiftPackageProductDependency;
-			package = E213C6BA2EA2BA650085C60E /* XCRemoteSwiftPackageReference "LRUCache" */;
-			productName = LRUCache;
 		};
 		E22A913B2CF8B1AA00D3B8F9 /* Nuke */ = {
 			isa = XCSwiftPackageProductDependency;
@@ -1221,6 +1228,14 @@
 			isa = XCSwiftPackageProductDependency;
 			package = E22A913A2CF8B1AA00D3B8F9 /* XCRemoteSwiftPackageReference "Nuke" */;
 			productName = NukeUI;
+		};
+		E2390F952EBCC64C0013F0FC /* ObservableLRUCache */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = ObservableLRUCache;
+		};
+		E2390F972EBCC7250013F0FC /* ObservableLRUCache */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = ObservableLRUCache;
 		};
 		E24D3BFC2CF3ACDC003484CC /* FrameUp */ = {
 			isa = XCSwiftPackageProductDependency;
@@ -1292,11 +1307,6 @@
 			isa = XCSwiftPackageProductDependency;
 			package = E2F1B9D32CD006C700410991 /* XCRemoteSwiftPackageReference "GRDB.swift" */;
 			productName = GRDB;
-		};
-		E2F979202D81D01D0088062F /* H3kit */ = {
-			isa = XCSwiftPackageProductDependency;
-			package = E2F9791F2D81D01D0088062F /* XCRemoteSwiftPackageReference "h3kit-ios" */;
-			productName = H3kit;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};

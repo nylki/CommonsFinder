@@ -15,6 +15,7 @@ struct PopulatedPreviewEnvironment: PreviewModifier {
     private let account: AccountModel
     private let searchModel: SearchModel
     private let mediaFileCache: MediaFileReactiveCache
+    private let mapModel: MapModel
 
     static func makeSharedContext() async throws -> AppDatabase {
         Self.previewDatabase
@@ -41,6 +42,8 @@ struct PopulatedPreviewEnvironment: PreviewModifier {
             categoryResults: .init(previewAppDatabase: Self.previewDatabase, searchString: "", prefilledCategories: prefilledSearchCategories)
         )
 
+        mapModel = MapModel(appDatabase: Self.previewDatabase, navigation: navigation)
+
         mediaFileCache = MediaFileReactiveCache(appDatabase: Self.previewDatabase)
     }
 
@@ -51,6 +54,7 @@ struct PopulatedPreviewEnvironment: PreviewModifier {
             .environment(searchModel)
             .environment(navigation)
             .environment(mockUploadManager)
+            .environment(mapModel)
             .environment(mediaFileCache)
     }
 }

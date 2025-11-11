@@ -9,7 +9,6 @@ import AsyncAlgorithms
 import CommonsAPI
 import CoreLocation
 import H3kit
-import LRUCache
 import MapKit
 import Nuke
 import OrderedCollections
@@ -19,16 +18,16 @@ import os.log
 @Observable final class MapModel {
     var position: MapCameraPosition = .automatic
     private(set) var region: MKCoordinateRegion?
+    private(set) var rect: MKMapRect?
+    private(set) var camera: MapCamera?
 
     private let navigation: Navigation
-
     private let appDatabase: AppDatabase
 
-    var pickedItemType: MapItemType = .wikiItem
+    private(set) var mapLayerMode: MapLayerMode = .categoryItems
 
     @ObservationIgnored
     private var fetchTask: Task<Void, Error>?
-    private var mediaFetchTask: Task<Void, Never>?
 
     private var refreshRegionTask: Task<Void, Never>?
     private(set) var lastRefreshedRegions: OrderedSet<MKCoordinateRegion> = .init()
@@ -65,15 +64,11 @@ import os.log
 
 
     @ObservationIgnored
-    private var locationTrackTrack: Task<Void, Never>?
+    private var locationTrack: Task<Void, Never>?
 
-    private var locationManager: CLLocationManager = .init()
+    var locationManager: CLLocationManager = .init()
     var isLocationAuthorized: Bool {
-        switch locationManager.authorizationStatus {
-        case .authorizedAlways, .authorizedWhenInUse: true
-        case .notDetermined, .restricted, .denied: false
-        @unknown default: false
-        }
+        locationManager.isLocationAuthorized
     }
 
     /// in meter
@@ -88,8 +83,17 @@ import os.log
         }
     }
 
-    func setRegion(region: MKCoordinateRegion) {
-        self.region = region
+    func selectMapMode(_ mode: MapLayerMode) {
+        isMapSheetPresented = false
+        selectedCluster?.mapSheetFocusedClusterItem = .init()
+        mapLayerMode = mode
+        refreshClusters()
+    }
+
+    func setMapContext(context: MapCameraUpdateContext) {
+        self.region = context.region
+        self.rect = context.rect
+        self.camera = context.camera
     }
 
 
@@ -114,7 +118,6 @@ import os.log
 
         let clock = ContinuousClock()
         let elapsed = clock.measure {
-
             clusters = geoClusterTree.clusters(
                 topLeft: region.boundingBox.topLeft,
                 bottomRight: region.boundingBox.bottomRight,
@@ -168,32 +171,28 @@ import os.log
         }
     }
 
-    //    func stopCurrentLocationUpdates() {
-    //        liveTask?.cancel()
-    //        liveTask = nil
-    //    }
-
-    /// Continuously tracks and follows tne position on the map (i.e. Navigation mode)
-    func goToUserLocation() {
-        locationManager.activityType = .otherNavigation
-        locationManager.distanceFilter = 7
-        locationManager.requestWhenInUseAuthorization()
-        position = .userLocation(followsHeading: false, fallback: .automatic)
+    func stopFollowingUserLocation() {
+        locationTrack?.cancel()
+        locationTrack = nil
     }
 
-    /// sets the user location once
-    func locateUserPosition() {
-        locationTrackTrack?.cancel()
-        locationTrackTrack = Task<Void, Never> {
+    func followUserLocation() {
+        locationTrack?.cancel()
+        locationTrack = Task<Void, Never> {
+            let currentCamera = position.camera
             do {
                 for try await locationUpdate in CLLocationUpdate.liveUpdates(.otherNavigation) {
                     try Task.checkCancellation()
                     guard let location = locationUpdate.location else { continue }
 
-                    position = .camera(.init(centerCoordinate: location.coordinate, distance: 1000))
-                    // Here we are only interested in a single location update
-                    // thus break out of the loop and save battery.
-                    //                    break
+                    position = .camera(
+                        .init(
+                            centerCoordinate: location.coordinate,
+                            distance: currentCamera?.distance ?? region?.diagonalMeters ?? 1000,
+                            heading: currentCamera?.heading ?? 0,
+                            pitch: currentCamera?.pitch ?? 0
+                        ))
+
                 }
             } catch is CancellationError {
                 logger.debug("Location updates cancelled.")

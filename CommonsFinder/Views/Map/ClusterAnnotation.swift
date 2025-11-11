@@ -9,7 +9,7 @@ import MapKit
 import SwiftUI
 
 struct ClusterAnnotation: View {
-    let pickedItemType: MapItemType
+    let pickedItemType: MapLayerMode
     let mediaCount: Int
     let wikiItemCount: Int
     let isSelected: Bool
@@ -51,7 +51,7 @@ struct ClusterAnnotation: View {
                     .padding(.vertical, 10)
                     .padding(.horizontal, 12)
                     .background(Color.yellow.opacity(0.2))
-            case .wikiItem:
+            case .categoryItems:
                 Text(numberText(count: wikiItemCount) ?? "\(wikiItemCount)")
                     .padding(.vertical, 10)
                     .padding(.horizontal, 12)
@@ -68,7 +68,6 @@ struct ClusterAnnotation: View {
         .compositingGroup()
         .shadow(color: Color.primary.opacity(0.4), radius: 2)
         .padding()
-        //            .background(Color.red)
         .clipShape(shape)
         .onTapGesture(perform: onTap)
         .animation(.default, value: isInteracting)
@@ -80,7 +79,7 @@ struct ClusterAnnotation: View {
 }
 
 #Preview(traits: .previewEnvironment) {
-    @Previewable @State var pickedItemType = MapItemType.mediaItem
+    @Previewable @State var pickedItemType = MapLayerMode.mediaItem
     let onTap = {
         print("tap")
     }
@@ -113,10 +112,10 @@ struct ClusterAnnotation: View {
         Picker("", selection: $pickedItemType) {
 
             Text("Locations")
-                .tag(MapItemType.wikiItem)
+                .tag(MapLayerMode.categoryItems)
 
             Text("Images")
-                .tag(MapItemType.mediaItem)
+                .tag(MapLayerMode.mediaItem)
         }
         .pickerStyle(.segmented)
         .frame(minWidth: 0, maxWidth: .infinity)

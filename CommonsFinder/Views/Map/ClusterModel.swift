@@ -14,8 +14,6 @@ import os.log
     var cluster: GeoCluster
     var mediaPaginationModel: PaginatableMediaFiles? = nil
     var resolvedCategories: [CategoryInfo] = []
-    let possibleDetents: Set<PresentationDetent>
-    var selectedDetent: PresentationDetent
 
     var humanReadableLocation: String?
 
@@ -39,9 +37,6 @@ import os.log
 
     init(cluster: GeoCluster) {
         self.cluster = cluster
-        let defaultDetent = PresentationDetent.height(275)
-        possibleDetents = [defaultDetent]
-        selectedDetent = defaultDetent
         fetchCenterLocation()
     }
 }

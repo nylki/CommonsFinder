@@ -22,7 +22,7 @@ final class MockUploadManager: UploadManager {
     private let uploadMockSimulation: UploadMockSimulation
 
     init(mockSimulation: UploadMockSimulation, appDatabase: AppDatabase) {
-        print("init MockUploadManager")
+        //        print("init MockUploadManager")
         self.uploadMockSimulation = mockSimulation
         super.init(appDatabase: appDatabase)
     }

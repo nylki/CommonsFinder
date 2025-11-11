@@ -7,31 +7,19 @@
 
 import CommonsAPI
 import Foundation
-import LRUCache
+import ObservableLRUCache
 import SwiftSoup
 import SwiftUI
 import os.log
 
 extension AttributedString {
-    static private let cache = LRUCache<String, AttributedString>(countLimit: 250)
 
     init(htmlOrString: String) async {
         self.init()
-        if let cachedAttributedString = Self.cache.value(forKey: htmlOrString) {
-            //            logger.info("P: cache hit")
-            self = cachedAttributedString
-        } else {
-            //            logger.info("P: no cache hit")
-            let attributedString = await Self.parse(htmlOrString: htmlOrString) ?? .init()
-            Self.cache.setValue(attributedString, forKey: htmlOrString)
-            self = attributedString
-        }
+        self = await Self.parse(htmlOrString: htmlOrString) ?? .init()
     }
 
-
     @concurrent static private func parse(htmlOrString: String, font: Font = .body) async -> AttributedString? {
-
-
         do {
             var attributedString = AttributedString()
 
@@ -80,24 +68,13 @@ extension AttributedString {
 }
 
 extension MediaFile {
-    nonisolated func createAttributedStringDescription(font: Font = .body, locale: Locale) async -> AttributedString? {
-
-        //        let signposter = OSSignposter()
-        //        let signpostID = signposter.makeSignpostID()
-        //        let signPostName: StaticString = "createAttributedStringDescription"
-        //        let state = signposter.beginInterval(signPostName, id: signpostID)
-        //        defer {
-        //            signposter.endInterval(signPostName, state)
-        //        }
-
-        let preferredLanguage = locale.wikiLanguageCodeIdentifier
+    /// returns the localized version of the file full description, parsed as AttributedString
+    /// values are cached.
+    var attributedStringDescription: AttributedString? {
+        let preferredLanguage = Locale.current.wikiLanguageCodeIdentifier
         let languageString = fullDescriptions.first { $0.languageCode == preferredLanguage } ?? fullDescriptions.first { $0.languageCode == "en" }
-        guard let localizedDescription = languageString?.string else {
-            return nil
-        }
+        guard let localizedDescription = languageString?.string else { return nil }
 
-        var attributedString = await AttributedString(htmlOrString: localizedDescription)
-        attributedString.font = font
-        return attributedString
+        return AttributedStringCache.shared[localizedDescription]
     }
 }

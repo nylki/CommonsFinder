@@ -18,4 +18,17 @@ extension MediaFile {
             return nil
         }
     }
+
+    /// either returns the localized caption, the localized description as String (converted as plaintext from its AttributedString version) and if neither exists, the displayName wis returned
+    var bestShortTitle: String {
+        if let preferredCaption = captions.first(where: { $0.languageCode == Locale.current.wikiLanguageCodeIdentifier }) {
+            preferredCaption.string
+        } else if let description = attributedStringDescription?.characters {
+            String(description)
+        } else if let anyCaption = captions.first {
+            anyCaption.string
+        } else {
+            displayName
+        }
+    }
 }

@@ -20,11 +20,24 @@ struct MediaFileListItem: View {
     @Namespace private var navigationNamespace
     @Environment(\.locale) private var locale
 
-    @State private var captionOrName: String = ""
+    private var captionOrName: String {
+        let captions = mediaFileInfo.mediaFile.captions
+
+        return
+            if let preferredCaption = captions.first(where: { $0.languageCode == locale.wikiLanguageCodeIdentifier })
+        {
+            preferredCaption.string
+        } else if let description = mediaFileInfo.mediaFile.attributedStringDescription?.characters {
+            String(description)
+        } else if let anyCaption = captions.first {
+            anyCaption.string
+        } else {
+            mediaFileInfo.mediaFile.displayName
+        }
+    }
 
 
     var body: some View {
-        let navItem = NavigationStackItem.viewFile(mediaFileInfo, namespace: navigationNamespace)
         Button {
             navigationModel.viewFile(mediaFile: mediaFileInfo, namespace: navigationNamespace)
         } label: {
@@ -36,20 +49,6 @@ struct MediaFileListItem: View {
         // .clipShape is redundant here as its already defined in the ButtonStyle, but apparently
         // required, for the .zoom transition to properly settle back without hard corners
         .clipShape(.rect(cornerRadius: 16))
-        .task(priority: .userInitiated) {
-            guard captionOrName.isEmpty else { return }
-            let captions = mediaFileInfo.mediaFile.captions
-            captionOrName =
-                if let preferredCaption = captions.first(where: { $0.languageCode == locale.wikiLanguageCodeIdentifier }) {
-                    preferredCaption.string
-                } else if let description = await mediaFileInfo.mediaFile.createAttributedStringDescription(locale: Locale.current)?.characters {
-                    String(description)
-                } else if let anyCaption = captions.first {
-                    anyCaption.string
-                } else {
-                    mediaFileInfo.mediaFile.displayName
-                }
-        }
     }
 
     private func imageHeight(containerWidth: Double) -> Double {
