@@ -41,10 +41,10 @@ struct PopulatedPreviewEnvironment: PreviewModifier {
             mediaResults: .init(previewAppDatabase: Self.previewDatabase, searchString: "", prefilledMedia: prefilledSearchMedia),
             categoryResults: .init(previewAppDatabase: Self.previewDatabase, searchString: "", prefilledCategories: prefilledSearchCategories)
         )
-
-        mapModel = MapModel(appDatabase: Self.previewDatabase, navigation: navigation)
-
         mediaFileCache = MediaFileReactiveCache(appDatabase: Self.previewDatabase)
+        mapModel = MapModel(appDatabase: Self.previewDatabase, navigation: navigation, mediaFileCache: mediaFileCache)
+
+
     }
 
     func body(content: Content, context: AppDatabase) -> some View {

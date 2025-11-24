@@ -26,6 +26,11 @@ nonisolated final class GeoClusterTree {
         }
     }
 
+    func items(for index: H3Index, resolution: H3.Resolution) -> [GeoItem] {
+        guard let itemIDs = h3IndexTree[resolution]?[index] else { return [] }
+        return itemIDs.compactMap { items[$0] }
+    }
+
     func clusters(
         topLeft: CLLocationCoordinate2D,
         bottomRight: CLLocationCoordinate2D,
@@ -77,6 +82,51 @@ nonisolated final class GeoClusterTree {
             }
 
         return Dictionary(uniqueKeysWithValues: matchingClusters)
+    }
+
+    func items(around coordinate: CLLocationCoordinate2D, radius: CLLocationDistance) -> [GeoItem] {
+        let location = CLLocation(latitude: coordinate.latitude, longitude: coordinate.longitude)
+        // 1. get clusters inside the circle
+        // 2. filter clusters to exclude outliers
+
+        let resolutionsFromSmallestAreaToLargest = H3.Resolution.allCases.reversed()
+        assert(resolutionsFromSmallestAreaToLargest.first == .fifteen)
+
+        // we pick one step larger res to make sure we get all items, if if on the edges
+        var resolution = resolutionsFromSmallestAreaToLargest.first { $0.approxCircleRadius > radius } ?? .zero
+        resolution = .init(rawValue: resolution.rawValue - 1) ?? .zero
+        do {
+            let clusterIndex = try H3.latLngToCell(
+                lat: coordinate.latitude.degreesToRadians,
+                lng: coordinate.longitude.degreesToRadians,
+                resolution: resolution
+            )
+
+            let itemsInCluster = items(for: clusterIndex, resolution: resolution)
+            let filteredItems =
+                itemsInCluster
+                .filter { item in
+                    guard let itemCoordinate = item.coordinate else {
+                        assertionFailure()
+                        return false
+                    }
+                    return location.distance(from: .init(latitude: itemCoordinate.latitude, longitude: itemCoordinate.longitude)) <= radius
+                }
+                .sorted { a, b in
+                    guard let aCoord = a.coordinate, let bCoord = b.coordinate else { return false }
+                    let aLoc = CLLocation(latitude: aCoord.latitude, longitude: aCoord.longitude)
+                    let bLoc = CLLocation(latitude: bCoord.latitude, longitude: bCoord.longitude)
+                    let aDist = aLoc.distance(from: location)
+                    let bDist = bLoc.distance(from: location)
+                    return aDist <= bDist
+                }
+
+            return filteredItems
+        } catch {
+            logger.error("Failed to find a matching cluster around (\(coordinate.latitude),\(coordinate.longitude)) with radius: \(radius): \(error)")
+            return []
+        }
+
     }
 
     func add(_ items: [GeoItem]) {

@@ -37,6 +37,6 @@ import SwiftUI
         )
 
         offset = result.offset
-        return (result.items.map(\.title), offset != nil)
+        return (result.items.compactMap(\.pageid).map(String.init), offset != nil)
     }
 }

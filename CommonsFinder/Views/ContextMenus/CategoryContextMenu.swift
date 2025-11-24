@@ -14,6 +14,7 @@ struct CategoryContextMenu: ViewModifier {
     let item: CategoryInfo
     @Environment(\.appDatabase) private var appDatabase
     @Environment(Navigation.self) private var navigation
+    @Environment(MapModel.self) private var mapModel
     @Namespace private var namespace
 
     func body(content: Content) -> some View {
@@ -22,6 +23,17 @@ struct CategoryContextMenu: ViewModifier {
                 VStack {
                     Button("Open Details") {
                         navigation.viewCategory(item)
+                    }
+
+                    if item.base.coordinate != nil {
+                        Button("Show on Map") {
+                            do {
+                                try mapModel.showInCircle(item.base)
+                                navigation.selectedTab = .map
+                            } catch {
+                                logger.error("Failed to show category on map \(error)")
+                            }
+                        }
                     }
 
                     Button(

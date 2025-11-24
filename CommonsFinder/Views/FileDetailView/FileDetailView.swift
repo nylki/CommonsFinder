@@ -268,7 +268,7 @@ struct FileDetailView: View {
             tagSection
 
             if let coordinate = mediaFileInfo.mediaFile.coordinate {
-                InlineMap(coordinate: coordinate)
+                InlineMap(coordinate: coordinate, item: .mediaFile(mediaFileInfo.mediaFile))
             }
 
 

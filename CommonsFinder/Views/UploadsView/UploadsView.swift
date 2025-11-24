@@ -37,7 +37,7 @@ private final class
 
         let canContinue = result.continueString != nil
         self.continueString = result.continueString
-        return (result.files.map(\.title), canContinue)
+        return (result.files.compactMap(\.pageid).map(String.init), canContinue)
     }
 }
 

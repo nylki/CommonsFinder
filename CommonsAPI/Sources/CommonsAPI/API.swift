@@ -831,6 +831,41 @@ public actor API {
 
     }
     
+    public func geoSearchFiles(around coordinate: CLLocationCoordinate2D, radius: CLLocationDistance) async throws -> [GeoSearchFileItem] {
+        
+        enum Sort: String {
+            case distance
+            case relevance
+        }
+        
+        let radius = Int(radius.rounded(.awayFromZero))
+        let gscoord = "\(coordinate.latitude)|\(coordinate.longitude)"
+        
+        let parameters: Parameters = [
+            "action": "query",
+            "list": "geosearch",
+            "gscoord": gscoord,
+            "gsradius": radius,
+            "gssort": Sort.distance.rawValue,
+            "gsnamespace": MediawikiNamespace.file.rawValue,
+            "gslimit": "max",
+            "maxage": 60,
+            "exportschema": "0.11",
+            "formatversion": 2,
+            "curtimestamp": 1,
+            "format": "json"
+        ]
+        
+        let request = session.request(commonsEndpoint, method: .get, parameters: parameters)
+            .serializingDecodable(QueryResponse<GeosearchListResponse>.self, decoder: jsonDecoder)
+        let resultValue = try await request.value
+        guard let resultQuery = resultValue.query else {
+            return []
+        }
+        return resultQuery.geosearch
+
+    }
+    
     /// searchWikidataItems
     /// - Parameters:
     ///   - term: `String` to search for
@@ -864,7 +899,7 @@ public actor API {
     }
     
     public func fetchGenericWikidataItems(itemIDs: [String], languageCode: LanguageCode) async throws -> [GenericWikidataItem] {
-        let preferredLanguages = ([languageCode] + Locale.preferredLanguages).uniqued().joined(separator: ",")
+        let preferredLanguages = ([languageCode] + getPreferredSystemLanguages()).uniqued().joined(separator: ",")
         let ids = itemIDs.reduce("") { partialResult, qItem in
             partialResult + " wd:\(qItem)"
         }
@@ -928,7 +963,7 @@ GROUP BY ?item ?commonsCategory ?area ?location ?label ?image ?description
     /// and P373 (http://www.wikidata.org/entity/Property:P373)
     // eg: https://query.wikidata.org/sparql?query=%20%20SELECT%20%3Fitem%20%3FitemLabel%20%3FcommonsCategory%20%3FcommonsCategoryLabel%20WHERE%20%7B%0A%20%20%20%20VALUES%20%3Fitem%20%7Bwd%3AQ2%20wd%3AQ5%20wd%3AQ42%20%20%7D%20%20%23%20Replace%20these%20with%20your%20Q-items%0A%20%20%20%20%3Fitem%20wdt%3AP910%20%3FcommonsCategory%20.%20%20%20%20%23%20P910%20links%20to%20the%20main%20category%0A%20%20%20%20%3FcommonsCategory%20wdt%3AP373%20%3FcommonsName%20.%20%23%20Filter%20to%20ensure%20it%20has%20a%20Commons%20category%0A%20%20%20%20SERVICE%20wikibase%3Alabel%20%7B%20bd%3AserviceParam%20wikibase%3Alanguage%20%22%5BAUTO_LANGUAGE%5D%2Cen%22.%20%7D%0A%20%20%7D%0A%0A&format=json
     public func findCategoriesForWikidataItems(_ itemIDs: [String], languageCode: String) async throws -> [GenericWikidataItem] {
-        let preferredLanguages = ([languageCode] + Locale.preferredLanguages).uniqued().joined(separator: ",")
+        let preferredLanguages = ([languageCode] + getPreferredSystemLanguages()).uniqued().joined(separator: ",")
         let ids = itemIDs.reduce("") { partialResult, qItem in
             partialResult + " wd:\(qItem)"
         }
@@ -983,7 +1018,7 @@ GROUP BY ?item ?commonsCategory ?area ?location ?label ?image ?description
     
     
     public func findWikidataItemsForCategories(_ categories: [String], languageCode: String) async throws -> [GenericWikidataItem] {
-        let preferredLanguages = ([languageCode] + Locale.preferredLanguages).uniqued().joined(separator: ",")
+        let preferredLanguages = ([languageCode] + getPreferredSystemLanguages()).uniqued().joined(separator: ",")
         let categoriesString = categories
             .map {
                 let quotationMarksEscapedString = $0.replacingOccurrences(of: "\"", with: "\\\"")
@@ -1051,7 +1086,9 @@ GROUP BY ?item ?commonsCategory ?area ?location ?label ?image ?description
     
     // NOTE: see "radius_query_for_upload_wizard.rq" for similar query in android commons project
     public func getWikidataItemsAroundCoordinate(_ coordinate: CLLocationCoordinate2D, kilometerRadius: Double, limit: Int = 10000, minArea: Double? = nil, languageCode: LanguageCode) async throws -> [GenericWikidataItem] {
-        let preferredLanguages = ([languageCode] + Locale.preferredLanguages).uniqued().joined(separator: ",")
+        
+        let kilometerRadius = Int(kilometerRadius.rounded(.awayFromZero))
+        let preferredLanguages = ([languageCode] + getPreferredSystemLanguages()).uniqued().joined(separator: ",")
         
         let minAreaFilter = if let minArea {
             "FILTER(?area > \(minArea))"
@@ -1127,7 +1164,7 @@ ORDER BY ?distance LIMIT \(limit)
         limit: Int = 10000
     ) async throws -> [GenericWikidataItem] {
         
-        let preferredLanguages = ([languageCode] + Locale.preferredLanguages).uniqued().joined(separator: ",")
+        let preferredLanguages = ([languageCode] + getPreferredSystemLanguages()).uniqued().joined(separator: ",")
         
         var areaQuery = """
         ?item p:P2046/psn:P2046 [ # area, normalised (psn retrieves the normaized value, psv the original one)
@@ -1510,5 +1547,15 @@ internal extension [MediawikiNamespace] {
         self
             .map { String($0.rawValue) }
             .joined(separator: "|")
+    }
+}
+
+private func getPreferredSystemLanguages() -> [LanguageCode] {
+    return if #available(iOS 26.0, *) {
+        Locale.preferredLocales.compactMap { locale in
+            locale.language.languageCode?.identifier
+        }
+    } else {
+        Locale.preferredLanguages
     }
 }

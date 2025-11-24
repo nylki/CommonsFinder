@@ -32,7 +32,7 @@ struct MapView: View {
 
     /// this is either a media item or a wiki item
     private var scrollClusterItem: GeoItem? {
-        guard let id = mapModel.selectedCluster?.mapSheetFocusedClusterItem.viewID(type: String.self) else {
+        guard let id = mapModel.selectedMapItem?.mapSheetFocusedItem.viewID(type: String.self) else {
             return nil
         }
 
@@ -58,11 +58,19 @@ struct MapView: View {
 
                 UserAnnotation()
 
+                if let circleSelection = (mapModel.selectedMapItem as? CircleRepresentation) {
+                    MapCircle(MKCircle(center: circleSelection.coordinate, radius: circleSelection.radius))
+                        .foregroundStyle(Color.accent.opacity(0.2))
+                        .stroke(Color.accent, style: .init(lineWidth: 1, lineCap: .square, dash: [2, 6]))
+                    Marker(coordinate: circleSelection.coordinate) {
+
+                    }
+                }
+
                 switch scrollClusterItem {
                 case .none:
                     EmptyMapContent()
                 case .media(let mediaGeoItem):
-
                     let label = mediaFileCache[mediaGeoItem.id]?.mediaFile.bestShortTitle.truncate(to: 80) ?? ""
                     Annotation(label, coordinate: mediaGeoItem.coordinate, anchor: .center) {
                         MediaAnnotationView(
@@ -87,24 +95,33 @@ struct MapView: View {
                     }
                 }
             }
+            .task {
+                mapModel.setProxy(mapProxy)
+            }
+            .gesture(
+                MapPressGesture(longPressAt: { point in
+                    if let longPressCoordinate = mapProxy.convert(point, from: .global) {
+                        mapModel.selectMapLocation(longPressCoordinate)
+                    }
+                })
+            )
             .onChange(of: selection) { oldValue, newValue in
                 if oldValue != newValue, let newValue {
                     mapModel.selectCluster(newValue)
                 }
             }
             .onMapCameraChange(frequency: .onEnd) { context in
-                print("map camera change \(Date.now)")
                 mapModel.setMapContext(context: context)
                 mapModel.refreshPlaces(context: context)
             }
             .onMapCameraChange(frequency: .continuous) { context in
                 mapModel.setMapContext(context: context)
-                mapModel.refreshClusters()
+                mapModel.updateItems()
             }
             .mapControls {
                 MapCompass()
                 let diagonalMeters: Double = mapModel.region?.diagonalMeters ?? .infinity
-                if diagonalMeters < 4000 || mapModel.camera?.pitch != 0 {
+                if diagonalMeters < 7500 || mapModel.camera?.pitch != 0 {
                     MapPitchToggle()
                 }
 
@@ -136,34 +153,42 @@ struct MapView: View {
                     }
                 }
             ) {
-                if let model = mapModel.selectedCluster {
+                if let model = (mapModel.selectedMapItem as? MediaInClusterModel) {
                     @Bindable var model = model
-                    Group {
-                        switch mapModel.mapLayerMode {
-                        case .mediaItem:
-                            MediaClusterSheet(
-                                model: model,
-                                mapAnimationNamespace: namespace,
-                                onClose: mapModel.resetClusterSelection
-                            )
-                            .id(model.cluster.id)
-                            .presentationBackgroundInteraction(.enabled)
-                        //                            .environment(navigation)
-                        //                            .environment(mediaFileCache)
-
-                        case .categoryItems:
-                            CategoryClusterSheet(
-                                model: model,
-                                mapAnimationNamespace: namespace,
-                                onClose: mapModel.resetClusterSelection
-                            )
-                            .id(model.cluster.id)
-                            .presentationBackgroundInteraction(.enabled)
-                        //                            .environment(navigation)
-                        //                            .environment(mediaFileCache)
-                        }
-                    }
-
+                    MediaClusterSheet(
+                        model: model,
+                        mapAnimationNamespace: namespace,
+                        onClose: mapModel.resetClusterSelection
+                    )
+                    .id(model.id)
+                    .presentationBackgroundInteraction(.enabled)
+                } else if let model = (mapModel.selectedMapItem as? CategoriesInClusterModel) {
+                    @Bindable var model = model
+                    CategoryClusterSheet(
+                        model: model,
+                        mapAnimationNamespace: namespace,
+                        onClose: mapModel.resetClusterSelection
+                    )
+                    .id(model.id)
+                    .presentationBackgroundInteraction(.enabled)
+                } else if let model = (mapModel.selectedMapItem as? MediaAroundLocationModel) {
+                    @Bindable var model = model
+                    MediaCircleSheet(
+                        model: model,
+                        mapAnimationNamespace: namespace,
+                        onClose: mapModel.resetClusterSelection
+                    )
+                    .id(model.id)
+                    .presentationBackgroundInteraction(.enabled)
+                } else if let model = (mapModel.selectedMapItem as? CategoriesAroundLocationModel) {
+                    @Bindable var model = model
+                    CategoryCircleSheet(
+                        model: model,
+                        mapAnimationNamespace: namespace,
+                        onClose: mapModel.resetClusterSelection
+                    )
+                    .id(model.id)
+                    .presentationBackgroundInteraction(.enabled)
                 }
 
             }
@@ -185,14 +210,15 @@ struct MapView: View {
     @MapContentBuilder
     private var clusterLayer: some MapContent {
 
+        let selectedCluster = (mapModel.selectedMapItem as? ClusterRepresentation)?.cluster
+        let selectedCircle = (mapModel.selectedMapItem as? CircleRepresentation)
+
         let clusters: ArraySlice<GeoCluster> =
-            if let selectedCluster = mapModel.selectedCluster?.cluster {
+            if let selectedCluster {
                 ArraySlice([selectedCluster] + mapModel.clusters.values)
             } else {
                 ArraySlice(mapModel.clusters.values)
             }
-
-        let selectedCluster = mapModel.selectedCluster?.cluster
 
 
         let selectedClusterHull =
@@ -201,7 +227,23 @@ struct MapView: View {
             case .categoryItems: selectedCluster?.categoryHull
             }
 
+        let selectedCircleLocation: CLLocation? =
+            if let selectedCircle {
+                CLLocation(
+                    latitude: selectedCircle.coordinate.latitude,
+                    longitude: selectedCircle.coordinate.longitude
+                )
+            } else { nil }
+
+        let alwaysShowHulls = false
+
         ForEach(clusters) { cluster in
+            let hull =
+                switch mapModel.mapLayerMode {
+                case .mediaItem: cluster.mediaHull
+                case .categoryItems: cluster.categoryHull
+                }
+
             let isSelected: Bool = selectedCluster?.h3Index == cluster.h3Index
             // FIXME: bound the meanCenter leave some padding for neighbor clusters
 
@@ -213,6 +255,19 @@ struct MapView: View {
                 } else {
                     false
                 }
+
+            lazy var isContainedInSelectedRadius: Bool = {
+                if let selectedCircle, let selectedCircleLocation {
+                    // FIXME: move to a helper func
+                    let clusterHullCenter = CLLocation(
+                        latitude: hull.coordinate.latitude,
+                        longitude: hull.coordinate.longitude
+                    )
+                    return clusterHullCenter.distance(from: selectedCircleLocation) < selectedCircle.radius
+                } else {
+                    return false
+                }
+            }()
 
 
             if isSelected {
@@ -226,17 +281,10 @@ struct MapView: View {
                         .stroke(Color.accent, lineWidth: 2)
                 }
             } else if isContainedInSelectedCluster {
-                let hull =
-                    switch mapModel.mapLayerMode {
-                    case .mediaItem: cluster.mediaHull
-                    case .categoryItems: cluster.categoryHull
-                    }
                 MapPolygon(hull)
                     .foregroundStyle(Color.accent.opacity(0.2))
                     .stroke(Color.accent, style: .init(lineWidth: 1, lineCap: .square, dash: [2, 6]))
-
-
-            } else {
+            } else if !isContainedInSelectedRadius {
                 switch mapModel.mapLayerMode {
                 case .mediaItem:
                     if cluster.mediaItems.isEmpty {
@@ -287,6 +335,13 @@ struct MapView: View {
                         .mapOverlayLevel(level: .aboveLabels)
                         //                        .tag(cluster.h3Index)
                     } else {
+                        if alwaysShowHulls {
+                            MapPolygon(hull)
+                                .foregroundStyle(Color.accent.opacity(0.2))
+                                .stroke(Color.accent, style: .init(lineWidth: 1, lineCap: .square, dash: [2, 6]))
+                        }
+
+
                         // multiple categories
                         Annotation("", coordinate: cluster.meanCenterCategories, anchor: .center) {
                             ClusterAnnotation(
@@ -303,7 +358,7 @@ struct MapView: View {
                 }
             }
         }
-        .annotationTitles(mapModel.selectedCluster == nil ? .automatic : .hidden)
+        .annotationTitles(mapModel.selectedMapItem == nil ? .automatic : .hidden)
     }
 
     private var mapModeMenu: some View {
@@ -324,7 +379,6 @@ struct MapView: View {
                 Label("Images", systemImage: "photo")
             }
             .labelStyle(.iconOnly)
-
         } label: {
             switch mapModel.mapLayerMode {
             case .categoryItems:

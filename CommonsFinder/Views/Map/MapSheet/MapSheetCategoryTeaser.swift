@@ -1,5 +1,5 @@
 //
-//  MapPopupCategoryTeaser.swift
+//  MapSheetCategoryTeaser.swift
 //  CommonsFinder
 //
 //  Created by Tom Brewe on 11.03.25.
@@ -9,7 +9,7 @@ import CommonsAPI
 import NukeUI
 import SwiftUI
 
-struct MapPopupCategoryTeaser: View {
+struct MapSheetCategoryTeaser: View {
     // needs a better type for previews and images?
     let item: CategoryInfo
     let isSelected: Bool
@@ -76,14 +76,18 @@ struct MapPopupCategoryTeaser: View {
             .clipShape(.containerRelative)
             .contentShape([.contextMenuPreview, .interaction], .containerRelative)
             .modifier(CategoryContextMenu(item: item))
-            .padding(2)
-            .overlay {
-                if isSelected {
-                    ContainerRelativeShape()
-                        .stroke(Color.accent, lineWidth: 1)
+            .scrollTransition(
+                .interactive, axis: .horizontal,
+                transition: { view, phase in
+                    view.scaleEffect(y: phase == .identity ? 1 : 0.9)
                 }
+            )
+            .padding(3)
+            .overlay {
+                ContainerRelativeShape()
+                    .stroke(isSelected ? Color.accent : .clear, lineWidth: 2)
             }
-            .padding(2)
+            .padding(3)
         }
         .animation(.default, value: isSelected)
     }
@@ -95,11 +99,11 @@ struct MapPopupCategoryTeaser: View {
 
     VStack {
         Group {
-            MapPopupCategoryTeaser(item: .randomItem(id: "1"), isSelected: false, namespace: namespace)
-            MapPopupCategoryTeaser(item: .randomItem(id: "2"), isSelected: false, namespace: namespace)
-            MapPopupCategoryTeaser(item: .init(.testItemNoDesc), isSelected: false, namespace: namespace)
-            MapPopupCategoryTeaser(item: .init(.testItemNoLabel), isSelected: false, namespace: namespace)
-            MapPopupCategoryTeaser(item: .randomItem(id: "3"), isSelected: true, namespace: namespace)
+            MapSheetCategoryTeaser(item: .randomItem(id: "1"), isSelected: false, namespace: namespace)
+            MapSheetCategoryTeaser(item: .randomItem(id: "2"), isSelected: false, namespace: namespace)
+            MapSheetCategoryTeaser(item: .init(.testItemNoDesc), isSelected: false, namespace: namespace)
+            MapSheetCategoryTeaser(item: .init(.testItemNoLabel), isSelected: false, namespace: namespace)
+            MapSheetCategoryTeaser(item: .randomItem(id: "3"), isSelected: true, namespace: namespace)
         }
         // simulates a simplified MapPopup height
         .frame(height: 160)

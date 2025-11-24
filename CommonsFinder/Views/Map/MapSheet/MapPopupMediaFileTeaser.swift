@@ -15,7 +15,7 @@ struct MapPopupMediaFileTeaser: View {
     let isSelected: Bool
     let onTap: () -> Void
 
-    private let shape = RoundedRectangle(cornerRadius: 18)
+    private let shape = ContainerRelativeShape()
 
     var body: some View {
 

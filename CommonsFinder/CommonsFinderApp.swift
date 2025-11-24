@@ -56,8 +56,9 @@ struct CommonsFinderApp: App {
         let mediaFileCache = MediaFileReactiveCache(appDatabase: appDatabase)
         self.mediaFileCache = mediaFileCache
 
-        let mapModel = MapModel(appDatabase: appDatabase, navigation: navigation)
+        let mapModel = MapModel(appDatabase: appDatabase, navigation: navigation, mediaFileCache: mediaFileCache)
         self.mapModel = mapModel
+
 
         AppDependencyManager.shared.add(dependency: appDatabase)
         AppDependencyManager.shared.add(dependency: account)

@@ -9,7 +9,6 @@ import CommonsAPI
 import CoreLocation
 import Foundation
 
-typealias MediaGeoItem = GeoSearchFileItem
 typealias CategoryGeoItem = Category
 
 nonisolated protocol GeoReferencable: Hashable, Equatable {
@@ -19,19 +18,19 @@ nonisolated protocol GeoReferencable: Hashable, Equatable {
     var geoRefID: GeoRefID { get }
 }
 
-nonisolated extension MediaGeoItem {
-    /// non-prefixed filename (without FILE:)
-    var fileName: String? {
-        if let nonPrefixed = title.split(separator: "File:").first {
-            String(nonPrefixed)
-        } else {
-            nil
-        }
-    }
-    var coordinate: CLLocationCoordinate2D {
-        .init(latitude: lat, longitude: lon)
-    }
-}
+//nonisolated extension GeoSearchFileItem {
+//    /// non-prefixed filename (without FILE:)
+//    var fileName: String? {
+//        if let nonPrefixed = title.split(separator: "File:").first {
+//            String(nonPrefixed)
+//        } else {
+//            nil
+//        }
+//    }
+//    var coordinate: CLLocationCoordinate2D {
+//        .init(latitude: lat, longitude: lon)
+//    }
+//}
 
 nonisolated extension GeoReferencable {
     var coordinate: CLLocationCoordinate2D? {
@@ -46,7 +45,7 @@ nonisolated extension GeoReferencable {
 nonisolated
     enum GeoItem: GeoReferencable
 {
-    case media(MediaGeoItem)
+    case media(BasicGeoMediaFile)
     case category(CategoryGeoItem)
 
     var isMedia: Bool {
@@ -56,7 +55,7 @@ nonisolated
         if case .category(_) = self { true } else { false }
     }
 
-    var media: MediaGeoItem? {
+    var media: BasicGeoMediaFile? {
         if case .media(let item) = self { item } else { nil }
     }
     var category: CategoryGeoItem? {
@@ -66,7 +65,7 @@ nonisolated
     var latitude: Double? {
         switch self {
         case .media(let mediaGeoItem):
-            mediaGeoItem.latitude
+            mediaGeoItem.coordinate.latitude
         case .category(let categoryGeoItem):
             categoryGeoItem.latitude
         }
@@ -75,7 +74,7 @@ nonisolated
     var longitude: Double? {
         switch self {
         case .media(let mediaGeoItem):
-            mediaGeoItem.longitude
+            mediaGeoItem.coordinate.longitude
         case .category(let categoryGeoItem):
             categoryGeoItem.longitude
         }

@@ -14,6 +14,17 @@ struct MediaFileContextMenu: ViewModifier {
     let namespace: Namespace.ID
     @Environment(\.appDatabase) private var appDatabase
     @Environment(Navigation.self) private var navigation
+    @Environment(MapModel.self) private var mapModel
+
+    private func showOnMap() {
+        guard let mediaFile = mediaFileInfo?.mediaFile else { return }
+        do {
+            try mapModel.showInCircle(mediaFile)
+            navigation.selectedTab = .map
+        } catch {
+            logger.error("Failed to show category on map \(error)")
+        }
+    }
 
     func body(content: Content) -> some View {
         content
@@ -22,6 +33,9 @@ struct MediaFileContextMenu: ViewModifier {
                     VStack {
                         Button("Open Details") {
                             navigation.viewFile(mediaFile: mediaFileInfo, namespace: namespace)
+                        }
+                        if mediaFileInfo.mediaFile.coordinate != nil {
+                            Button("Show on Map", systemImage: "map", action: showOnMap)
                         }
                         Button(
                             mediaFileInfo.isBookmarked ? "Remove Bookmark" : "Add Bookmark",

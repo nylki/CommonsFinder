@@ -8,15 +8,46 @@
 import CommonsAPI
 import CoreLocation
 import Foundation
+import GEOSwift
+import GEOSwiftMapKit
 import H3kit
 import MapKit
 import os.log
+
+nonisolated struct BasicGeoMediaFile: Equatable, Hashable, Identifiable {
+    let coordinate: CLLocationCoordinate2D
+    /// pageID
+    let id: String
+    let title: String
+
+    /// non-prefixed filename (without FILE:)
+    var fileName: String? {
+        if let nonPrefixed = title.split(separator: "File:").first {
+            String(nonPrefixed)
+        } else {
+            nil
+        }
+    }
+
+    init(apiItem: GeoSearchFileItem) {
+        coordinate = .init(latitude: apiItem.lat, longitude: apiItem.lon)
+        title = apiItem.title
+        id = apiItem.id
+    }
+
+    init(id: String, coordinate: CLLocationCoordinate2D, title: String) {
+        self.id = id
+        self.coordinate = coordinate
+        self.title = title
+
+    }
+}
 
 nonisolated
     struct GeoCluster: Hashable, Equatable, Identifiable
 {
     let h3Index: H3Index
-    var mediaItems: [GeoSearchFileItem]
+    var mediaItems: [BasicGeoMediaFile]
     var categoryItems: [Category]
     let allCoordinates: [CLLocationCoordinate2D]
     let h3Center: CLLocationCoordinate2D
@@ -28,7 +59,7 @@ nonisolated
 
     var id: H3Index { h3Index }
 
-    init(h3Index: H3Index, mediaItems: [GeoSearchFileItem], categoryItems: [Category]) throws {
+    init(h3Index: H3Index, mediaItems: [BasicGeoMediaFile], categoryItems: [Category]) throws {
         self.h3Index = h3Index
         self.mediaItems = mediaItems
         self.categoryItems = categoryItems
@@ -44,18 +75,79 @@ nonisolated
         meanCenterMedia = GeoVectorMath.calculateMeanCenter(coordinates: mediaCoordinates)
         meanCenterCategories = GeoVectorMath.calculateMeanCenter(coordinates: categoryCoordinates)
 
-        let concavity: Double
+        let mediaPoints: MultiPoint = .init(points: mediaCoordinates.map(Point.init))
+        let categoryPoints: MultiPoint = .init(points: categoryCoordinates.map(Point.init))
 
-        if allCoordinates.count > 50, let res = H3.getResolution(index: h3Index) {
-            let degDiameter = GeoVectorMath.degrees(fromMeters: res.approxCircleRadius, atLatitude: lat)
-            concavity = ((degDiameter.latitudeDegrees + degDiameter.longitudeDegrees) / 2)
-        } else {
-            concavity = 20
+        do {
+            let mediaHullGeometry = try mediaPoints.convexHull()
+
+            mediaHull =
+                switch mediaHullGeometry {
+                case .point(_):
+                    .init()
+                case .multiPoint(_):
+                    .init()
+                case .lineString(_):
+                    .init()
+                case .multiLineString(_):
+                    .init()
+                case .polygon(let polygon):
+                    MKPolygon.init(polygon: polygon)
+                case .multiPolygon(_):
+                    .init()
+                case .geometryCollection(_):
+                    .init()
+                }
+        } catch {
+            logger.warning("Failed to created cluster \(error)")
+            mediaHull = .init()
         }
 
-        let categoryHullCoordinates = ConcaveHull.calculateHull(coordinates: categoryCoordinates, concavity: concavity)
-        let mediaHullCoordinates = ConcaveHull.calculateHull(coordinates: mediaCoordinates, concavity: concavity)
-        categoryHull = MKPolygon(coordinates: categoryHullCoordinates, count: categoryHullCoordinates.count)
-        mediaHull = MKPolygon(coordinates: mediaHullCoordinates, count: mediaHullCoordinates.count)
+        do {
+            let categoryHullGeometry = try categoryPoints.convexHull()
+            categoryHull =
+                switch categoryHullGeometry {
+                case .point(_):
+                    .init()
+                case .multiPoint(_):
+                    .init()
+                case .lineString(_):
+                    .init()
+                case .multiLineString(_):
+                    .init()
+                case .polygon(let polygon):
+                    MKPolygon.init(polygon: polygon)
+                case .multiPolygon(_):
+                    .init()
+                case .geometryCollection(_):
+                    .init()
+                }
+        } catch {
+            logger.warning("Failed to created cluster \(error)")
+            categoryHull = .init()
+        }
+    }
+}
+
+extension GeoCluster {
+    func cameraRegion(paddingFactor: Double = 0.5, withSheetOffset: Bool = true) -> MKCoordinateRegion? {
+        guard let res = h3Index.resolution else { return nil }
+        let delta = GeoVectorMath.degrees(fromMeters: res.approxCircleRadius * 2, atLatitude: h3Center.latitude)
+        let dLat = delta.latitudeDegrees + delta.latitudeDegrees * paddingFactor
+        let dLon = delta.longitudeDegrees + delta.longitudeDegrees * paddingFactor
+
+        var center = h3Center
+
+        if withSheetOffset {
+            // We offset the center a bit to the north, so that the map sheet doesn't overlap parts of the cluster (approximated)
+            center.latitude = center.latitude - (delta.latitudeDegrees * 0.2)
+        }
+        return MKCoordinateRegion(
+            center: center,
+            span: MKCoordinateSpan(
+                latitudeDelta: dLat,
+                longitudeDelta: dLon
+            )
+        )
     }
 }

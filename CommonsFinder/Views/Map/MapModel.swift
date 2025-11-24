@@ -15,6 +15,10 @@ import OrderedCollections
 import SwiftUI
 import os.log
 
+enum MapError: Error {
+    case itemWithoutCoordinateCannotBeShownOnMap
+}
+
 @Observable final class MapModel {
     var position: MapCameraPosition = .automatic
     private(set) var region: MKCoordinateRegion?
@@ -23,6 +27,7 @@ import os.log
 
     private let navigation: Navigation
     private let appDatabase: AppDatabase
+    private let mediaFileCache: MediaFileReactiveCache
 
     private(set) var mapLayerMode: MapLayerMode = .categoryItems
 
@@ -42,8 +47,13 @@ import os.log
     private(set) var clusters: [H3Index: GeoCluster] = .init()
     private var isMapSheetPresented: Bool = false
 
-    init(appDatabase: AppDatabase, navigation: Navigation) {
+    private(set) var selectedMapItem: SelectedMapItemModel?
+
+    private(set) var mapProxy: MapProxy?
+
+    init(appDatabase: AppDatabase, navigation: Navigation, mediaFileCache: MediaFileReactiveCache) {
         self.appDatabase = appDatabase
+        self.mediaFileCache = mediaFileCache
         self.navigation = navigation
     }
 
@@ -59,9 +69,6 @@ import os.log
                 }
             })
     }
-
-    private(set) var selectedCluster: ClusterModel?
-
 
     @ObservationIgnored
     private var locationTrack: Task<Void, Never>?
@@ -83,11 +90,15 @@ import os.log
         }
     }
 
+    func setProxy(_ mapProxy: MapProxy) {
+        self.mapProxy = mapProxy
+    }
+
     func selectMapMode(_ mode: MapLayerMode) {
         isMapSheetPresented = false
-        selectedCluster?.mapSheetFocusedClusterItem = .init()
+        selectedMapItem?.mapSheetFocusedItem = .init()
         mapLayerMode = mode
-        refreshClusters()
+        fetchDataForCurrentRegion()
     }
 
     func setMapContext(context: MapCameraUpdateContext) {
@@ -96,24 +107,139 @@ import os.log
         self.camera = context.camera
     }
 
+    func showInCircle(_ coordinate: CLLocationCoordinate2D) throws {
+        selectMapLocation(coordinate)
+    }
+
+    func showInCircle(_ category: Category) throws {
+        guard let coordinate = category.coordinate else {
+            throw MapError.itemWithoutCoordinateCannotBeShownOnMap
+        }
+        geoClusterTree.add([.category(category)])
+        mapLayerMode = .categoryItems
+        selectMapLocation(coordinate, focusedID: category.geoRefID)
+    }
+
+    func showInCircle(_ mediaFile: MediaFile) throws {
+        guard let coordinate = mediaFile.coordinate else {
+            throw MapError.itemWithoutCoordinateCannotBeShownOnMap
+        }
+        geoClusterTree.add([.media(.init(id: mediaFile.id, coordinate: coordinate, title: mediaFile.bestShortTitle))])
+        mapLayerMode = .mediaItem
+        selectMapLocation(coordinate, focusedID: mediaFile.id)
+    }
 
     func selectCluster(_ index: H3Index) {
         guard let cluster = clusters[index] else {
             assertionFailure()
             return
         }
-
-        selectedCluster = .init(cluster: cluster)
+        switch mapLayerMode {
+        case .categoryItems:
+            selectedMapItem = CategoriesInClusterModel(appDatabase: appDatabase, cluster: cluster)
+        case .mediaItem:
+            selectedMapItem = MediaInClusterModel(appDatabase: appDatabase, cluster: cluster)
+        }
+        fetchDataForSelectedItem()
         isMapSheetPresented = true
-        // TODO: fetch items in circle radius if items > max (500?)
+
+        // Zoom/Move camera to location
+        // TODO: only move to location if it is outside of current camera or at the edge of the screen
+
+        if !position.followsUserLocation,
+            let cameraRegion = cluster.cameraRegion(),
+            var newCamera = mapProxy?.camera(framing: cameraRegion)
+        {
+            newCamera.distance = self.camera?.distance ?? newCamera.distance
+            withAnimation {
+                self.position = .camera(newCamera)
+            }
+        }
+    }
+
+
+    func selectMapLocation(_ coordinate: CLLocationCoordinate2D, focusedID: String? = nil) {
+        let radius: CLLocationDistance = 250
+        let items = geoClusterTree.items(around: coordinate, radius: radius)
+
+        switch mapLayerMode {
+        case .categoryItems:
+            let categoryItems = items.compactMap { $0.category }
+            selectedMapItem = CategoriesAroundLocationModel(appDatabase: appDatabase, coordinate: coordinate, radius: radius, categoryItems: categoryItems)
+        case .mediaItem:
+            let mediaItems = items.compactMap { $0.media }
+            selectedMapItem = MediaAroundLocationModel(appDatabase: appDatabase, coordinate: coordinate, radius: radius, mediaItems: mediaItems)
+        }
+
+        fetchDataForSelectedItem()
+        isMapSheetPresented = true
+
+        let paddingFactor = 0.382
+        let delta = GeoVectorMath.degrees(fromMeters: radius * 2, atLatitude: coordinate.latitude)
+        let dLat = delta.latitudeDegrees + delta.latitudeDegrees * paddingFactor
+        let dLon = delta.longitudeDegrees + delta.longitudeDegrees * paddingFactor
+        var offsetCoordinate = coordinate
+        offsetCoordinate.latitude -= delta.latitudeDegrees * 0.2
+        let newRegion = MKCoordinateRegion(center: offsetCoordinate, span: .init(latitudeDelta: dLat, longitudeDelta: dLon))
+        withAnimation {
+            self.position = .region(newRegion)
+        }
     }
 
     func resetClusterSelection() {
         isMapSheetPresented = false
-        selectedCluster = nil
+        selectedMapItem = nil
     }
 
-    func refreshClusters() {
+    func fetchDataForSelectedItem() {
+        Task {
+            if let locationItem = selectedMapItem as? MediaAroundLocationModel {
+                let newItems: [BasicGeoMediaFile] = await fetchMediaFiles(around: locationItem.coordinate, radius: locationItem.radius)
+                    .map(BasicGeoMediaFile.init)
+                geoClusterTree.add(newItems.map { .media($0) })
+                updateItems()
+            } else if let locationItem = selectedMapItem as? CategoriesAroundLocationModel {
+                let newItems: [Category] = await fetchWikiItems(around: locationItem.coordinate, radius: locationItem.radius)
+                geoClusterTree.add(newItems.map { .category($0) })
+                updateItems()
+            } else if let clusterItem = selectedMapItem as? MediaInClusterModel {
+                let newItems: [BasicGeoMediaFile] = await fetchMediaFiles(around: clusterItem.cluster.h3Center, radius: currentResolution.approxCircleRadius).map { .init(apiItem: $0) }
+                geoClusterTree.add(newItems.map { .media($0) })
+                updateItems()
+            } else if let clusterItem = selectedMapItem as? CategoriesAroundLocationModel {
+                let newItems: [Category] = await fetchWikiItems(around: clusterItem.coordinate, radius: currentResolution.approxCircleRadius)
+                geoClusterTree.add(newItems.map { .category($0) })
+                updateItems()
+            }
+        }
+    }
+
+    func updateItems() {
+        updateClusterLayer()
+        updateSelectedItem()
+    }
+
+    private func updateSelectedItem() {
+        guard selectedMapItem != nil else { return }
+
+        if let model = selectedMapItem as? MediaAroundLocationModel {
+            let items = geoClusterTree.items(around: model.coordinate, radius: model.radius)
+            model.mediaPaginationModel?.replaceIDs(items.compactMap(\.media?.id))
+        } else if let model = selectedMapItem as? CategoriesAroundLocationModel {
+            let items = geoClusterTree.items(around: model.coordinate, radius: model.radius)
+            model.categories = items.compactMap(\.category)
+        } else if let model = selectedMapItem as? MediaInClusterModel,
+            let updatedCluster = clusters[model.cluster.h3Index]
+        {
+            model.updateCluster(updatedCluster)
+        } else if let model = selectedMapItem as? CategoriesInClusterModel,
+            let updatedCluster = clusters[model.cluster.h3Index]
+        {
+            model.updateCluster(updatedCluster)
+        }
+    }
+
+    private func updateClusterLayer() {
         guard let region else { return }
 
         let clock = ContinuousClock()
@@ -124,12 +250,6 @@ import os.log
                 resolution: currentResolution
             )
 
-            /// update data of selected cluster if we refresh the cluster info (eg. more items) otherwise if the bbox cluster don't have
-            /// it (eg. zoomed in), we retain it for display and to let the user keep interacting with it.
-            if let selectedIdx = selectedCluster?.cluster.h3Index, let updatedSelectedCluster = clusters[selectedIdx] {
-                selectedCluster?.cluster = updatedSelectedCluster
-            }
-
         }
 
         //        logger.debug("refreshClusters took \(elapsed)")
@@ -139,32 +259,38 @@ import os.log
         }
     }
 
-    private func fetchDataForCurrentRegion() {
+    private func fetchDataForCurrentRegion(shouldDebounce: Bool = true) {
         guard let region else { return }
 
         fetchTask?.cancel()
         fetchTask = Task {
-            try await Task.sleep(for: .milliseconds(500))
+            if shouldDebounce {
+                try await Task.sleep(for: .milliseconds(500))
+            }
+
             currentRefreshingRegion = region
             defer { currentRefreshingRegion = nil }
 
             logger.info("Map: refreshing started...")
 
-            async let wikiItemsTask = fetchWikiItems(region: region, maxDiagonalMapLength: wikiItemVisibilityThreshold)
-            async let mediaTask = fetchMediaFiles(region: region, maxDiagonalMapLength: imageVisibilityThreshold)
-            let (wikidataItems, mediaItems) = await (wikiItemsTask, mediaTask)
-
             var items: [GeoItem] = []
 
-            for wikidataItem in wikidataItems {
-                items.append(.category(wikidataItem))
-            }
-            for mediaItem in mediaItems {
-                items.append(.media(mediaItem))
+            switch mapLayerMode {
+            case .categoryItems:
+                let wikidataItems = await fetchWikiItems(region: region, maxDiagonalMapLength: wikiItemVisibilityThreshold)
+                for wikidataItem in wikidataItems {
+                    items.append(.category(wikidataItem))
+                }
+            case .mediaItem:
+                let mediaItems = await fetchMediaFiles(region: region, maxDiagonalMapLength: imageVisibilityThreshold)
+                for apiItem in mediaItems {
+                    let mediaItem = BasicGeoMediaFile(apiItem: apiItem)
+                    items.append(.media(mediaItem))
+                }
             }
 
             geoClusterTree.add(items)
-            refreshClusters()
+            updateItems()
 
             lastRefreshedRegions.append(region)
             logger.info("Map: refreshing finished.")
@@ -255,10 +381,35 @@ private func fetchWikiItems(region: MKCoordinateRegion, maxDiagonalMapLength: Do
     }
 }
 
+private func fetchWikiItems(around coordinate: CLLocationCoordinate2D, radius: CLLocationDistance) async -> [Category] {
+
+    do {
+        let getAllItems = (radius * 2) < 7500
+
+        let items: [Category] = try await API.shared
+            .getWikidataItemsAroundCoordinate(
+                coordinate,
+                kilometerRadius: radius / 1000,
+                limit: getAllItems ? 10000 : 200,
+                minArea: getAllItems ? nil : 1000,
+                languageCode: Locale.current.wikiLanguageCodeIdentifier
+            )
+            .map { .init(apiItem: $0) }
+
+        logger.info("wikidata item count: \(items.count)")
+
+        return items
+    } catch {
+        logger.error("Failed to get files around coordinate \(error), maybe canceled.")
+        return []
+    }
+}
+
 private func fetchMediaFiles(region: MKCoordinateRegion, maxDiagonalMapLength: Double) async -> [GeoSearchFileItem] {
     guard region.diagonalMeters < maxDiagonalMapLength else { return [] }
     do {
         let boundingBox = region.boundingBox
+        assert(boundingBox.bottomRight != boundingBox.topLeft, "bounding box corners must be different")
 
         let items: [GeoSearchFileItem] = try await API.shared
             .geoSearchFiles(
@@ -266,13 +417,20 @@ private func fetchMediaFiles(region: MKCoordinateRegion, maxDiagonalMapLength: D
                 bottomRight: boundingBox.bottomRight
             )
 
+        return items
+    } catch {
+        logger.error("Failed to get files around coordinate \(error), maybe canceled.")
+        return []
+    }
+}
 
-        guard !items.isEmpty else {
-            return []
-        }
+private func fetchMediaFiles(around coordinate: CLLocationCoordinate2D, radius: CLLocationDistance) async -> [GeoSearchFileItem] {
+    assert(radius != 0, "Radius should not be 0")
+    do {
+        let items: [GeoSearchFileItem] = try await API.shared
+            .geoSearchFiles(around: coordinate, radius: radius)
 
         return items
-
     } catch {
         logger.error("Failed to get files around coordinate \(error), maybe canceled.")
         return []
@@ -313,15 +471,11 @@ private func isRegionDiffSignificant(oldRegion: MKCoordinateRegion?, newRegion: 
 
 }
 
-nonisolated
-    extension MediaGeoItem: GeoReferencable
-{
-    var geoRefID: GeoRefID {
-        self.id
-    }
+nonisolated extension BasicGeoMediaFile: GeoReferencable {
+    var geoRefID: GeoRefID { self.id }
 
-    var latitude: Double? { lat }
-    var longitude: Double? { lon }
+    var latitude: Double? { coordinate.latitude }
+    var longitude: Double? { coordinate.longitude }
 }
 
 nonisolated extension Category: GeoReferencable {

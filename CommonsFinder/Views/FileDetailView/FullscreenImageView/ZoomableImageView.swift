@@ -21,6 +21,18 @@ enum NetworkStatus: String, Equatable, Hashable {
     case ok
 }
 
+private struct DraggingTransactionKey: TransactionKey {
+    static let defaultValue = false
+}
+
+
+extension Transaction {
+    fileprivate var isDragging: Bool {
+        get { self[DraggingTransactionKey.self] }
+        set { self[DraggingTransactionKey.self] = newValue }
+    }
+}
+
 enum LoadedImageType: Equatable, Hashable {
     case none
     case thumbnail(PlatformImage)

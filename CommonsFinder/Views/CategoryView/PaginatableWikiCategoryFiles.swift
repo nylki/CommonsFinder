@@ -27,19 +27,19 @@ import os.log
         try await super.init(appDatabase: appDatabase)
     }
 
-    private func fetchRawContinueCategoryItems() async throws -> ([String], String?)? {
+    private func fetchRawContinueCategoryItems() async throws -> ([Int64], String?)? {
         if let categoryName {
             let result = try await CommonsAPI.API.shared.listCategoryImagesRaw(
                 of: categoryName,
                 continueString: categoryContinueString
             )
-            return (result.files.map(\.title), result.continueString)
+            return (result.files.compactMap(\.pageid), result.continueString)
         } else {
             return nil
         }
     }
 
-    private func fetchRawContinueDepictItems() async throws -> ([String], Int?)? {
+    private func fetchRawContinueDepictItems() async throws -> ([Int64], Int?)? {
         if let depictItemID {
             let result = try await CommonsAPI.API.shared.searchFiles(
                 for: "haswbstatement:P180=\(depictItemID)",
@@ -47,7 +47,7 @@ import os.log
                 limit: .max,
                 offset: depictSearchOffset
             )
-            return (result.items.map(\.title), result.offset)
+            return (result.items.compactMap(\.pageid), result.offset)
         } else {
             return nil
         }
@@ -62,13 +62,13 @@ import os.log
         logger.info("\(categoryResult?.0.count ?? 0) category files")
         logger.info("\(depictResult?.0.count ?? 0) wikidata depict files")
 
-        let categoryTitles = categoryResult?.0 ?? []
-        let depictTitles = depictResult?.0 ?? []
+        let categoryIDs = categoryResult?.0 ?? []
+        let depictIDs = depictResult?.0 ?? []
         categoryContinueString = categoryResult?.1
         depictSearchOffset = depictResult?.1
 
-        let zippedTitles = zippedFlatMap(categoryTitles, depictTitles).uniqued(on: \.self)
+        let zippedIDs = zippedFlatMap(categoryIDs, depictIDs).uniqued(on: \.self).map(String.init)
         let canContinue = categoryContinueString != nil || depictSearchOffset != nil
-        return (zippedTitles, canContinue)
+        return (zippedIDs, canContinue)
     }
 }

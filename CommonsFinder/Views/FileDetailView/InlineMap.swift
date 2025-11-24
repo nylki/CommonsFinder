@@ -9,11 +9,46 @@ import GeoToolbox
 import SwiftUI
 import os.log
 
+enum InlineMapItemType {
+    case mediaFile(MediaFile)
+    case category(Category)
+}
+
 struct InlineMap: View {
-    let coordinate: CLLocationCoordinate2D
-    var knownName: String? = nil
-    var mapPinStyle: MapPinStyle = .label
-    var details: DetailSection = .label
+    private let coordinate: CLLocationCoordinate2D
+    private let shownItem: InlineMapItemType?
+    private let knownName: String?
+    private let mapPinStyle: MapPinStyle
+    private let details: DetailSection
+
+    @Environment(Navigation.self) private var navigation
+    @Environment(MapModel.self) private var mapModel
+
+    init(
+        coordinate: CLLocationCoordinate2D,
+        item: InlineMapItemType? = nil,
+        knownName: String? = nil,
+        mapPinStyle: MapPinStyle = .label,
+        details: DetailSection = .label
+    ) {
+        self.coordinate = coordinate
+        self.shownItem = item
+        self.knownName = knownName
+        self.mapPinStyle = mapPinStyle
+        self.details = details
+
+        switch item {
+        case .mediaFile(let mediaFile):
+            if coordinate != mediaFile.coordinate {
+                logger.warning("coordinate and coordinate of showItem are not equal. This may indicate some underlying issue.")
+            }
+        case .category(let category):
+            if coordinate != category.coordinate {
+                logger.warning("coordinate and coordinate of showItem are not equal. This may indicate some underlying issue.")
+            }
+        case .none: break
+        }
+    }
 
     enum MapPinStyle {
         case label
@@ -51,6 +86,24 @@ struct InlineMap: View {
 
     private var omLink: URL? {
         URL(string: "om://map?v=1&ll=\(coordinate.latitude),\(coordinate.longitude)&n=\(label)")
+    }
+
+    private func showOnMap() {
+
+        do {
+            switch shownItem {
+            case .mediaFile(let mediaFile):
+                try mapModel.showInCircle(mediaFile)
+            case .category(let category):
+                try mapModel.showInCircle(category)
+            case .none:
+                try mapModel.showInCircle(coordinate)
+            }
+
+            navigation.selectedTab = .map
+        } catch {
+            logger.error("Failed to show category on map \(error)")
+        }
     }
 
     private func openInMapApp() {
@@ -137,6 +190,7 @@ struct InlineMap: View {
 
     @ViewBuilder
     private var mapMenuItems: some View {
+        Button("Show on Map", systemImage: "map", action: showOnMap)
         Button("Open in Map App", systemImage: "map", action: openInMapApp)
         Button("Look Around", systemImage: "binoculars", action: openLookAround)
             .task {
@@ -173,5 +227,5 @@ extension CLLocationCoordinate2D {
 
 
 #Preview {
-    InlineMap(coordinate: .init(latitude: .init(48.8588), longitude: .init(2.2945)))
+    InlineMap(coordinate: .init(latitude: .init(48.8588), longitude: .init(2.2945)), item: nil)
 }
