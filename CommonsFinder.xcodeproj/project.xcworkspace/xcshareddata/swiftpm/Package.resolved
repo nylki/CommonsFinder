@@ -1,5 +1,5 @@
 {
-  "originHash" : "76878d4d704b26dd1c3d1c192f422e630e0c953a2eea10dc99ee9706cab0a318",
+  "originHash" : "f07f119f0e2b0a70b1a12ec15a893de6d449c9d2878bef179176feb6127ce601",
   "pins" : [
     {
       "identity" : "alamofire",
@@ -98,6 +98,15 @@
       "state" : {
         "revision" : "0ead44350d2737db384908569c012fe67c421e4d",
         "version" : "12.8.0"
+      }
+    },
+    {
+      "identity" : "observablelrucache",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/nylki/ObservableLRUCache",
+      "state" : {
+        "branch" : "main",
+        "revision" : "a18141551382c7b60e7d5bb5f40cabfbad3a89ea"
       }
     },
     {

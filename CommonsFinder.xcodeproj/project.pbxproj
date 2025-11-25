@@ -28,6 +28,7 @@
 		E290323F2D9EA84700A0CD8F /* GRDBQuery in Frameworks */ = {isa = PBXBuildFile; productRef = E290323E2D9EA84700A0CD8F /* GRDBQuery */; };
 		E29112B62DF34733007A3998 /* WhatToTest.de-DE.txt in Resources */ = {isa = PBXBuildFile; fileRef = E29112B52DF3463E007A3998 /* WhatToTest.de-DE.txt */; };
 		E29112B72DF34733007A3998 /* WhatToTest.en-US.txt in Resources */ = {isa = PBXBuildFile; fileRef = E29112B42DF344F0007A3998 /* WhatToTest.en-US.txt */; };
+		E2C92DD32ED60D4000EAA248 /* ObservableLRUCache in Frameworks */ = {isa = PBXBuildFile; productRef = E2C92DD22ED60D4000EAA248 /* ObservableLRUCache */; };
 		E2D7EF412EA692080058BE29 /* Intersect.swift in Sources */ = {isa = PBXBuildFile; fileRef = E2D7EF3D2EA692080058BE29 /* Intersect.swift */; };
 		E2D7EF422EA692080058BE29 /* ConcaveHull.swift in Sources */ = {isa = PBXBuildFile; fileRef = E2D7EF3B2EA692080058BE29 /* ConcaveHull.swift */; };
 		E2D7EF442EA692080058BE29 /* HullHelper.swift in Sources */ = {isa = PBXBuildFile; fileRef = E2D7EF3C2EA692080058BE29 /* HullHelper.swift */; };
@@ -379,6 +380,7 @@
 				E206777A2EBE52FF00981A79 /* H3kit in Frameworks */,
 				E2F19BC62CA43C6400E19DCD /* SwiftSecurity in Frameworks */,
 				E257E6BF2D2038F90049FFE8 /* Lock in Frameworks */,
+				E2C92DD32ED60D4000EAA248 /* ObservableLRUCache in Frameworks */,
 				E28B17662CB03CBB00D6FEA0 /* GRDBQuery in Frameworks */,
 				E24D3BFD2CF3ACDC003484CC /* FrameUp in Frameworks */,
 				E2549B232CBD6886005DFE14 /* AsyncAlgorithms in Frameworks */,
@@ -527,6 +529,7 @@
 				E2390F972EBCC7250013F0FC /* ObservableLRUCache */,
 				E20677792EBE52FF00981A79 /* H3kit */,
 				E2D8C6692ECF5B8200CEBB37 /* GEOSwiftMapKit */,
+				E2C92DD22ED60D4000EAA248 /* ObservableLRUCache */,
 			);
 			productName = CommonsFinder;
 			productReference = E2839FE72CA2DD900053C312 /* CommonsFinder.app */;
@@ -599,9 +602,9 @@
 				E290323D2D9EA84700A0CD8F /* XCRemoteSwiftPackageReference "GRDBQuery" */,
 				E26D503A2DA5A75F00621D1C /* XCLocalSwiftPackageReference "CommonsAPI" */,
 				E213C6B72EA29F570085C60E /* XCRemoteSwiftPackageReference "SwiftSoup" */,
-				E2390F942EBCC64C0013F0FC /* XCLocalSwiftPackageReference "../../gits/ObservableLRUCache" */,
 				E20677782EBE52FF00981A79 /* XCRemoteSwiftPackageReference "h3kit-ios" */,
 				E2D8C6682ECF5B8200CEBB37 /* XCRemoteSwiftPackageReference "GEOSwiftMapKit" */,
+				E2C92DD12ED60D4000EAA248 /* XCRemoteSwiftPackageReference "ObservableLRUCache" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = E2839FE82CA2DD900053C312 /* Products */;
@@ -1100,10 +1103,6 @@
 /* End XCConfigurationList section */
 
 /* Begin XCLocalSwiftPackageReference section */
-		E2390F942EBCC64C0013F0FC /* XCLocalSwiftPackageReference "../../gits/ObservableLRUCache" */ = {
-			isa = XCLocalSwiftPackageReference;
-			relativePath = ../../gits/ObservableLRUCache;
-		};
 		E26D503A2DA5A75F00621D1C /* XCLocalSwiftPackageReference "CommonsAPI" */ = {
 			isa = XCLocalSwiftPackageReference;
 			relativePath = CommonsAPI;
@@ -1189,6 +1188,14 @@
 			requirement = {
 				kind = exactVersion;
 				version = 0.11.0;
+			};
+		};
+		E2C92DD12ED60D4000EAA248 /* XCRemoteSwiftPackageReference "ObservableLRUCache" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/nylki/ObservableLRUCache";
+			requirement = {
+				branch = main;
+				kind = branch;
 			};
 		};
 		E2D8C6682ECF5B8200CEBB37 /* XCRemoteSwiftPackageReference "GEOSwiftMapKit" */ = {
@@ -1309,6 +1316,11 @@
 			isa = XCSwiftPackageProductDependency;
 			package = E290323D2D9EA84700A0CD8F /* XCRemoteSwiftPackageReference "GRDBQuery" */;
 			productName = GRDBQuery;
+		};
+		E2C92DD22ED60D4000EAA248 /* ObservableLRUCache */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = E2C92DD12ED60D4000EAA248 /* XCRemoteSwiftPackageReference "ObservableLRUCache" */;
+			productName = ObservableLRUCache;
 		};
 		E2D8C6692ECF5B8200CEBB37 /* GEOSwiftMapKit */ = {
 			isa = XCSwiftPackageProductDependency;
