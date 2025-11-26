@@ -151,6 +151,8 @@ enum MapError: Error {
             var newCamera = mapProxy?.camera(framing: cameraRegion)
         {
             newCamera.distance = self.camera?.distance ?? newCamera.distance
+            newCamera.heading = self.camera?.heading ?? newCamera.heading
+            newCamera.pitch = self.camera?.pitch ?? newCamera.pitch
             withAnimation {
                 self.position = .camera(newCamera)
             }
@@ -245,11 +247,10 @@ enum MapError: Error {
         let clock = ContinuousClock()
         let elapsed = clock.measure {
             clusters = geoClusterTree.clusters(
-                topLeft: region.boundingBox.topLeft,
-                bottomRight: region.boundingBox.bottomRight,
+                topLeft: region.paddedBoundingBox.topLeft,
+                bottomRight: region.paddedBoundingBox.bottomRight,
                 resolution: currentResolution
             )
-
         }
 
         //        logger.debug("refreshClusters took \(elapsed)")
@@ -349,22 +350,15 @@ enum MapError: Error {
 private func fetchWikiItems(region: MKCoordinateRegion, maxDiagonalMapLength: Double) async -> [Category] {
     guard region.diagonalMeters < maxDiagonalMapLength else { return [] }
 
-    let halfLatDelata = region.span.latitudeDelta / 2
-    let halfLonDelta = region.span.longitudeDelta / 2
-
-    let cornerNorthEastLat = region.center.latitude + halfLatDelata
-    let cornerNorthEastLon = region.center.longitude + halfLonDelta
-
-    let cornerSouthWestLat = region.center.latitude - halfLatDelata
-    let cornerSouthWestLon = region.center.longitude - halfLonDelta
+    let bbox = region.paddedBoundingBoxNESW
 
     do {
         let getAllItems = region.diagonalMeters < 7500
 
         let items: [Category] = try await API.shared
             .getWikidataItemsInBoundingBox(
-                cornerSouthWest: .init(latitude: cornerSouthWestLat, longitude: cornerSouthWestLon),
-                cornerNorthEast: .init(latitude: cornerNorthEastLat, longitude: cornerNorthEastLon),
+                cornerSouthWest: bbox.southWest,
+                cornerNorthEast: bbox.northEast,
                 isAreaOptional: getAllItems,
                 isCategoryOptional: getAllItems,
                 languageCode: Locale.current.wikiLanguageCodeIdentifier,
@@ -408,7 +402,7 @@ private func fetchWikiItems(around coordinate: CLLocationCoordinate2D, radius: C
 private func fetchMediaFiles(region: MKCoordinateRegion, maxDiagonalMapLength: Double) async -> [GeoSearchFileItem] {
     guard region.diagonalMeters < maxDiagonalMapLength else { return [] }
     do {
-        let boundingBox = region.boundingBox
+        let boundingBox = region.paddedBoundingBox
         assert(boundingBox.bottomRight != boundingBox.topLeft, "bounding box corners must be different")
 
         let items: [GeoSearchFileItem] = try await API.shared

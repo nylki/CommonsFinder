@@ -5,22 +5,13 @@
 //  Created by Tom Brewe on 18.11.25.
 //
 
+import CoreLocation
 import SwiftUI
 
 struct CategoryCircleSheet: View {
-    @Environment(\.appDatabase) private var appDatabase
-    @Environment(\.locale) private var locale
-    @Environment(Navigation.self) private var navigation
-    @Environment(\.verticalSizeClass) private var verticalSizeClass
-    @Namespace private var namespace: Namespace.ID
-
     var model: CategoriesAroundLocationModel
     let mapAnimationNamespace: Namespace.ID
     let onClose: () -> Void
-
-    private var currentItemTitle: Text? {
-        return nil
-    }
 
     var body: some View {
         @Bindable var model = model
@@ -40,4 +31,23 @@ struct CategoryCircleSheet: View {
             await model.observeAndResolveCategories()
         }
     }
+}
+
+
+#Preview(traits: .previewEnvironment) {
+    @Previewable @Environment(\.appDatabase) var appDatabase
+    @Previewable @Namespace var namespace
+    @Previewable @State var model: CategoriesAroundLocationModel?
+
+
+    Color.clear
+        .sheet(isPresented: .constant(true)) {
+            if let model {
+                CategoryCircleSheet(model: model, mapAnimationNamespace: namespace, onClose: {})
+            }
+
+        }
+        .task {
+            model = .init(appDatabase: appDatabase, coordinate: .init(latitude: 0, longitude: 0), radius: 250, categoryItems: [.earth, .randomItem(id: "12345")])
+        }
 }

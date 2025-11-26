@@ -17,11 +17,6 @@ import SwiftUI
 import os.log
 
 struct MediaCircleSheet: View {
-    @Namespace private var namespace: Namespace.ID
-    @Environment(\.locale) private var locale
-    @Environment(Navigation.self) private var navigation
-    @Environment(MediaFileReactiveCache.self) private var mediaFileCache
-
     let model: MediaAroundLocationModel
     let mapAnimationNamespace: Namespace.ID
     let onClose: () -> Void

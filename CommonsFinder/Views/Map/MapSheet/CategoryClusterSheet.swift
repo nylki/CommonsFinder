@@ -9,20 +9,9 @@ import SwiftUI
 import os.log
 
 struct CategoryClusterSheet: View {
-
-    @Environment(\.appDatabase) private var appDatabase
-    @Environment(\.locale) private var locale
-    @Environment(Navigation.self) private var navigation
-    @Environment(\.verticalSizeClass) private var verticalSizeClass
-    @Namespace private var namespace: Namespace.ID
-
     var model: CategoriesInClusterModel
     let mapAnimationNamespace: Namespace.ID
     let onClose: () -> Void
-
-    private var currentItemTitle: Text? {
-        return nil
-    }
 
     var body: some View {
         @Bindable var model = model
@@ -42,4 +31,22 @@ struct CategoryClusterSheet: View {
             await model.observeAndResolveCategories()
         }
     }
+}
+
+#Preview(traits: .previewEnvironment) {
+    @Previewable @Environment(\.appDatabase) var appDatabase
+    @Previewable @Namespace var namespace
+    @Previewable @State var model: CategoriesInClusterModel?
+
+
+    Color.clear
+        .sheet(isPresented: .constant(true)) {
+            if let model {
+                CategoryClusterSheet(model: model, mapAnimationNamespace: namespace, onClose: {})
+            }
+
+        }
+        .task {
+            model = try? .init(appDatabase: appDatabase, cluster: .init(h3Index: 123445, mediaItems: [], categoryItems: [.earthExtraLongLabel, .earth, .testItemNoLabel]))
+        }
 }

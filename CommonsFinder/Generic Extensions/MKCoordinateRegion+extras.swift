@@ -26,15 +26,18 @@ extension MKCoordinateRegion {
         sqrt(pow(metersInLatitude, 2) + pow(metersInLongitude, 2))
     }
 
-    var boundingBox: (topLeft: CLLocationCoordinate2D, bottomRight: CLLocationCoordinate2D) {
-        let halfLatDelata = span.latitudeDelta / 2
+    var paddedBoundingBox: (topLeft: CLLocationCoordinate2D, bottomRight: CLLocationCoordinate2D) {
+        let halfLatDelta = span.latitudeDelta / 2
         let halfLonDelta = span.longitudeDelta / 2
 
-        let topLeftCoordinateLat = center.latitude + halfLatDelata
-        let topLeftCoordinateLon = center.longitude - halfLonDelta
+        let latPadding = span.latitudeDelta * 0.15
+        let lonPadding = span.longitudeDelta * 0.15
 
-        let bottomRightCoordinateLat = center.latitude - halfLatDelata
-        let bottomRightCoordinateLon = center.longitude + halfLonDelta
+        let topLeftCoordinateLat = center.latitude + (halfLatDelta + latPadding)
+        let topLeftCoordinateLon = center.longitude - (halfLonDelta + lonPadding)
+
+        let bottomRightCoordinateLat = center.latitude - (halfLatDelta + latPadding)
+        let bottomRightCoordinateLon = center.longitude + (halfLonDelta + lonPadding)
 
         let topLeftCoordinate = CLLocationCoordinate2D(
             latitude: topLeftCoordinateLat,
@@ -49,4 +52,33 @@ extension MKCoordinateRegion {
         return (topLeftCoordinate, bottomRightCoordinate)
 
     }
+
+    var paddedBoundingBoxNESW: (northEast: CLLocationCoordinate2D, southWest: CLLocationCoordinate2D) {
+        let halfLatDelta = span.latitudeDelta / 2
+        let halfLonDelta = span.longitudeDelta / 2
+
+        let latPadding = span.latitudeDelta * 0.15
+        let lonPadding = span.longitudeDelta * 0.15
+
+        let cornerNorthEastLat = center.latitude + (halfLatDelta + latPadding)
+        let cornerNorthEastLon = center.longitude + (halfLonDelta + lonPadding)
+
+        let cornerSouthWestLat = center.latitude - (halfLatDelta + latPadding)
+        let cornerSouthWestLon = center.longitude - (halfLonDelta + lonPadding)
+
+
+        let northEast = CLLocationCoordinate2D(
+            latitude: cornerNorthEastLat,
+            longitude: cornerNorthEastLon
+        )
+
+        let southWest = CLLocationCoordinate2D(
+            latitude: cornerSouthWestLat,
+            longitude: cornerSouthWestLon
+        )
+
+        return (northEast, southWest)
+
+    }
+
 }
