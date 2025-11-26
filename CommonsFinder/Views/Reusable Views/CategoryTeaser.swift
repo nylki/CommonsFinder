@@ -72,32 +72,44 @@ private struct CategoryTeaserBase: View {
     }
 
 
+    @ViewBuilder
     private var background: some View {
-        Color(.emptyWikiItemBackground)
-            .overlay {
-                if let imageRequest = categoryInfo.base.thumbnailImage {
-                    LazyImage(request: imageRequest, transaction: .init(animation: .linear)) { imageState in
-                        if let image = imageState.image {
-                            image.resizable()
-                                .aspectRatio(contentMode: .fill)
-                                .scaledToFill()
-                        } else {
-                            Color.clear
+        let imageRequest = categoryInfo.base.thumbnailImage
+        
+        ZStack {
+            if let imageRequest {
+                Color(.emptyWikiItemBackground)
+                    .overlay {
+                        LazyImage(request: imageRequest, transaction: .init(animation: .linear)) { imageState in
+                            if let image = imageState.image {
+                                image.resizable()
+                                    .aspectRatio(contentMode: .fill)
+                                    .scaledToFill()
+                            } else {
+                                Color.clear
+                            }
                         }
                     }
-                }
+            } else {
+                ProceduralBackground(categoryName: categoryInfo.base.commonsCategory ?? categoryInfo.base.wikidataId ?? "")
+                    .blur(radius: 5)
+                    .clipped()
             }
-            .overlay {
-                if categoryInfo.base.thumbnailImage != nil {
-                    LinearGradient(
-                        stops: [
-                            .init(color: .init(white: 0, opacity: 0), location: 0),
-                            .init(color: .init(white: 0, opacity: 0.1), location: 0.35),
-                            .init(color: .init(white: 0, opacity: 0.2), location: 0.5),
-                            .init(color: .init(white: 0, opacity: 0.8), location: 1),
-                        ], startPoint: .top, endPoint: .bottom)
-                }
-            }
+        }
+        .overlay {
+            LinearGradient(
+                stops: [
+                    .init(color: .init(white: 0, opacity: 0), location: 0),
+                    .init(color: .init(white: 0, opacity: 0.1), location: 0.35),
+                    .init(color: .init(white: 0, opacity: 0.2), location: 0.5),
+                    .init(color: .init(white: 0, opacity: 0.8), location: 1),
+                ], startPoint: .top, endPoint: .bottom)
+        }
+
+        
+        
+        
+
     }
 }
 
