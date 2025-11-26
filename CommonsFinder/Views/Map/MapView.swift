@@ -14,6 +14,8 @@ import Nuke
 import NukeUI
 import SwiftUI
 import os.log
+import GEOSwiftMapKit
+import GEOSwift
 
 struct MapView: View {
     @Environment(\.appDatabase) private var appDatabase
@@ -31,7 +33,7 @@ struct MapView: View {
     @State private var selection: H3Index?
 
     /// this is either a media item or a wiki item
-    private var scrollClusterItem: GeoItem? {
+    private var focusedMapSheetItem: GeoItem? {
         guard let id = mapModel.selectedMapItem?.mapSheetFocusedItem.viewID(type: String.self) else {
             return nil
         }
@@ -45,8 +47,56 @@ struct MapView: View {
         } else {
             assertionFailure()
         }
-
     }
+    
+    private func handleLongPressGesture(gesturePoint: CGPoint) {
+            guard let coordinate = mapModel.mapProxy?.convert(gesturePoint, from: .global) else {
+                return
+            }
+        
+            let point = Point(coordinate)
+            
+            if isZoomedIntoSelectedCluster {
+                let pressedCluster: GeoCluster? = mapModel.clusters.values.first { cluster in
+                    let clusterGeometry: Geometry? = switch mapModel.mapLayerMode {
+                     case .categoryItems: cluster.categoryGeometry
+                     case .mediaItem: cluster.mediaGeometry
+                    }
+                    
+                    return if let clusterGeometry {
+                        (try? clusterGeometry.contains(point)) ?? false
+                    } else {
+                        false
+                    }
+                }
+    
+                if let pressedCluster {
+                    mapModel.selectCluster(pressedCluster.h3Index)
+                } else {
+                    mapModel.selectMapLocation(coordinate)
+                }
+                
+            } else {
+                mapModel.selectMapLocation(coordinate)
+            }
+        
+    }
+    
+    var selectedCluster: GeoCluster? {
+        (mapModel.selectedMapItem as? ClusterRepresentation)?.cluster
+    }
+    var selectedCircle: CircleRepresentation? {
+        (mapModel.selectedMapItem as? CircleRepresentation)
+    }
+    var isZoomedIntoSelectedCluster: Bool {
+        if let selectedClusterRes = selectedCluster?.h3Index.resolution {
+            selectedClusterRes.rawValue < mapModel.currentResolution.rawValue
+        } else {
+            false
+        }
+    }
+
+
 
     var body: some View {
         @Bindable var mapModel = mapModel
@@ -58,16 +108,15 @@ struct MapView: View {
 
                 UserAnnotation()
 
-                if let circleSelection = (mapModel.selectedMapItem as? CircleRepresentation) {
-                    MapCircle(MKCircle(center: circleSelection.coordinate, radius: circleSelection.radius))
+                if let selectedCircle {
+                    MapCircle(MKCircle(center: selectedCircle.coordinate, radius: selectedCircle.radius))
                         .foregroundStyle(Color.accent.opacity(0.2))
                         .stroke(Color.accent, style: .init(lineWidth: 1, lineCap: .square, dash: [2, 6]))
-                    Marker(coordinate: circleSelection.coordinate) {
-
+                    Marker(coordinate: selectedCircle.coordinate) {
                     }
                 }
 
-                switch scrollClusterItem {
+                switch focusedMapSheetItem {
                 case .none:
                     EmptyMapContent()
                 case .media(let mediaGeoItem):
@@ -98,13 +147,7 @@ struct MapView: View {
             .task {
                 mapModel.setProxy(mapProxy)
             }
-            .gesture(
-                MapPressGesture(longPressAt: { point in
-                    if let longPressCoordinate = mapProxy.convert(point, from: .global) {
-                        mapModel.selectMapLocation(longPressCoordinate)
-                    }
-                })
-            )
+            .gesture(MapPressGesture(longPressAt: handleLongPressGesture))
             .onChange(of: selection) { oldValue, newValue in
                 if oldValue != newValue, let newValue {
                     mapModel.selectCluster(newValue)
@@ -209,10 +252,6 @@ struct MapView: View {
 
     @MapContentBuilder
     private var clusterLayer: some MapContent {
-
-        let selectedCluster = (mapModel.selectedMapItem as? ClusterRepresentation)?.cluster
-        let selectedCircle = (mapModel.selectedMapItem as? CircleRepresentation)
-
         let clusters: ArraySlice<GeoCluster> =
             if let selectedCluster {
                 ArraySlice([selectedCluster] + mapModel.clusters.values)
@@ -235,9 +274,14 @@ struct MapView: View {
                 )
             } else { nil }
 
-        let alwaysShowHulls = false
+        let experimentalAlwaysShowHulls = false
 
+        
+        
         ForEach(clusters) { cluster in
+            
+            // TODO: clean up this logic to be easier to read (maybe switch by selected item first, if its a cluster or circle and lay out the logic in sub-funcs for each case)
+            
             let hull =
                 switch mapModel.mapLayerMode {
                 case .mediaItem: cluster.mediaHull
@@ -245,16 +289,26 @@ struct MapView: View {
                 }
 
             let isSelected: Bool = selectedCluster?.h3Index == cluster.h3Index
-            // FIXME: bound the meanCenter leave some padding for neighbor clusters
-
+            
+//            let containsFocusedSheetItem = if let focusedItemID = focusedMapSheetItem {
+//                switch focusedItemID {
+//                case .media:
+//                    Set(cluster.mediaItems.map(\.geoRefID)).contains(focusedItemID.geoRefID)
+//                case .category:
+//                    Set(cluster.categoryItems.map(\.geoRefID)).contains(focusedItemID.geoRefID)
+//                }
+//            } else {
+//                false
+//            }
+            
             let isContainedInSelectedCluster: Bool =
-                if let selectedClusterRes = selectedCluster?.h3Index.resolution,
-                    let parent = try? H3.cellToParent(cell: cluster.h3Index, parentRes: selectedClusterRes)
-                {
-                    parent == selectedCluster?.h3Index
-                } else {
-                    false
-                }
+            if let selectedClusterRes = selectedCluster?.h3Index.resolution,
+               let parent = try? H3.cellToParent(cell: cluster.h3Index, parentRes: selectedClusterRes) {
+                     parent == selectedCluster?.h3Index
+                 } else {
+                     false
+                 }
+            
 
             lazy var isContainedInSelectedRadius: Bool = {
                 if let selectedCircle, let selectedCircleLocation {
@@ -268,13 +322,22 @@ struct MapView: View {
                     return false
                 }
             }()
+            
+            let isZoomedIntoSelected = if let selectedClusterRes = selectedCluster?.h3Index.resolution {
+                selectedClusterRes.rawValue < mapModel.currentResolution.rawValue
+            } else {
+                false
+            }
 
-
+            
             if isSelected {
                 if let selectedClusterHull {
                     MapPolygon(selectedClusterHull)
-                        .foregroundStyle(Color.accent.opacity(0.2))
-                        .stroke(Color.accent, style: .init(lineWidth: 1, lineCap: .square, dash: [2, 6]))
+                        .foregroundStyle(Color.accent.opacity(isZoomedIntoSelectedCluster ? 0.1 : 0.2))
+                        .stroke(
+                            Color.accent.opacity(isZoomedIntoSelectedCluster ? 0.35 : 1),
+                            style: .init(lineWidth: 1, lineCap: .square, dash: [2, 6])
+                        )
                 } else {
                     MapCircle(MKCircle(center: cluster.h3Center, radius: mapModel.currentResolution.approxCircleRadius))
                         .foregroundStyle(.clear)
@@ -335,7 +398,7 @@ struct MapView: View {
                         .mapOverlayLevel(level: .aboveLabels)
                         //                        .tag(cluster.h3Index)
                     } else {
-                        if alwaysShowHulls {
+                        if experimentalAlwaysShowHulls {
                             MapPolygon(hull)
                                 .foregroundStyle(Color.accent.opacity(0.2))
                                 .stroke(Color.accent, style: .init(lineWidth: 1, lineCap: .square, dash: [2, 6]))

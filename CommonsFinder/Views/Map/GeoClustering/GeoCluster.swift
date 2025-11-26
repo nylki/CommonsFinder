@@ -54,6 +54,9 @@ nonisolated
     let meanCenter: CLLocationCoordinate2D
     let meanCenterMedia: CLLocationCoordinate2D
     let meanCenterCategories: CLLocationCoordinate2D
+    
+    let mediaGeometry: Geometry?
+    let categoryGeometry: Geometry?
     let mediaHull: MKPolygon
     let categoryHull: MKPolygon
 
@@ -79,10 +82,10 @@ nonisolated
         let categoryPoints: MultiPoint = .init(points: categoryCoordinates.map(Point.init))
 
         do {
-            let mediaHullGeometry = try mediaPoints.convexHull()
+            mediaGeometry = try mediaPoints.convexHull()
 
             mediaHull =
-                switch mediaHullGeometry {
+                switch mediaGeometry {
                 case .point(_):
                     .init()
                 case .multiPoint(_):
@@ -96,17 +99,20 @@ nonisolated
                 case .multiPolygon(_):
                     .init()
                 case .geometryCollection(_):
+                    .init()
+                case .none:
                     .init()
                 }
         } catch {
             logger.warning("Failed to created cluster \(error)")
             mediaHull = .init()
+            mediaGeometry = nil
         }
 
         do {
-            let categoryHullGeometry = try categoryPoints.convexHull()
+            categoryGeometry = try categoryPoints.convexHull()
             categoryHull =
-                switch categoryHullGeometry {
+                switch categoryGeometry {
                 case .point(_):
                     .init()
                 case .multiPoint(_):
@@ -121,10 +127,13 @@ nonisolated
                     .init()
                 case .geometryCollection(_):
                     .init()
+                case .none:
+                    .init()
                 }
         } catch {
             logger.warning("Failed to created cluster \(error)")
             categoryHull = .init()
+            categoryGeometry = nil
         }
     }
 }

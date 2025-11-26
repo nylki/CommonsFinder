@@ -50,7 +50,6 @@ extension MKCoordinateRegion {
         )
 
         return (topLeftCoordinate, bottomRightCoordinate)
-
     }
 
     var paddedBoundingBoxNESW: (northEast: CLLocationCoordinate2D, southWest: CLLocationCoordinate2D) {
