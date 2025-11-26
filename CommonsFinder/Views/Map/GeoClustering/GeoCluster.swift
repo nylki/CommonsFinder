@@ -54,7 +54,7 @@ nonisolated
     let meanCenter: CLLocationCoordinate2D
     let meanCenterMedia: CLLocationCoordinate2D
     let meanCenterCategories: CLLocationCoordinate2D
-    
+
     let mediaGeometry: Geometry?
     let categoryGeometry: Geometry?
     let mediaHull: MKPolygon

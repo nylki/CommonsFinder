@@ -8,14 +8,14 @@
 import Accelerate
 import CommonsAPI
 import CoreLocation
+import GEOSwift
+import GEOSwiftMapKit
 import H3kit
 import MapKit
 import Nuke
 import NukeUI
 import SwiftUI
 import os.log
-import GEOSwiftMapKit
-import GEOSwift
 
 struct MapView: View {
     @Environment(\.appDatabase) private var appDatabase
@@ -48,40 +48,41 @@ struct MapView: View {
             assertionFailure()
         }
     }
-    
+
     private func handleLongPressGesture(gesturePoint: CGPoint) {
-            guard let coordinate = mapModel.mapProxy?.convert(gesturePoint, from: .global) else {
-                return
-            }
-        
-            let point = Point(coordinate)
-            
-            if isZoomedIntoSelectedCluster {
-                let pressedCluster: GeoCluster? = mapModel.clusters.values.first { cluster in
-                    let clusterGeometry: Geometry? = switch mapModel.mapLayerMode {
-                     case .categoryItems: cluster.categoryGeometry
-                     case .mediaItem: cluster.mediaGeometry
+        guard let coordinate = mapModel.mapProxy?.convert(gesturePoint, from: .global) else {
+            return
+        }
+
+        let point = Point(coordinate)
+
+        if isZoomedIntoSelectedCluster {
+            let pressedCluster: GeoCluster? = mapModel.clusters.values.first { cluster in
+                let clusterGeometry: Geometry? =
+                    switch mapModel.mapLayerMode {
+                    case .categoryItems: cluster.categoryGeometry
+                    case .mediaItem: cluster.mediaGeometry
                     }
-                    
-                    return if let clusterGeometry {
-                        (try? clusterGeometry.contains(point)) ?? false
-                    } else {
-                        false
-                    }
-                }
-    
-                if let pressedCluster {
-                    mapModel.selectCluster(pressedCluster.h3Index)
+
+                return if let clusterGeometry {
+                    (try? clusterGeometry.contains(point)) ?? false
                 } else {
-                    mapModel.selectMapLocation(coordinate)
+                    false
                 }
-                
+            }
+
+            if let pressedCluster {
+                mapModel.selectCluster(pressedCluster.h3Index)
             } else {
                 mapModel.selectMapLocation(coordinate)
             }
-        
+
+        } else {
+            mapModel.selectMapLocation(coordinate)
+        }
+
     }
-    
+
     var selectedCluster: GeoCluster? {
         (mapModel.selectedMapItem as? ClusterRepresentation)?.cluster
     }
@@ -95,7 +96,6 @@ struct MapView: View {
             false
         }
     }
-
 
 
     var body: some View {
@@ -276,12 +276,11 @@ struct MapView: View {
 
         let experimentalAlwaysShowHulls = false
 
-        
-        
+
         ForEach(clusters) { cluster in
-            
+
             // TODO: clean up this logic to be easier to read (maybe switch by selected item first, if its a cluster or circle and lay out the logic in sub-funcs for each case)
-            
+
             let hull =
                 switch mapModel.mapLayerMode {
                 case .mediaItem: cluster.mediaHull
@@ -289,26 +288,27 @@ struct MapView: View {
                 }
 
             let isSelected: Bool = selectedCluster?.h3Index == cluster.h3Index
-            
-//            let containsFocusedSheetItem = if let focusedItemID = focusedMapSheetItem {
-//                switch focusedItemID {
-//                case .media:
-//                    Set(cluster.mediaItems.map(\.geoRefID)).contains(focusedItemID.geoRefID)
-//                case .category:
-//                    Set(cluster.categoryItems.map(\.geoRefID)).contains(focusedItemID.geoRefID)
-//                }
-//            } else {
-//                false
-//            }
-            
+
+            //            let containsFocusedSheetItem = if let focusedItemID = focusedMapSheetItem {
+            //                switch focusedItemID {
+            //                case .media:
+            //                    Set(cluster.mediaItems.map(\.geoRefID)).contains(focusedItemID.geoRefID)
+            //                case .category:
+            //                    Set(cluster.categoryItems.map(\.geoRefID)).contains(focusedItemID.geoRefID)
+            //                }
+            //            } else {
+            //                false
+            //            }
+
             let isContainedInSelectedCluster: Bool =
-            if let selectedClusterRes = selectedCluster?.h3Index.resolution,
-               let parent = try? H3.cellToParent(cell: cluster.h3Index, parentRes: selectedClusterRes) {
-                     parent == selectedCluster?.h3Index
-                 } else {
-                     false
-                 }
-            
+                if let selectedClusterRes = selectedCluster?.h3Index.resolution,
+                    let parent = try? H3.cellToParent(cell: cluster.h3Index, parentRes: selectedClusterRes)
+                {
+                    parent == selectedCluster?.h3Index
+                } else {
+                    false
+                }
+
 
             lazy var isContainedInSelectedRadius: Bool = {
                 if let selectedCircle, let selectedCircleLocation {
@@ -322,14 +322,15 @@ struct MapView: View {
                     return false
                 }
             }()
-            
-            let isZoomedIntoSelected = if let selectedClusterRes = selectedCluster?.h3Index.resolution {
-                selectedClusterRes.rawValue < mapModel.currentResolution.rawValue
-            } else {
-                false
-            }
 
-            
+            let isZoomedIntoSelected =
+                if let selectedClusterRes = selectedCluster?.h3Index.resolution {
+                    selectedClusterRes.rawValue < mapModel.currentResolution.rawValue
+                } else {
+                    false
+                }
+
+
             if isSelected {
                 if let selectedClusterHull {
                     MapPolygon(selectedClusterHull)
