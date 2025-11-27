@@ -837,11 +837,27 @@ internal struct QueryResponse<T: Decodable&Sendable>: Decodable, Sendable {
     }
 }
 
-public struct ImageListResponse: Sendable {
+public enum FileIdentifierList: Sendable {
+    case titles([String])
+    case pageids([String])
+    
+    public var items: [String] {
+        switch self {
+        case .titles(let array), .pageids(let array):
+            array
+        }
+    }
+}
+
+public struct CategoryImageListResponse: Sendable {
     public let continueString: String?
     public let files: [QueryListItem]
 }
 
+public struct UserImagesListResponse: Sendable {
+    public let continueString: String?
+    public let titles: [String]
+}
 
 // query: prop=url|timestamp|user|commonmetadata|badfile|metadata|extmetadata ...
 internal struct AllImagesListResponse: Decodable, Sendable {

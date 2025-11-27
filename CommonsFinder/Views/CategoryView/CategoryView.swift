@@ -29,7 +29,7 @@ struct CategoryView: View {
 
     @State private var item: CategoryInfo?
 
-    @State private var paginationModel: PaginatableCategoryFiles? = nil
+    @State private var paginationModel: PaginatableCategoryMediaFiles? = nil
 
     @State private var subCategories: [CategoryInfo] = []
     @State private var parentCategories: [CategoryInfo] = []

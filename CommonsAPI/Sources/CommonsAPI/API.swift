@@ -408,10 +408,9 @@ public actor API {
     }
     
     
-    /// listUploads
+    /// listUserImages
     /// - Parameters:
     ///   - username: list items for this user
-    ///   - limit: 1..50 (default: 50, for clients with higher limits, the max limit is: 500)
     public func listUserImages(
         of username: String,
         limit: ListLimit = .max,
@@ -419,7 +418,7 @@ public actor API {
         end: Date?,
         direction: ListDirection,
         continueString: String?
-    ) async throws -> ImageListResponse {
+    ) async throws -> UserImagesListResponse {
         var parameters: Parameters = [
             "action": "query",
             "curtimestamp": 1,
@@ -429,8 +428,6 @@ public actor API {
             "ailimit": limit.apiString,
             "aiprop": "",
             "aisort": "timestamp",
-            "prop": "info",
-            "inprop": "protection",
             "format": "json",
             "formatversion": 2
         ]
@@ -447,14 +444,16 @@ public actor API {
             parameters["aicontinue"] = continueString
         }
         
-
-
         let request = session
             .request(commonsEndpoint, method: .get, parameters: parameters)
             .serializingDecodable(QueryResponse<AllImagesListResponse>.self, decoder: jsonDecoder)
         
         let responseValue = try await request.value
-        return .init(continueString: responseValue.continue?.aicontinue, files: responseValue.query?.allimages ?? [])
+        
+        // NOTE: "allimages" list doesnt return pageid for some reason (only with generator, which
+        // we like to avoid due to sort order and pagination complications.
+        let titles = responseValue.query?.allimages.map(\.title) ?? []
+        return .init(continueString: responseValue.continue?.aicontinue, titles: titles)
     }
     
     
@@ -519,7 +518,7 @@ public actor API {
         )
     }
     
-    public func listCategoryImagesRaw(of category: String, continueString: String? = nil, limit: ListLimit = .max) async throws -> ImageListResponse {
+    public func listCategoryImagesRaw(of category: String, continueString: String? = nil, limit: ListLimit = .max) async throws -> CategoryImageListResponse {
         var parameters: Parameters = [
             "action": "query",
             "list": "categorymembers",
@@ -610,23 +609,6 @@ public actor API {
 
         // Mapping the result based on the original order, since the fetch order is not guaranteed
         return identifiers.items.compactMap { result[$0] }
-        
-
-        
-        
-
-    }
-    
-    public enum FileIdentifierList: Sendable {
-        case titles([String])
-        case pageids([String])
-        
-        var items: [String] {
-            switch self {
-            case .titles(let array), .pageids(let array):
-                array
-            }
-        }
     }
     
     // Example: https://commons.wikimedia.org/w/api.php?action=query&format=json&prop=imageinfo&titles=File%3The_Earth_seen_from_Apollo_17.jpg&formatversion=2&iiprop=url%7Cextmetadata&iiurlwidth=640&iiurlheight=640&iiextmetadatamultilang=1
