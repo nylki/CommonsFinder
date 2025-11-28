@@ -767,10 +767,24 @@
       }
     },
     "Images (%@ radius)" : {
-
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bilder (%@ radius)"
+          }
+        }
+      }
     },
     "Images in area" : {
-
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bilder im Gebiet"
+          }
+        }
+      }
     },
     "In-App Search" : {
       "localizations" : {
@@ -909,10 +923,24 @@
       }
     },
     "Locations (%@ radius)" : {
-
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Orte (%@ radius)"
+          }
+        }
+      }
     },
     "Locations in area" : {
-
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Orte im Gebiet"
+          }
+        }
+      }
     },
     "logging in..." : {
       "localizations" : {
@@ -984,8 +1012,15 @@
         }
       }
     },
-    "Map modes" : {
-
+    "Map Mode" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kartenmodus"
+          }
+        }
+      }
     },
     "Media" : {
       "extractionState" : "stale",
@@ -1550,7 +1585,14 @@
       }
     },
     "Show on Map" : {
-
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Auf Karte anzeigen"
+          }
+        }
+      }
     },
     "slow or expensive internet connection" : {
       "localizations" : {
@@ -1795,7 +1837,14 @@
       }
     },
     "User actions" : {
-
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Benutzeraktionen"
+          }
+        }
+      }
     },
     "Username" : {
       "localizations" : {
