@@ -75,7 +75,7 @@ struct MapSheetCategoryTeaser: View {
             }
             .clipShape(.containerRelative)
             .contentShape([.contextMenuPreview, .interaction], .containerRelative)
-            .modifier(CategoryContextMenu(item: item))
+            .modifier(CategoryContextMenu(item: item, hiddenEntries: [.showOnMap]))
             .scrollTransition(
                 .interactive, axis: .horizontal,
                 transition: { view, phase in

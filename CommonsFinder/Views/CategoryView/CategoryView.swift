@@ -54,6 +54,16 @@ struct CategoryView: View {
         item?.base.label ?? resolvedCategoryName ?? ""
     }
 
+    private func showOnMap() {
+        guard let item else { return }
+        do {
+            try mapModel.showInCircle(item.base)
+            navigation.selectedTab = .map
+        } catch {
+            logger.error("Failed to show category on map \(error)")
+        }
+    }
+
 
     @ViewBuilder
     private var subheadline: some View {
@@ -177,16 +187,8 @@ struct CategoryView: View {
                     CategoryLinkSection(item: item)
 
                     if item.base.coordinate != nil {
-                        Button("Show on Map") {
-                            do {
-                                try mapModel.showInCircle(item.base)
-                                navigation.selectedTab = .map
-                            } catch {
-                                logger.error("Failed to show category on map \(error)")
-                            }
-                        }
+                        Button("Show on Map", systemImage: "map", action: showOnMap)
                     }
-
                 }
             }
             .disabled(item == nil)

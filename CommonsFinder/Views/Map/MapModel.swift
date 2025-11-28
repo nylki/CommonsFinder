@@ -142,6 +142,7 @@ enum MapError: Error {
         }
         fetchDataForSelectedItem()
         isMapSheetPresented = true
+        navigation.clearPath(of: .map)
 
         guard let currentMapBoxWithSafeArea = region?.paddedBoundingBox(top: -0.25, bottom: -0.3, left: -0.15, right: -0.15) else {
             return
@@ -153,7 +154,7 @@ enum MapError: Error {
         )
 
         // TODO: only move the camera as much as needed to fit, to minimize screen motion. (-> eg. edge padding (top,bottom,left,right) = clusterradius - (cluster center distance to edge)
-        
+
         // Zoom/Move camera to location
         if !position.followsUserLocation,
             !isClusterCenterInSafeMapBox,
@@ -173,6 +174,8 @@ enum MapError: Error {
     func selectMapLocation(_ coordinate: CLLocationCoordinate2D, focusedID: String? = nil) {
         let radius: CLLocationDistance = 250
         let items = geoClusterTree.items(around: coordinate, radius: radius)
+
+        navigation.clearPath(of: .map)
 
         switch mapLayerMode {
         case .categoryItems:

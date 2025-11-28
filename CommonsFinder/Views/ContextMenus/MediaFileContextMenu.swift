@@ -10,8 +10,28 @@ import SwiftUI
 import os.log
 
 struct MediaFileContextMenu: ViewModifier {
-    var mediaFileInfo: MediaFileInfo?
-    let namespace: Namespace.ID
+    private var mediaFileInfo: MediaFileInfo?
+    private let namespace: Namespace.ID
+    private let shownEntries: ContextMenuEntries
+
+    init(mediaFileInfo: MediaFileInfo?, namespace: Namespace.ID) {
+        self.mediaFileInfo = mediaFileInfo
+        self.shownEntries = .all
+        self.namespace = namespace
+    }
+
+    init(mediaFileInfo: MediaFileInfo?, shownEntries: ContextMenuEntries, namespace: Namespace.ID) {
+        self.mediaFileInfo = mediaFileInfo
+        self.shownEntries = shownEntries
+        self.namespace = namespace
+    }
+
+    init(mediaFileInfo: MediaFileInfo?, hiddenEntries: ContextMenuEntries, namespace: Namespace.ID) {
+        self.mediaFileInfo = mediaFileInfo
+        self.shownEntries = .all.subtracting(hiddenEntries)
+        self.namespace = namespace
+    }
+
     @Environment(\.appDatabase) private var appDatabase
     @Environment(Navigation.self) private var navigation
     @Environment(MapModel.self) private var mapModel
@@ -31,23 +51,32 @@ struct MediaFileContextMenu: ViewModifier {
             .contextMenu {
                 if let mediaFileInfo {
                     VStack {
-                        Button("Open Details") {
-                            navigation.viewFile(mediaFile: mediaFileInfo, namespace: namespace)
-                        }
-                        if mediaFileInfo.mediaFile.coordinate != nil {
-                            Button("Show on Map", systemImage: "map", action: showOnMap)
-                        }
-                        Button(
-                            mediaFileInfo.isBookmarked ? "Remove Bookmark" : "Add Bookmark",
-                            systemImage: mediaFileInfo.isBookmarked ? "bookmark.fill" : "bookmark"
-                        ) {
-                            do {
-                                _ = try appDatabase.updateBookmark(mediaFileInfo, bookmark: !mediaFileInfo.isBookmarked)
-                            } catch {
-                                logger.error("Failed to update bookmark on \(mediaFileInfo.mediaFile.name): \(error)")
+                        if shownEntries.contains(.openDetails) {
+                            Button("Open Details") {
+                                navigation.viewFile(mediaFile: mediaFileInfo, namespace: namespace)
                             }
                         }
-                        ShareLink(item: mediaFileInfo.mediaFile.descriptionURL)
+
+                        if shownEntries.contains(.showOnMap), mediaFileInfo.mediaFile.coordinate != nil {
+                            Button("Show on Map", systemImage: "map", action: showOnMap)
+                        }
+
+                        if shownEntries.contains(.bookmark) {
+                            Button(
+                                mediaFileInfo.isBookmarked ? "Remove Bookmark" : "Add Bookmark",
+                                systemImage: mediaFileInfo.isBookmarked ? "bookmark.fill" : "bookmark"
+                            ) {
+                                do {
+                                    _ = try appDatabase.updateBookmark(mediaFileInfo, bookmark: !mediaFileInfo.isBookmarked)
+                                } catch {
+                                    logger.error("Failed to update bookmark on \(mediaFileInfo.mediaFile.name): \(error)")
+                                }
+                            }
+                        }
+
+                        if shownEntries.contains(.linkSection) {
+                            ShareLink(item: mediaFileInfo.mediaFile.descriptionURL)
+                        }
                     }
                 }
 
@@ -68,6 +97,20 @@ struct MediaFileContextMenu: ViewModifier {
                     }
                 }
             }
+    }
+}
+
+extension MediaFileContextMenu {
+    struct ContextMenuEntries: OptionSet {
+        let rawValue: Int
+        static let openDetails = Self(rawValue: 1 << 0)
+        static let showOnMap = Self(rawValue: 1 << 1)
+        static let bookmark = Self(rawValue: 1 << 2)
+        static let linkSection = Self(rawValue: 1 << 3)
+
+        static var all: Self {
+            [.openDetails, .showOnMap, .bookmark, .linkSection]
+        }
     }
 }
 

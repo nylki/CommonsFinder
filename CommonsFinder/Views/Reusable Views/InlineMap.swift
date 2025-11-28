@@ -80,12 +80,12 @@ struct InlineMap: View {
         return URL(string: "https://www.openstreetmap.org/#map=\(zoomLevel)/\(coordinate.latitude)/\(coordinate.longitude)")
     }
 
-    private var genericGeoLink: URL? {
-        URL(string: "geo:\(coordinate.latitude),\(coordinate.longitude)")
+    private var genericGeoLink: URL {
+        URL(string: "geo-navigation:///place?coordinate=\(coordinate.latitude),\(coordinate.longitude)")!
     }
 
     private var omLink: URL? {
-        URL(string: "om://map?v=1&ll=\(coordinate.latitude),\(coordinate.longitude)&n=\(label)")
+        URL(string: "om://map?v=1&ll=\(coordinate.latitude),\(coordinate.longitude)")
     }
 
     private func showOnMap() {
@@ -110,13 +110,10 @@ struct InlineMap: View {
         // TODO: switch external map via settings or "always ask" dialog
         // test installed apps via https://developer.apple.com/documentation/uikit/uiapplication/canopenurl(_:) ?
 
-        let canOpenOrganicMaps = UIApplication.shared.canOpenURL(omLink!)
-        logger.info("supports OrganicMaps: \(canOpenOrganicMaps)")
-        if canOpenOrganicMaps, let omLink {
-            openURL(omLink)
-        } else {
-            MKMapItem(placemark: .init(location: location, name: label, postalAddress: nil)).openInMaps()
-        }
+        //        let canOpenOrganicMaps = UIApplication.shared.canOpenURL(omLink!)
+        //        logger.info("supports OrganicMaps: \(canOpenOrganicMaps)")
+        logger.debug("opening map app with: \(genericGeoLink)")
+        openURL(genericGeoLink)
     }
 
     private func openLookAround() {
@@ -191,7 +188,6 @@ struct InlineMap: View {
     @ViewBuilder
     private var mapMenuItems: some View {
         Button("Show on Map", systemImage: "map", action: showOnMap)
-        Button("Open in Map App", systemImage: "map", action: openInMapApp)
         Button("Look Around", systemImage: "binoculars", action: openLookAround)
             .task {
                 logger.debug("Look Around scene fetching for \(label)...")
@@ -202,6 +198,9 @@ struct InlineMap: View {
             .disabled(lookAroundScene == nil)
 
         Divider()
+
+        Button("Open in Maps", systemImage: "arrow.up.forward.app", action: openInMapApp)
+
         if let osmLink {
             // TODO: use OSM-relation instead if it exists as structured-data statement!
             ShareLink(item: osmLink, subject: Text(label)) {
@@ -221,7 +220,7 @@ extension CLLocationCoordinate2D {
     fileprivate var coordinateString: String {
         let latSign = latitude.sign == .minus ? "-" : ""
         let lonSign = longitude.sign == .minus ? "-" : ""
-        return "\(latSign)\(latitude) \(lonSign)\(longitude)"
+        return "\(latSign)\(latitude), \(lonSign)\(longitude)"
     }
 }
 

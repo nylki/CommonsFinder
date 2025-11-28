@@ -24,7 +24,7 @@ struct MapPopupMediaFileTeaser: View {
         } label: {
             imageView
         }
-        .modifier(MediaFileContextMenu(mediaFileInfo: mediaFileInfo, namespace: namespace))
+        .modifier(MediaFileContextMenu(mediaFileInfo: mediaFileInfo, hiddenEntries: [.showOnMap], namespace: namespace))
         .foregroundStyle(.primary)
         .tint(.primary)
         .animation(.default, value: isSelected)

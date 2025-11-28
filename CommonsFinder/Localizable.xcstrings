@@ -1013,26 +1013,11 @@
       }
     },
     "Map Mode" : {
-      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Kartenmodus"
-          }
-        }
-      }
-    },
-    "Map modes" : {
-
-    },
-    "Media" : {
-      "extractionState" : "stale",
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Medien"
           }
         }
       }
@@ -1194,12 +1179,12 @@
         }
       }
     },
-    "Open in Map App" : {
+    "Open in Maps" : {
       "localizations" : {
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "In Karten-App öffnen"
+            "value" : "In der Karten-App öffnen"
           }
         }
       }
@@ -1936,17 +1921,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Wikidata"
-          }
-        }
-      }
-    },
-    "Wikidata Items" : {
-      "extractionState" : "stale",
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Wikidata-Eintrag"
           }
         }
       }

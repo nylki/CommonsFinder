@@ -428,7 +428,7 @@ struct MapView: View {
 
     private var mapModeMenu: some View {
         Menu {
-            Text("Map modes")
+            Text("Map Mode")
             Divider()
             Button {
                 mapModel.selectMapMode(.categoryItems)

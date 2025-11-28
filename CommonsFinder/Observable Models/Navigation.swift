@@ -119,6 +119,10 @@ enum NavigationStackItem: Hashable, CustomStringConvertible {
 }
 
 extension Navigation {
+    func clearPath(of tabItem: TabItem) {
+        path[tabItem] = []
+    }
+
     func editDrafts(drafts: [MediaFileDraft]) {
         isEditingDraft = .existing(drafts)
     }
