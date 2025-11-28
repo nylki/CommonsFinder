@@ -561,8 +561,6 @@ public actor API {
 //    
     /// Augment existing partial file info with structured data
     public func fetchFileMetadata(fileMetadataList: [FileMetadata]) async throws -> [RawFileMetadata] {
-        
-        async let pageQueryTask = fetchImageMetadata(.pageids(fileMetadataList.map(\.id)))
         let structuredData = try await fetchStructuredData(.pageids(fileMetadataList.map(\.id)))
         var result: [RawFileMetadata] = []
         

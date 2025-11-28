@@ -141,6 +141,7 @@ nonisolated
 extension GeoCluster {
     func cameraRegion(paddingFactor: Double = 0.5, withSheetOffset: Bool = true) -> MKCoordinateRegion? {
         guard let res = h3Index.resolution else { return nil }
+
         let delta = GeoVectorMath.degrees(fromMeters: res.approxCircleRadius * 2, atLatitude: h3Center.latitude)
         let dLat = delta.latitudeDegrees + delta.latitudeDegrees * paddingFactor
         let dLon = delta.longitudeDegrees + delta.longitudeDegrees * paddingFactor

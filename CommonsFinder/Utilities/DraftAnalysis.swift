@@ -289,11 +289,11 @@ nonisolated enum DraftAnalysis {
 
             }
 
-            let relevantLargeAreaPOIs: [MKPointOfInterestCategory] = [
-                .airport, .amusementPark, .aquarium, .beach, .campground, .castle, .conventionCenter, .fairground, .foodMarket, .fortress, .golf, .goKart, .hiking, .kayaking, .landmark, .marina,
-                .museum, .musicVenue, .nationalMonument, .nationalPark, .park, .publicTransport, .rvPark, .skating, .skatePark, .spa, .soccer, .skiing, .stadium, .swimming, .surfing, .tennis,
-                .theater, .university, .volleyball, .zoo,
-            ]
+            //            let relevantLargeAreaPOIs: [MKPointOfInterestCategory] = [
+            //                .airport, .amusementPark, .aquarium, .beach, .campground, .castle, .conventionCenter, .fairground, .foodMarket, .fortress, .golf, .goKart, .hiking, .kayaking, .landmark, .marina,
+            //                .museum, .musicVenue, .nationalMonument, .nationalPark, .park, .publicTransport, .rvPark, .skating, .skatePark, .spa, .soccer, .skiing, .stadium, .swimming, .surfing, .tennis,
+            //                .theater, .university, .volleyball, .zoo,
+            //            ]
 
             // TODO: use this with iOS 26 mapItem via MKReverseGeocodingRequest
             // Parks, Landmarks, beach, zoo etc.

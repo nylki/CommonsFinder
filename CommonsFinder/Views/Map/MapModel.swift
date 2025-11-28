@@ -143,10 +143,18 @@ enum MapError: Error {
         fetchDataForSelectedItem()
         isMapSheetPresented = true
 
-        // Zoom/Move camera to location
-        // TODO: only move to location if it is outside of current camera or at the edge of the screen
+        guard let currentMapBoxWithSafeArea = region?.paddedBoundingBox(top: -0.25, bottom: -0.3, left: -0.15, right: -0.15) else {
+            return
+        }
 
+        let isClusterCenterInSafeMapBox = cluster.h3Center.isLocationInBoundingBox(
+            topLeft: currentMapBoxWithSafeArea.topLeft,
+            bottomRight: currentMapBoxWithSafeArea.bottomRight
+        )
+
+        // Zoom/Move camera to location
         if !position.followsUserLocation,
+            !isClusterCenterInSafeMapBox,
             let cameraRegion = cluster.cameraRegion(),
             var newCamera = mapProxy?.camera(framing: cameraRegion)
         {
@@ -175,6 +183,7 @@ enum MapError: Error {
 
         fetchDataForSelectedItem()
         isMapSheetPresented = true
+
 
         let paddingFactor = 0.382
         let delta = GeoVectorMath.degrees(fromMeters: radius * 2, atLatitude: coordinate.latitude)
@@ -246,9 +255,10 @@ enum MapError: Error {
 
         let clock = ContinuousClock()
         let elapsed = clock.measure {
+            let boundingBox = region.paddedBoundingBox()
             clusters = geoClusterTree.clusters(
-                topLeft: region.paddedBoundingBox.topLeft,
-                bottomRight: region.paddedBoundingBox.bottomRight,
+                topLeft: boundingBox.topLeft,
+                bottomRight: boundingBox.bottomRight,
                 resolution: currentResolution
             )
         }
@@ -402,7 +412,7 @@ private func fetchWikiItems(around coordinate: CLLocationCoordinate2D, radius: C
 private func fetchMediaFiles(region: MKCoordinateRegion, maxDiagonalMapLength: Double) async -> [GeoSearchFileItem] {
     guard region.diagonalMeters < maxDiagonalMapLength else { return [] }
     do {
-        let boundingBox = region.paddedBoundingBox
+        let boundingBox = region.paddedBoundingBox()
         assert(boundingBox.bottomRight != boundingBox.topLeft, "bounding box corners must be different")
 
         let items: [GeoSearchFileItem] = try await API.shared

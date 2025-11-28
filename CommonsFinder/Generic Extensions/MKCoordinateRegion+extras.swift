@@ -26,18 +26,48 @@ extension MKCoordinateRegion {
         sqrt(pow(metersInLatitude, 2) + pow(metersInLongitude, 2))
     }
 
-    var paddedBoundingBox: (topLeft: CLLocationCoordinate2D, bottomRight: CLLocationCoordinate2D) {
+    func paddedBoundingBox(paddingFactor: Double = 0.15) -> (topLeft: CLLocationCoordinate2D, bottomRight: CLLocationCoordinate2D) {
         let halfLatDelta = span.latitudeDelta / 2
         let halfLonDelta = span.longitudeDelta / 2
 
-        let latPadding = span.latitudeDelta * 0.15
-        let lonPadding = span.longitudeDelta * 0.15
+        let latPadding = span.latitudeDelta * paddingFactor
+        let lonPadding = span.longitudeDelta * paddingFactor
 
         let topLeftCoordinateLat = center.latitude + (halfLatDelta + latPadding)
         let topLeftCoordinateLon = center.longitude - (halfLonDelta + lonPadding)
 
         let bottomRightCoordinateLat = center.latitude - (halfLatDelta + latPadding)
         let bottomRightCoordinateLon = center.longitude + (halfLonDelta + lonPadding)
+
+        let topLeftCoordinate = CLLocationCoordinate2D(
+            latitude: topLeftCoordinateLat,
+            longitude: topLeftCoordinateLon
+        )
+
+        let bottomRightCoordinate = CLLocationCoordinate2D(
+            latitude: bottomRightCoordinateLat,
+            longitude: bottomRightCoordinateLon
+        )
+
+        return (topLeftCoordinate, bottomRightCoordinate)
+    }
+
+    /// padding values are factors of the region lan/lat delta (eg. top:0.25 would add a padding on the top edge of 25% of the vertical length
+    /// negative paddings subtract the padding, in effect shrinking the area of the bounding box
+    func paddedBoundingBox(top: Double, bottom: Double, left: Double, right: Double) -> (topLeft: CLLocationCoordinate2D, bottomRight: CLLocationCoordinate2D) {
+        let halfLatDelta = span.latitudeDelta / 2
+        let halfLonDelta = span.longitudeDelta / 2
+
+        let latPaddingTop = span.latitudeDelta * top
+        let latPaddingBottom = span.latitudeDelta * bottom
+        let lonPaddingLeft = span.longitudeDelta * left
+        let lonPaddingRight = span.longitudeDelta * right
+
+        let topLeftCoordinateLat = center.latitude + (halfLatDelta + latPaddingTop)
+        let topLeftCoordinateLon = center.longitude - (halfLonDelta + lonPaddingLeft)
+
+        let bottomRightCoordinateLat = center.latitude - (halfLatDelta + latPaddingBottom)
+        let bottomRightCoordinateLon = center.longitude + (halfLonDelta + lonPaddingRight)
 
         let topLeftCoordinate = CLLocationCoordinate2D(
             latitude: topLeftCoordinateLat,

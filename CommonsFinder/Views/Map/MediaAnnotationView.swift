@@ -73,9 +73,7 @@ struct MediaAnnotationView: View {
 #Preview(traits: .previewEnvironment) {
     @Previewable @Namespace var namespace
     @Previewable @Environment(Navigation.self) var navigation
-    let onTap = {
-        print("tap")
-    }
+    let onTap = { print("tap") }
     Map {
         Annotation("", coordinate: .init(latitude: 50, longitude: 2)) {
             MediaAnnotationView(item: .makeRandomUploaded(id: "1", .horizontalImage), namespace: namespace, isSelected: true) {}

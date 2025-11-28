@@ -158,15 +158,6 @@ nonisolated final class GeoClusterTree {
 }
 
 
-extension CLLocationCoordinate2D {
-    func isLocationInBoundingBox(
-        topLeft: CLLocationCoordinate2D, bottomRight: CLLocationCoordinate2D
-    ) -> Bool {
-        return latitude <= topLeft.latitude && latitude >= bottomRight.latitude && longitude >= topLeft.longitude && longitude <= bottomRight.longitude
-    }
-}
-
-
 extension MKCoordinateRegion: @retroactive Equatable, @retroactive Hashable {
     public static func == (lhs: MKCoordinateRegion, rhs: MKCoordinateRegion) -> Bool {
         lhs.area == rhs.area && lhs.center == rhs.center && lhs.span.latitudeDelta == rhs.span.latitudeDelta && lhs.span.longitudeDelta == rhs.span.longitudeDelta

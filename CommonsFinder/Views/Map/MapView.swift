@@ -133,7 +133,8 @@ struct MapView: View {
                     .mapOverlayLevel(level: .aboveLabels)
                 case .category(let category):
                     if let coordinate = category.coordinate {
-                        Annotation(category.label ?? "", coordinate: coordinate, anchor: .center) {
+                        let label = category.label?.truncate(to: 80) ?? ""
+                        Annotation(label, coordinate: coordinate, anchor: .center) {
                             // TODO: custom marker with image
                             WikiAnnotationView(item: category, isSelected: true) {
                                 navigation.viewCategory(.init(category))
@@ -364,7 +365,7 @@ struct MapView: View {
                                 item: mediaFileCache[singleMediaItem.id],
                                 namespace: namespace,
                                 isSelected: false,
-                                onTap: { openMediaFile(singleMediaItem.id) }
+                                onTap: { mapModel.selectCluster(cluster.h3Index) }
                             )
                         }
                         //                        .tag(cluster.h3Index)
@@ -392,7 +393,7 @@ struct MapView: View {
                         // single category
                         Annotation(singleCategory.label ?? "", coordinate: coordinate, anchor: .center) {
                             WikiAnnotationView(item: singleCategory, isSelected: false) {
-                                navigation.viewCategory(.init(singleCategory))
+                                mapModel.selectCluster(cluster.h3Index)
                             }
                             .id(singleCategory.geoRefID)
                         }

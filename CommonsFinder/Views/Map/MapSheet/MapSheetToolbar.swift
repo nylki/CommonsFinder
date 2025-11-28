@@ -39,12 +39,21 @@ struct MapSheetToolbar: ToolbarContent {
         }
     }
 
+    var isSingleItem: Bool {
+        if let model = (model as? MapItemWithSubItems) {
+            model.maxCount == 1
+        } else {
+            false
+        }
+    }
+
     var body: some ToolbarContent {
         ToolbarItem(placement: .topBarLeading) {
-            if let model = (model as? MapItemWithSubItems) {
+            if let model = (model as? MapItemWithSubItems), !isSingleItem {
                 CounterView(current: (model.focusedIdx ?? 0) + 1, max: model.maxCount)
             }
         }
+
 
         ToolbarItem(placement: .title) {
             HStack(spacing: 5) {

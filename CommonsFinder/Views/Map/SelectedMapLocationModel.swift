@@ -214,3 +214,13 @@ extension CircleRepresentation {
         }
     }
 }
+
+extension SelectedMapItemModel {
+    var containsOnlySingleItem: Bool {
+        if let model = (self as? MapItemWithSubItems) {
+            model.maxCount == 1
+        } else {
+            false
+        }
+    }
+}

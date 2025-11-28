@@ -166,6 +166,7 @@
 				"Generic Extensions/CGPoint+Extensions.swift",
 				"Generic Extensions/CGSize+Extensions.swift",
 				"Generic Extensions/CLLocation+generateHumanReadableString.swift",
+				"Generic Extensions/CLLocationCoordinate2D+isLocationInBoundingBox.swift",
 				"Generic Extensions/Date+dateOnlyWikidataCompatibleISOString.swift",
 				"Generic Extensions/FileNameType+generateFilename.swift",
 				"Generic Extensions/FloatingPoint+interpolateRanges.swift",
