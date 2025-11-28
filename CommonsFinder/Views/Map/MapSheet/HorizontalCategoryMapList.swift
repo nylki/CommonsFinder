@@ -25,7 +25,7 @@ struct HorizontalCategoryMapList: View {
             .containerShape(ViewConstants.mapSheetContainerShape)
             .frame(minWidth: 100)
             .safeAreaPadding(.horizontal, 120)
-            .frame(height: 190)
+            .frame(height: 180)
             .scrollTargetLayout()
         }
         .scrollIndicators(.hidden)
