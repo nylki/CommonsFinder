@@ -152,6 +152,8 @@ enum MapError: Error {
             bottomRight: currentMapBoxWithSafeArea.bottomRight
         )
 
+        // TODO: only move the camera as much as needed to fit, to minimize screen motion. (-> eg. edge padding (top,bottom,left,right) = clusterradius - (cluster center distance to edge)
+        
         // Zoom/Move camera to location
         if !position.followsUserLocation,
             !isClusterCenterInSafeMapBox,
