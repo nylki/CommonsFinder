@@ -39,18 +39,12 @@ struct MapSheetToolbar: ToolbarContent {
         }
     }
 
-    var isSingleItem: Bool {
-        if let model = (model as? MapItemWithSubItems) {
-            model.maxCount == 1
-        } else {
-            false
-        }
-    }
-
     var body: some ToolbarContent {
         ToolbarItem(placement: .topBarLeading) {
-            if let model = (model as? MapItemWithSubItems), !isSingleItem {
+            if let model = (model as? MapItemWithSubItems), model.maxCount > 1 {
                 CounterView(current: (model.focusedIdx ?? 0) + 1, max: model.maxCount)
+            } else if #available(iOS 26.0, *) {
+                
             } else {
                 Color.clear.frame(width: 70)
             }
