@@ -51,6 +51,8 @@ struct MapSheetToolbar: ToolbarContent {
         ToolbarItem(placement: .topBarLeading) {
             if let model = (model as? MapItemWithSubItems), !isSingleItem {
                 CounterView(current: (model.focusedIdx ?? 0) + 1, max: model.maxCount)
+            } else {
+                Color.clear.frame(width: 70)
             }
         }
 

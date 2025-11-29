@@ -12,8 +12,15 @@ import SwiftUI
 struct MapSheetCategoryTeaser: View {
     // needs a better type for previews and images?
     let item: CategoryInfo
+    var size: WidthClass = .regular
     let isSelected: Bool
+    var isInScrollView: Bool = true
     let namespace: Namespace.ID
+
+    enum WidthClass {
+        case regular
+        case wide
+    }
 
     @Environment(Navigation.self) private var navigation
 
@@ -43,35 +50,10 @@ struct MapSheetCategoryTeaser: View {
             .shadow(color: hasBackgroundImage ? .black : .clear, radius: 2)
             .shadow(color: .black.opacity(0.7), radius: 7)
             .padding()
-            .containerRelativeFrame(.horizontal, count: 5, span: 3, spacing: 0)
+            .containerRelativeFrame(.horizontal, count: 5, span: size == .regular ? 3 : 4, spacing: 0)
             .frame(minHeight: 0, maxHeight: .infinity)
             .background {
-                Color(.emptyWikiItemBackground)
-                    .overlay {
-                        if let imageRequest = item.base.thumbnailImage {
-                            LazyImage(request: imageRequest, transaction: .init(animation: .linear)) { imageState in
-                                if let image = imageState.image {
-                                    image.resizable()
-                                        .aspectRatio(contentMode: .fill)
-                                        .scaledToFill()
-                                } else {
-                                    Color.clear
-                                }
-                            }
-                        }
-                    }
-                    .overlay {
-                        if item.base.thumbnailImage != nil {
-                            LinearGradient(
-                                stops: [
-                                    .init(color: .init(white: 0, opacity: 0), location: 0),
-                                    .init(color: .init(white: 0, opacity: 0.1), location: 0.35),
-                                    .init(color: .init(white: 0, opacity: 0.2), location: 0.5),
-                                    .init(color: .init(white: 0, opacity: 0.8), location: 1),
-                                ], startPoint: .top, endPoint: .bottom)
-                        }
-                    }
-
+                CategoryTeaserBackground(category: item.base)
             }
             .clipShape(.containerRelative)
             .contentShape([.contextMenuPreview, .interaction], .containerRelative)
@@ -79,7 +61,8 @@ struct MapSheetCategoryTeaser: View {
             .scrollTransition(
                 .interactive, axis: .horizontal,
                 transition: { view, phase in
-                    view.scaleEffect(y: phase == .identity ? 1 : 0.9)
+                    view.scaleEffect(y: (phase == .identity || !isInScrollView) ? 1 : 0.9)
+
                 }
             )
             .padding(3)

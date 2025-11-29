@@ -223,4 +223,12 @@ extension SelectedMapItemModel {
             false
         }
     }
+
+    var itemCount: Int? {
+        if let model = (self as? MapItemWithSubItems) {
+            model.maxCount
+        } else {
+            nil
+        }
+    }
 }

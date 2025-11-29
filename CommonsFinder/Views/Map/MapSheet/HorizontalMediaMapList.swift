@@ -18,11 +18,17 @@ struct HorizontalMediaMapList: View {
     var body: some View {
         @Bindable var paginationModel = paginationModel
         let mediaFileInfos = paginationModel.mediaFileInfos
+        let isSingleImage = mediaFileInfos.count == 1
         ScrollView(.horizontal) {
             LazyHStack {
                 ForEach(mediaFileInfos) { mediaFileInfo in
                     let isSelected = mediaFileInfo.id == focusedItem.viewID(type: String.self)
-                    MapPopupMediaFileTeaser(namespace: mapAnimationNamespace, mediaFileInfo: mediaFileInfo, isSelected: isSelected) {
+                    MapPopupMediaFileTeaser(
+                        namespace: mapAnimationNamespace,
+                        mediaFileInfo: mediaFileInfo,
+                        size: isSingleImage ? .wide : .regular,
+                        isSelected: isSelected
+                    ) {
                         navigation.viewFile(mediaFile: mediaFileInfo, namespace: mapAnimationNamespace)
                     }
                     .onScrollVisibilityChange { visible in

@@ -12,8 +12,14 @@ import SwiftUI
 struct MapPopupMediaFileTeaser: View {
     let namespace: Namespace.ID
     let mediaFileInfo: MediaFileInfo
+    var size: WidthClass = .regular
     let isSelected: Bool
     let onTap: () -> Void
+
+    enum WidthClass {
+        case regular
+        case wide
+    }
 
     private let shape = ContainerRelativeShape()
 
@@ -46,7 +52,7 @@ struct MapPopupMediaFileTeaser: View {
             }
         }
         //        .frame(width: isSelected && (mediaFileInfo.mediaFile.aspectRatio ?? 1) > 1 ? 220 : 160, height: 160)
-        .frame(width: 160, height: 160)
+        .frame(width: size == .wide ? 250 : 160, height: 160)
         .clipShape(shape)
         .contentShape([.contextMenuPreview, .interaction], shape)
         .geometryGroup()

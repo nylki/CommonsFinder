@@ -15,16 +15,24 @@ struct HorizontalCategoryMapList: View {
     @Environment(Navigation.self) private var navigation
 
     var body: some View {
+
+        let isSingleCategory = categories.count == 1
+
         ScrollView(.horizontal) {
             LazyHStack {
                 ForEach(categories) { item in
                     let isSelected = item.id == focusedItem.viewID(type: String.self)
-                    MapSheetCategoryTeaser(item: item, isSelected: isSelected, namespace: mapAnimationNamespace)
+                    MapSheetCategoryTeaser(
+                        item: item,
+                        size: isSingleCategory ? .wide : .regular,
+                        isSelected: isSelected,
+                        namespace: mapAnimationNamespace
+                    )
                 }
             }
             .containerShape(ViewConstants.mapSheetContainerShape)
             .frame(minWidth: 100)
-            .safeAreaPadding(.horizontal, 120)
+            .safeAreaPadding(.horizontal, isSingleCategory ? 50 : 120)
             .frame(height: 180)
             .scrollTargetLayout()
         }
