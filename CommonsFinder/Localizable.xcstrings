@@ -5,7 +5,8 @@
       "shouldTranslate" : false
     },
     "%@" : {
-      "comment" : "Title in Intent FileEntity"
+      "comment" : "Title in Intent FileEntity",
+      "shouldTranslate" : false
     },
     "%@ Upload Error" : {
       "localizations" : {
@@ -50,9 +51,39 @@
     "%lld Parent Categories" : {
       "localizations" : {
         "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%lld Überkategorien"
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "1 Überkategorie"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld Überkategorien"
+                }
+              }
+            }
+          }
+        },
+        "en" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "1 Parent Category"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "new",
+                  "value" : "%lld Parent Categories"
+                }
+              }
+            }
           }
         }
       }
@@ -60,9 +91,39 @@
     "%lld Subcategories" : {
       "localizations" : {
         "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%lld Unterkategorien"
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "needs_review",
+                  "value" : "1 Unterkategorie"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "needs_review",
+                  "value" : "%lld Unterkategorien"
+                }
+              }
+            }
+          }
+        },
+        "en" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "1 Sub-Category"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld Sub-Categories"
+                }
+              }
+            }
           }
         }
       }
@@ -78,7 +139,7 @@
       }
     },
     "•" : {
-
+      "shouldTranslate" : false
     },
     "• What can you do?" : {
       "localizations" : {
@@ -766,6 +827,26 @@
         }
       }
     },
+    "Images (%@ radius)" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bilder (%@ radius)"
+          }
+        }
+      }
+    },
+    "Images in area" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bilder im Gebiet"
+          }
+        }
+      }
+    },
     "In-App Search" : {
       "localizations" : {
         "de" : {
@@ -902,6 +983,26 @@
         }
       }
     },
+    "Locations (%@ radius)" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Orte (%@ radius)"
+          }
+        }
+      }
+    },
+    "Locations in area" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Orte im Gebiet"
+          }
+        }
+      }
+    },
     "logging in..." : {
       "localizations" : {
         "de" : {
@@ -972,12 +1073,12 @@
         }
       }
     },
-    "Media" : {
+    "Map Mode" : {
       "localizations" : {
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Medien"
+            "value" : "Kartenmodus"
           }
         }
       }
@@ -1139,12 +1240,12 @@
         }
       }
     },
-    "Open in Map App" : {
+    "Open in Maps" : {
       "localizations" : {
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "In Karten-App öffnen"
+            "value" : "In der Karten-App öffnen"
           }
         }
       }
@@ -1533,6 +1634,16 @@
         }
       }
     },
+    "Show on Map" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Auf Karte anzeigen"
+          }
+        }
+      }
+    },
     "slow or expensive internet connection" : {
       "localizations" : {
         "de" : {
@@ -1776,7 +1887,14 @@
       }
     },
     "User actions" : {
-
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Benutzeraktionen"
+          }
+        }
+      }
     },
     "Username" : {
       "localizations" : {
@@ -1868,16 +1986,6 @@
         }
       }
     },
-    "Wikidata Items" : {
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Wikidata-Eintrag"
-          }
-        }
-      }
-    },
     "Wikimedia Account" : {
       "localizations" : {
         "de" : {
@@ -1901,9 +2009,39 @@
     "You reached the end of %lld files!" : {
       "localizations" : {
         "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Du hast das Ende von %lld files erreicht!"
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Du hast das Ende erreicht, es gibt nur eine Datei."
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Du hast das Ende von %lld files erreicht!"
+                }
+              }
+            }
+          }
+        },
+        "en" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "You reached the end, there is only one file."
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "new",
+                  "value" : "You reached the end of %lld files!"
+                }
+              }
+            }
           }
         }
       }

@@ -8,7 +8,7 @@
 import Foundation
 import H3kit
 
-extension H3 {
+nonisolated extension H3 {
     // This is just a rough estimation, to be adjusted.
     public static func bestH3Resolution(forScreenArea screenArea: Double) -> Resolution {
         let idealVisibleCellCount = 4
@@ -26,8 +26,14 @@ extension H3 {
     }
 }
 
+nonisolated extension H3Index {
+    var resolution: H3.Resolution? {
+        H3.getResolution(index: self)
+    }
+}
 
-extension H3.Resolution {
+
+nonisolated extension H3.Resolution {
     /// A cell is a hexagong or pentagon, so the circle is just a rough approximation in meter based on the area
     /// and will not cover points at the corners of the polygon.
     var approxCircleRadius: Double {

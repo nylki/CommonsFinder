@@ -408,10 +408,9 @@ public actor API {
     }
     
     
-    /// listUploads
+    /// listUserImages
     /// - Parameters:
     ///   - username: list items for this user
-    ///   - limit: 1..50 (default: 50, for clients with higher limits, the max limit is: 500)
     public func listUserImages(
         of username: String,
         limit: ListLimit = .max,
@@ -419,7 +418,7 @@ public actor API {
         end: Date?,
         direction: ListDirection,
         continueString: String?
-    ) async throws -> ImageListResponse {
+    ) async throws -> UserImagesListResponse {
         var parameters: Parameters = [
             "action": "query",
             "curtimestamp": 1,
@@ -429,8 +428,6 @@ public actor API {
             "ailimit": limit.apiString,
             "aiprop": "",
             "aisort": "timestamp",
-            "prop": "info",
-            "inprop": "protection",
             "format": "json",
             "formatversion": 2
         ]
@@ -447,14 +444,16 @@ public actor API {
             parameters["aicontinue"] = continueString
         }
         
-
-
         let request = session
             .request(commonsEndpoint, method: .get, parameters: parameters)
             .serializingDecodable(QueryResponse<AllImagesListResponse>.self, decoder: jsonDecoder)
         
         let responseValue = try await request.value
-        return .init(continueString: responseValue.continue?.aicontinue, files: responseValue.query?.allimages ?? [])
+        
+        // NOTE: "allimages" list doesnt return pageid for some reason (only with generator, which
+        // we like to avoid due to sort order and pagination complications.
+        let titles = responseValue.query?.allimages.map(\.title) ?? []
+        return .init(continueString: responseValue.continue?.aicontinue, titles: titles)
     }
     
     
@@ -519,7 +518,7 @@ public actor API {
         )
     }
     
-    public func listCategoryImagesRaw(of category: String, continueString: String? = nil, limit: ListLimit = .max) async throws -> ImageListResponse {
+    public func listCategoryImagesRaw(of category: String, continueString: String? = nil, limit: ListLimit = .max) async throws -> CategoryImageListResponse {
         var parameters: Parameters = [
             "action": "query",
             "list": "categorymembers",
@@ -562,9 +561,7 @@ public actor API {
 //    
     /// Augment existing partial file info with structured data
     public func fetchFileMetadata(fileMetadataList: [FileMetadata]) async throws -> [RawFileMetadata] {
-        
-//        async let pageQueryTask = fetchImageMetadata(forImageTitles: titles)
-        let structuredData = try await fetchStructuredData(forMediaTitles: fileMetadataList.map(\.title))
+        let structuredData = try await fetchStructuredData(.pageids(fileMetadataList.map(\.id)))
         var result: [RawFileMetadata] = []
         
         for fileMetadata in fileMetadataList {
@@ -578,12 +575,14 @@ public actor API {
     }
     
     /// fetch file info and  structured data to form a RawFileMetadata
-    public func fetchFullFileMetadata(fileNames: [String]) async throws -> [RawFileMetadata] {
+    public func fetchFullFileMetadata(_ identifiers: FileIdentifierList) async throws -> [RawFileMetadata] {
         
-        async let pageQueryTask = fetchImageMetadata(forMediaTitles: fileNames)
-        async let structuredDataTask = fetchStructuredData(forMediaTitles: fileNames)
+        async let pageQueryTask = fetchImageMetadata(identifiers)
+        async let structuredDataTask = fetchStructuredData(identifiers)
         
         let (fileMetadataList, structuredDataItems) = try await (pageQueryTask, structuredDataTask)
+        
+        // dict on either pageid or title as key
         var result: [String: RawFileMetadata] = [:]
         
         for fileMetadata in fileMetadataList {
@@ -591,30 +590,31 @@ public actor API {
                 logger.warning("We expect to find a wikidata entry for each page, \(fileMetadata.id) doesnt have one. Failed upload?")
                 continue
             }
-            result[fileMetadata.title] = .init(
+            let item = RawFileMetadata(
                 title: fileMetadata.title,
                 pageid: fileMetadata.pageid,
                 pageData: fileMetadata,
                 structuredData: structuredData
             )
+            
+            switch identifiers {
+            case .titles(_):
+                result[item.title] = item
+            case .pageids(_):
+                result[item.id] = item
+            }
         }
-        
+
         // Mapping the result based on the original order, since the fetch order is not guaranteed
-        return fileNames.compactMap { result[$0] }
+        return identifiers.items.compactMap { result[$0] }
     }
     
     // Example: https://commons.wikimedia.org/w/api.php?action=query&format=json&prop=imageinfo&titles=File%3The_Earth_seen_from_Apollo_17.jpg&formatversion=2&iiprop=url%7Cextmetadata&iiurlwidth=640&iiurlheight=640&iiextmetadatamultilang=1
-    internal func fetchImageMetadata(forMediaTitles titles: [String]) async throws -> [FileMetadata] {
-        var titles = titles
-        if titles.count >= 50 {
-            logger.warning("Trying to fetch metadata for \(titles.count) titles. However only 50 are supported at one time. Will be limited to 10.")
-            titles = Array(titles.prefix(50))
-        }
-        let parameters: Parameters = [
+    internal func fetchImageMetadata(_ identifiers: FileIdentifierList) async throws -> [FileMetadata] {
+        var parameters: Parameters = [
             "action": "query",
             "curtimestamp": 1,
             "prop": "imageinfo|categories|info",
-            "titles": titles.joined(separator: "|"),
             "exportschema": "0.11",
             "formatversion": 2,
             "clshow": "!hidden",
@@ -629,7 +629,21 @@ public actor API {
             "maxage": 60,
             "format": "json"
         ]
-    
+        
+        switch identifiers {
+        case .titles(var titles):
+            if titles.count >= 50 {
+                logger.warning("Trying to fetch metadata for \(titles.count) titles. However only 50 are supported at one time. Will be limited to 10.")
+                titles = Array(titles.prefix(50))
+            }
+            parameters["titles"] = titles.joined(separator: "|")
+        case .pageids(var pageIDs):
+            if pageIDs.count >= 50 {
+                logger.warning("Trying to fetch metadata for \(pageIDs.count) titles. However only 50 are supported at one time. Will be limited to 10.")
+                pageIDs = Array(pageIDs.prefix(50))
+            }
+            parameters["pageids"] = pageIDs.joined(separator: "|")
+        }
         
         let request = session.request(commonsEndpoint, method: .get, parameters: parameters)
             .serializingDecodable(QueryResponse<FileMetadataListResponse>.self, decoder: jsonDecoder)
@@ -797,6 +811,41 @@ public actor API {
 
     }
     
+    public func geoSearchFiles(around coordinate: CLLocationCoordinate2D, radius: CLLocationDistance) async throws -> [GeoSearchFileItem] {
+        
+        enum Sort: String {
+            case distance
+            case relevance
+        }
+        
+        let radius = Int(radius.rounded(.awayFromZero))
+        let gscoord = "\(coordinate.latitude)|\(coordinate.longitude)"
+        
+        let parameters: Parameters = [
+            "action": "query",
+            "list": "geosearch",
+            "gscoord": gscoord,
+            "gsradius": radius,
+            "gssort": Sort.distance.rawValue,
+            "gsnamespace": MediawikiNamespace.file.rawValue,
+            "gslimit": "max",
+            "maxage": 60,
+            "exportschema": "0.11",
+            "formatversion": 2,
+            "curtimestamp": 1,
+            "format": "json"
+        ]
+        
+        let request = session.request(commonsEndpoint, method: .get, parameters: parameters)
+            .serializingDecodable(QueryResponse<GeosearchListResponse>.self, decoder: jsonDecoder)
+        let resultValue = try await request.value
+        guard let resultQuery = resultValue.query else {
+            return []
+        }
+        return resultQuery.geosearch
+
+    }
+    
     /// searchWikidataItems
     /// - Parameters:
     ///   - term: `String` to search for
@@ -830,7 +879,7 @@ public actor API {
     }
     
     public func fetchGenericWikidataItems(itemIDs: [String], languageCode: LanguageCode) async throws -> [GenericWikidataItem] {
-        let preferredLanguages = ([languageCode] + Locale.preferredLanguages).uniqued().joined(separator: ",")
+        let preferredLanguages = ([languageCode] + getPreferredSystemLanguages()).uniqued().joined(separator: ",")
         let ids = itemIDs.reduce("") { partialResult, qItem in
             partialResult + " wd:\(qItem)"
         }
@@ -894,7 +943,7 @@ GROUP BY ?item ?commonsCategory ?area ?location ?label ?image ?description
     /// and P373 (http://www.wikidata.org/entity/Property:P373)
     // eg: https://query.wikidata.org/sparql?query=%20%20SELECT%20%3Fitem%20%3FitemLabel%20%3FcommonsCategory%20%3FcommonsCategoryLabel%20WHERE%20%7B%0A%20%20%20%20VALUES%20%3Fitem%20%7Bwd%3AQ2%20wd%3AQ5%20wd%3AQ42%20%20%7D%20%20%23%20Replace%20these%20with%20your%20Q-items%0A%20%20%20%20%3Fitem%20wdt%3AP910%20%3FcommonsCategory%20.%20%20%20%20%23%20P910%20links%20to%20the%20main%20category%0A%20%20%20%20%3FcommonsCategory%20wdt%3AP373%20%3FcommonsName%20.%20%23%20Filter%20to%20ensure%20it%20has%20a%20Commons%20category%0A%20%20%20%20SERVICE%20wikibase%3Alabel%20%7B%20bd%3AserviceParam%20wikibase%3Alanguage%20%22%5BAUTO_LANGUAGE%5D%2Cen%22.%20%7D%0A%20%20%7D%0A%0A&format=json
     public func findCategoriesForWikidataItems(_ itemIDs: [String], languageCode: String) async throws -> [GenericWikidataItem] {
-        let preferredLanguages = ([languageCode] + Locale.preferredLanguages).uniqued().joined(separator: ",")
+        let preferredLanguages = ([languageCode] + getPreferredSystemLanguages()).uniqued().joined(separator: ",")
         let ids = itemIDs.reduce("") { partialResult, qItem in
             partialResult + " wd:\(qItem)"
         }
@@ -949,7 +998,7 @@ GROUP BY ?item ?commonsCategory ?area ?location ?label ?image ?description
     
     
     public func findWikidataItemsForCategories(_ categories: [String], languageCode: String) async throws -> [GenericWikidataItem] {
-        let preferredLanguages = ([languageCode] + Locale.preferredLanguages).uniqued().joined(separator: ",")
+        let preferredLanguages = ([languageCode] + getPreferredSystemLanguages()).uniqued().joined(separator: ",")
         let categoriesString = categories
             .map {
                 let quotationMarksEscapedString = $0.replacingOccurrences(of: "\"", with: "\\\"")
@@ -1017,7 +1066,9 @@ GROUP BY ?item ?commonsCategory ?area ?location ?label ?image ?description
     
     // NOTE: see "radius_query_for_upload_wizard.rq" for similar query in android commons project
     public func getWikidataItemsAroundCoordinate(_ coordinate: CLLocationCoordinate2D, kilometerRadius: Double, limit: Int = 10000, minArea: Double? = nil, languageCode: LanguageCode) async throws -> [GenericWikidataItem] {
-        let preferredLanguages = ([languageCode] + Locale.preferredLanguages).uniqued().joined(separator: ",")
+        
+        let kilometerRadius = Int(kilometerRadius.rounded(.awayFromZero))
+        let preferredLanguages = ([languageCode] + getPreferredSystemLanguages()).uniqued().joined(separator: ",")
         
         let minAreaFilter = if let minArea {
             "FILTER(?area > \(minArea))"
@@ -1093,7 +1144,7 @@ ORDER BY ?distance LIMIT \(limit)
         limit: Int = 10000
     ) async throws -> [GenericWikidataItem] {
         
-        let preferredLanguages = ([languageCode] + Locale.preferredLanguages).uniqued().joined(separator: ",")
+        let preferredLanguages = ([languageCode] + getPreferredSystemLanguages()).uniqued().joined(separator: ",")
         
         var areaQuery = """
         ?item p:P2046/psn:P2046 [ # area, normalised (psn retrieves the normaized value, psv the original one)
@@ -1138,8 +1189,7 @@ GROUP BY ?item ?commonsCategory ?location ?label ?description ?image ?area
 LIMIT \(limit)
 """
         
-        print(sparqlQuery)
-        
+
         let parameters: Parameters = [
             "query": sparqlQuery,
             "format": "json"
@@ -1220,20 +1270,27 @@ LIMIT \(limit)
     // see "snak": http://www.wikidata.org/entity/Wikidata:Glossary
     // https://commons.wikimedia.org/w/api.php?action=wbgetentities&format=json&curtimestamp=1&sites=commonswiki&titles=File%3AThe_Earth_seen_from_Apollo_17.jpg&redirects=yes&props=info%7Clabels%7Cclaims&languages=&sitefilter=&callback=&formatversion=2
     /// Returns a dictionary of entities where the key is the wikibase formatted pageID (string with "M" suffix), eg. "M148014716" for pageID 148014716.
-    public func fetchStructuredData(forMediaTitles titles: [String]) async throws -> [String: WikidataFileEntity] {
+    public func fetchStructuredData(_ identifiers: FileIdentifierList) async throws -> [String: WikidataFileEntity] {
         // NOTE: In contrast to Q-Items and Properties (P) where only limited language translations are fetched,
         // for files we don't want a reduced language set when calling "wbgetentities" for easier editing.
-        let parameters: Parameters = [
+        
+        var parameters: Parameters = [
             "action": "wbgetentities",
             "curtimestamp": 1,
             "sites": "commonswiki",
-            "titles": titles.joined(separator: "|"),
             "exportschema": "0.11",
             "formatversion": 2,
             "smaxage": 60,
             "maxage": 60,
             "format": "json"
         ]
+        
+        switch identifiers {
+        case .titles(let titles):
+            parameters["titles"] = titles.joined(separator: "|")
+        case .pageids(let pageids):
+            parameters["ids"] = pageids.map{ "M\($0)" }.joined(separator: "|")
+        }
         
         let request = session.request(commonsEndpoint, method: .get, parameters: parameters)
             .serializingDecodable(FileEntitiesResponse.self, decoder: jsonDecoder)
@@ -1263,9 +1320,8 @@ LIMIT \(limit)
             "languagefallback": "1",
             "ids": ids.joined(separator: "|"),
             "formatversion": 2,
-            // Allow long cache times for these relatively static strings
-            "smaxage": 24 * 3600,
-            "maxage": 24 * 3600,
+            "smaxage": 60,
+            "maxage": 60,
             "format": "json"
         ]
         
@@ -1471,5 +1527,15 @@ internal extension [MediawikiNamespace] {
         self
             .map { String($0.rawValue) }
             .joined(separator: "|")
+    }
+}
+
+private func getPreferredSystemLanguages() -> [LanguageCode] {
+    return if #available(iOS 26.0, *) {
+        Locale.preferredLocales.compactMap { locale in
+            locale.language.languageCode?.identifier
+        }
+    } else {
+        Locale.preferredLanguages
     }
 }

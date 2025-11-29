@@ -5,8 +5,11 @@
 //  Created by Tom Brewe on 03.10.24.
 //
 
+import Accelerate
 import CommonsAPI
 import CoreLocation
+import GEOSwift
+import GEOSwiftMapKit
 import H3kit
 import MapKit
 import Nuke
@@ -15,61 +18,222 @@ import SwiftUI
 import os.log
 
 struct MapView: View {
+    @Environment(\.appDatabase) private var appDatabase
     @Environment(Navigation.self) private var navigation
-    @State private var mapModel = MapModel()
+    @Environment(MediaFileReactiveCache.self) private var mediaFileCache
 
     @Namespace private var namespace
+    @Namespace private var mapScope
     @Environment(\.isPresented) private var isPresented
     @Environment(\.verticalSizeClass) private var verticalSizeClass
     @Environment(\.locale) private var locale
     @Environment(\.scenePhase) private var scenePhase
 
+    @Environment(MapModel.self) private var mapModel
+    @State private var selection: H3Index?
+
     /// this is either a media item or a wiki item
-    private var scrollClusterItem: (any GeoReferencable)? {
-        guard let id = mapModel.focusedClusterItem.viewID(type: String.self) else {
+    private var focusedMapSheetItem: GeoItem? {
+        guard let id = mapModel.selectedMapItem?.mapSheetFocusedItem.viewID(type: String.self) else {
             return nil
         }
 
-        return mapModel.wikiItemClustering.items[id] ?? mapModel.mediaClustering.items[id]
+        return mapModel.geoClusterTree.items[id]
     }
 
+    private func openMediaFile(_ id: MediaFileInfo.ID) {
+        if let mediaFileInfo = mediaFileCache[id] {
+            navigation.viewFile(mediaFile: mediaFileInfo, namespace: namespace)
+        } else {
+            assertionFailure()
+        }
+    }
+
+    private func handleLongPressGesture(gesturePoint: CGPoint) {
+        guard let coordinate = mapModel.mapProxy?.convert(gesturePoint, from: .global) else {
+            return
+        }
+
+        let point = Point(coordinate)
+
+        if isZoomedIntoSelectedCluster {
+            let pressedCluster: GeoCluster? = mapModel.clusters.values.first { cluster in
+                let clusterGeometry: Geometry? =
+                    switch mapModel.mapLayerMode {
+                    case .categoryItems: cluster.categoryGeometry
+                    case .mediaItem: cluster.mediaGeometry
+                    }
+
+                return if let clusterGeometry {
+                    (try? clusterGeometry.contains(point)) ?? false
+                } else {
+                    false
+                }
+            }
+
+            if let pressedCluster {
+                mapModel.selectCluster(pressedCluster.h3Index)
+            } else {
+                mapModel.selectMapLocation(coordinate)
+            }
+
+        } else {
+            mapModel.selectMapLocation(coordinate)
+        }
+
+    }
+
+    var selectedCluster: GeoCluster? {
+        (mapModel.selectedMapItem as? ClusterRepresentation)?.cluster
+    }
+    var selectedCircle: CircleRepresentation? {
+        (mapModel.selectedMapItem as? CircleRepresentation)
+    }
+    var isZoomedIntoSelectedCluster: Bool {
+        if let selectedClusterRes = selectedCluster?.h3Index.resolution {
+            selectedClusterRes.rawValue < mapModel.currentResolution.rawValue
+        } else {
+            false
+        }
+    }
+
+
     var body: some View {
+        @Bindable var mapModel = mapModel
+
         MapReader { mapProxy in
-            Map(position: $mapModel.position) {
+
+            Map(position: $mapModel.position, selection: $selection, scope: mapScope) {
                 clusterLayer
 
-                if let scrollClusterItem {
-                    ItemAnnotation(item: scrollClusterItem)
+                UserAnnotation()
+
+                if let selectedCircle {
+                    MapCircle(MKCircle(center: selectedCircle.coordinate, radius: selectedCircle.radius))
+                        .foregroundStyle(Color.accent.opacity(0.2))
+                        .stroke(Color.accent, style: .init(lineWidth: 1, lineCap: .square, dash: [2, 6]))
+                    Marker(coordinate: selectedCircle.coordinate) {
+                    }
                 }
 
-                UserAnnotation()
+                switch focusedMapSheetItem {
+                case .none:
+                    EmptyMapContent()
+                case .media(let mediaGeoItem):
+                    let label = mediaFileCache[mediaGeoItem.id]?.mediaFile.bestShortTitle.truncate(to: 80) ?? ""
+                    Annotation(label, coordinate: mediaGeoItem.coordinate, anchor: .center) {
+                        MediaAnnotationView(
+                            item: mediaFileCache[mediaGeoItem.id],
+                            namespace: namespace,
+                            isSelected: true,
+                            onTap: { openMediaFile(mediaGeoItem.id) }
+                        )
+                        .id(mediaGeoItem.id)
+                    }
+                    .mapOverlayLevel(level: .aboveLabels)
+                case .category(let category):
+                    if let coordinate = category.coordinate {
+                        let label = category.label?.truncate(to: 80) ?? ""
+                        Annotation(label, coordinate: coordinate, anchor: .center) {
+                            // TODO: custom marker with image
+                            WikiAnnotationView(item: category, isSelected: true) {
+                                navigation.viewCategory(.init(category))
+                            }
+                            .id(category.geoRefID)
+                        }
+                        .mapOverlayLevel(level: .aboveLabels)
+                    }
+                }
+            }
+            .task {
+                mapModel.setProxy(mapProxy)
+            }
+            .gesture(MapPressGesture(longPressAt: handleLongPressGesture))
+            .onChange(of: selection) { oldValue, newValue in
+                if oldValue != newValue, let newValue {
+                    mapModel.selectCluster(newValue)
+                }
+            }
+            .onMapCameraChange(frequency: .onEnd) { context in
+                mapModel.setMapContext(context: context)
+                mapModel.refreshPlaces(context: context)
+            }
+            .onMapCameraChange(frequency: .continuous) { context in
+                mapModel.setMapContext(context: context)
+                mapModel.updateItems()
             }
             .mapControls {
                 MapCompass()
-                MapScaleView(anchorEdge: .trailing)
-                // MapUserLocationButton doesnt ask for permissions and thus doesnt work, bug?
-                // check again maybe with iOS 19
-                if mapModel.isLocationAuthorized {
-                    MapUserLocationButton()
+                let diagonalMeters: Double = mapModel.region?.diagonalMeters ?? .infinity
+                if diagonalMeters < 7500 || mapModel.camera?.pitch != 0 {
+                    MapPitchToggle()
                 }
-            }
-        }
-        .overlay(alignment: .topTrailing) {
-            /// This is the replacement for the MapUserLocationButton in the mapControls
-            /// when the permission is not yet set
-            if !mapModel.isLocationAuthorized {
-                Button {
-                    mapModel.goToUserLocation()
-                } label: {
-                    Image(systemName: "location")
-                        .imageScale(.large)
-                        .frame(width: 25, height: 33)
 
+                MapScaleView()
+            }
+            .mapControlVisibility(.visible)
+            .mapStyle(
+                .standard(
+                    elevation: .automatic,
+                    emphasis: .automatic,
+                    pointsOfInterest: .excludingAll,
+                    showsTraffic: false
+                )
+            )
+            .overlay(alignment: .trailing) {
+                VStack {
+                    MapUserLocateButtonCustom(mapModel: mapModel)
+                    mapModeMenu
                 }
-                .tint(.blue)
-                .glassButtonStyle()
-                .labelStyle(.iconOnly)
                 .scenePadding()
+            }
+            .sheet(
+                isPresented: mapModel.isMapSheetPresentedBinding,
+                onDismiss: {
+                    if navigation.mapPath.isEmpty {
+                        // only clear the selected cluster if the dismiss comes from actively dismissing
+                        // by the user, and not indirectly when a navigation mapPath update was pushed (eg. viewing an image)
+                        mapModel.resetClusterSelection()
+                    }
+                }
+            ) {
+                if let model = (mapModel.selectedMapItem as? MediaInClusterModel) {
+                    @Bindable var model = model
+                    MediaClusterSheet(
+                        model: model,
+                        mapAnimationNamespace: namespace,
+                        onClose: mapModel.resetClusterSelection
+                    )
+                    .id(model.id)
+                    .presentationBackgroundInteraction(.enabled)
+                } else if let model = (mapModel.selectedMapItem as? CategoriesInClusterModel) {
+                    @Bindable var model = model
+                    CategoryClusterSheet(
+                        model: model,
+                        mapAnimationNamespace: namespace,
+                        onClose: mapModel.resetClusterSelection
+                    )
+                    .id(model.id)
+                    .presentationBackgroundInteraction(.enabled)
+                } else if let model = (mapModel.selectedMapItem as? MediaAroundLocationModel) {
+                    @Bindable var model = model
+                    MediaCircleSheet(
+                        model: model,
+                        mapAnimationNamespace: namespace,
+                        onClose: mapModel.resetClusterSelection
+                    )
+                    .id(model.id)
+                    .presentationBackgroundInteraction(.enabled)
+                } else if let model = (mapModel.selectedMapItem as? CategoriesAroundLocationModel) {
+                    @Bindable var model = model
+                    CategoryCircleSheet(
+                        model: model,
+                        mapAnimationNamespace: namespace,
+                        onClose: mapModel.resetClusterSelection
+                    )
+                    .id(model.id)
+                    .presentationBackgroundInteraction(.enabled)
+                }
 
             }
         }
@@ -78,234 +242,221 @@ struct MapView: View {
                 ProgressView().progressViewStyle(.circular)
             }
         }
-        .overlay(alignment: .bottomLeading) {
-            //            #if DEBUG
-            //                Text("\(mapModel.region?.diagonalMeters ?? 0.0)")
-            //            #endif
-        }
-        .mapStyle(
-            .standard(
-                elevation: .realistic,
-                emphasis: .automatic,
-                pointsOfInterest: .excludingAll,
-                showsTraffic: false
-            )
-        )
-        .onMapCameraChange(frequency: .onEnd) { context in
-            mapModel.setRegion(region: context.region)
-            mapModel.refreshPlaces(context: context)
-        }
-        .onMapCameraChange(frequency: .continuous) { context in
-            mapModel.setRegion(region: context.region)
-            mapModel.refreshClusters()
-        }
-        .onChange(of: locale) {
-            mapModel.locale = locale
-        }
         // Hide navigation title to have a larger map but still set it for accessibility reasons
         // (eg. for Navigation or Screen Reader)
+        .mapScope(mapScope)
         .navigationTitle("Map")
         .navigationBarTitleDisplayMode(.inline)
         .toolbarVisibility(.hidden, for: .navigationBar)
         .toolbarVisibility(verticalSizeClass == .compact ? .hidden : .automatic, for: .tabBar)
-        .pseudoSheet(isPresented: $mapModel.isClusterSheetPresented) {
-            if let cellIndex = mapModel.selectedCluster,
-                let rawMediaItems = mapModel.clusters[cellIndex]?.mediaItems,
-                let wikiItems = mapModel.clusters[cellIndex]?.wikiItems
-            {
-                MapPopup(
-                    clusterIndex: cellIndex,
-                    scrollPosition: $mapModel.focusedClusterItem,
-                    rawCategories: wikiItems,
-                    rawMediaItems: rawMediaItems,
-                    isPresented: $mapModel.isClusterSheetPresented
-                )
-                // the .id makes sure we don't retain state of the previous cell
-                // as this complicates things with scroll positions and selected states and is generally not desired for this custom sheet.
-                .id(cellIndex)
-            }
-        }
-
     }
-
 
     @MapContentBuilder
     private var clusterLayer: some MapContent {
-        ForEach(Array(mapModel.clusters.keys), id: \.self) { index in
-            if let cluster = mapModel.clusters[index],
-                let centerCoordinate = try? CLLocationCoordinate2D.h3CellCenter(h3Index: index)
-            {
+        let clusters: ArraySlice<GeoCluster> =
+            if let selectedCluster {
+                ArraySlice([selectedCluster] + mapModel.clusters.values)
+            } else {
+                ArraySlice(mapModel.clusters.values)
+            }
 
-                let isSelected = index == mapModel.selectedCluster
 
-                if isSelected {
-                    MapCircle(MKCircle(center: centerCoordinate, radius: mapModel.currentResolution.approxCircleRadius))
+        let selectedClusterHull =
+            switch mapModel.mapLayerMode {
+            case .mediaItem: selectedCluster?.mediaHull
+            case .categoryItems: selectedCluster?.categoryHull
+            }
+
+        let selectedCircleLocation: CLLocation? =
+            if let selectedCircle {
+                CLLocation(
+                    latitude: selectedCircle.coordinate.latitude,
+                    longitude: selectedCircle.coordinate.longitude
+                )
+            } else { nil }
+
+        let experimentalAlwaysShowHulls = false
+
+
+        ForEach(clusters) { cluster in
+
+            // TODO: clean up this logic to be easier to read (maybe switch by selected item first, if its a cluster or circle and lay out the logic in sub-funcs for each case)
+
+            let hull =
+                switch mapModel.mapLayerMode {
+                case .mediaItem: cluster.mediaHull
+                case .categoryItems: cluster.categoryHull
+                }
+
+            let isSelected: Bool = selectedCluster?.h3Index == cluster.h3Index
+
+            //            let containsFocusedSheetItem = if let focusedItemID = focusedMapSheetItem {
+            //                switch focusedItemID {
+            //                case .media:
+            //                    Set(cluster.mediaItems.map(\.geoRefID)).contains(focusedItemID.geoRefID)
+            //                case .category:
+            //                    Set(cluster.categoryItems.map(\.geoRefID)).contains(focusedItemID.geoRefID)
+            //                }
+            //            } else {
+            //                false
+            //            }
+
+            let isContainedInSelectedCluster: Bool =
+                if let selectedClusterRes = selectedCluster?.h3Index.resolution,
+                    let parent = try? H3.cellToParent(cell: cluster.h3Index, parentRes: selectedClusterRes)
+                {
+                    parent == selectedCluster?.h3Index
+                } else {
+                    false
+                }
+
+
+            lazy var isContainedInSelectedRadius: Bool = {
+                if let selectedCircle, let selectedCircleLocation {
+                    // FIXME: move to a helper func
+                    let clusterHullCenter = CLLocation(
+                        latitude: hull.coordinate.latitude,
+                        longitude: hull.coordinate.longitude
+                    )
+                    return clusterHullCenter.distance(from: selectedCircleLocation) < selectedCircle.radius
+                } else {
+                    return false
+                }
+            }()
+
+            let isZoomedIntoSelected =
+                if let selectedClusterRes = selectedCluster?.h3Index.resolution {
+                    selectedClusterRes.rawValue < mapModel.currentResolution.rawValue
+                } else {
+                    false
+                }
+
+
+            if isSelected {
+                if let selectedClusterHull {
+                    MapPolygon(selectedClusterHull)
+                        .foregroundStyle(Color.accent.opacity(isZoomedIntoSelectedCluster ? 0.1 : 0.2))
+                        .stroke(
+                            Color.accent.opacity(isZoomedIntoSelectedCluster ? 0.35 : 1),
+                            style: .init(lineWidth: 1, lineCap: .square, dash: [2, 6])
+                        )
+                } else {
+                    MapCircle(MKCircle(center: cluster.h3Center, radius: mapModel.currentResolution.approxCircleRadius))
                         .foregroundStyle(.clear)
                         .stroke(Color.accent, lineWidth: 2)
-
-                } else {
-                    Annotation("", coordinate: centerCoordinate, anchor: .center) {
-                        ClusterAnnotation(
-                            mediaCount: cluster.mediaItems.count,
-                            wikiItemCount: cluster.wikiItems.count,
-                            isSelected: isSelected
-                        ) {
-                            mapModel.selectCluster(index)
+                }
+            } else if isContainedInSelectedCluster {
+                MapPolygon(hull)
+                    .foregroundStyle(Color.accent.opacity(0.2))
+                    .stroke(Color.accent, style: .init(lineWidth: 1, lineCap: .square, dash: [2, 6]))
+            } else if !isContainedInSelectedRadius {
+                switch mapModel.mapLayerMode {
+                case .mediaItem:
+                    if cluster.mediaItems.isEmpty {
+                        EmptyMapContent()
+                    } else if cluster.mediaItems.count == 1,
+                        let singleMediaItem = cluster.mediaItems.first,
+                        let coordinate = singleMediaItem.coordinate
+                    {
+                        /// single Image
+                        let mediaFileInfo = mediaFileCache[singleMediaItem.id]
+                        Annotation(mediaFileInfo?.mediaFile.bestShortTitle.truncate(to: 80) ?? "", coordinate: coordinate, anchor: .center) {
+                            MediaAnnotationView(
+                                item: mediaFileCache[singleMediaItem.id],
+                                namespace: namespace,
+                                isSelected: false,
+                                onTap: { mapModel.selectCluster(cluster.h3Index) }
+                            )
                         }
-                        .tag(index)
+                        //                        .tag(cluster.h3Index)
+                    } else {
+                        // multiple images
+                        Annotation("", coordinate: cluster.meanCenterMedia, anchor: .center) {
+                            ClusterAnnotation(
+                                pickedItemType: .mediaItem,
+                                mediaCount: cluster.mediaItems.count,
+                                wikiItemCount: cluster.categoryItems.count,
+                                isSelected: isSelected
+                            ) {
+                                mapModel.selectCluster(cluster.h3Index)
+                            }
+                        }
+                        .tag(cluster.h3Index)
+                    }
+                case .categoryItems:
+                    if cluster.categoryItems.isEmpty {
+                        EmptyMapContent()
+                    } else if cluster.categoryItems.count == 1,
+                        let singleCategory = cluster.categoryItems.first,
+                        let coordinate = singleCategory.coordinate
+                    {
+                        // single category
+                        Annotation(singleCategory.label ?? "", coordinate: coordinate, anchor: .center) {
+                            WikiAnnotationView(item: singleCategory, isSelected: false) {
+                                mapModel.selectCluster(cluster.h3Index)
+                            }
+                            .id(singleCategory.geoRefID)
+                        }
+                        .mapOverlayLevel(level: .aboveLabels)
+                        //                        .tag(cluster.h3Index)
+                    } else {
+                        if experimentalAlwaysShowHulls {
+                            MapPolygon(hull)
+                                .foregroundStyle(Color.accent.opacity(0.2))
+                                .stroke(Color.accent, style: .init(lineWidth: 1, lineCap: .square, dash: [2, 6]))
+                        }
+
+
+                        // multiple categories
+                        Annotation("", coordinate: cluster.meanCenterCategories, anchor: .center) {
+                            ClusterAnnotation(
+                                pickedItemType: .categoryItems,
+                                mediaCount: cluster.mediaItems.count,
+                                wikiItemCount: cluster.categoryItems.count,
+                                isSelected: isSelected
+                            ) {
+                                mapModel.selectCluster(cluster.h3Index)
+                            }
+                        }
+                        .tag(cluster.h3Index)
                     }
                 }
-
-
-            } else {
-                EmptyMapContent()
             }
         }
-        .annotationTitles(.hidden)
+        .annotationTitles(mapModel.selectedMapItem == nil ? .automatic : .hidden)
     }
-}
 
-private struct ItemAnnotation: MapContent {
-    let item: any GeoReferencable
+    private var mapModeMenu: some View {
+        Menu {
+            Text("Map Mode")
+            Divider()
+            Button {
+                mapModel.selectMapMode(.categoryItems)
+            } label: {
+                Label("Locations", systemImage: "tag.fill")
 
-    var body: some MapContent {
-        if let lat = item.latitude, let lon = item.longitude {
-            Annotation("", coordinate: .init(latitude: lat, longitude: lon), anchor: .center) {
-                if let category = item as? Category {
-                    WikiAnnotationView(item: category)
-                        .id(category.geoRefID)
+            }
+            .labelStyle(.iconOnly)
 
-                } else if let imageItem = item as? GeoSearchFileItem {
-                    MediaAnnotationView(item: imageItem)
-                        .id(imageItem.geoRefID)
-                }
+            Button {
+                mapModel.selectMapMode(.mediaItem)
+            } label: {
+                Label("Images", systemImage: "photo")
+            }
+            .labelStyle(.iconOnly)
+        } label: {
+            switch mapModel.mapLayerMode {
+            case .categoryItems:
+                Image(systemName: "tag.fill")
+                    .imageScale(.large)
+                    .frame(width: 25, height: 33)
+            case .mediaItem:
+                Image(systemName: "photo")
+                    .imageScale(.large)
+                    .frame(width: 25, height: 33)
             }
         }
-    }
-}
-
-
-// TODO: unify both views (WikiAnnotationView + MediaAnnotationView) via Nuke.ImageRequest param when they stay identical
-// for now this gives us some flexibility to differentiate both if useful or looks better
-private struct WikiAnnotationView: View {
-    @State private var isVisible = false
-    let item: Category
-
-    var body: some View {
-        ZStack {
-            if let imageRequest = item.thumbnailImage {
-                LazyImage(request: imageRequest) { imageLoadingState in
-                    if isVisible, let image = imageLoadingState.image {
-                        image
-                            .resizable()
-                            .aspectRatio(contentMode: .fill)
-                            .transition(.opacity)
-                    }
-                }
-            } else {
-                Color.accent.opacity(isVisible ? 1 : 0)
-            }
-        }
-        .frame(width: 35, height: 35)
-        .clipShape(.circle)
-        .scaleEffect(isVisible ? 1 : 0.85, anchor: .center)
-        .animation(.default, value: isVisible)
-        .geometryGroup()
-        .compositingGroup()
-        .task {
-            do {
-                try await Task.sleep(for: .milliseconds(50))
-                isVisible = true
-            } catch {}
-        }
-
-    }
-}
-
-// TODO: unify both views (WikiAnnotationView + MediaAnnotationView) via Nuke.ImageRequest param when they stay identical
-// for now this gives us some flexibility to differentiate both if useful or looks better
-private struct MediaAnnotationView: View {
-    let item: GeoSearchFileItem
-    @State private var isVisible = false
-
-
-    var body: some View {
-        ZStack {
-            if let title = item.title.split(separator: "File:").first,
-                let resizedURL = try? URL.experimentalResizedCommonsImageURL(filename: String(title), maxWidth: 640)
-            {
-                // FIXME: url request to be identical on the map and in the sheet otherwise
-                // we have two image separate network requests and a visible delay when display
-                // the image on the map.
-                LazyImage(request: Nuke.ImageRequest(url: resizedURL)) { imageLoadingState in
-                    if isVisible, let image = imageLoadingState.image {
-                        image
-                            .resizable()
-                            .aspectRatio(contentMode: .fill)
-                            .transition(.opacity)
-                    }
-                }
-            } else {
-                Color.accent.opacity(isVisible ? 1 : 0)
-            }
-        }
-        .frame(width: 35, height: 35)
-        .clipShape(.circle)
-        .scaleEffect(isVisible ? 1 : 0.85, anchor: .center)
-        .animation(.default, value: isVisible)
-        .geometryGroup()
-        .compositingGroup()
-        .task {
-            do {
-                try await Task.sleep(for: .milliseconds(50))
-                isVisible = true
-            } catch {}
-        }
-
-    }
-}
-
-extension MKCoordinateRegion {
-    var metersInLatitude: Double {
-        span.latitudeDelta * 111_320
-    }
-
-    /// area in m^2
-    var area: Double {
-        metersInLatitude * metersInLongitude
-    }
-
-    var metersInLongitude: Double {
-        let metersPerDegreeLongitude = cos(center.latitude * .pi / 180.0) * 111_320
-        return span.longitudeDelta * metersPerDegreeLongitude
-    }
-
-    var diagonalMeters: Double {
-        sqrt(pow(metersInLatitude, 2) + pow(metersInLongitude, 2))
-    }
-
-    var boundingBox: (topLeft: CLLocationCoordinate2D, bottomRight: CLLocationCoordinate2D) {
-        let halfLatDelata = span.latitudeDelta / 2
-        let halfLonDelta = span.longitudeDelta / 2
-
-        let topLeftCoordinateLat = center.latitude + halfLatDelata
-        let topLeftCoordinateLon = center.longitude - halfLonDelta
-
-        let bottomRightCoordinateLat = center.latitude - halfLatDelata
-        let bottomRightCoordinateLon = center.longitude + halfLonDelta
-
-        let topLeftCoordinate = CLLocationCoordinate2D(
-            latitude: topLeftCoordinateLat,
-            longitude: topLeftCoordinateLon
-        )
-
-        let bottomRightCoordinate = CLLocationCoordinate2D(
-            latitude: bottomRightCoordinateLat,
-            longitude: bottomRightCoordinateLon
-        )
-
-        return (topLeftCoordinate, bottomRightCoordinate)
-
+        .glassButtonStyle()
     }
 }
 

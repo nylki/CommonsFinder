@@ -17,7 +17,7 @@ import SwiftUI
     init(appDatabase: AppDatabase, searchString: String, order: SearchOrder = .relevance) async throws {
         self.sort = order
         self.searchString = searchString
-        try await super.init(appDatabase: appDatabase)
+        try await super.init(appDatabase: appDatabase, initialIDs: [])
     }
 
     init(previewAppDatabase: AppDatabase, searchString: String, prefilledMedia: [MediaFileInfo]) {
@@ -27,7 +27,7 @@ import SwiftUI
     }
 
     override internal func
-        fetchRawContinuePaginationItems() async throws -> (items: [String], reachedEnd: Bool)
+        fetchRawContinuePaginationItems() async throws -> (fileIdentifiers: FileIdentifierList, canContinue: Bool)
     {
         let result = try await CommonsAPI.API.shared.searchFiles(
             for: searchString,
@@ -37,6 +37,7 @@ import SwiftUI
         )
 
         offset = result.offset
-        return (result.items.map(\.title), offset != nil)
+        let pageIDs = result.items.compactMap(\.pageid).map(String.init)
+        return (fileIdentifiers: .pageids(pageIDs), canContinue: offset != nil)
     }
 }

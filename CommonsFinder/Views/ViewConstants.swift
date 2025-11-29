@@ -8,7 +8,7 @@
 import SwiftUI
 
 struct ViewConstants {
-    static let pseudoSheetShape: RoundedRectangle = .rect(cornerRadius: 33)
+    static let mapSheetContainerShape: RoundedRectangle = .rect(cornerRadius: 33)
 
     /// the maximum width or height of a zoomable image
     static let maxFullscreenLengthPx = 50_000

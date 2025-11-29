@@ -11,24 +11,62 @@ import SwiftUI
 import os.log
 
 struct CategoryContextMenu: ViewModifier {
-    let item: CategoryInfo
+    private let item: CategoryInfo
+    private let shownEntries: ContextMenuEntries
+
+    init(item: CategoryInfo) {
+        self.item = item
+        self.shownEntries = .all
+    }
+
+    init(item: CategoryInfo, shownEntries: ContextMenuEntries) {
+        self.item = item
+        self.shownEntries = shownEntries
+    }
+
+    init(item: CategoryInfo, hiddenEntries: ContextMenuEntries) {
+        self.item = item
+        self.shownEntries = .all.subtracting(hiddenEntries)
+    }
+
     @Environment(\.appDatabase) private var appDatabase
+    @Environment(Navigation.self) private var navigation
+    @Environment(MapModel.self) private var mapModel
     @Namespace private var namespace
+
+    private func showOnMap() {
+        do {
+            try mapModel.showInCircle(item.base)
+            navigation.selectedTab = .map
+        } catch {
+            logger.error("Failed to show category on map \(error)")
+        }
+    }
 
     func body(content: Content) -> some View {
         content
             .contextMenu {
                 VStack {
-                    NavigationLink("Open Details", value: NavigationStackItem.wikidataItem(item))
+                    if shownEntries.contains(.openDetails) {
+                        Button("Open Details") {
+                            navigation.viewCategory(item)
+                        }
+                    }
+                    if shownEntries.contains(.showOnMap), item.base.coordinate != nil {
+                        Button("Show on Map", action: showOnMap)
+                    }
+                    if shownEntries.contains(.bookmark) {
+                        Button(
+                            item.isBookmarked ? "Remove Bookmark" : "Add Bookmark",
+                            systemImage: item.isBookmarked ? "bookmark.fill" : "bookmark",
+                            action: { updateBookmark(!item.isBookmarked) }
+                        )
+                    }
 
-                    Button(
-                        item.isBookmarked ? "Remove Bookmark" : "Add Bookmark",
-                        systemImage: item.isBookmarked ? "bookmark.fill" : "bookmark",
-                        action: { updateBookmark(!item.isBookmarked) }
-                    )
-
-                    // TODO: open location in OrganicMaps / AppleMaps
-                    CategoryLinkSection(item: item)
+                    if shownEntries.contains(.linkSection) {
+                        // TODO: open location in OrganicMaps / AppleMaps
+                        CategoryLinkSection(item: item)
+                    }
                 }
             } preview: {
                 CategoryTeaser(categoryInfo: item, withContextMenu: false)
@@ -42,6 +80,20 @@ struct CategoryContextMenu: ViewModifier {
             _ = try appDatabase.updateBookmark(item, bookmark: value)
         } catch {
             logger.error("Failed to update bookmark on wiki item \(item.id): \(error)")
+        }
+    }
+}
+
+extension CategoryContextMenu {
+    struct ContextMenuEntries: OptionSet {
+        let rawValue: Int
+        static let openDetails = Self(rawValue: 1 << 0)
+        static let showOnMap = Self(rawValue: 1 << 1)
+        static let bookmark = Self(rawValue: 1 << 2)
+        static let linkSection = Self(rawValue: 1 << 3)
+
+        static var all: Self {
+            [.openDetails, .showOnMap, .bookmark, .linkSection]
         }
     }
 }

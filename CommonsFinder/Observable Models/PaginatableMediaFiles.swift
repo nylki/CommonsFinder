@@ -11,10 +11,19 @@ import GRDB
 import SwiftUI
 import os.log
 
+private enum PaginationFileIdentifierType {
+    case pageid
+    case title
+}
+
+// IDEA: instead of handling Strings both with pageid and title pagination,
+// use tagged types (ie. SwiftTagged) as an associated type (PaginatableMediaFiles<FileIdType>?)  to differentiate and make it more obvious in all steps, without using the API type "FileIdentifierList".
+
 @Observable class PaginatableMediaFiles {
 
     var status: PaginationStatus = .unknown
-    var mediaFileInfos: [MediaFileInfo] = []
+    let fileCachingStrategy: FileCachingStrategy
+    private(set) var mediaFileInfos: [MediaFileInfo] = []
     let fullFilesFetchLimit = 10
 
     @ObservationIgnored
@@ -22,7 +31,14 @@ import os.log
 
     var isEmpty: Bool { status != .isPaginating && mediaFileInfos.isEmpty && !canContinueRawPagination }
 
-    var rawTitleStack: [String]
+    private let identifierType: PaginationFileIdentifierType
+
+    /// may represent pageid or title depending on identifierType
+    private var idsToFetch: [String]
+
+    /// may represent pageid or title depending on identifierType
+    @ObservationIgnored
+    private var allIds: Set<String> = []
 
     @ObservationIgnored
     private var paginationTask: Task<Void, Never>?
@@ -31,25 +47,63 @@ import os.log
 
     private let appDatabase: AppDatabase
 
-    @ObservationIgnored
-    var fileIDs: Set<FileMetadata.ID> = []
+    var maxCount: Int {
+        allIds.count
+    }
 
-    init(appDatabase: AppDatabase, initialTitles: [String] = []) async throws {
-        self.rawTitleStack = initialTitles
+    enum FileCachingStrategy {
+        case saveAll
+        case replaceExisting
+    }
+
+    func replaceIDs(_ ids: [String]) {
+        // FIXME: proper replace, while keeping already resolved ones
+        let oldCount = idsToFetch.count
+        let filteredIDs = ids.filter { !allIds.contains($0) }
+        idsToFetch.append(contentsOf: filteredIDs)
+        allIds.formUnion(filteredIDs)
+        if filteredIDs.count > oldCount {
+            status = .idle(reachedEnd: false)
+            paginate()
+        }
+    }
+
+    /// Initializes a Pagination model that paginates on file titles
+    init(appDatabase: AppDatabase, initialTitles: [String], fileCachingStrategy: FileCachingStrategy = .replaceExisting) async throws {
+        identifierType = .title
+        self.idsToFetch = initialTitles
+        allIds.formUnion(initialTitles)
         self.appDatabase = appDatabase
+        self.fileCachingStrategy = fileCachingStrategy
+        try await initialFetch()
+    }
+
+    /// Initializes a Pagination model that paginates on pageids
+    init(appDatabase: AppDatabase, initialIDs: [String], fileCachingStrategy: FileCachingStrategy = .replaceExisting) async throws {
+        identifierType = .pageid
+        self.idsToFetch = initialIDs
+        allIds.formUnion(initialIDs)
+        self.appDatabase = appDatabase
+        self.fileCachingStrategy = fileCachingStrategy
         try await initialFetch()
     }
 
     /// init for preview env not requiring to be async and can be pre-filled
-    init(previewAppDatabase: AppDatabase, initialTitles: [String], mediaFileInfos: [MediaFileInfo]) {
-        self.rawTitleStack = initialTitles
+    init(previewAppDatabase: AppDatabase, initialTitles: [String], mediaFileInfos: [MediaFileInfo], fileCachingStrategy: FileCachingStrategy = .replaceExisting) {
+        identifierType = .title
+        self.idsToFetch = initialTitles
+        allIds.formUnion(initialTitles)
         self.mediaFileInfos = mediaFileInfos
+        self.fileCachingStrategy = .replaceExisting
         self.appDatabase = previewAppDatabase
     }
 
-    func fetchRawContinuePaginationItems() async throws -> (items: [String], canContinue: Bool) {
+    func fetchRawContinuePaginationItems() async throws -> (fileIdentifiers: FileIdentifierList, canContinue: Bool) {
         // NOTE: if sub-classed: this function should be overriden to provide the continue titles
-        return ([], false)
+        return switch identifierType {
+        case .pageid: (.pageids([]), false)
+        case .title: (.titles([]), false)
+        }
     }
 
     private func observeDatabase() {
@@ -58,7 +112,6 @@ import os.log
         observationTask = Task<Void, Never> {
             do {
                 let ids = mediaFileInfos.map(\.id)
-
 
                 let observation = ValueObservation.tracking { db in
                     try MediaFileInfo.fetchAll(ids: ids, db: db)
@@ -95,34 +148,50 @@ import os.log
         paginationTask = Task<Void, Never> {
             defer { paginationTask = nil }
 
-            let needsRawFilesContinue = rawTitleStack.count < fullFilesFetchLimit
+            let needsRawFilesContinue = idsToFetch.count < fullFilesFetchLimit
             do {
                 /// If we reached the end of the raw item list, fetch some more with the `continue` if there are more items to paginate
                 if needsRawFilesContinue, canContinueRawPagination {
-                    let (titles, canContinue) = try await fetchRawContinuePaginationItems()
+                    let (fetchedIdentifiers, canContinue) = try await fetchRawContinuePaginationItems()
+
+                    assert(
+                        fetchedIdentifiers.type == self.identifierType,
+                        "we expect to operate either only with pageids or only with titles"
+                    )
 
                     // Makes sure to unique the raw files in case they come from a mixed data source
-                    // to prevent list loops. This is relevant for the PaginatableCategoryFiles subclass.
-                    let filteredTitles = titles.filter { !fileIDs.contains($0) }
-                    rawTitleStack.append(contentsOf: filteredTitles)
-                    fileIDs.formUnion(filteredTitles)
-
+                    // to prevent list loops. This is relevant for the PaginatableCategoryMediaFiles subclass.
+                    let filteredIdentifiers = fetchedIdentifiers.items.filter { !allIds.contains($0) }
+                    idsToFetch.append(contentsOf: filteredIdentifiers)
+                    allIds.formUnion(filteredIdentifiers)
                     self.canContinueRawPagination = canContinue
                 }
 
-                let titlesToFetch = rawTitleStack.popFirst(n: fullFilesFetchLimit)
-                guard !titlesToFetch.isEmpty else {
+                let idsToFetch = idsToFetch.popFirst(n: fullFilesFetchLimit)
+                guard !idsToFetch.isEmpty else {
                     status = .idle(reachedEnd: true)
                     return
                 }
 
+                let apiIDsToFetch: FileIdentifierList =
+                    switch identifierType {
+                    case .pageid: .pageids(idsToFetch)
+                    case .title: .titles(idsToFetch)
+                    }
+
                 let fetchedMediaFiles: [MediaFile] = try await CommonsAPI.API.shared
-                    .fetchFullFileMetadata(fileNames: titlesToFetch)
+                    .fetchFullFileMetadata(apiIDsToFetch)
                     .map(MediaFile.init)
 
-                // upsert newly fetched base MediaFile DB, in case it was updated,
-                // so those changes are visible when opening a file from bookmarks later
-                try appDatabase.replaceExistingMediaFiles(fetchedMediaFiles)
+                switch fileCachingStrategy {
+                case .saveAll:
+                    try appDatabase.upsert(fetchedMediaFiles)
+                case .replaceExisting:
+                    // upsert newly fetched base MediaFile DB, in case it was updated,
+                    // so those changes are visible when opening a file from bookmarks later
+                    try appDatabase.replaceExistingMediaFiles(fetchedMediaFiles)
+                }
+
 
                 // Append the fetched files to our list (keeping the ItemInteraction empty as
                 // we are going to observe the DB after this block and itemInteraction will be augmented from DB there.
@@ -131,10 +200,10 @@ import os.log
                         .init(mediaFile: $0, itemInteraction: nil)
                     })
 
-                let reachedEnd = rawTitleStack.isEmpty && !canContinueRawPagination
+                let reachedEnd = idsToFetch.isEmpty && !canContinueRawPagination
                 status = .idle(reachedEnd: reachedEnd)
 
-                logger.debug("new rawItems count: \(self.rawTitleStack.count)")
+                logger.debug("new rawItems count: \(self.idsToFetch.count)")
                 logger.debug("new mediaFiles count: \(self.mediaFileInfos.count)")
 
                 // NOTE: We may already have some of the mediaFiles in the DB  (eg. isBookmarked`)
@@ -152,10 +221,10 @@ import os.log
 
     private func initialFetch() async throws {
         status = .isPaginating
-        let (titles, canContinue) = try await fetchRawContinuePaginationItems()
-        let filteredTitles = titles.uniqued(on: \.self)
-        rawTitleStack.append(contentsOf: filteredTitles)
-        fileIDs.formUnion(filteredTitles)
+        let (ids, canContinue) = try await fetchRawContinuePaginationItems()
+        let filteredIDs = ids.items.uniqued(on: \.self)
+        idsToFetch.append(contentsOf: filteredIDs)
+        allIds.formUnion(filteredIDs)
         canContinueRawPagination = canContinue
         paginate()
     }
@@ -176,4 +245,13 @@ enum PaginationStatus: Equatable {
     case isPaginating
     case error
     case idle(reachedEnd: Bool)
+}
+
+extension FileIdentifierList {
+    fileprivate var type: PaginationFileIdentifierType {
+        switch self {
+        case .titles: .title
+        case .pageids: .pageid
+        }
+    }
 }

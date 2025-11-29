@@ -1,9 +1,21 @@
-- fixed error when syncing previous uploads of the logged in user
+This release features mayor changes to the map making,
+making it more useful and hopefully also more intuitive.
+This is just one iteration on Map features, expect finetuning and more bigger features to come! :)
 
-- feature: In zoomable full screen mode, the original image is now also loaded and displayed in full resolution, if you are connected to Wifi (otherwise manually)
+MAP
+- new Tab-Icon for consistency
+- images and categories can now be shown on the map (via context menu or small inline map in the detail views)
+- when you long press on an empty location on the map, you will now be presented with items in a 250m radius around that coordinate that you pressed
+- split location (categories/wikidata items) and images into 2 separate map layers that can be switched
+- highlighted items on the map now have labels
+- clusters are now positioned by center of density instead purely by their mathematical center, making the cluster button positioned more naturally
+- a selected cluster now has the boundary-outline instead of a radius, which better reflects the geometry and density of items in a cluster
+- clusters with only 1 item show that item with its image directly on the map
+- the map sheet is now using the native sheet-model implementation which has some upsides, but also some gotchas.
+- the map sheet now indicates the (rough) address/location of a cluster of items
+- when opening a category/map location in another app, the system-wide default app for navigation will now be opened (eg. Organic Maps instead of Apple Maps), this may be an iOS 26 or EU-only feature, not 100% sure.
 
-- feature: new "Open full screen mode" button in the "..." menu of an image detail page
 
-- fixed an error in image descriptions in list views, whereby the description was cut off if it contained a dot (".")
-
-- perf: more efficient parsing of image descriptions that contain html/wikitext
+OTHER CHANGES
+- add pluralization in some places
+- some smaller label and icon adjustments in menus

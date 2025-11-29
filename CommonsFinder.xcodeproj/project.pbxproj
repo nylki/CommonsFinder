@@ -8,12 +8,14 @@
 
 /* Begin PBXBuildFile section */
 		E2035C452D52544D0079235B /* CommonsAPI in Frameworks */ = {isa = PBXBuildFile; productRef = E2035C442D52544D0079235B /* CommonsAPI */; };
-		E20A8A642D75F24F00EA79C5 /* H3kit in Frameworks */ = {isa = PBXBuildFile; productRef = E20A8A632D75F24F00EA79C5 /* H3kit */; };
+		E206777A2EBE52FF00981A79 /* H3kit in Frameworks */ = {isa = PBXBuildFile; productRef = E20677792EBE52FF00981A79 /* H3kit */; };
 		E213C6B92EA29F570085C60E /* SwiftSoup in Frameworks */ = {isa = PBXBuildFile; productRef = E213C6B82EA29F570085C60E /* SwiftSoup */; };
-		E213C6BC2EA2BA650085C60E /* LRUCache in Frameworks */ = {isa = PBXBuildFile; productRef = E213C6BB2EA2BA650085C60E /* LRUCache */; };
 		E22A913C2CF8B1AA00D3B8F9 /* Nuke in Frameworks */ = {isa = PBXBuildFile; productRef = E22A913B2CF8B1AA00D3B8F9 /* Nuke */; };
 		E22A913E2CF8B1AA00D3B8F9 /* NukeUI in Frameworks */ = {isa = PBXBuildFile; productRef = E22A913D2CF8B1AA00D3B8F9 /* NukeUI */; };
+		E2390F962EBCC64C0013F0FC /* ObservableLRUCache in Frameworks */ = {isa = PBXBuildFile; productRef = E2390F952EBCC64C0013F0FC /* ObservableLRUCache */; };
+		E2390F982EBCC7250013F0FC /* ObservableLRUCache in Frameworks */ = {isa = PBXBuildFile; productRef = E2390F972EBCC7250013F0FC /* ObservableLRUCache */; };
 		E24D3BFD2CF3ACDC003484CC /* FrameUp in Frameworks */ = {isa = PBXBuildFile; productRef = E24D3BFC2CF3ACDC003484CC /* FrameUp */; };
+		E252BF862EC09ABF00467A7C /* H3kit in Frameworks */ = {isa = PBXBuildFile; productRef = E20A8A5D2D75F1D200EA79C5 /* H3kit */; };
 		E252D5592D50DFF0002056B3 /* CommonsFinderShareExtension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = E252D54F2D50DFF0002056B3 /* CommonsFinderShareExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		E2549B232CBD6886005DFE14 /* AsyncAlgorithms in Frameworks */ = {isa = PBXBuildFile; productRef = E2549B222CBD6886005DFE14 /* AsyncAlgorithms */; };
 		E2549B262CBD68B9005DFE14 /* Algorithms in Frameworks */ = {isa = PBXBuildFile; productRef = E2549B252CBD68B9005DFE14 /* Algorithms */; };
@@ -26,13 +28,27 @@
 		E290323F2D9EA84700A0CD8F /* GRDBQuery in Frameworks */ = {isa = PBXBuildFile; productRef = E290323E2D9EA84700A0CD8F /* GRDBQuery */; };
 		E29112B62DF34733007A3998 /* WhatToTest.de-DE.txt in Resources */ = {isa = PBXBuildFile; fileRef = E29112B52DF3463E007A3998 /* WhatToTest.de-DE.txt */; };
 		E29112B72DF34733007A3998 /* WhatToTest.en-US.txt in Resources */ = {isa = PBXBuildFile; fileRef = E29112B42DF344F0007A3998 /* WhatToTest.en-US.txt */; };
+		E2C92DD32ED60D4000EAA248 /* ObservableLRUCache in Frameworks */ = {isa = PBXBuildFile; productRef = E2C92DD22ED60D4000EAA248 /* ObservableLRUCache */; };
+		E2D7EF412EA692080058BE29 /* Intersect.swift in Sources */ = {isa = PBXBuildFile; fileRef = E2D7EF3D2EA692080058BE29 /* Intersect.swift */; };
+		E2D7EF422EA692080058BE29 /* ConcaveHull.swift in Sources */ = {isa = PBXBuildFile; fileRef = E2D7EF3B2EA692080058BE29 /* ConcaveHull.swift */; };
+		E2D7EF442EA692080058BE29 /* HullHelper.swift in Sources */ = {isa = PBXBuildFile; fileRef = E2D7EF3C2EA692080058BE29 /* HullHelper.swift */; };
+		E2D7EF452EA692080058BE29 /* Convex.swift in Sources */ = {isa = PBXBuildFile; fileRef = E2D7EF382EA692080058BE29 /* Convex.swift */; };
+		E2D7EF462EA692080058BE29 /* Grid.swift in Sources */ = {isa = PBXBuildFile; fileRef = E2D7EF3A2EA692080058BE29 /* Grid.swift */; };
+		E2D7EF482EA692080058BE29 /* LICENSE in Resources */ = {isa = PBXBuildFile; fileRef = E2D7EF3E2EA692080058BE29 /* LICENSE */; };
+		E2D7EF492EA692080058BE29 /* Intersect.swift in Sources */ = {isa = PBXBuildFile; fileRef = E2D7EF3D2EA692080058BE29 /* Intersect.swift */; };
+		E2D7EF4A2EA692080058BE29 /* ConcaveHull.swift in Sources */ = {isa = PBXBuildFile; fileRef = E2D7EF3B2EA692080058BE29 /* ConcaveHull.swift */; };
+		E2D7EF4C2EA692080058BE29 /* HullHelper.swift in Sources */ = {isa = PBXBuildFile; fileRef = E2D7EF3C2EA692080058BE29 /* HullHelper.swift */; };
+		E2D7EF4D2EA692080058BE29 /* Convex.swift in Sources */ = {isa = PBXBuildFile; fileRef = E2D7EF382EA692080058BE29 /* Convex.swift */; };
+		E2D7EF4E2EA692080058BE29 /* Grid.swift in Sources */ = {isa = PBXBuildFile; fileRef = E2D7EF3A2EA692080058BE29 /* Grid.swift */; };
+		E2D7EF502EA692080058BE29 /* LICENSE in Resources */ = {isa = PBXBuildFile; fileRef = E2D7EF3E2EA692080058BE29 /* LICENSE */; };
+		E2D7EF522EA69DDF0058BE29 /* README.md in Sources */ = {isa = PBXBuildFile; fileRef = E2D7EF512EA69DDA0058BE29 /* README.md */; };
+		E2D7EF532EA69DDF0058BE29 /* README.md in Sources */ = {isa = PBXBuildFile; fileRef = E2D7EF512EA69DDA0058BE29 /* README.md */; };
+		E2D8C66A2ECF5B8200CEBB37 /* GEOSwiftMapKit in Frameworks */ = {isa = PBXBuildFile; productRef = E2D8C6692ECF5B8200CEBB37 /* GEOSwiftMapKit */; };
 		E2E2BFD52D8718AE00751949 /* Algorithms in Frameworks */ = {isa = PBXBuildFile; productRef = E2E2BFD42D8718AE00751949 /* Algorithms */; };
 		E2F19BC62CA43C6400E19DCD /* SwiftSecurity in Frameworks */ = {isa = PBXBuildFile; productRef = E2F19BC52CA43C6400E19DCD /* SwiftSecurity */; };
 		E2F1B9D52CD006C700410991 /* GRDB in Frameworks */ = {isa = PBXBuildFile; productRef = E2F1B9D42CD006C700410991 /* GRDB */; };
 		E2FF0A2E2D9EAA29008F915C /* GRDB in Frameworks */ = {isa = PBXBuildFile; productRef = E25278722CB03FAF00D00640 /* GRDB */; };
 		E2FF0A2F2D9EAA29008F915C /* GRDBQuery in Frameworks */ = {isa = PBXBuildFile; productRef = E25278752CB03FBB00D00640 /* GRDBQuery */; };
-		E2FF0A302D9EAA29008F915C /* H3kit in Frameworks */ = {isa = PBXBuildFile; productRef = E20A8A5D2D75F1D200EA79C5 /* H3kit */; };
-		E2FF0A312D9EAA29008F915C /* H3kit in Frameworks */ = {isa = PBXBuildFile; productRef = E2F979202D81D01D0088062F /* H3kit */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -82,6 +98,13 @@
 		E2839FF82CA2DD910053C312 /* CommonsFinderTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = CommonsFinderTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		E29112B42DF344F0007A3998 /* WhatToTest.en-US.txt */ = {isa = PBXFileReference; lastKnownFileType = text; path = "WhatToTest.en-US.txt"; sourceTree = "<group>"; };
 		E29112B52DF3463E007A3998 /* WhatToTest.de-DE.txt */ = {isa = PBXFileReference; lastKnownFileType = text; path = "WhatToTest.de-DE.txt"; sourceTree = "<group>"; };
+		E2D7EF382EA692080058BE29 /* Convex.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Convex.swift; sourceTree = "<group>"; };
+		E2D7EF3A2EA692080058BE29 /* Grid.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Grid.swift; sourceTree = "<group>"; };
+		E2D7EF3B2EA692080058BE29 /* ConcaveHull.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConcaveHull.swift; sourceTree = "<group>"; };
+		E2D7EF3C2EA692080058BE29 /* HullHelper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HullHelper.swift; sourceTree = "<group>"; };
+		E2D7EF3D2EA692080058BE29 /* Intersect.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Intersect.swift; sourceTree = "<group>"; };
+		E2D7EF3E2EA692080058BE29 /* LICENSE */ = {isa = PBXFileReference; lastKnownFileType = text; path = LICENSE; sourceTree = "<group>"; };
+		E2D7EF512EA69DDA0058BE29 /* README.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
 		E2F19BC72CA45AF600E19DCD /* CommonsAPI */ = {isa = PBXFileReference; lastKnownFileType = wrapper; path = CommonsAPI; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -143,13 +166,16 @@
 				"Generic Extensions/CGPoint+Extensions.swift",
 				"Generic Extensions/CGSize+Extensions.swift",
 				"Generic Extensions/CLLocation+generateHumanReadableString.swift",
+				"Generic Extensions/CLLocationCoordinate2D+isLocationInBoundingBox.swift",
 				"Generic Extensions/Date+dateOnlyWikidataCompatibleISOString.swift",
 				"Generic Extensions/FileNameType+generateFilename.swift",
 				"Generic Extensions/FloatingPoint+interpolateRanges.swift",
 				"Generic Extensions/Locale+languageCode.swift",
+				"Generic Extensions/MKCoordinateRegion+extras.swift",
 				"Generic Extensions/Sequence+sortedByKeyPath.swift",
 				"Generic Extensions/String+CapitalizedFirstLetter.swift",
 				"Generic Extensions/String+FileExtension.swift",
+				"Generic Extensions/String+truncated.swift",
 				"Generic Extensions/Uint64+Identifiable.swift",
 				"Generic Extensions/URL+resizedCommonsImageURL.swift",
 				"Generic Extensions/URL+staticUrls.swift",
@@ -191,11 +217,11 @@
 				Views/Bookmarks/BookmarksUnavailableView.swift,
 				Views/CategoryView/CategoryLinkSection.swift,
 				Views/CategoryView/CategoryView.swift,
-				Views/CategoryView/PaginatableCategoryFiles.swift,
-				Views/CategoryView/PaginatableWikiCategoryFiles.swift,
+				Views/CategoryView/PaginatableCategoryMediaFiles.swift,
 				Views/CategoryView/RelatedCategoryView.swift,
 				Views/ContextMenus/CategoryContextMenu.swift,
 				Views/ContextMenus/MediaFileContextMenu.swift,
+				"Views/Extensions/CLLocationManager+isLocationAutorized.swift",
 				"Views/Extensions/MediaFile+localizedDisplayCaption.swift",
 				Views/FileCreateView/FileCreateView.swift,
 				Views/FileCreateView/FilenameTip.swift,
@@ -214,7 +240,6 @@
 				Views/FileDetailView/FileGroupBoxStyle.swift,
 				Views/FileDetailView/FileLoadView.swift,
 				Views/FileDetailView/FullscreenImageView/ZoomableImageView.swift,
-				Views/FileDetailView/InlineMap.swift,
 				Views/FileDetailView/TagsContainerView.swift,
 				Views/Home/DraftsSection.swift,
 				Views/Home/HomeView.swift,
@@ -225,23 +250,42 @@
 				Views/iOS18FallbackSupport/FallbackButtonRoles.swift,
 				Views/iOS18FallbackSupport/GlassFallbackButtonStyle.swift,
 				Views/Map/ClusterAnnotation.swift,
-				Views/Map/GeoClustering/GeoClustering.swift,
+				Views/Map/GeoClustering/GeoCluster.swift,
+				Views/Map/GeoClustering/GeoClusterTree.swift,
+				Views/Map/GeoClustering/GeoItem.swift,
 				"Views/Map/GeoClustering/H3+Convenience.swift",
+				Views/Map/MapLayerMode.swift,
 				Views/Map/MapModel.swift,
-				Views/Map/MapPopup/DraggablePseudoSheet.swift,
-				Views/Map/MapPopup/MapPopup.swift,
-				Views/Map/MapPopup/MapPopupCategoryTeaser.swift,
-				Views/Map/MapPopup/MapPopupMediaFileTeaser.swift,
-				Views/Map/MapPopup/PseudoSheet.swift,
+				Views/Map/MapPitchButtonCustom.swift,
+				Views/Map/MapPressGesture.swift,
+				Views/Map/MapSheet/CategoryCircleSheet.swift,
+				Views/Map/MapSheet/CategoryClusterSheet.swift,
+				Views/Map/MapSheet/HorizontalCategoryMapList.swift,
+				Views/Map/MapSheet/HorizontalMediaMapList.swift,
+				Views/Map/MapSheet/MapPopupMediaFileTeaser.swift,
+				Views/Map/MapSheet/MapSheetCategoryTeaser.swift,
+				Views/Map/MapSheet/MapSheetToolbar.swift,
+				Views/Map/MapSheet/MediaCircleSheet.swift,
+				Views/Map/MapSheet/MediaClusterSheet.swift,
+				Views/Map/MapUserLocateButtonCustom.swift,
 				Views/Map/MapView.swift,
+				Views/Map/MediaAnnotationView.swift,
+				Views/Map/MediaFileReactiveCache.swift,
+				Views/Map/SelectedMapLocationModel.swift,
+				Views/Map/WikiAnnotationView.swift,
 				Views/PreviewUtils/Lorem.swift,
 				Views/PreviewUtils/PreviewEnvironment.swift,
 				Views/RecentlyViewed/RecentlyViewedCategoriesView.swift,
 				Views/RecentlyViewed/RecentlyViewedMediaView.swift,
 				"Views/Reusable Views/CameraImagePicker.swift",
 				"Views/Reusable Views/CategoryTeaser.swift",
+				"Views/Reusable Views/CategoryTeaserBackground.swift",
 				"Views/Reusable Views/CircularProgressShape.swift",
+				"Views/Reusable Views/CounterView.swift",
+				"Views/Reusable Views/Deprecated/DraggablePseudoSheet.swift",
+				"Views/Reusable Views/Deprecated/PseudoSheet.swift",
 				"Views/Reusable Views/DraftFileListItem.swift",
+				"Views/Reusable Views/InlineMap.swift",
 				"Views/Reusable Views/MediaDowloadSheet.swift",
 				"Views/Reusable Views/MediaFileListItem.swift",
 				"Views/Reusable Views/PaginatableList/PaginatableCategoryList.swift",
@@ -276,6 +320,13 @@
 			);
 			target = E2839FE62CA2DD900053C312 /* CommonsFinder */;
 		};
+		E2EF15932EBCF16D00813C45 /* Exceptions for "CommonsFinder" folder in "CommonsFinderShareExtension" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				"Generic Extensions/String+truncated.swift",
+			);
+			target = E252D54E2D50DFF0002056B3 /* CommonsFinderShareExtension */;
+		};
 /* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
@@ -294,6 +345,7 @@
 			exceptions = (
 				E2DC53012D146B78009EF370 /* Exceptions for "CommonsFinder" folder in "CommonsFinder" target */,
 				E27850F12CB0381D0053C6D5 /* Exceptions for "CommonsFinder" folder in "CommonsFinderTests" target */,
+				E2EF15932EBCF16D00813C45 /* Exceptions for "CommonsFinder" folder in "CommonsFinderShareExtension" target */,
 			);
 			path = CommonsFinder;
 			sourceTree = "<group>";
@@ -312,26 +364,28 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				E2FF0A312D9EAA29008F915C /* H3kit in Frameworks */,
-				E2FF0A302D9EAA29008F915C /* H3kit in Frameworks */,
+				E252BF862EC09ABF00467A7C /* H3kit in Frameworks */,
 				E2FF0A2F2D9EAA29008F915C /* GRDBQuery in Frameworks */,
+				E2D8C66A2ECF5B8200CEBB37 /* GEOSwiftMapKit in Frameworks */,
 				E2FF0A2E2D9EAA29008F915C /* GRDB in Frameworks */,
 				E290323A2D9EA52000A0CD8F /* Pulse in Frameworks */,
 				E2549B2D2CBD69C7005DFE14 /* OrderedCollections in Frameworks */,
-				E213C6BC2EA2BA650085C60E /* LRUCache in Frameworks */,
 				E2F1B9D52CD006C700410991 /* GRDB in Frameworks */,
 				E290323C2D9EA52000A0CD8F /* PulseUI in Frameworks */,
+				E2390F962EBCC64C0013F0FC /* ObservableLRUCache in Frameworks */,
 				E26D503C2DA5A75F00621D1C /* CommonsAPI in Frameworks */,
 				E2549B262CBD68B9005DFE14 /* Algorithms in Frameworks */,
-				E20A8A642D75F24F00EA79C5 /* H3kit in Frameworks */,
 				E22A913E2CF8B1AA00D3B8F9 /* NukeUI in Frameworks */,
 				E290323F2D9EA84700A0CD8F /* GRDBQuery in Frameworks */,
 				E22A913C2CF8B1AA00D3B8F9 /* Nuke in Frameworks */,
+				E206777A2EBE52FF00981A79 /* H3kit in Frameworks */,
 				E2F19BC62CA43C6400E19DCD /* SwiftSecurity in Frameworks */,
 				E257E6BF2D2038F90049FFE8 /* Lock in Frameworks */,
+				E2C92DD32ED60D4000EAA248 /* ObservableLRUCache in Frameworks */,
 				E28B17662CB03CBB00D6FEA0 /* GRDBQuery in Frameworks */,
 				E24D3BFD2CF3ACDC003484CC /* FrameUp in Frameworks */,
 				E2549B232CBD6886005DFE14 /* AsyncAlgorithms in Frameworks */,
+				E2390F982EBCC7250013F0FC /* ObservableLRUCache in Frameworks */,
 				E213C6B92EA29F570085C60E /* SwiftSoup in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -364,6 +418,7 @@
 				E2839FE82CA2DD900053C312 /* Products */,
 				E2F19BC72CA45AF600E19DCD /* CommonsAPI */,
 				E2035C432D52544D0079235B /* Frameworks */,
+				E2D7EF402EA692080058BE29 /* Libraries */,
 			);
 			sourceTree = "<group>";
 		};
@@ -384,6 +439,28 @@
 				E29112B42DF344F0007A3998 /* WhatToTest.en-US.txt */,
 			);
 			path = TestFlight;
+			sourceTree = "<group>";
+		};
+		E2D7EF3F2EA692080058BE29 /* ConcaveHull */ = {
+			isa = PBXGroup;
+			children = (
+				E2D7EF512EA69DDA0058BE29 /* README.md */,
+				E2D7EF382EA692080058BE29 /* Convex.swift */,
+				E2D7EF3A2EA692080058BE29 /* Grid.swift */,
+				E2D7EF3B2EA692080058BE29 /* ConcaveHull.swift */,
+				E2D7EF3C2EA692080058BE29 /* HullHelper.swift */,
+				E2D7EF3D2EA692080058BE29 /* Intersect.swift */,
+				E2D7EF3E2EA692080058BE29 /* LICENSE */,
+			);
+			path = ConcaveHull;
+			sourceTree = "<group>";
+		};
+		E2D7EF402EA692080058BE29 /* Libraries */ = {
+			isa = PBXGroup;
+			children = (
+				E2D7EF3F2EA692080058BE29 /* ConcaveHull */,
+			);
+			path = Libraries;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -444,14 +521,16 @@
 				E22A913D2CF8B1AA00D3B8F9 /* NukeUI */,
 				E257E6BE2D2038F90049FFE8 /* Lock */,
 				E20A8A5D2D75F1D200EA79C5 /* H3kit */,
-				E20A8A632D75F24F00EA79C5 /* H3kit */,
-				E2F979202D81D01D0088062F /* H3kit */,
 				E29032392D9EA52000A0CD8F /* Pulse */,
 				E290323B2D9EA52000A0CD8F /* PulseUI */,
 				E290323E2D9EA84700A0CD8F /* GRDBQuery */,
 				E26D503B2DA5A75F00621D1C /* CommonsAPI */,
 				E213C6B82EA29F570085C60E /* SwiftSoup */,
-				E213C6BB2EA2BA650085C60E /* LRUCache */,
+				E2390F952EBCC64C0013F0FC /* ObservableLRUCache */,
+				E2390F972EBCC7250013F0FC /* ObservableLRUCache */,
+				E20677792EBE52FF00981A79 /* H3kit */,
+				E2D8C6692ECF5B8200CEBB37 /* GEOSwiftMapKit */,
+				E2C92DD22ED60D4000EAA248 /* ObservableLRUCache */,
 			);
 			productName = CommonsFinder;
 			productReference = E2839FE72CA2DD900053C312 /* CommonsFinder.app */;
@@ -520,12 +599,13 @@
 				E24D3BFB2CF3ACDC003484CC /* XCRemoteSwiftPackageReference "FrameUp" */,
 				E22A913A2CF8B1AA00D3B8F9 /* XCRemoteSwiftPackageReference "Nuke" */,
 				E257E6BD2D2038F90049FFE8 /* XCRemoteSwiftPackageReference "Lock" */,
-				E2F9791F2D81D01D0088062F /* XCRemoteSwiftPackageReference "h3kit-ios" */,
 				E29032382D9EA52000A0CD8F /* XCRemoteSwiftPackageReference "Pulse" */,
 				E290323D2D9EA84700A0CD8F /* XCRemoteSwiftPackageReference "GRDBQuery" */,
 				E26D503A2DA5A75F00621D1C /* XCLocalSwiftPackageReference "CommonsAPI" */,
 				E213C6B72EA29F570085C60E /* XCRemoteSwiftPackageReference "SwiftSoup" */,
-				E213C6BA2EA2BA650085C60E /* XCRemoteSwiftPackageReference "LRUCache" */,
+				E20677782EBE52FF00981A79 /* XCRemoteSwiftPackageReference "h3kit-ios" */,
+				E2D8C6682ECF5B8200CEBB37 /* XCRemoteSwiftPackageReference "GEOSwiftMapKit" */,
+				E2C92DD12ED60D4000EAA248 /* XCRemoteSwiftPackageReference "ObservableLRUCache" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = E2839FE82CA2DD900053C312 /* Products */;
@@ -552,6 +632,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				E29112B62DF34733007A3998 /* WhatToTest.de-DE.txt in Resources */,
+				E2D7EF482EA692080058BE29 /* LICENSE in Resources */,
 				E29112B72DF34733007A3998 /* WhatToTest.en-US.txt in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -560,6 +641,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				E2D7EF502EA692080058BE29 /* LICENSE in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -577,6 +659,12 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				E2D7EF522EA69DDF0058BE29 /* README.md in Sources */,
+				E2D7EF412EA692080058BE29 /* Intersect.swift in Sources */,
+				E2D7EF422EA692080058BE29 /* ConcaveHull.swift in Sources */,
+				E2D7EF442EA692080058BE29 /* HullHelper.swift in Sources */,
+				E2D7EF452EA692080058BE29 /* Convex.swift in Sources */,
+				E2D7EF462EA692080058BE29 /* Grid.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -584,6 +672,12 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				E2D7EF492EA692080058BE29 /* Intersect.swift in Sources */,
+				E2D7EF4A2EA692080058BE29 /* ConcaveHull.swift in Sources */,
+				E2D7EF4C2EA692080058BE29 /* HullHelper.swift in Sources */,
+				E2D7EF4D2EA692080058BE29 /* Convex.swift in Sources */,
+				E2D7EF4E2EA692080058BE29 /* Grid.swift in Sources */,
+				E2D7EF532EA69DDF0058BE29 /* README.md in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -1017,20 +1111,20 @@
 /* End XCLocalSwiftPackageReference section */
 
 /* Begin XCRemoteSwiftPackageReference section */
+		E20677782EBE52FF00981A79 /* XCRemoteSwiftPackageReference "h3kit-ios" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/nylki/h3kit-ios";
+			requirement = {
+				branch = main;
+				kind = branch;
+			};
+		};
 		E213C6B72EA29F570085C60E /* XCRemoteSwiftPackageReference "SwiftSoup" */ = {
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/scinfu/SwiftSoup.git";
 			requirement = {
 				kind = upToNextMajorVersion;
 				minimumVersion = 2.11.1;
-			};
-		};
-		E213C6BA2EA2BA650085C60E /* XCRemoteSwiftPackageReference "LRUCache" */ = {
-			isa = XCRemoteSwiftPackageReference;
-			repositoryURL = "https://github.com/nicklockwood/LRUCache.git";
-			requirement = {
-				kind = upToNextMajorVersion;
-				minimumVersion = 1.2.0;
 			};
 		};
 		E22A913A2CF8B1AA00D3B8F9 /* XCRemoteSwiftPackageReference "Nuke" */ = {
@@ -1097,6 +1191,22 @@
 				version = 0.11.0;
 			};
 		};
+		E2C92DD12ED60D4000EAA248 /* XCRemoteSwiftPackageReference "ObservableLRUCache" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/nylki/ObservableLRUCache";
+			requirement = {
+				branch = main;
+				kind = branch;
+			};
+		};
+		E2D8C6682ECF5B8200CEBB37 /* XCRemoteSwiftPackageReference "GEOSwiftMapKit" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/GEOSwift/GEOSwiftMapKit.git";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 5.0.0;
+			};
+		};
 		E2F19BC42CA43C6400E19DCD /* XCRemoteSwiftPackageReference "swift-security" */ = {
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/dm-zharov/swift-security";
@@ -1113,14 +1223,6 @@
 				version = 7.8.0;
 			};
 		};
-		E2F9791F2D81D01D0088062F /* XCRemoteSwiftPackageReference "h3kit-ios" */ = {
-			isa = XCRemoteSwiftPackageReference;
-			repositoryURL = "https://github.com/nylki/h3kit-ios";
-			requirement = {
-				branch = main;
-				kind = branch;
-			};
-		};
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
@@ -1128,11 +1230,12 @@
 			isa = XCSwiftPackageProductDependency;
 			productName = CommonsAPI;
 		};
-		E20A8A5D2D75F1D200EA79C5 /* H3kit */ = {
+		E20677792EBE52FF00981A79 /* H3kit */ = {
 			isa = XCSwiftPackageProductDependency;
+			package = E20677782EBE52FF00981A79 /* XCRemoteSwiftPackageReference "h3kit-ios" */;
 			productName = H3kit;
 		};
-		E20A8A632D75F24F00EA79C5 /* H3kit */ = {
+		E20A8A5D2D75F1D200EA79C5 /* H3kit */ = {
 			isa = XCSwiftPackageProductDependency;
 			productName = H3kit;
 		};
@@ -1140,11 +1243,6 @@
 			isa = XCSwiftPackageProductDependency;
 			package = E213C6B72EA29F570085C60E /* XCRemoteSwiftPackageReference "SwiftSoup" */;
 			productName = SwiftSoup;
-		};
-		E213C6BB2EA2BA650085C60E /* LRUCache */ = {
-			isa = XCSwiftPackageProductDependency;
-			package = E213C6BA2EA2BA650085C60E /* XCRemoteSwiftPackageReference "LRUCache" */;
-			productName = LRUCache;
 		};
 		E22A913B2CF8B1AA00D3B8F9 /* Nuke */ = {
 			isa = XCSwiftPackageProductDependency;
@@ -1155,6 +1253,14 @@
 			isa = XCSwiftPackageProductDependency;
 			package = E22A913A2CF8B1AA00D3B8F9 /* XCRemoteSwiftPackageReference "Nuke" */;
 			productName = NukeUI;
+		};
+		E2390F952EBCC64C0013F0FC /* ObservableLRUCache */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = ObservableLRUCache;
+		};
+		E2390F972EBCC7250013F0FC /* ObservableLRUCache */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = ObservableLRUCache;
 		};
 		E24D3BFC2CF3ACDC003484CC /* FrameUp */ = {
 			isa = XCSwiftPackageProductDependency;
@@ -1212,6 +1318,16 @@
 			package = E290323D2D9EA84700A0CD8F /* XCRemoteSwiftPackageReference "GRDBQuery" */;
 			productName = GRDBQuery;
 		};
+		E2C92DD22ED60D4000EAA248 /* ObservableLRUCache */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = E2C92DD12ED60D4000EAA248 /* XCRemoteSwiftPackageReference "ObservableLRUCache" */;
+			productName = ObservableLRUCache;
+		};
+		E2D8C6692ECF5B8200CEBB37 /* GEOSwiftMapKit */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = E2D8C6682ECF5B8200CEBB37 /* XCRemoteSwiftPackageReference "GEOSwiftMapKit" */;
+			productName = GEOSwiftMapKit;
+		};
 		E2E2BFD42D8718AE00751949 /* Algorithms */ = {
 			isa = XCSwiftPackageProductDependency;
 			package = E2549B242CBD68B9005DFE14 /* XCRemoteSwiftPackageReference "swift-algorithms" */;
@@ -1226,11 +1342,6 @@
 			isa = XCSwiftPackageProductDependency;
 			package = E2F1B9D32CD006C700410991 /* XCRemoteSwiftPackageReference "GRDB.swift" */;
 			productName = GRDB;
-		};
-		E2F979202D81D01D0088062F /* H3kit */ = {
-			isa = XCSwiftPackageProductDependency;
-			package = E2F9791F2D81D01D0088062F /* XCRemoteSwiftPackageReference "h3kit-ios" */;
-			productName = H3kit;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};

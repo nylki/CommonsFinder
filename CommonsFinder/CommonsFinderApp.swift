@@ -24,6 +24,8 @@ struct CommonsFinderApp: App {
     private let searchModel: SearchModel
     private let uploadManager: UploadManager
     private let account: AccountModel
+    private let mediaFileCache: MediaFileReactiveCache
+    private let mapModel: MapModel
 
     init() {
         postInstallMaintenance()
@@ -51,6 +53,12 @@ struct CommonsFinderApp: App {
         let uploadManager = UploadManager(appDatabase: appDatabase)
         self.uploadManager = uploadManager
 
+        let mediaFileCache = MediaFileReactiveCache(appDatabase: appDatabase)
+        self.mediaFileCache = mediaFileCache
+
+        let mapModel = MapModel(appDatabase: appDatabase, navigation: navigation, mediaFileCache: mediaFileCache)
+        self.mapModel = mapModel
+
 
         AppDependencyManager.shared.add(dependency: appDatabase)
         AppDependencyManager.shared.add(dependency: account)
@@ -73,7 +81,10 @@ struct CommonsFinderApp: App {
                 .environment(account)
                 .environment(navigation)
                 .environment(searchModel)
+                .environment(mapModel)
                 .environment(uploadManager)
+                .environment(mediaFileCache)
+                .environment(mapModel)
                 .task {
                     postLaunchMaintennce()
 

@@ -57,10 +57,6 @@ nonisolated
 {
     var geoString: String?
     if let coordinate {
-        let location = CLLocation(
-            latitude: coordinate.latitude,
-            longitude: coordinate.longitude
-        )
         do {
             geoString = try await coordinate.generateHumanReadableString()
         } catch {

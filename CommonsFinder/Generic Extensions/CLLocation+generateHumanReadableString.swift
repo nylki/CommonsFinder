@@ -25,7 +25,7 @@ nonisolated extension CLLocationCoordinate2D {
         }
     }
 
-    func generateHumanReadableString(includeCountry: Bool = true) async throws -> String? {
+    func generateHumanReadableString(includeCountry: Bool = true, includeCity: Bool = true) async throws -> String? {
 
         guard let placemark = try await reverseGeocodingRequest() else {
             return nil
@@ -42,7 +42,7 @@ nonisolated extension CLLocationCoordinate2D {
                 nil
             }
 
-        let secondary = placemark.locality
+        let secondary = includeCity ? placemark.locality : nil
         let tertiary = includeCountry ? placemark.country : nil
 
         let humanReadableLocation = [primary, secondary, tertiary]

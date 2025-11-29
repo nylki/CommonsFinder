@@ -119,6 +119,10 @@ enum NavigationStackItem: Hashable, CustomStringConvertible {
 }
 
 extension Navigation {
+    func clearPath(of tabItem: TabItem) {
+        path[tabItem] = []
+    }
+
     func editDrafts(drafts: [MediaFileDraft]) {
         isEditingDraft = .existing(drafts)
     }
@@ -133,6 +137,10 @@ extension Navigation {
 
     func loadFile(title: String, namespace: Namespace.ID) {
         path[selectedTab]?.append(.loadFile(title: title, namespace: namespace))
+    }
+
+    func viewCategory(_ categoryInfo: CategoryInfo) {
+        path[selectedTab]?.append(.wikidataItem(categoryInfo))
     }
 
     func openOnboarding() {

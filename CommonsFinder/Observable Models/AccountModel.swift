@@ -230,15 +230,16 @@ final class AccountModel {
             continueString: nil
         )
 
-        let titles = response.files.map(\.title)
-        guard titles.isEmpty == false else { return }
+        let titles = response.titles
+
+        guard !titles.isEmpty else { return }
 
         let apiFetchLimit = 50
         let titlesChunked = titles.chunks(ofCount: apiFetchLimit)
 
         for titleChunk in titlesChunked {
             let mediaFiles = try await API.shared
-                .fetchFullFileMetadata(fileNames: Array(titleChunk))
+                .fetchFullFileMetadata(.titles(Array(titleChunk)))
                 .map(MediaFile.init)
 
             _ = try appDatabase.upsert(mediaFiles)

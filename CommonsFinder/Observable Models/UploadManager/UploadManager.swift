@@ -199,6 +199,13 @@ class UploadManager {
             let request = await API.shared.publish(file: uploadable, csrfToken: csrfToken)
 
             for await status in request {
+
+                guard !Task.isCancelled else {
+                    bgTask?.setTaskCompleted(success: false)
+                    uploadStatus[uploadable.id] = nil
+                    return
+                }
+
                 switch status {
                 case .uploadingFile(let progress):
                     uploadStatus[uploadable.id] = .uploading(progress.fractionCompleted)
@@ -250,8 +257,6 @@ class UploadManager {
 
                     uploadStatus[uploadable.id] = .unspecifiedError(error)
                 }
-
-                try Task.checkCancellation()
             }
         }
     }

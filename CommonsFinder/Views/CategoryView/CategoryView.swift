@@ -29,7 +29,7 @@ struct CategoryView: View {
 
     @State private var item: CategoryInfo?
 
-    @State private var paginationModel: PaginatableCategoryFiles? = nil
+    @State private var paginationModel: PaginatableCategoryMediaFiles? = nil
 
     @State private var subCategories: [CategoryInfo] = []
     @State private var parentCategories: [CategoryInfo] = []
@@ -42,7 +42,8 @@ struct CategoryView: View {
 
     @Environment(\.appDatabase) private var appDatabase
     @Environment(\.locale) private var locale
-
+    @Environment(Navigation.self) private var navigation
+    @Environment(MapModel.self) private var mapModel
     @Namespace private var namespace
 
     private var resolvedCategoryName: String? {
@@ -51,6 +52,16 @@ struct CategoryView: View {
 
     private var title: String {
         item?.base.label ?? resolvedCategoryName ?? ""
+    }
+
+    private func showOnMap() {
+        guard let item else { return }
+        do {
+            try mapModel.showInCircle(item.base)
+            navigation.selectedTab = .map
+        } catch {
+            logger.error("Failed to show category on map \(error)")
+        }
     }
 
 
@@ -87,9 +98,10 @@ struct CategoryView: View {
                     Text(title)
                         .font(.largeTitle).bold()
                     subheadline
-                    if let coordinate = item?.base.coordinate {
+                    if let item, let coordinate = item.base.coordinate {
                         InlineMap(
                             coordinate: coordinate,
+                            item: .category(item.base),
                             knownName: title,
                             mapPinStyle: .pinOnly,
                             details: .none
@@ -143,37 +155,44 @@ struct CategoryView: View {
         .animation(.default, value: paginationModel == nil)
         .navigationTitle(title)
         .navigationBarTitleDisplayMode(.inline)
-        .toolbar {
-            //            ToolbarItem(placement: .principal) {
-            //                if showTitleInToolbar {
-            //                    Text(title)
-            //                        .font(.headline)
-            //                        .lineLimit(2)
-            //                        .fixedSize(horizontal: false, vertical: true)
-            //                        .padding(.vertical, 3)
-            //                        .allowsTightening(true)
-            //                }
-            //            }
+        .toolbar { toolbar }
+        .toolbar(removing: .title)
+    }
 
-            ToolbarItem(placement: .automatic) {
-                let isBookmarked = (item ?? initialItem).isBookmarked
-                Button(
-                    isBookmarked ? "Remove Bookmark" : "Add Bookmark",
-                    systemImage: isBookmarked ? "bookmark.fill" : "bookmark"
-                ) {
-                    updateBookmark(!isBookmarked)
-                }
-            }
-            ToolbarItem(placement: .automatic) {
-                Menu("More", systemImage: "ellipsis") {
-                    if let item {
-                        CategoryLinkSection(item: item)
-                    }
-                }
-                .disabled(item == nil)
+    @ToolbarContentBuilder
+    private var toolbar: some ToolbarContent {
+        //            ToolbarItem(placement: .principal) {
+        //                if showTitleInToolbar {
+        //                    Text(title)
+        //                        .font(.headline)
+        //                        .lineLimit(2)
+        //                        .fixedSize(horizontal: false, vertical: true)
+        //                        .padding(.vertical, 3)
+        //                        .allowsTightening(true)
+        //                }
+        //            }
+
+        ToolbarItem(placement: .automatic) {
+            let isBookmarked = (item ?? initialItem).isBookmarked
+            Button(
+                isBookmarked ? "Remove Bookmark" : "Add Bookmark",
+                systemImage: isBookmarked ? "bookmark.fill" : "bookmark"
+            ) {
+                updateBookmark(!isBookmarked)
             }
         }
-        .toolbar(removing: .title)
+        ToolbarItem(placement: .automatic) {
+            Menu("More", systemImage: "ellipsis") {
+                if let item {
+                    CategoryLinkSection(item: item)
+
+                    if item.base.coordinate != nil {
+                        Button("Show on Map", systemImage: "map", action: showOnMap)
+                    }
+                }
+            }
+            .disabled(item == nil)
+        }
     }
 
     @ViewBuilder private var relatedCategoriesView: some View {
@@ -252,14 +271,13 @@ struct CategoryView: View {
             #endif
             do {
                 if let wikidataID = item.base.wikidataId {
-                    if let apiItem = try await CommonsAPI.API.shared
-                        .findCategoriesForWikidataItems([wikidataID], languageCode: locale.wikiLanguageCodeIdentifier)
-                        .first
-                    {
-                        let fetchedCategory = Category(apiItem: apiItem)
+                    let result = try await DataAccess.fetchCategoriesFromAPI(
+                        wikidataIDs: [wikidataID],
+                        shouldCache: true,
+                        appDatabase: appDatabase
+                    )
 
-                        try appDatabase.upsert(fetchedCategory)
-
+                    if let fetchedCategory = result.fetchedCategories.first {
                         if let commonsCategory = fetchedCategory.commonsCategory {
                             try await resolveCategoryDetails(category: commonsCategory)
                         }

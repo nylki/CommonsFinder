@@ -18,13 +18,13 @@ private final class
     @ObservationIgnored
     private var continueString: String?
 
-    init(appDatabase: AppDatabase, username: String) async throws {
+    init(appDatabase: AppDatabase, username: String, fileCachingStrategy: FileCachingStrategy) async throws {
         self.username = username
-        try await super.init(appDatabase: appDatabase)
+        try await super.init(appDatabase: appDatabase, initialTitles: [], fileCachingStrategy: fileCachingStrategy)
     }
 
     override internal func
-        fetchRawContinuePaginationItems() async throws -> (items: [String], reachedEnd: Bool)
+        fetchRawContinuePaginationItems() async throws -> (fileIdentifiers: CommonsAPI.FileIdentifierList, canContinue: Bool)
     {
         let result = try await CommonsAPI.API.shared.listUserImages(
             of: username,
@@ -32,12 +32,14 @@ private final class
             start: .now,
             end: nil,
             direction: .older,
-            continueString: continueString
+            continueString: continueString,
         )
 
         let canContinue = result.continueString != nil
-        self.continueString = result.continueString
-        return (result.files.map(\.title), canContinue)
+        continueString = result.continueString
+        let titles = result.titles
+
+        return (fileIdentifiers: .titles(titles), canContinue: canContinue)
     }
 }
 
@@ -46,6 +48,11 @@ struct UploadsView: View {
 
     @State private var paginationModel: PaginatableUserUploadedFiles? = nil
     @Environment(\.appDatabase) private var appDatabase
+    @Environment(AccountModel.self) private var account
+
+    var isAccountUser: Bool {
+        account.activeUser?.username == username
+    }
 
     var body: some View {
         ZStack {
@@ -62,7 +69,11 @@ struct UploadsView: View {
         .task {
             if paginationModel == nil {
                 do {
-                    let paginationModel = try await PaginatableUserUploadedFiles(appDatabase: appDatabase, username: username)
+                    let paginationModel = try await PaginatableUserUploadedFiles(
+                        appDatabase: appDatabase,
+                        username: username,
+                        fileCachingStrategy: isAccountUser ? .saveAll : .replaceExisting
+                    )
                     self.paginationModel = paginationModel
                 } catch {
                     logger.error("Error loading category images: \(error)")

@@ -1,5 +1,5 @@
 {
-  "originHash" : "33871415eadcb90d7b2660e8c65b9e99023304c892393d9a5d233f851ade799e",
+  "originHash" : "f07f119f0e2b0a70b1a12ec15a893de6d449c9d2878bef179176feb6127ce601",
   "pins" : [
     {
       "identity" : "alamofire",
@@ -17,6 +17,33 @@
       "state" : {
         "revision" : "a7576e88672196f6d9e7cda1d9e005b1fec0455e",
         "version" : "0.9.10"
+      }
+    },
+    {
+      "identity" : "geos",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/GEOSwift/geos.git",
+      "state" : {
+        "revision" : "4d8af495e7507f48f1ae9104102debdd2043917b",
+        "version" : "9.0.0"
+      }
+    },
+    {
+      "identity" : "geoswift",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/GEOSwift/GEOSwift.git",
+      "state" : {
+        "revision" : "9ddf733b9f72799eb7651d1e0d322f2426b36a06",
+        "version" : "11.2.0"
+      }
+    },
+    {
+      "identity" : "geoswiftmapkit",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/GEOSwift/GEOSwiftMapKit.git",
+      "state" : {
+        "revision" : "961bed008cd890e79af9381dabbe9af971c6b2bb",
+        "version" : "5.0.0"
       }
     },
     {
@@ -71,6 +98,15 @@
       "state" : {
         "revision" : "0ead44350d2737db384908569c012fe67c421e4d",
         "version" : "12.8.0"
+      }
+    },
+    {
+      "identity" : "observablelrucache",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/nylki/ObservableLRUCache",
+      "state" : {
+        "branch" : "main",
+        "revision" : "a18141551382c7b60e7d5bb5f40cabfbad3a89ea"
       }
     },
     {
