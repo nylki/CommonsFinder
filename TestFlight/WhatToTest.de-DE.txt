@@ -1,9 +1,19 @@
-- fixed: Fehler beim syncen von bisherigen Uploads des eingeloggten Users behoben
+Diese Version enthält ein paar größere Änderungen an der Karte, die die Benutzung nützlicher und hoffentlich auch intuitiver macht.
+Dies ist nur eine erste Version der Kartenfunktionen; weitere Optimierungen und größere Features folgen!
 
-- feature: Im zoombaren Vollbildmodus wird jetzt auch das Originalbild in voller Auflösung geladen und angezeigt, sofern man mit Wifi verbunden ist (ansonsten manuell)
+KARTE
+- Neues Tab-Icon für mehr Einheitlichkeit
+- Bilder und Kategorien können jetzt direkt auf der großen Karte angezeigt werden mit ihren benachbarten Items (über das Kontextmenü oder via der kleinen Inline-Map in den Detailansichten)
+- Wenn man einen Longpress auf der Karte macht, werden nun Elemente in einem Radius von 250 m um diese Koordinate angezeigt.
+- Positionen (Kategorien/Wikidata-Einträge) und Bilder sind in zwei separate Kartenebenen aufgeteilt, zwischen denen gewechselt werden kann
+- selektierte Elemente auf der Karte haben jetzt Beschriftungen
+- Cluster werden nun entsprehend der Item-Dichte positioniert, wodurch die Cluster-Buttons nicht ganz so rastermäßig angeordnet (wirken).
+- Ein ausgewählter Cluster hat jetzt eine natürlichere Outline anstelle eines Kreises, was die Geometrie und Dichte der Elemente in einem Cluster besser widerspiegelt
+- Cluster mit nur einem Element zeigen dieses Element mit seinem Bild direkt auf der Karte an
+- Das Map-Sheet-Modal verwendet jetzt die native Sheet-Implementierung, was vorallem Vorteile mit sich bringt, aber auch ein paar Eigenheiten hat.
+- Das Map-Sheet zeigt nun die (ungefähre) Adresse, bzw. Standort eines ausgewählten Clusters an.
+- Bei "In Karten-App öffnen" wird nun die in den Systemeinstellungen eingestellte Standard-Navigations-App geöffnet (z. B. Organic Maps statt Apple Maps). Möglicherweise ist das iOS 26-only oder nur in der EU verfügbar, not sure.
 
-- feature: neuer "Vollbildmodus Öffnen"-Button im "..."-Menu einer Bild-Detailseite
-
-- fixed: Fehler in Bildbeschreibung in Listenansichten behoben, wodurch die Beschreibung abgeschnitten waren, wenn sie einen Punkt (".") enthielte
-
-- perf: effizienteres Verarbeiten von Bildbeschreibungen die html/wikitext enthalten
+WEITERE ÄNDERUNGEN
+- Pluralisierung an einigen Stellen hinzugefügt
+- Kleinere Anpassungen an Beschriftungen und Symbolen in Menüs
