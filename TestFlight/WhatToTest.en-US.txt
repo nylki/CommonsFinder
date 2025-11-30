@@ -1,6 +1,7 @@
-This release features bigger changes to the map making,
-making it more useful and hopefully also more intuitive.
-This is just one iteration on Map features, expect finetuning and more bigger features to come! :)
+This release fixes a crash that occurs on iOS 26 when uploading more than 1 image.
+
+There are also bigger changes to the map section, making it more useful and hopefully also more intuitive.
+This is just one iteration on Map features, expect finetuning and more features to come! :)
 
 MAP
 - new Tab-Icon for consistency
