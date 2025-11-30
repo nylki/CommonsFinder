@@ -1,5 +1,7 @@
-Diese Version enthält ein paar größere Änderungen an der Karte, die die Benutzung nützlicher und hoffentlich auch intuitiver macht.
-Dies ist nur eine erste Version der Kartenfunktionen; weitere Optimierungen und größere Features folgen!
+Diese Version enthält einen Fix für einen Crash der  unter iOS 26 Auftritt wenn man mehr als 1 Bild hochlädt.
+
+Außerdem gibt es ein paar größere Änderungen an der Karte, die die Benutzung nützlicher und hoffentlich auch intuitiver macht. :)
+Weitere Verbesserungen und Funktionen in der Karte sind geplant.
 
 KARTE
 - Neues Tab-Icon für mehr Einheitlichkeit

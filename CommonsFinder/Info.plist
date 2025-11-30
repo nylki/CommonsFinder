@@ -4,7 +4,7 @@
 <dict>
 	<key>BGTaskSchedulerPermittedIdentifiers</key>
 	<array>
-		<string>app.CommonsFinder.upload</string>
+		<string>app.CommonsFinder.upload.*</string>
 	</array>
 	<key>CFBundleURLTypes</key>
 	<array>
