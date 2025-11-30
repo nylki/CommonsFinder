@@ -177,9 +177,9 @@ final class AccountModel {
         }
     }
 
-    func removeUploadedDrafts(filenames: [String]) {
+    func removeUploadedDrafts(ids: [MediaFileDraft.ID]) {
         do {
-            let deletedFileCount = try appDatabase.deleteDrafts(withFinalFilenames: filenames)
+            let deletedFileCount = try appDatabase.deleteDrafts(ids: ids)
             if deletedFileCount != 0 {
                 logger.info("Deleted \(deletedFileCount) drafts that have been uploaded.")
             }
@@ -195,20 +195,26 @@ final class AccountModel {
             logger.warning("Tried to removeUploadedDrafts, but no user logged in.")
             return
         }
-        let draftFinalFilenames =
-            try appDatabase
-            .fetchAllDrafts()
-            .map(\.finalFilename)
+        var existingDraftIDsPerFilename: [String: MediaFileDraft.ID] = [:]
+        let currentDrafts = try appDatabase.fetchAllDrafts()
 
-        let draftsToCleanup =
+        for draft in currentDrafts {
+            existingDraftIDsPerFilename[draft.finalFilename] = draft.id
+        }
+
+        let filenamesToRemove =
             try appDatabase
-            .fetchAllFiles(byUsername: username, withNames: draftFinalFilenames)
+            .fetchAllFiles(byUsername: username, withNames: currentDrafts.map(\.name))
             .map(\.name)
             .filter { !$0.isEmpty }
 
-        guard !draftsToCleanup.isEmpty else { return }
+        let draftIDsToRemove = filenamesToRemove.compactMap { filename in
+            existingDraftIDsPerFilename[filename]
+        }
 
-        let deletedFileCount = try appDatabase.deleteDrafts(withFinalFilenames: draftsToCleanup)
+        guard !draftIDsToRemove.isEmpty else { return }
+
+        let deletedFileCount = try appDatabase.deleteDrafts(ids: draftIDsToRemove)
         if deletedFileCount != 0 {
             logger.info("Deleted \(deletedFileCount) drafts that have been uploaded.")
         }

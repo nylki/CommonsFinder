@@ -27,60 +27,60 @@ final class MockUploadManager: UploadManager {
         super.init(appDatabase: appDatabase)
     }
 
-    private func simulateRegularUpload(_ uploadable: MediaFileUploadable) {
+    private func simulateRegularUpload(_ id: MediaFileDraft.ID) {
         print("simulateRegularUpload")
         Task {
             try? await Task.sleep(for: .milliseconds(100))
-            uploadStatus[uploadable.id] = .uploading(0.01)
+            uploadStatus[id] = .uploading(0.01)
 
             try? await Task.sleep(for: .milliseconds(500))
-            uploadStatus[uploadable.id] = .uploading(0.1)
+            uploadStatus[id] = .uploading(0.1)
 
             try? await Task.sleep(for: .milliseconds(500))
-            uploadStatus[uploadable.id] = .uploading(0.2)
+            uploadStatus[id] = .uploading(0.2)
 
             try? await Task.sleep(for: .milliseconds(500))
-            uploadStatus[uploadable.id] = .uploading(0.5)
+            uploadStatus[id] = .uploading(0.5)
 
             try? await Task.sleep(for: .milliseconds(500))
-            uploadStatus[uploadable.id] = .uploading(0.8)
+            uploadStatus[id] = .uploading(0.8)
 
             try? await Task.sleep(for: .milliseconds(500))
-            uploadStatus[uploadable.id] = .uploading(1)
+            uploadStatus[id] = .uploading(1)
             try? await Task.sleep(for: .milliseconds(500))
-            uploadStatus[uploadable.id] = .unstashingFile
+            uploadStatus[id] = .unstashingFile
 
             try? await Task.sleep(for: .milliseconds(600))
-            uploadStatus[uploadable.id] = .creatingWikidataClaims
+            uploadStatus[id] = .creatingWikidataClaims
 
             try? await Task.sleep(for: .milliseconds(600))
-            uploadStatus[uploadable.id] = .published
+            uploadStatus[id] = .published
             try? await Task.sleep(for: .milliseconds(1000))
         }
     }
 
-    private func simulateErrorUpload(_ uploadable: MediaFileUploadable) {
+    private func simulateErrorUpload(_ id: MediaFileDraft.ID) {
         print("simulateErrorUpload")
         Task {
             try? await Task.sleep(for: .milliseconds(100))
-            uploadStatus[uploadable.id] = .uploading(0.01)
+            uploadStatus[id] = .uploading(0.01)
 
             try? await Task.sleep(for: .milliseconds(500))
-            uploadStatus[uploadable.id] = .uploading(0.1)
+            uploadStatus[id] = .uploading(0.1)
 
             try? await Task.sleep(for: .milliseconds(1000))
-            uploadStatus[uploadable.id] = .uploadWarnings([.existsNormalized(normalizedName: "Some-similar-name.jpeg")])
+            uploadStatus[id] = .uploadWarnings([.existsNormalized(normalizedName: "Some-similar-name.jpeg")])
         }
     }
 
-    override func performUpload(_ uploadable: MediaFileUploadable) {
+    override func performUpload(_ id: MediaFileDraft.ID) {
         print("perform simulated upload")
         switch uploadMockSimulation {
         case .regular:
-            simulateRegularUpload(uploadable)
-            didFinishUpload.send(uploadable.filename)
+            simulateRegularUpload(id)
+            didFinishUpload.send(id)
         case .withErrors:
-            simulateErrorUpload(uploadable)
+            simulateErrorUpload(id)
         }
     }
 }

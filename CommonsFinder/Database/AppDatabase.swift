@@ -723,11 +723,18 @@ extension AppDatabase {
     }
 
     /// Deletes all files by finalFilename, returns the number of deleted files
-    func deleteDrafts(withFinalFilenames filenames: [String]) throws -> Int {
+    //    func deleteDrafts(withFinalFilenames filenames: [String]) throws -> Int {
+    //        try dbWriter.write { db in
+    //            try MediaFileDraft
+    //                //                .filter(filenames.contains(MediaFileDraft.Columns.finalFilename))
+    //                .deleteAll(db)
+    //        }
+    //    }
+    //
+    func deleteDrafts(ids: [MediaFileDraft.ID]) throws -> Int {
         try dbWriter.write { db in
             try MediaFileDraft
-                //                .filter(filenames.contains(MediaFileDraft.Columns.finalFilename))
-                .deleteAll(db)
+                .deleteAll(db, ids: ids)
         }
     }
 }
