@@ -1,4 +1,4 @@
-This release features mayor changes to the map making,
+This release features bigger changes to the map making,
 making it more useful and hopefully also more intuitive.
 This is just one iteration on Map features, expect finetuning and more bigger features to come! :)
 
