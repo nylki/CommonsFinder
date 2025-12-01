@@ -36,29 +36,21 @@ struct MediaFileContextMenu: ViewModifier {
     @Environment(Navigation.self) private var navigation
     @Environment(MapModel.self) private var mapModel
 
-    private func showOnMap() {
-        guard let mediaFile = mediaFileInfo?.mediaFile else { return }
-        do {
-            try mapModel.showInCircle(mediaFile)
-            navigation.selectedTab = .map
-        } catch {
-            logger.error("Failed to show category on map \(error)")
-        }
-    }
-
     func body(content: Content) -> some View {
         content
             .contextMenu {
                 if let mediaFileInfo {
                     VStack {
                         if shownEntries.contains(.openDetails) {
-                            Button("Open Details") {
+                            Button("Open Details", systemImage: "text.below.photo.fill") {
                                 navigation.viewFile(mediaFile: mediaFileInfo, namespace: namespace)
                             }
                         }
 
                         if shownEntries.contains(.showOnMap), mediaFileInfo.mediaFile.coordinate != nil {
-                            Button("Show on Map", systemImage: "map", action: showOnMap)
+                            Button("Show on Map", systemImage: "map") {
+                                navigation.showOnMap(mediaFile: mediaFileInfo.mediaFile, mapModel: mapModel)
+                            }
                         }
 
                         if shownEntries.contains(.bookmark) {

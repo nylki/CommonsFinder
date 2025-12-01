@@ -66,8 +66,8 @@ struct ContentView: View {
             switch destination {
             case .existing(let files):
                 FileCreateView(appDatabase: appDatabase, files: files)
-            case .newDraft:
-                FileCreateView(appDatabase: appDatabase)
+            case .newDraft(let options):
+                FileCreateView(appDatabase: appDatabase, newDraftOptions: options)
             }
         }
         .onOpenURL(perform: handleURL)

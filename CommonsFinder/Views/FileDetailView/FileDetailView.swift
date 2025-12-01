@@ -57,6 +57,7 @@ struct FileDetailView: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(Navigation.self) private var navigation
     @Environment(\.appDatabase) private var appDatabase
+    @Environment(MapModel.self) private var mapModel
 
     @State private var updatedMediaFileInfo: MediaFileInfo?
     private var mediaFileInfo: MediaFileInfo { updatedMediaFileInfo ?? initialMediaFileInfo }
@@ -149,6 +150,10 @@ struct FileDetailView: View {
                             systemImage: "arrow.up.left.and.arrow.down.right.rectangle"
                         ) {
                             isShowingFullscreenImage = true
+                        }
+
+                        Button("Show on Map", systemImage: "map") {
+                            navigation.showOnMap(mediaFile: mediaFileInfo.mediaFile, mapModel: mapModel)
                         }
 
                         ShareLink(item: mediaFileInfo.mediaFile.descriptionURL)

@@ -5,7 +5,9 @@
 //  Created by Tom Brewe on 03.10.24.
 //
 
+import CoreLocation
 import SwiftUI
+import os.log
 
 @Observable final class Navigation {
     var homePath: [NavigationStackItem] {
@@ -62,13 +64,13 @@ import SwiftUI
     var isAuthSheetOpen: AuthNavigationDestination?
 
     enum DraftSheetNavItem: Identifiable {
-        case newDraft
+        case newDraft(NewDraftOptions?)
         case existing([MediaFileDraft])
 
         var id: String {
             switch self {
-            case .newDraft:
-                "newDraft"
+            case .newDraft(let options):
+                "newDraft-\(options.hashValue)"
             case .existing(let drafts):
                 "existing-\(drafts.hashValue)"
             }
@@ -127,8 +129,12 @@ extension Navigation {
         isEditingDraft = .existing(drafts)
     }
 
+    func openNewDraft(options: NewDraftOptions) {
+        isEditingDraft = .newDraft(options)
+    }
+
     func openNewDraft() {
-        isEditingDraft = .newDraft
+        isEditingDraft = .newDraft(nil)
     }
 
     func viewFile(mediaFile: MediaFileInfo, namespace: Namespace.ID) {
@@ -149,5 +155,32 @@ extension Navigation {
 
     func dismissOnboarding() {
         isAuthSheetOpen = nil
+    }
+
+    func showOnMap(category: Category, mapModel: MapModel) {
+        do {
+            try mapModel.showInCircle(category)
+            selectedTab = .map
+        } catch {
+            logger.error("Failed to show category on map \(error)")
+        }
+    }
+
+    func showOnMap(mediaFile: MediaFile, mapModel: MapModel) {
+        do {
+            try mapModel.showInCircle(mediaFile)
+            selectedTab = .map
+        } catch {
+            logger.error("Failed to show mediafile on map \(error)")
+        }
+    }
+
+    func showOnMap(coordinate: CLLocationCoordinate2D, mapModel: MapModel) {
+        do {
+            try mapModel.showInCircle(coordinate)
+            selectedTab = .map
+        } catch {
+            logger.error("Failed to show coordinates on map \(error)")
+        }
     }
 }
