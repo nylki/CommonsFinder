@@ -194,6 +194,7 @@
 				Types/DraftMediaLicense.swift,
 				"Types/DraftMediaLicense+CommonsAPI.swift",
 				Types/FileNameType.swift,
+				Types/NewDraftOptions.swift,
 				Types/TagItem.swift,
 				Types/WikidataStatement.swift,
 				Types/WikimediaLanguage.swift,

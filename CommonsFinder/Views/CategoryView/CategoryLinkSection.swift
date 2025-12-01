@@ -20,16 +20,14 @@ struct CategoryLinkSection: View {
                     Text(wikidataID)
 
                     ControlGroup {
+                        Button("Copy ID", systemImage: "document.on.document") {
+                            UIPasteboard.general.string = wikidataID
+                        }
                         ShareLink("Share", item: wikidataURL)
                         Link(destination: wikidataURL) {
                             Label("Open in Browser", systemImage: "globe")
                         }
-
-                        Button("Copy ID", systemImage: "document.on.document") {
-                            UIPasteboard.general.string = wikidataID
-                        }
                     }
-
                 }
             }
             if let commonsCategory = item.base.commonsCategory,

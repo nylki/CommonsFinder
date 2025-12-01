@@ -32,9 +32,12 @@ import os.log
         draft.loadExifData()
     }()
 
-    init(fileItem: FileItem) {
+    init(fileItem: FileItem, newDraftOptions: NewDraftOptions?) {
         addedDate = .now
-        let draft = MediaFileDraft(fileItem)
+        var draft = MediaFileDraft(fileItem)
+        if let initialTag = newDraftOptions?.tag {
+            draft.tags = [initialTag]
+        }
         self.id = fileItem.id
         self.draft = draft
         self.fileItem = fileItem

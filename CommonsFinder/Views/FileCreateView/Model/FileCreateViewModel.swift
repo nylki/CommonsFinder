@@ -25,6 +25,7 @@ enum DraftError: Error {
 /// DraftModel models a drafting session where the user can add & remove files and also edit their metadata
 @Observable class FileCreateViewModel {
     private var photoImportTask: Task<Void, Error>?
+    let newDraftOptions: NewDraftOptions?
 
     /// The currently centered file in the scrollView that is being edited
     var selectedID: MediaFileDraftModel.ID?
@@ -59,13 +60,14 @@ enum DraftError: Error {
 
     private let appDatabase: AppDatabase
 
-    init(appDatabase: AppDatabase) {
+    init(appDatabase: AppDatabase, newDraftOptions: NewDraftOptions?) {
         self.appDatabase = appDatabase
+        self.newDraftOptions = newDraftOptions
         editedDrafts = .init()
     }
 
-    convenience init(appDatabase: AppDatabase, existingDrafts: [MediaFileDraft]) {
-        self.init(appDatabase: appDatabase)
+    convenience init(appDatabase: AppDatabase, existingDrafts: [MediaFileDraft], newDraftOptions: NewDraftOptions? = nil) {
+        self.init(appDatabase: appDatabase, newDraftOptions: newDraftOptions)
         for existingDraft in existingDrafts {
             let model = MediaFileDraftModel(existingDraft: existingDraft)
             editedDrafts[model.id] = model
@@ -112,7 +114,7 @@ enum DraftError: Error {
                 do {
                     let fileItem = try await FileItem.init(photoPickerItem: photoItem)
                     try Task.checkCancellation()
-                    let draft = MediaFileDraftModel(fileItem: fileItem)
+                    let draft = MediaFileDraftModel(fileItem: fileItem, newDraftOptions: newDraftOptions)
                     editedDrafts[draft.id] = draft
                 } catch {
                     logger.error("Failed to create fileItem of photo \(photoItem.itemIdentifier ?? ""): \(error)")
@@ -128,7 +130,7 @@ enum DraftError: Error {
                 for url in fileURLs {
                     do {
                         let fileItem = try await loadFileItem(url: url)
-                        let newDraft = MediaFileDraftModel(fileItem: fileItem)
+                        let newDraft = MediaFileDraftModel(fileItem: fileItem, newDraftOptions: newDraftOptions)
                         editedDrafts[newDraft.id] = newDraft
                     } catch {
                         logger.error("Failed to import file. \(error)")
@@ -162,7 +164,8 @@ enum DraftError: Error {
 
 
             let fileItem = try FileItem.init(uiImage: uiImage, metadata: metadata, location: cameraLocation)
-            let newDraft = MediaFileDraftModel(fileItem: fileItem)
+            let newDraft = MediaFileDraftModel(fileItem: fileItem, newDraftOptions: newDraftOptions)
+
             editedDrafts[newDraft.id] = newDraft
         }
 
