@@ -138,6 +138,9 @@
         }
       }
     },
+    "%llu" : {
+
+    },
     "•" : {
       "shouldTranslate" : false
     },
