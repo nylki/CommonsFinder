@@ -69,7 +69,14 @@ struct ClusterAnnotation: View {
         .shadow(color: Color.primary.opacity(0.4), radius: 2)
         .padding()
         .clipShape(shape)
-        .onTapGesture(perform: onTap)
+        .gesture(
+            LongPressGesture(minimumDuration: 0.2, maximumDistance: 50).simultaneously(with: TapGesture(count: 1))
+                .onEnded({ combinedState in
+                    if combinedState.first == true || combinedState.second != nil {
+                        onTap()
+                    }
+                })
+        )
         .animation(.default, value: isInteracting)
         .animation(.default, value: isSelected)
         .animation(.default, value: pickedItemType)

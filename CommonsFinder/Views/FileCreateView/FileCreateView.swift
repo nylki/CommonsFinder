@@ -31,10 +31,10 @@ struct FileCreateView: View {
 
     /// Initializes the FileEditView with a list of files. If files are empty, start with a blank view, where users add new files.
     /// - Parameter files: [MediaFile]
-    init(appDatabase: AppDatabase, files: [MediaFileDraft] = []) {
+    init(appDatabase: AppDatabase, newDraftOptions: NewDraftOptions? = nil, files: [MediaFileDraft] = []) {
         // NOTE: It is ok to initialize the @State model in the init, as we don't expect
         // and are not interested in subsequent prop changes from the outside.
-        model = FileCreateViewModel(appDatabase: appDatabase, existingDrafts: files)
+        model = FileCreateViewModel(appDatabase: appDatabase, existingDrafts: files, newDraftOptions: newDraftOptions)
     }
 
     /// Initializes the FileEditView with a file.
@@ -72,7 +72,6 @@ struct FileCreateView: View {
                         Button("Add from Photos", systemImage: "photo.badge.plus") {
                             isPhotosPickerPresented = true
                         }
-
 
                         Button("Take new Photo", systemImage: "camera") {
                             isCameraPresented = true
@@ -346,6 +345,10 @@ struct FileCreateView: View {
 
 #Preview("Empty/Initial", traits: .previewEnvironment) {
     FileCreateView(appDatabase: .populatedPreviewDatabase())
+}
+
+#Preview("empty with initial tags", traits: .previewEnvironment) {
+    FileCreateView(appDatabase: .populatedPreviewDatabase(), newDraftOptions: .init(tag: .init(.earth, pickedUsages: [.category, .depict])))
 }
 
 #Preview(

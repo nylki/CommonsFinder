@@ -34,33 +34,38 @@ struct CategoryContextMenu: ViewModifier {
     @Environment(MapModel.self) private var mapModel
     @Namespace private var namespace
 
-    private func showOnMap() {
-        do {
-            try mapModel.showInCircle(item.base)
-            navigation.selectedTab = .map
-        } catch {
-            logger.error("Failed to show category on map \(error)")
-        }
-    }
-
     func body(content: Content) -> some View {
         content
             .contextMenu {
                 VStack {
+
                     if shownEntries.contains(.openDetails) {
-                        Button("Open Details") {
+                        Button("Open Details", systemImage: "square.text.square") {
                             navigation.viewCategory(item)
                         }
                     }
+
                     if shownEntries.contains(.showOnMap), item.base.coordinate != nil {
-                        Button("Show on Map", action: showOnMap)
+                        Button("Show on Map", systemImage: "map") {
+                            navigation.showOnMap(category: item.base, mapModel: mapModel)
+                        }
                     }
+
                     if shownEntries.contains(.bookmark) {
                         Button(
                             item.isBookmarked ? "Remove Bookmark" : "Add Bookmark",
                             systemImage: item.isBookmarked ? "bookmark.fill" : "bookmark",
                             action: { updateBookmark(!item.isBookmarked) }
                         )
+                    }
+
+                    Divider()
+
+                    if shownEntries.contains(.newImage) {
+                        Button("Add Image", systemImage: "plus") {
+                            let newDraftOptions = NewDraftOptions(tag: TagItem(item.base, pickedUsages: [.category, .depict]))
+                            navigation.openNewDraft(options: newDraftOptions)
+                        }
                     }
 
                     if shownEntries.contains(.linkSection) {
@@ -91,9 +96,10 @@ extension CategoryContextMenu {
         static let showOnMap = Self(rawValue: 1 << 1)
         static let bookmark = Self(rawValue: 1 << 2)
         static let linkSection = Self(rawValue: 1 << 3)
+        static let newImage = Self(rawValue: 1 << 4)
 
         static var all: Self {
-            [.openDetails, .showOnMap, .bookmark, .linkSection]
+            [.openDetails, .showOnMap, .bookmark, .linkSection, .newImage]
         }
     }
 }

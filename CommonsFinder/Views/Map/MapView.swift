@@ -30,7 +30,6 @@ struct MapView: View {
     @Environment(\.scenePhase) private var scenePhase
 
     @Environment(MapModel.self) private var mapModel
-    @State private var selection: H3Index?
 
     /// this is either a media item or a wiki item
     private var focusedMapSheetItem: GeoItem? {
@@ -103,7 +102,7 @@ struct MapView: View {
 
         MapReader { mapProxy in
 
-            Map(position: $mapModel.position, selection: $selection, scope: mapScope) {
+            Map(position: $mapModel.position, scope: mapScope) {
                 clusterLayer
 
                 UserAnnotation()
@@ -149,11 +148,6 @@ struct MapView: View {
                 mapModel.setProxy(mapProxy)
             }
             .gesture(MapPressGesture(longPressAt: handleLongPressGesture))
-            .onChange(of: selection) { oldValue, newValue in
-                if oldValue != newValue, let newValue {
-                    mapModel.selectCluster(newValue)
-                }
-            }
             .onMapCameraChange(frequency: .onEnd) { context in
                 mapModel.setMapContext(context: context)
                 mapModel.refreshPlaces(context: context)
@@ -368,7 +362,6 @@ struct MapView: View {
                                 onTap: { mapModel.selectCluster(cluster.h3Index) }
                             )
                         }
-                        //                        .tag(cluster.h3Index)
                     } else {
                         // multiple images
                         Annotation("", coordinate: cluster.meanCenterMedia, anchor: .center) {
@@ -381,7 +374,6 @@ struct MapView: View {
                                 mapModel.selectCluster(cluster.h3Index)
                             }
                         }
-                        .tag(cluster.h3Index)
                     }
                 case .categoryItems:
                     if cluster.categoryItems.isEmpty {
@@ -398,7 +390,6 @@ struct MapView: View {
                             .id(singleCategory.geoRefID)
                         }
                         .mapOverlayLevel(level: .aboveLabels)
-                        //                        .tag(cluster.h3Index)
                     } else {
                         if experimentalAlwaysShowHulls {
                             MapPolygon(hull)
@@ -418,7 +409,6 @@ struct MapView: View {
                                 mapModel.selectCluster(cluster.h3Index)
                             }
                         }
-                        .tag(cluster.h3Index)
                     }
                 }
             }

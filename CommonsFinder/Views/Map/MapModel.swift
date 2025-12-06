@@ -55,6 +55,10 @@ enum MapError: Error {
         self.appDatabase = appDatabase
         self.mediaFileCache = mediaFileCache
         self.navigation = navigation
+
+        if isLocationAuthorized, let userCoordinates = locationManager.location?.coordinate {
+            position = .region(.init(center: userCoordinates, latitudinalMeters: 1000, longitudinalMeters: 1000))
+        }
     }
 
     /// To be used as the binding in the sheet initializer
@@ -80,7 +84,7 @@ enum MapError: Error {
 
     /// in meter
     private let imageVisibilityThreshold: Double = 4000
-    private let wikiItemVisibilityThreshold: Double = 40_000
+    private let wikiItemVisibilityThreshold: Double = 35_000
 
     var currentResolution: H3.Resolution {
         if let region {

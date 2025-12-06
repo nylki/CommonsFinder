@@ -7,11 +7,12 @@
 
 import Foundation
 import H3kit
+import CoreLocation
 
 nonisolated extension H3 {
     // This is just a rough estimation, to be adjusted.
     public static func bestH3Resolution(forScreenArea screenArea: Double) -> Resolution {
-        let idealVisibleCellCount = 4
+        let idealVisibleCellCount = 5
         let idealHexArea = screenArea / Double(idealVisibleCellCount)
 
         var idealRes: Resolution = .zero
