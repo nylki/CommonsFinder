@@ -1,21 +1,9 @@
-Diese Version enthält einen Fix für einen Crash der  unter iOS 26 Auftritt wenn man mehr als 1 Bild hochlädt.
+Neu diese Woche:
 
-Außerdem gibt es ein paar größere Änderungen an der Karte, die die Benutzung nützlicher und hoffentlich auch intuitiver macht. :)
-Weitere Verbesserungen und Funktionen in der Karte sind geplant.
+- feature: Bilder können direkt von einer Kategorie-Detailansicht hochgeladen werden
+- Ein Fehler bei der Auswahl von Punkten auf der Karte wurde gefixt
+- Anpassungen der Item-Dichte auf der Karte
+- Beim App-Start wird die Karte nun auf die User-Position zentriert statt stark rausgezoomte Ansicht mit Kontinenten zu zeigen (sofern die Location-Berechtigungen bestehen)
+- neue bzw. angepasste Icons in verschiedenen Menüs
 
-KARTE
-- Neues Tab-Icon für mehr Einheitlichkeit
-- Bilder und Kategorien können jetzt direkt auf der großen Karte angezeigt werden mit ihren benachbarten Items (über das Kontextmenü oder via der kleinen Inline-Map in den Detailansichten)
-- Wenn man einen Longpress auf der Karte macht, werden nun Elemente in einem Radius von 250 m um diese Koordinate angezeigt.
-- Positionen (Kategorien/Wikidata-Einträge) und Bilder sind in zwei separate Kartenebenen aufgeteilt, zwischen denen gewechselt werden kann
-- selektierte Elemente auf der Karte haben jetzt Beschriftungen
-- Cluster werden nun entsprehend der Item-Dichte positioniert, wodurch die Cluster-Buttons nicht ganz so rastermäßig angeordnet (wirken).
-- Ein ausgewählter Cluster hat jetzt eine natürlichere Outline anstelle eines Kreises, was die Geometrie und Dichte der Elemente in einem Cluster besser widerspiegelt
-- Cluster mit nur einem Element zeigen dieses Element mit seinem Bild direkt auf der Karte an
-- Das Map-Sheet-Modal verwendet jetzt die native Sheet-Implementierung, was vorallem Vorteile mit sich bringt, aber auch ein paar Eigenheiten hat.
-- Das Map-Sheet zeigt nun die (ungefähre) Adresse, bzw. Standort eines ausgewählten Clusters an.
-- Bei "In Karten-App öffnen" wird nun die in den Systemeinstellungen eingestellte Standard-Navigations-App geöffnet (z. B. Organic Maps statt Apple Maps). Möglicherweise ist das iOS 26-only oder nur in der EU verfügbar, not sure.
-
-WEITERE ÄNDERUNGEN
-- Pluralisierung an einigen Stellen hinzugefügt
-- Kleinere Anpassungen an Beschriftungen und Symbolen in Menüs
+Beim Update letzte Woche gab es ein großes Update auf der Karte und eine Crash-fix der beim Hochladen unter iOS 26 auftrat.

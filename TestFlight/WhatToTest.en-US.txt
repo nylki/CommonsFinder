@@ -1,22 +1,9 @@
-This release fixes a crash that occurs on iOS 26 when uploading more than 1 image.
+changes this week:
 
-There are also bigger changes to the map section, making it more useful and hopefully also more intuitive.
-This is just one iteration on Map features, expect finetuning and more features to come! :)
+- feature: upload a new image directly from a Category detail view
+- fix wrong map selection in some situations
+- tweak map item density
+- on app start, position the map at the user location instead of a zoomed out continents view (if location access was previously granted)
+- new and tweaked icons in some context menus
 
-MAP
-- new Tab-Icon for consistency
-- images and categories can now be shown on the map (via context menu or small inline map in the detail views)
-- when you long press on an empty location on the map, you will now be presented with items in a 250m radius around that coordinate that you pressed
-- split location (categories/wikidata items) and images into 2 separate map layers that can be switched
-- highlighted items on the map now have labels
-- clusters are now positioned by center of density instead purely by their mathematical center, making the cluster button positioned more naturally
-- a selected cluster now has the boundary-outline instead of a radius, which better reflects the geometry and density of items in a cluster
-- clusters with only 1 item show that item with its image directly on the map
-- the map sheet is now using the native sheet-model implementation which has some upsides, but also some gotchas.
-- the map sheet now indicates the (rough) address/location of a cluster of items
-- when opening a category/map location in another app, the system-wide default app for navigation will now be opened (eg. Organic Maps instead of Apple Maps), this may be an iOS 26 or EU-only feature, not 100% sure.
-
-
-OTHER CHANGES
-- add pluralization in some places
-- some smaller label and icon adjustments in menus
+Last week's update contained big map changes and a crash fix for uploads on iOS 26.
