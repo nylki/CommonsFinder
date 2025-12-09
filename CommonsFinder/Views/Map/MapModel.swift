@@ -56,8 +56,8 @@ enum MapError: Error {
         self.mediaFileCache = mediaFileCache
         self.navigation = navigation
 
-        if isLocationAuthorized, let userCoordinates = locationManager.location?.coordinate {
-            position = .region(.init(center: userCoordinates, latitudinalMeters: 1000, longitudinalMeters: 1000))
+        if isLocationAuthorized {
+            position = .userLocation(fallback: .automatic)
         }
     }
 
