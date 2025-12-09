@@ -99,10 +99,20 @@ enum MapError: Error {
     }
 
     func selectMapMode(_ mode: MapLayerMode) {
-        isMapSheetPresented = false
-        selectedMapItem?.mapSheetFocusedItem = .init()
+        guard mode != mapLayerMode else { return }
+
+        let oldMapSelection = selectedMapItem
+
         mapLayerMode = mode
-        fetchDataForCurrentRegion()
+
+        if let clusterSelection = oldMapSelection as? ClusterRepresentation {
+            selectCluster(clusterSelection.cluster.h3Index)
+        } else if let circleSelection = oldMapSelection as? CircleRepresentation {
+            selectMapLocation(circleSelection.coordinate)
+        } else {
+            selectedMapItem?.mapSheetFocusedItem = .init()
+            isMapSheetPresented = false
+        }
     }
 
     func setMapContext(context: MapCameraUpdateContext) {
