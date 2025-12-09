@@ -1001,7 +1001,7 @@ GROUP BY ?item ?commonsCategory ?area ?location ?label ?image ?description
         let preferredLanguages = ([languageCode] + getPreferredSystemLanguages()).uniqued().joined(separator: ",")
         let categoriesString = categories
             .map {
-                let quotationMarksEscapedString = $0.replacingOccurrences(of: "\"", with: "\\\"")
+                let quotationMarksEscapedString = $0.replacing("\"", with: "\\\"")
                 return "\"\(quotationMarksEscapedString)\""
             }
             .joined(separator: " ")
