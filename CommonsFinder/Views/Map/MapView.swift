@@ -58,7 +58,7 @@ struct MapView: View {
         if isZoomedIntoSelectedCluster {
             let pressedCluster: GeoCluster? = mapModel.clusters.values.first { cluster in
                 let clusterGeometry: Geometry? =
-                    switch mapModel.mapLayerMode {
+                    switch mapModel.mapItemTypeToShow {
                     case .categoryItems: cluster.categoryGeometry
                     case .mediaItem: cluster.mediaGeometry
                     }
@@ -177,7 +177,7 @@ struct MapView: View {
             .overlay(alignment: .trailing) {
                 VStack {
                     MapUserLocateButtonCustom(mapModel: mapModel)
-                    mapModeMenu
+                    mapItemsToShowMenu
                 }
                 .scenePadding()
             }
@@ -256,7 +256,7 @@ struct MapView: View {
 
 
         let selectedClusterHull =
-            switch mapModel.mapLayerMode {
+            switch mapModel.mapItemTypeToShow {
             case .mediaItem: selectedCluster?.mediaHull
             case .categoryItems: selectedCluster?.categoryHull
             }
@@ -277,7 +277,7 @@ struct MapView: View {
             // TODO: clean up this logic to be easier to read (maybe switch by selected item first, if its a cluster or circle and lay out the logic in sub-funcs for each case)
 
             let hull =
-                switch mapModel.mapLayerMode {
+                switch mapModel.mapItemTypeToShow {
                 case .mediaItem: cluster.mediaHull
                 case .categoryItems: cluster.categoryHull
                 }
@@ -344,7 +344,7 @@ struct MapView: View {
                     .foregroundStyle(Color.accent.opacity(0.2))
                     .stroke(Color.accent, style: .init(lineWidth: 1, lineCap: .square, dash: [2, 6]))
             } else if !isContainedInSelectedRadius {
-                switch mapModel.mapLayerMode {
+                switch mapModel.mapItemTypeToShow {
                 case .mediaItem:
                     if cluster.mediaItems.isEmpty {
                         EmptyMapContent()
@@ -416,12 +416,12 @@ struct MapView: View {
         .annotationTitles(mapModel.selectedMapItem == nil ? .automatic : .hidden)
     }
 
-    private var mapModeMenu: some View {
+    private var mapItemsToShowMenu: some View {
         Menu {
-            Text("Map Mode")
+            Text("Items to show on the Map")
             Divider()
             Button {
-                mapModel.selectMapMode(.categoryItems)
+                mapModel.selectMapItemTypeToShow(.categoryItems)
             } label: {
                 Label("Locations", systemImage: "tag.fill")
 
@@ -429,13 +429,13 @@ struct MapView: View {
             .labelStyle(.iconOnly)
 
             Button {
-                mapModel.selectMapMode(.mediaItem)
+                mapModel.selectMapItemTypeToShow(.mediaItem)
             } label: {
                 Label("Images", systemImage: "photo")
             }
             .labelStyle(.iconOnly)
         } label: {
-            switch mapModel.mapLayerMode {
+            switch mapModel.mapItemTypeToShow {
             case .categoryItems:
                 Image(systemName: "tag.fill")
                     .imageScale(.large)

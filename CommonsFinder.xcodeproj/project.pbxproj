@@ -255,7 +255,7 @@
 				Views/Map/GeoClustering/GeoClusterTree.swift,
 				Views/Map/GeoClustering/GeoItem.swift,
 				"Views/Map/GeoClustering/H3+Convenience.swift",
-				Views/Map/MapLayerMode.swift,
+				Views/Map/MapItemType.swift,
 				Views/Map/MapModel.swift,
 				Views/Map/MapPitchButtonCustom.swift,
 				Views/Map/MapPressGesture.swift,

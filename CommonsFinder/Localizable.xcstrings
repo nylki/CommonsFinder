@@ -877,6 +877,9 @@
         }
       }
     },
+    "Items to show on the Map" : {
+
+    },
     "License" : {
       "localizations" : {
         "de" : {
@@ -1074,6 +1077,7 @@
       }
     },
     "Map Mode" : {
+      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {

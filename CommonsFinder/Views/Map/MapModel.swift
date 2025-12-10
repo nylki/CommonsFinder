@@ -29,7 +29,7 @@ enum MapError: Error {
     private let appDatabase: AppDatabase
     private let mediaFileCache: MediaFileReactiveCache
 
-    private(set) var mapLayerMode: MapLayerMode = .categoryItems
+    private(set) var mapItemTypeToShow: MapItemType = .categoryItems
 
     @ObservationIgnored
     private var fetchTask: Task<Void, Error>?
@@ -98,12 +98,12 @@ enum MapError: Error {
         self.mapProxy = mapProxy
     }
 
-    func selectMapMode(_ mode: MapLayerMode) {
-        guard mode != mapLayerMode else { return }
+    func selectMapItemTypeToShow(_ type: MapItemType) {
+        guard type != mapItemTypeToShow else { return }
 
         let oldMapSelection = selectedMapItem
 
-        mapLayerMode = mode
+        mapItemTypeToShow = type
 
         if let clusterSelection = oldMapSelection as? ClusterRepresentation {
             selectCluster(clusterSelection.cluster.h3Index)
@@ -130,7 +130,7 @@ enum MapError: Error {
             throw MapError.itemWithoutCoordinateCannotBeShownOnMap
         }
         geoClusterTree.add([.category(category)])
-        mapLayerMode = .categoryItems
+        mapItemTypeToShow = .categoryItems
         selectMapLocation(coordinate, focusedID: category.geoRefID)
     }
 
@@ -139,7 +139,7 @@ enum MapError: Error {
             throw MapError.itemWithoutCoordinateCannotBeShownOnMap
         }
         geoClusterTree.add([.media(.init(id: mediaFile.id, coordinate: coordinate, title: mediaFile.bestShortTitle))])
-        mapLayerMode = .mediaItem
+        mapItemTypeToShow = .mediaItem
         selectMapLocation(coordinate, focusedID: mediaFile.id)
     }
 
@@ -148,7 +148,7 @@ enum MapError: Error {
             assertionFailure()
             return
         }
-        switch mapLayerMode {
+        switch mapItemTypeToShow {
         case .categoryItems:
             selectedMapItem = CategoriesInClusterModel(appDatabase: appDatabase, cluster: cluster)
         case .mediaItem:
@@ -191,7 +191,7 @@ enum MapError: Error {
 
         navigation.clearPath(of: .map)
 
-        switch mapLayerMode {
+        switch mapItemTypeToShow {
         case .categoryItems:
             let categoryItems = items.compactMap { $0.category }
             selectedMapItem = CategoriesAroundLocationModel(appDatabase: appDatabase, coordinate: coordinate, radius: radius, categoryItems: categoryItems)
@@ -305,7 +305,7 @@ enum MapError: Error {
 
             var items: [GeoItem] = []
 
-            switch mapLayerMode {
+            switch mapItemTypeToShow {
             case .categoryItems:
                 let wikidataItems = await fetchWikiItems(region: region, maxDiagonalMapLength: wikiItemVisibilityThreshold)
                 for wikidataItem in wikidataItems {
