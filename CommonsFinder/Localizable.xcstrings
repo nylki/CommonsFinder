@@ -567,6 +567,9 @@
     "copyrighted: dedicated to public domain" : {
 
     },
+    "Could not load image (this is a bug, please report :)" : {
+
+    },
     "Creating Account..." : {
       "localizations" : {
         "de" : {
