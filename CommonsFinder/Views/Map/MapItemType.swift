@@ -5,7 +5,7 @@
 //  Created by Tom Brewe on 29.10.25.
 //
 
-enum MapLayerMode {
+enum MapItemType {
     case categoryItems
     case mediaItem
 }

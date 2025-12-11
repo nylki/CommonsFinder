@@ -29,8 +29,6 @@ enum MapError: Error {
     private let appDatabase: AppDatabase
     private let mediaFileCache: MediaFileReactiveCache
 
-    private(set) var mapLayerMode: MapLayerMode = .categoryItems
-
     @ObservationIgnored
     private var fetchTask: Task<Void, Error>?
 
@@ -45,11 +43,22 @@ enum MapError: Error {
     private(set) var geoClusterTree = GeoClusterTree()
 
     private(set) var clusters: [H3Index: GeoCluster] = .init()
-    private var isMapSheetPresented: Bool = false
 
+    var mapStyle: WrappedMapStyle = .standard
+
+    private(set) var itemType: MapItemType = .categoryItems
     private(set) var selectedMapItem: SelectedMapItemModel?
 
     private(set) var mapProxy: MapProxy?
+
+    enum MapSheetType: String, Identifiable {
+        case mapStyle
+        case mapSelection
+
+        var id: String {
+            self.rawValue
+        }
+    }
 
     init(appDatabase: AppDatabase, navigation: Navigation, mediaFileCache: MediaFileReactiveCache) {
         self.appDatabase = appDatabase
@@ -61,16 +70,18 @@ enum MapError: Error {
         }
     }
 
+
+    private(set) var presentedMapSheet: MapSheetType? = nil
     /// To be used as the binding in the sheet initializer
-    var isMapSheetPresentedBinding: Binding<Bool> {
+    var presentedMapSheetBinding: Binding<MapSheetType?> {
         .init(
             get: {
-                self.isMapSheetPresented && self.navigation.mapPath.isEmpty == true
+                guard self.navigation.mapPath.isEmpty else { return nil }
+                return self.presentedMapSheet
             },
             set: { newValue in
-                if self.navigation.mapPath.isEmpty == true {
-                    self.isMapSheetPresented = newValue
-                }
+                guard self.navigation.mapPath.isEmpty else { return }
+                self.presentedMapSheet = newValue
             })
     }
 
@@ -98,12 +109,16 @@ enum MapError: Error {
         self.mapProxy = mapProxy
     }
 
-    func selectMapMode(_ mode: MapLayerMode) {
-        guard mode != mapLayerMode else { return }
+    func presentMapStyleSheet() {
+        presentedMapSheet = .mapStyle
+    }
+
+    func selectMapItemTypeToShow(_ type: MapItemType) {
+        guard type != itemType else { return }
 
         let oldMapSelection = selectedMapItem
 
-        mapLayerMode = mode
+        itemType = type
 
         if let clusterSelection = oldMapSelection as? ClusterRepresentation {
             selectCluster(clusterSelection.cluster.h3Index)
@@ -111,7 +126,8 @@ enum MapError: Error {
             selectMapLocation(circleSelection.coordinate)
         } else {
             selectedMapItem?.mapSheetFocusedItem = .init()
-            isMapSheetPresented = false
+            presentedMapSheet = nil
+            fetchDataForCurrentRegion(shouldDebounce: false)
         }
     }
 
@@ -130,7 +146,7 @@ enum MapError: Error {
             throw MapError.itemWithoutCoordinateCannotBeShownOnMap
         }
         geoClusterTree.add([.category(category)])
-        mapLayerMode = .categoryItems
+        itemType = .categoryItems
         selectMapLocation(coordinate, focusedID: category.geoRefID)
     }
 
@@ -139,7 +155,7 @@ enum MapError: Error {
             throw MapError.itemWithoutCoordinateCannotBeShownOnMap
         }
         geoClusterTree.add([.media(.init(id: mediaFile.id, coordinate: coordinate, title: mediaFile.bestShortTitle))])
-        mapLayerMode = .mediaItem
+        itemType = .mediaItem
         selectMapLocation(coordinate, focusedID: mediaFile.id)
     }
 
@@ -148,14 +164,14 @@ enum MapError: Error {
             assertionFailure()
             return
         }
-        switch mapLayerMode {
+        switch itemType {
         case .categoryItems:
             selectedMapItem = CategoriesInClusterModel(appDatabase: appDatabase, cluster: cluster)
         case .mediaItem:
             selectedMapItem = MediaInClusterModel(appDatabase: appDatabase, cluster: cluster)
         }
         fetchDataForSelectedItem()
-        isMapSheetPresented = true
+        presentedMapSheet = .mapSelection
         navigation.clearPath(of: .map)
 
         guard let currentMapBoxWithSafeArea = region?.paddedBoundingBox(top: -0.25, bottom: -0.3, left: -0.15, right: -0.15) else {
@@ -191,7 +207,7 @@ enum MapError: Error {
 
         navigation.clearPath(of: .map)
 
-        switch mapLayerMode {
+        switch itemType {
         case .categoryItems:
             let categoryItems = items.compactMap { $0.category }
             selectedMapItem = CategoriesAroundLocationModel(appDatabase: appDatabase, coordinate: coordinate, radius: radius, categoryItems: categoryItems)
@@ -201,7 +217,7 @@ enum MapError: Error {
         }
 
         fetchDataForSelectedItem()
-        isMapSheetPresented = true
+        presentedMapSheet = .mapSelection
 
 
         let paddingFactor = 0.382
@@ -217,7 +233,7 @@ enum MapError: Error {
     }
 
     func resetClusterSelection() {
-        isMapSheetPresented = false
+        presentedMapSheet = nil
         selectedMapItem = nil
     }
 
@@ -305,7 +321,7 @@ enum MapError: Error {
 
             var items: [GeoItem] = []
 
-            switch mapLayerMode {
+            switch itemType {
             case .categoryItems:
                 let wikidataItems = await fetchWikiItems(region: region, maxDiagonalMapLength: wikiItemVisibilityThreshold)
                 for wikidataItem in wikidataItems {

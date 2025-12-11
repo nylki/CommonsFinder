@@ -58,7 +58,7 @@ struct MapView: View {
         if isZoomedIntoSelectedCluster {
             let pressedCluster: GeoCluster? = mapModel.clusters.values.first { cluster in
                 let clusterGeometry: Geometry? =
-                    switch mapModel.mapLayerMode {
+                    switch mapModel.itemType {
                     case .categoryItems: cluster.categoryGeometry
                     case .mediaItem: cluster.mediaGeometry
                     }
@@ -166,70 +166,117 @@ struct MapView: View {
                 MapScaleView()
             }
             .mapControlVisibility(.visible)
-            .mapStyle(
-                .standard(
-                    elevation: .automatic,
-                    emphasis: .automatic,
-                    pointsOfInterest: .excludingAll,
-                    showsTraffic: false
-                )
-            )
+            .mapStyle(mapModel.mapStyle.asMKMapStyle)
             .overlay(alignment: .trailing) {
                 VStack {
                     MapUserLocateButtonCustom(mapModel: mapModel)
-                    mapModeMenu
+                    mapItemsToShowMenu
+                    mapStyleButton
                 }
                 .scenePadding()
             }
             .sheet(
-                isPresented: mapModel.isMapSheetPresentedBinding,
+                item: mapModel.presentedMapSheetBinding,
                 onDismiss: {
                     if navigation.mapPath.isEmpty {
-                        // only clear the selected cluster if the dismiss comes from actively dismissing
-                        // by the user, and not indirectly when a navigation mapPath update was pushed (eg. viewing an image)
+                        // only clear the selected cluster if the dismiss comes from active dismissing
+                        // by the user, and not indirectly when a navigation mapPath update is pushed (eg. viewing an image)
                         mapModel.resetClusterSelection()
                     }
-                }
-            ) {
-                if let model = (mapModel.selectedMapItem as? MediaInClusterModel) {
-                    @Bindable var model = model
-                    MediaClusterSheet(
-                        model: model,
-                        mapAnimationNamespace: namespace,
-                        onClose: mapModel.resetClusterSelection
-                    )
-                    .id(model.id)
-                    .presentationBackgroundInteraction(.enabled)
-                } else if let model = (mapModel.selectedMapItem as? CategoriesInClusterModel) {
-                    @Bindable var model = model
-                    CategoryClusterSheet(
-                        model: model,
-                        mapAnimationNamespace: namespace,
-                        onClose: mapModel.resetClusterSelection
-                    )
-                    .id(model.id)
-                    .presentationBackgroundInteraction(.enabled)
-                } else if let model = (mapModel.selectedMapItem as? MediaAroundLocationModel) {
-                    @Bindable var model = model
-                    MediaCircleSheet(
-                        model: model,
-                        mapAnimationNamespace: namespace,
-                        onClose: mapModel.resetClusterSelection
-                    )
-                    .id(model.id)
-                    .presentationBackgroundInteraction(.enabled)
-                } else if let model = (mapModel.selectedMapItem as? CategoriesAroundLocationModel) {
-                    @Bindable var model = model
-                    CategoryCircleSheet(
-                        model: model,
-                        mapAnimationNamespace: namespace,
-                        onClose: mapModel.resetClusterSelection
-                    )
-                    .id(model.id)
-                    .presentationBackgroundInteraction(.enabled)
-                }
-
-            }
+                },
+                content: { sheetType in
+                    switch sheetType {
+                    case .mapStyle:
+                        MapStyleSheet(activeStyle: $mapModel.mapStyle)
+                    case .mapSelection:
+                        if let model = (mapModel.selectedMapItem as? MediaInClusterModel) {
+                            @Bindable var model = model
+                            MediaClusterSheet(
+                                model: model,
+                                mapAnimationNamespace: namespace,
+                                onClose: mapModel.resetClusterSelection
+                            )
+                            .id(model.id)
+                            .presentationBackgroundInteraction(.enabled)
+                        } else if let model = (mapModel.selectedMapItem as? CategoriesInClusterModel) {
+                            @Bindable var model = model
+                            CategoryClusterSheet(
+                                model: model,
+                                mapAnimationNamespace: namespace,
+                                onClose: mapModel.resetClusterSelection
+                            )
+                            .id(model.id)
+                            .presentationBackgroundInteraction(.enabled)
+                        } else if let model = (mapModel.selectedMapItem as? MediaAroundLocationModel) {
+                            @Bindable var model = model
+                            MediaCircleSheet(
+                                model: model,
+                                mapAnimationNamespace: namespace,
+                                onClose: mapModel.resetClusterSelection
+                            )
+                            .id(model.id)
+                            .presentationBackgroundInteraction(.enabled)
+                        } else if let model = (mapModel.selectedMapItem as? CategoriesAroundLocationModel) {
+                            @Bindable var model = model
+                            CategoryCircleSheet(
+                                model: model,
+                                mapAnimationNamespace: namespace,
+                                onClose: mapModel.resetClusterSelection
+                            )
+                            .id(model.id)
+                            .presentationBackgroundInteraction(.enabled)
+                        }
+                    }
+                })
+            //            .sheet(
+            //                isPresented: mapModel.isMapSelectionSheetPresentedBinding,
+            //                onDismiss: {
+            //                    if navigation.mapPath.isEmpty {
+            //                        // only clear the selected cluster if the dismiss comes from actively dismissing
+            //                        // by the user, and not indirectly when a navigation mapPath update was pushed (eg. viewing an image)
+            //                        mapModel.resetClusterSelection()
+            //                    }
+            //                }
+            //            ) {
+            //                if let model = (mapModel.selectedMapItem as? MediaInClusterModel) {
+            //                    @Bindable var model = model
+            //                    MediaClusterSheet(
+            //                        model: model,
+            //                        mapAnimationNamespace: namespace,
+            //                        onClose: mapModel.resetClusterSelection
+            //                    )
+            //                    .id(model.id)
+            //                    .presentationBackgroundInteraction(.enabled)
+            //                } else if let model = (mapModel.selectedMapItem as? CategoriesInClusterModel) {
+            //                    @Bindable var model = model
+            //                    CategoryClusterSheet(
+            //                        model: model,
+            //                        mapAnimationNamespace: namespace,
+            //                        onClose: mapModel.resetClusterSelection
+            //                    )
+            //                    .id(model.id)
+            //                    .presentationBackgroundInteraction(.enabled)
+            //                } else if let model = (mapModel.selectedMapItem as? MediaAroundLocationModel) {
+            //                    @Bindable var model = model
+            //                    MediaCircleSheet(
+            //                        model: model,
+            //                        mapAnimationNamespace: namespace,
+            //                        onClose: mapModel.resetClusterSelection
+            //                    )
+            //                    .id(model.id)
+            //                    .presentationBackgroundInteraction(.enabled)
+            //                } else if let model = (mapModel.selectedMapItem as? CategoriesAroundLocationModel) {
+            //                    @Bindable var model = model
+            //                    CategoryCircleSheet(
+            //                        model: model,
+            //                        mapAnimationNamespace: namespace,
+            //                        onClose: mapModel.resetClusterSelection
+            //                    )
+            //                    .id(model.id)
+            //                    .presentationBackgroundInteraction(.enabled)
+            //                }
+            //
+            //            }
         }
         .overlay {
             if mapModel.isRefreshingMap {
@@ -256,7 +303,7 @@ struct MapView: View {
 
 
         let selectedClusterHull =
-            switch mapModel.mapLayerMode {
+            switch mapModel.itemType {
             case .mediaItem: selectedCluster?.mediaHull
             case .categoryItems: selectedCluster?.categoryHull
             }
@@ -277,7 +324,7 @@ struct MapView: View {
             // TODO: clean up this logic to be easier to read (maybe switch by selected item first, if its a cluster or circle and lay out the logic in sub-funcs for each case)
 
             let hull =
-                switch mapModel.mapLayerMode {
+                switch mapModel.itemType {
                 case .mediaItem: cluster.mediaHull
                 case .categoryItems: cluster.categoryHull
                 }
@@ -344,7 +391,7 @@ struct MapView: View {
                     .foregroundStyle(Color.accent.opacity(0.2))
                     .stroke(Color.accent, style: .init(lineWidth: 1, lineCap: .square, dash: [2, 6]))
             } else if !isContainedInSelectedRadius {
-                switch mapModel.mapLayerMode {
+                switch mapModel.itemType {
                 case .mediaItem:
                     if cluster.mediaItems.isEmpty {
                         EmptyMapContent()
@@ -416,12 +463,12 @@ struct MapView: View {
         .annotationTitles(mapModel.selectedMapItem == nil ? .automatic : .hidden)
     }
 
-    private var mapModeMenu: some View {
+    private var mapItemsToShowMenu: some View {
         Menu {
-            Text("Map Mode")
+            Text("Map Details")
             Divider()
             Button {
-                mapModel.selectMapMode(.categoryItems)
+                mapModel.selectMapItemTypeToShow(.categoryItems)
             } label: {
                 Label("Locations", systemImage: "tag.fill")
 
@@ -429,13 +476,13 @@ struct MapView: View {
             .labelStyle(.iconOnly)
 
             Button {
-                mapModel.selectMapMode(.mediaItem)
+                mapModel.selectMapItemTypeToShow(.mediaItem)
             } label: {
                 Label("Images", systemImage: "photo")
             }
             .labelStyle(.iconOnly)
         } label: {
-            switch mapModel.mapLayerMode {
+            switch mapModel.itemType {
             case .categoryItems:
                 Image(systemName: "tag.fill")
                     .imageScale(.large)
@@ -446,6 +493,19 @@ struct MapView: View {
                     .frame(width: 25, height: 33)
             }
         }
+        .glassButtonStyle()
+    }
+
+    @ViewBuilder
+    private var mapStyleButton: some View {
+        Button {
+            mapModel.presentMapStyleSheet()
+        } label: {
+            Image(systemName: "square.2.layers.3d.bottom.filled")
+                .imageScale(.large)
+                .frame(width: 25, height: 33)
+        }
+        .labelStyle(.iconOnly)
         .glassButtonStyle()
     }
 }
