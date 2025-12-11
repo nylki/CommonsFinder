@@ -87,38 +87,16 @@ struct FileCreateView: View {
                     .padding()
 
                 } else if model.editedDrafts.count == 1, let selectedID = model.selectedID, let singleSelectedModel = model.editedDrafts[selectedID] {
-
-
-                    if #available(iOS 26.0, *) {
-                        MetadataEditForm(model: singleSelectedModel)
-                            .safeAreaBar(edge: .top) {
-                                singleImageView(model: singleSelectedModel)
-                                    .padding(.bottom)
-                            }
-                    } else {
-                        MetadataEditForm(model: singleSelectedModel)
-                            .safeAreaInset(edge: .top) {
-                                HStack {
-                                    Spacer(minLength: 0)
-                                    singleImageView(model: singleSelectedModel)
-                                    Spacer(minLength: 0)
-                                }
-                                .background(Material.ultraThin.opacity(0.92))
-                                .padding(.bottom)
-                            }
-                    }
-
-
+                    SingleImageDraftView(model: singleSelectedModel)
                 } else if model.editedDrafts.count > 1 {
 
                     // TODO: Design specialized batch edit where you edit the title etc. for all images
                     // then copies with enumeration (1-99) to drafts.
                     imageScrollView
 
-
                     // TODO: debounce changes to selectedID to reduce redraws of the form when swiping really fast
                     if !isInteractingWithScrollView, let selectedID = model.selectedID, let selectedModel = model.editedDrafts[selectedID] {
-                        MetadataEditForm(model: selectedModel)
+                        SingleImageDraftView(model: selectedModel)
                             .id(selectedID)  // .id is explicitly set to allow animated transition.
                     }
                     Spacer()
@@ -252,33 +230,6 @@ struct FileCreateView: View {
                 .disabled(model.selectedDraft?.draft.canUpload != true || !model.canSafeDrafts || account.activeUser == nil)
             }
         }
-    }
-
-
-    @ViewBuilder func singleImageView(model: MediaFileDraftModel) -> some View {
-        // we only expect the model.fileItem?.fileURL, but thumburl is useful for previews
-        Button {
-            biggerImage.toggle()
-        } label: {
-            let imageRequest: ImageRequest? =
-                model.temporaryFileImageRequest
-                ?? model.draft.localFileRequestFull
-
-            LazyImage(request: imageRequest) { phase in
-                if let image = phase.image {
-                    image
-                        .resizable()
-                        .aspectRatio(contentMode: .fit)
-                        .transition(.blurReplace)
-                } else {
-                    Color.clear.background(.regularMaterial)
-                }
-            }
-            .clipShape(.rect(cornerRadius: 23))
-            .frame(height: biggerImage ? 250 : 125, alignment: .top)
-        }
-        .buttonStyle(ImageButtonStyle())
-
     }
 
 

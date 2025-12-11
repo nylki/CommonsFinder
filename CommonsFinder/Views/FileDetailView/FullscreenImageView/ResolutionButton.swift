@@ -10,7 +10,10 @@ import TipKit
 import os.log
 
 struct ResolutionButton: View {
-    let mediaFileInfo: MediaFileInfo
+    let width: Int
+    let height: Int
+    let byte: Int
+
     let loadedImage: LoadedImageType
     let networkStatus: NetworkStatus
     let originalImageLoadedPercent: Int?
@@ -53,19 +56,8 @@ struct ResolutionButton: View {
             }
         } message: {
             let byteStyle = ByteCountFormatStyle(style: .file, allowedUnits: [.kb, .mb, .gb, .tb])
-            let fileSizeString: String =
-                if let byte = mediaFileInfo.mediaFile.size {
-                    byteStyle.format(Int64(byte))
-                } else {
-                    "unknown"
-                }
-
-            let dimensionString: String =
-                if let w = mediaFileInfo.mediaFile.width, let h = mediaFileInfo.mediaFile.height {
-                    "(\(w)×\(h)px)"
-                } else {
-                    ""
-                }
+            let fileSizeString: String = byteStyle.format(Int64(byte))
+            let dimensionString: String = "(\(width)×\(height)px)"
 
             Text("Load original image \(dimensionString) with a size of \(fileSizeString) now?")
         }
@@ -141,7 +133,9 @@ struct ZoomHUDButtonStyle: ButtonStyle {
 #Preview {
     VStack {
         ResolutionButton(
-            mediaFileInfo: .makeRandomUploaded(id: "1", .squareImage),
+            width: 1920,
+            height: 1080,
+            byte: 100000,
             loadedImage: .resized(.zeroSymbol),
             networkStatus: .ok,
             originalImageLoadedPercent: nil
@@ -150,7 +144,9 @@ struct ZoomHUDButtonStyle: ButtonStyle {
         }
 
         ResolutionButton(
-            mediaFileInfo: .makeRandomUploaded(id: "1", .squareImage),
+            width: 1920,
+            height: 1080,
+            byte: 100000,
             loadedImage: .resized(.zeroSymbol),
             networkStatus: .restricted,
             originalImageLoadedPercent: nil
@@ -159,7 +155,9 @@ struct ZoomHUDButtonStyle: ButtonStyle {
         }
 
         ResolutionButton(
-            mediaFileInfo: .makeRandomUploaded(id: "1", .squareImage),
+            width: 1920,
+            height: 1080,
+            byte: 100000,
             loadedImage: .resized(.zeroSymbol),
             networkStatus: .restricted,
             originalImageLoadedPercent: 30
@@ -169,7 +167,9 @@ struct ZoomHUDButtonStyle: ButtonStyle {
 
 
         ResolutionButton(
-            mediaFileInfo: .makeRandomUploaded(id: "1", .squareImage),
+            width: 1920,
+            height: 1080,
+            byte: 100000,
             loadedImage: .resized(.zeroSymbol),
             networkStatus: .restricted,
             originalImageLoadedPercent: 74
@@ -178,7 +178,9 @@ struct ZoomHUDButtonStyle: ButtonStyle {
         }
 
         ResolutionButton(
-            mediaFileInfo: .makeRandomUploaded(id: "1", .squareImage),
+            width: 1920,
+            height: 1080,
+            byte: 100000,
             loadedImage: .original(.zeroSymbol, cached: false),
             networkStatus: .restricted,
             originalImageLoadedPercent: nil
@@ -187,7 +189,9 @@ struct ZoomHUDButtonStyle: ButtonStyle {
         }
 
         ResolutionButton(
-            mediaFileInfo: .makeRandomUploaded(id: "1", .squareImage),
+            width: 1920,
+            height: 1080,
+            byte: 100000,
             loadedImage: .original(.zeroSymbol, cached: true),
             networkStatus: .restricted,
             originalImageLoadedPercent: nil

@@ -62,9 +62,58 @@ enum LoadedImageType: Equatable, Hashable {
     }
 }
 
+enum ZoomableImageReference {
+    case localImage(localImageReference)
+    case remoteImage(RemoteImageReference)
+    var fullWidth: Int? {
+        switch self {
+        case .localImage(let ref): ref.fullWidth
+        case .remoteImage(let ref): ref.fullWidth
+        }
+    }
+    var fullHeight: Int? {
+        switch self {
+        case .localImage(let ref): ref.fullHeight
+        case .remoteImage(let ref): ref.fullHeight
+        }
+    }
+    var fullByte: Int? {
+        switch self {
+        case .localImage(let ref): ref.fullByte
+        case .remoteImage(let ref): ref.fullByte
+        }
+    }
+}
+
+protocol BasicImageInfoProtocol {
+    var fullWidth: Int? { get }
+    var fullHeight: Int? { get }
+    var fullByte: Int? { get }
+}
+
+
+struct localImageReference: BasicImageInfoProtocol {
+    let image: ImageRequest
+    let fullWidth: Int?
+    let fullHeight: Int?
+    let fullByte: Int?
+}
+
+struct RemoteImageReference: BasicImageInfoProtocol {
+    let fullImage: ImageRequest
+    /// alternative to original image if problematic due to file type or whatever
+    let maxResizedRequest: ImageRequest?
+    let largeResized: ImageRequest?
+    let thumbnail: ImageRequest?
+
+    let fullWidth: Int?
+    let fullHeight: Int?
+    let fullByte: Int?
+}
+
+
 struct ZoomableImageView: View {
-    let mediaFileInfo: MediaFileInfo
-    let namespace: Namespace.ID
+    let image: ZoomableImageReference
 
     @Binding var isPresented: Bool
 
@@ -269,53 +318,62 @@ struct ZoomableImageView: View {
         .task(priority: .high) {
             // If the original is cached, take the shortcut and directly show that instead of loading any fallback image
             // see: // see: https://kean-docs.github.io/nuke/documentation/nuke/accessing-caches
-            do {
-                let cachedImageResponse = try await ImagePipeline.shared
-                    .imageTask(with: mediaFileInfo.originalImageRequest(cachePolicy: .returnCacheDataDontLoad))
-                    .response
 
-                loadedImage = .original(cachedImageResponse.image, cached: true)
-                logger.info("I: Loaded cached original")
-                return
-            } catch {
-                logger.log("I: Could not load cached original")
-            }
+            switch image {
+            case .localImage(let localImageReference):
+                // if its a local image, we can go directly to laoding the full image
+                await loadFullImage(localImage: localImageReference)
+
+            case .remoteImage(let remoteImageReference):
+                do {
+                    var cachedRequest = remoteImageReference.fullImage
+                    cachedRequest.options = .returnCacheDataDontLoad
+                    let cachedImageResponse = try await ImagePipeline.shared
+                        .imageTask(with: cachedRequest)
+                        .response
+
+                    loadedImage = .original(cachedImageResponse.image, cached: true)
+                    logger.info("I: Loaded cached original")
+                    return
+                } catch {
+                    logger.log("I: Could not load cached original")
+                }
 
 
-            // Load both fallback images in parallel (usually already in cache)
-            var resizedTask: Task<Void, Never>?
-            var thumbTask: Task<Void, Never>?
+                // Load both fallback images in parallel (usually already in cache)
+                var resizedTask: Task<Void, Never>?
+                var thumbTask: Task<Void, Never>?
 
-            let thumbRequest = mediaFileInfo.thumbRequest
-            let resizedRequest = mediaFileInfo.largeResizedRequest
+                let thumbRequest = remoteImageReference.thumbnail
+                let resizedRequest = remoteImageReference.largeResized
 
-
-            if let thumbRequest {
-                thumbTask = Task {
-                    if let thumb = try? await ImagePipeline.shared.imageTask(with: thumbRequest).image,
-                        loadedImage == .none
-                    {
-                        loadedImage = .thumbnail(thumb)
+                if let thumbRequest {
+                    thumbTask = Task {
+                        if let thumb = try? await ImagePipeline.shared.imageTask(with: thumbRequest).image,
+                            loadedImage == .none
+                        {
+                            loadedImage = .thumbnail(thumb)
+                        }
                     }
                 }
-            }
 
-            if let resizedRequest {
-                resizedTask = Task {
-                    if let resized = try? await ImagePipeline.shared.imageTask(with: resizedRequest).image,
-                        !loadedImage.isOriginal
-                    {
-                        loadedImage = .resized(resized)
+                if let resizedRequest {
+                    resizedTask = Task {
+                        if let resized = try? await ImagePipeline.shared.imageTask(with: resizedRequest).image,
+                            !loadedImage.isOriginal
+                        {
+                            loadedImage = .resized(resized)
+                        }
                     }
                 }
+
+                let (_, _) = await (thumbTask?.result, resizedTask?.result)
+
             }
-
-            let (_, _) = await (thumbTask?.result, resizedTask?.result)
-
-
         }
         .task(priority: .medium) {
             guard !loadedImage.isOriginal else { return }
+            guard case .remoteImage(let remoteImage) = image else { return }
 
             @MainActor
             func setNetworkStatus(basedOnPath path: NWPath) {
@@ -348,26 +406,17 @@ struct ZoomableImageView: View {
 
                 if networkStatus == .ok {
                     try? await Task.sleep(for: .milliseconds(100))
-                    do {
-                        try await loadFullImage()
-                        // Once we have loaded the full image we are not interested in network updates anymore
-                        // so we simply return.
-                        networkMonitor.cancel()
-                        return
-                    } catch {
-                        logger.error("Failed to load full image \(error)")
-                    }
+                    await loadFullImage(remoteImage: remoteImage)
+                    // Once we have loaded the full image we are not interested in network updates anymore
+                    // so we simply return.
+                    networkMonitor.cancel()
                 }
             }
         }
-
         .task(id: explicitlyLoadFullImage, priority: .userInitiated) {
+            guard case .remoteImage(let remoteImage) = image else { return }
             if explicitlyLoadFullImage, originalImageTask == nil {
-                do {
-                    try await loadFullImage()
-                } catch {
-                    logger.error("Failed to load full image \(error)")
-                }
+                await loadFullImage(remoteImage: remoteImage)
             }
         }
     }
@@ -378,9 +427,11 @@ struct ZoomableImageView: View {
         // when hidden/shown interferes with the gestures. Safe-Area offset?
         // Could investigate in the future.
         ZStack {
-            if canShowBottomHUD, shouldShowHUD {
+            if canShowBottomHUD, shouldShowHUD, let width = image.fullWidth, let height = image.fullHeight, let byte = image.fullByte {
                 ResolutionButton(
-                    mediaFileInfo: mediaFileInfo,
+                    width: width,
+                    height: height,
+                    byte: byte,
                     loadedImage: loadedImage,
                     networkStatus: networkStatus,
                     originalImageLoadedPercent: originalImageLoadedPercent,
@@ -399,16 +450,29 @@ struct ZoomableImageView: View {
 
     }
 
-    private func loadFullImage() async throws {
+    private func loadFullImage(localImage: localImageReference) async {
+        guard originalImageTask == nil else { return }
+        originalImageTask?.cancel()
+        let originalImageTask = ImagePipeline.shared.imageTask(with: localImage.image)
+        do {
+            if let image = try? await originalImageTask.image {
+                loadedImage = .original(image, cached: true)
+            }
+        } catch {
+            logger.error("Failed to load local image \(error)")
+        }
+    }
+
+    private func loadFullImage(remoteImage: RemoteImageReference) async {
         guard originalImageTask == nil else { return }
         originalImageTask?.cancel()
 
         let canUseOriginalFile: Bool
 
         canUseOriginalFile =
-            if let size = mediaFileInfo.mediaFile.size,
-                let w = mediaFileInfo.mediaFile.width,
-                let h = mediaFileInfo.mediaFile.height,
+            if let size = remoteImage.fullByte,
+                let w = remoteImage.fullWidth,
+                let h = remoteImage.fullHeight,
                 size < ViewConstants.maxFileSize,
                 w < ViewConstants.maxFullscreenLengthPx,
                 h < ViewConstants.maxFullscreenLengthPx
@@ -416,8 +480,8 @@ struct ZoomableImageView: View {
 
         let request: ImageRequest? =
             if canUseOriginalFile {
-                mediaFileInfo.originalImageRequest()
-            } else if let request = mediaFileInfo.maxResizedRequest {
+                remoteImage.fullImage
+            } else if let request = remoteImage.maxResizedRequest {
                 request
             } else {
                 nil
@@ -439,8 +503,11 @@ struct ZoomableImageView: View {
             }
         }
 
-        if let imageResponse = try? await originalImageTask.response {
+        do {
+            let imageResponse = try await originalImageTask.response
             self.loadedImage = .original(imageResponse.image, cached: imageResponse.cacheType != nil)
+        } catch {
+            logger.error("Failed to load original remote image \(error)")
         }
         canShowBottomHUD = true
 
@@ -450,7 +517,6 @@ struct ZoomableImageView: View {
 
 #Preview {
     @Previewable @State var isPresented = true
-    @Previewable @Namespace var namespace
     let image = MediaFile.makeRandomUploaded(id: "1", .verticalImage)
 
     let mediaFileInfo = MediaFileInfo(mediaFile: image)
@@ -472,5 +538,8 @@ struct ZoomableImageView: View {
         Spacer().frame(height: 300)
 
     }
-    .zoomableImageFullscreenCover(mediaFileInfo: mediaFileInfo, namespace: namespace, isPresented: $isPresented)
+    .zoomableImageFullscreenCover(
+        imageReference: mediaFileInfo.zoomableImageReference,
+        isPresented: $isPresented
+    )
 }
