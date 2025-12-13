@@ -28,7 +28,7 @@ struct CommonsEndToEndTests {
     
     @Test("list user uploads", arguments: ["Flickr_upload_bot"])
     func listUserUploads(username: String) async throws {
-        let uploads = try await API.shared.listUserImages(
+        let titles = try await API.shared.listUserImages(
             of: username,
             limit: .count(1),
             start: nil,
@@ -36,10 +36,10 @@ struct CommonsEndToEndTests {
             direction: .older,
             continueString: nil
         )
-        .files
+        .titles
         
-        print(uploads.map(\.title))
-        #expect(!uploads.isEmpty)
+        print(titles)
+        #expect(!titles.isEmpty)
     }
     
     
@@ -67,7 +67,7 @@ struct CommonsEndToEndTests {
     
     @Test("get wikidata statements", arguments: ["File:The Earth seen from Apollo 17.jpg"])
     func fetchStructuredDataForMedia(title: String) async throws {
-        let statements = try await API.shared.fetchStructuredData(forMediaTitles: [title])
+        let statements = try await API.shared.fetchStructuredData(.titles([title]))
         print(statements)
         #expect(!statements.isEmpty, "We expect to get results for this search term")
     }

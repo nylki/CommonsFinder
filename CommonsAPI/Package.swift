@@ -14,7 +14,6 @@ let package = Package(
     ],
     dependencies: [
         .package(url: "https://github.com/kean/Pulse", from: .init(5, 1, 4)),
-        .package(url: "https://github.com/Alamofire/Alamofire.git", from: .init(5, 10, 2)),
         .package(url: "https://github.com/apple/swift-algorithms.git", from: .init(1, 2, 1))
     ],
     targets: [
@@ -24,7 +23,7 @@ let package = Package(
             name: "CommonsAPI",
             dependencies: [
                 .byName(name: "Pulse"),
-                .byName(name: "Alamofire"),
+//                .product(name: "PulseProxy", package: "Pulse"),
                 .product(name: "Algorithms", package: "swift-algorithms")
             ]
         ),

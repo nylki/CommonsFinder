@@ -5,7 +5,6 @@
 //  Created by Tom Brewe on 26.10.24.
 //
 
-import Alamofire
 import CommonsAPI
 import CoreLocation
 import Foundation
