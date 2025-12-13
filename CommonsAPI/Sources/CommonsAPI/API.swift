@@ -5,47 +5,15 @@
 //  Created by Tom Brewe on 24.09.24.
 //
 
-@preconcurrency import Alamofire
 import CoreLocation
 import Foundation
 import os.log
 import Algorithms
-
 #if DEBUG
-import Pulse
+@preconcurrency import Pulse
 #endif
 
-enum CommonAPIError: Error {
-    case invalidResponseType(rawDataString: String?)
-    case invalidQueryParams
-    
-    /// Requested token type not found in response
-    case requestedTokenTypeMissing(TokenType)
-    /// Token is too short, most likely because of no authenticated session
-    case tokenTooShort(TokenType)
-    
-    case httpError(statusCode: Int)
-    case failedToDecodeJSONArray
-    case failedToEncodeJSONData
-    case missingLanguageCodes
-}
-
-enum TokenType: CustomStringConvertible {
-    case login
-    case createAccount
-    case csrf
-    
-    var description: String {
-        switch self {
-        case .login:
-            "login"
-        case .createAccount:
-            "createaccount"
-        case .csrf:
-            "csrf"
-        }
-    }
-}
+internal typealias Parameters = [String:String]
 
 public actor API {
     let logger = Logger(subsystem: "CommonsFinder", category: "CommonsAPI")
@@ -58,11 +26,19 @@ public actor API {
     // see: https://www.wikidata.org/wiki/Wikidata:SPARQL_query_service
     let wikidataSparqlEndpoint = URL(string: "https://query.wikidata.org/bigdata/namespace/wdq/sparql")!
     let createAccountRedirectURL = URL(string: "https://commons.m.wikimedia.beta.wmflabs.org/w/index.php?title=Main_Page&welcome=yes")!
-
-    public static let shared = API()
-    private let session: Alamofire.Session
     
-    private let jsonDecoder: JSONDecoder = {
+    public static let shared = API()
+
+    private lazy var urlSession: URLSessionProtocol = {
+        let configuration = URLSessionConfiguration.default
+        #if DEBUG
+            return URLSessionProxy(configuration: configuration)
+        #else
+            return URLSession(configuration: configuration)
+        #endif
+    }()
+    
+    private lazy var jsonDecoder: JSONDecoder = {
         let decoder = JSONDecoder()
         decoder.dateDecodingStrategy = .iso8601
         return decoder
@@ -70,9 +46,6 @@ public actor API {
 
 
     public init() {
-        let configuration = URLSessionConfiguration.af.default
-
-        configuration.headers.update(name: "User-Agent", value: userAgent)
         
 
  // Un-Comment the following code block to test EmailAuth via email-code (https://www.mediawiki.org/wiki/Help:Extension:EmailAuth)
@@ -102,113 +75,78 @@ public actor API {
 //        }
 // #endif
         
-        var eventMonitors: [any EventMonitor] = [AlamofireNotifications()]
+//        var eventMonitors: [any EventMonitor] = [AlamofireNotifications()]
         
-        #if DEBUG
-        struct PulseNetworkLoggerEventMonitor: EventMonitor {
-            var logger: NetworkLogger? {
-                if ProcessInfo.processInfo.processName != "xctest" {
-                    return Pulse.NetworkLogger.shared
-                } else {
-                    return nil
-                }
-            }
-            
-            func request(_ request: Request, didCreateTask task: URLSessionTask) {
-                logger?.logTaskCreated(task)
-            }
-            
-            func urlSession(_ session: URLSession, dataTask: URLSessionDataTask, didReceive data: Data) {
-                logger?.logDataTask(dataTask, didReceive: data)
-            }
-            
-            func urlSession(_ session: URLSession, task: URLSessionTask, didFinishCollecting metrics: URLSessionTaskMetrics) {
-                logger?.logTask(task, didFinishCollecting: metrics)
-            }
-            
-            func urlSession(_ session: URLSession, task: URLSessionTask, didCompleteWithError error: Error?) {
-                logger?.logTask(task, didCompleteWithError: error)
-            }
+}
+    
+    private func parse<T: Decodable>(_ type: T.Type, from data: Data, response: URLResponse) throws -> T {
+        guard let http = response as? HTTPURLResponse else {
+            throw CommonAPIError.invalidResponseType(rawDataString: String(data: data, encoding: .utf8))
         }
-        
-        if ProcessInfo.processInfo.processName != "xctest" {
-            eventMonitors.append(PulseNetworkLoggerEventMonitor())
+        guard (200..<300).contains(http.statusCode) else {
+            throw CommonAPIError.httpError(statusCode: http.statusCode)
         }
-        #endif
-        
-        session = .init(configuration: configuration, eventMonitors: eventMonitors)
+        return try jsonDecoder.decode(T.self, from: data)
     }
 
-    
+    // MARK: - Tokens
+
     private func fetchToken(type: TokenType, includeAuthmanagerInfo: Bool = false) async throws -> TokenAuthManagerInfo {
-        var parameters: Parameters = [
+        var query: Parameters = [
             "format": "json",
-            "curtimestamp": 1,
+            "curtimestamp": "1",
             "action": "query",
-            "type": type,
+            "type": type.description
         ]
-        
+
         if includeAuthmanagerInfo {
-            parameters["meta"] = "tokens|authmanagerinfo"
+            query["meta"] = "tokens|authmanagerinfo"
             switch type {
             case .login:
-                parameters["amirequestsfor"] = "login"
+                query["amirequestsfor"] = "login"
             case .createAccount:
-                parameters["amirequestsfor"] = "create"
+                query["amirequestsfor"] = "create"
             case .csrf:
-                // Maybe needed for edit/upload? then this function needs the info about which csrf action if both used in combination
                 assertionFailure("Requesting auth manager info when fetching CSRF token is unexpected.")
-                break
             }
-
-            
         } else {
-            parameters["meta"] = "tokens"
+            query["meta"] = "tokens"
         }
-        
-        let request = session
-            .request(commonsEndpoint, method: .get, parameters: parameters)
-            .serializingDecodable(QueryResponse<AuthManagerOrTokensResponse>.self, decoder: jsonDecoder)
-        
-        let value = try await request.value
-        
+
+        let request = try URLRequest.GET(url: commonsEndpoint, query: query)
+        let (data, response) = try await urlSession.data(for: request)
+
+        let value = try parse(QueryResponse<AuthManagerOrTokensResponse>.self, from: data, response: response)
+
         guard let tokens = value.query?.tokens else {
             throw CommonAPIError.requestedTokenTypeMissing(type)
         }
-        
-        let fetchedToken: String? = switch type {
-            case .login: tokens.logintoken
-            case .createAccount: tokens.createaccounttoken
-            case .csrf: tokens.csrftoken
-        }
-        
+
+        let fetchedToken: String? = {
+            switch type {
+            case .login: return tokens.logintoken
+            case .createAccount: return tokens.createaccounttoken
+            case .csrf: return tokens.csrftoken
+            }
+        }()
+
         guard let fetchedToken else {
             throw CommonAPIError.requestedTokenTypeMissing(type)
         }
-        
         if fetchedToken.count <= 3 {
             throw CommonAPIError.tokenTooShort(type)
         }
-        
-        let captchaRequest = value.query?.authmanagerinfo?.requests.first(where: {
-            $0.id == "CaptchaAuthenticationRequest" }
-        )
-        
+
+        let captchaRequest = value.query?.authmanagerinfo?.requests.first(where: { $0.id == "CaptchaAuthenticationRequest" })
         let captchaID = captchaRequest?.fields?["captchaId"]?.value
         var captchaURL: URL?
         if let captchaPath = captchaRequest?.fields?["captchaInfo"]?.value {
             captchaURL = URL(string: commonsHomepage.absoluteString.appending(captchaPath))
         }
-        
-        let result = TokenAuthManagerInfo(token: fetchedToken, type: type, captchaID: captchaID, captchaURL: captchaURL)
-        return result
+
+        return TokenAuthManagerInfo(token: fetchedToken, type: type, captchaID: captchaID, captchaURL: captchaURL)
     }
-    
-    /// fetches the "createaccount"-token and info about the CAPTCHA
-    struct CreateAccountInfo: Sendable {
-        let captchaImageURL: URL
-        let token: String
-    }
+
     
     public func fetchCreateAccountInfo() async throws -> TokenAuthManagerInfo {
         try await fetchToken(
@@ -221,32 +159,30 @@ public actor API {
         try await fetchToken(type: .csrf).token
     }
 
+    // MARK: Login
+
     internal func login(
         usingLoginToken loginToken: String,
         username: String,
         password: String
     ) async throws -> LoginResponse {
-        let parameters: Parameters = [
+        let form: Parameters = [
             "action": "clientlogin",
-            "curtimestamp": 1,
+            "curtimestamp": "1",
             "format": "json",
             "loginreturnurl": wikipediaHomepage.absoluteString,
             "logintoken": loginToken,
             "username": username,
             "password": password,
-            "rememberMe": "1",
+            "rememberMe": "1"
         ]
+        var request = try URLRequest.POST(url: commonsEndpoint, form: form)
+        // Optional: Referer can help in some CSRF contexts; generally not required for clientlogin.
+        request.setValue("https://commons.wikimedia.org/wiki/Special:UserLogin", forHTTPHeaderField: "Referer")
 
-        let request = session
-            .request(commonsEndpoint, method: .post, parameters: parameters)
-            .serializingDecodable(LoginResponseWrapped.self, decoder: jsonDecoder)
-        
-        do {
-            let value = try await request.value
-            return value.clientlogin
-        } catch {
-            throw error
-        }
+        let (data, response) = try await urlSession.data(for: request)
+        let wrapped = try parse(LoginResponseWrapped.self, from: data, response: response)
+        return wrapped.clientlogin
     }
     
     public func createAccount(
@@ -257,9 +193,9 @@ public actor API {
         password: String,
         email: String
     ) async throws -> CreateAccountResponse {
-        let parameters: Parameters = [
+        let form: Parameters = [
             "action": "createaccount",
-            "curtimestamp": 1,
+            "curtimestamp": "1",
             "format": "json",
             "createreturnurl": createAccountRedirectURL.absoluteString,
             "createtoken": loginToken,
@@ -268,20 +204,14 @@ public actor API {
             "retype": password,
             "captchaWord": captchaWord,
             "captchaId": captchaID,
-            "email": email,
-//            "reason": nil,
+            "email": email
         ]
-        
-        let request = session
-            .request(commonsEndpoint, method: .post, parameters: parameters)
-            .serializingDecodable(CreateAccountResponseWrapped.self, decoder: jsonDecoder)
-        
-        do {
-            let value = try await request.value
-            return value.createaccount
-        } catch {
-            throw error
-        }
+        var request = try URLRequest.POST(url: commonsEndpoint, form: form)
+        request.setValue("https://commons.wikimedia.org/wiki/Special:CreateAccount", forHTTPHeaderField: "Referer")
+
+        let (data, response) = try await urlSession.data(for: request)
+        let wrapped = try parse(CreateAccountResponseWrapped.self, from: data, response: response)
+        return wrapped.createaccount
     }
     
     /// Login to Wikimedia user-account (sign-in)
@@ -298,113 +228,85 @@ public actor API {
     public func continueLogin(emailCode: String) async throws -> LoginResponse {
         let loginToken = try await fetchToken(type: .login).token
         
-        let parameters: Parameters = [
+        let form: Parameters = [
             "action": "clientlogin",
-            "curtimestamp": 1,
+            "curtimestamp": "1",
             "format": "json",
             "loginreturnurl": wikipediaHomepage.absoluteString,
             "logintoken": loginToken,
             "rememberMe": "1",
             "token": emailCode,
-            "logincontinue": 1
+            "logincontinue": "1"
         ]
-        
-        let request = session
-            .request(commonsEndpoint, method: .post, parameters: parameters)
-            .serializingDecodable(LoginResponseWrapped.self, decoder: jsonDecoder)
-        
-        do {
-            let value = try await request.value
-            return value.clientlogin
-        } catch {
-            throw error
-        }
+        var request = try URLRequest.POST(url: commonsEndpoint, form: form)
+        request.setValue("https://commons.wikimedia.org/wiki/Special:UserLogin", forHTTPHeaderField: "Referer")
+
+        let (data, response) = try await urlSession.data(for: request)
+        let wrapped = try parse(LoginResponseWrapped.self, from: data, response: response)
+        return wrapped.clientlogin
     }
     
     public func continueLogin(twoFactorCode: String) async throws -> LoginResponse {
         let loginToken = try await fetchToken(type: .login).token
         
-        let parameters: Parameters = [
+        let form: Parameters = [
             "action": "clientlogin",
-            "curtimestamp": 1,
+            "curtimestamp": "1",
             "format": "json",
             "loginreturnurl": wikipediaHomepage.absoluteString,
             "logintoken": loginToken,
             "rememberMe": "1",
             "OATHToken": twoFactorCode,
-            "logincontinue": 1
+            "logincontinue": "1"
         ]
-        
-        let request = session
-            .request(commonsEndpoint, method: .post, parameters: parameters)
-            .serializingDecodable(LoginResponseWrapped.self, decoder: jsonDecoder)
-        
-        do {
-            let value = try await request.value
-            return value.clientlogin
-        } catch {
-            throw error
-        }
-    }
-    
-    /// Create new Wikimedia user-account (register/sign-up)
+        var request = try URLRequest.POST(url: commonsEndpoint, form: form)
+        request.setValue("https://commons.wikimedia.org/wiki/Special:UserLogin", forHTTPHeaderField: "Referer")
 
-    
+        let (data, response) = try await urlSession.data(for: request)
+        let wrapped = try parse(LoginResponseWrapped.self, from: data, response: response)
+        return wrapped.clientlogin
+    }
+
     public func validateUsernamePassword(username: String, password: String, email: String) async throws -> UsernamePasswordValidation {
-        let parameters: Parameters = [
+        let form: Parameters = [
             "action": "validatepassword",
             "user": username,
             "password": password,
             "email": email,
-            "curtimestamp": 1,
+            "curtimestamp": "1",
             "format": "json",
-            "formatversion": 2
+            "formatversion": "2"
         ]
         
-        let request = session
-            .request(commonsEndpoint, method: .post, parameters: parameters)
-            .validate()
-            .serializingDecodable(ValidatePasswordResponse.self, decoder: jsonDecoder)
+        let request = try URLRequest.POST(url: commonsEndpoint, form: form)
+        let (data, response) = try await urlSession.data(for: request)
         
-        let response = await request.response
-        
-        if let value = response.value {
-            return .init(withRawResponse: value)
-        } else if let error = response.error {
-            throw error
-        } else {
-            var string: String?
-            if let data = response.data {
-                string = .init(data: data, encoding: .utf8)
-            }
-            throw CommonAPIError.invalidResponseType(rawDataString: string)
-        }
+        let responseValue = try parse(ValidatePasswordResponse.self, from: data, response: response)
+        return UsernamePasswordValidation(withRawResponse: responseValue)
     }
     
     // see: https://commons.wikimedia.org/w/api.php?action=help&modules=query%2Busercontribs
     
     /// limit: 1..50 (default: 50, for clients with higher limits, the max limit is: 500)
     private func listUserContribs(of username: String, limit: ListLimit) async throws -> [UserContributionListItem] {
-        let parameters: Parameters = [
+        let query: Parameters = [
             "action": "query",
-            "curtimestamp": 1,
+            "curtimestamp": "1",
             "list": "usercontribs",
             "ucuser": username,
-            /// new -> new contributions aka uploads
+            // new -> new contributions aka uploads
             "ucshow": "new",
             // 6 == File (https://www.mediawiki.org/wiki/Help:Namespaces/en#ns-aliases)
-            "ucnamespace": MediawikiNamespace.file.rawValue,
+            "ucnamespace": String(MediawikiNamespace.file.rawValue),
             "uclimit": limit.apiString,
             "format": "json",
-            "formatversion": 2
+            "formatversion": "2"
         ]
-        let request = session
-            .request(commonsEndpoint, method: .get, parameters: parameters)
-            .serializingDecodable(QueryResponse<UserContributionListResponse>.self, decoder: jsonDecoder)
-            
         
-        let list = try await request.value.query?.usercontribs ?? []
-        return list
+        let request = try URLRequest.GET(url: commonsEndpoint, query: query)
+        let (data, response) = try await urlSession.data(for: request)
+        let responseValue = try parse(QueryResponse<UserContributionListResponse>.self, from: data, response: response)
+        return responseValue.query?.usercontribs ?? []
     }
     
     
@@ -419,9 +321,9 @@ public actor API {
         direction: ListDirection,
         continueString: String?
     ) async throws -> UserImagesListResponse {
-        var parameters: Parameters = [
+        var query: Parameters = [
             "action": "query",
-            "curtimestamp": 1,
+            "curtimestamp": "1",
             "list": "allimages",
             "aiuser": username,
             "aidir": direction.rawValue,
@@ -429,30 +331,26 @@ public actor API {
             "aiprop": "",
             "aisort": "timestamp",
             "format": "json",
-            "formatversion": 2
+            "formatversion": "2"
         ]
-        
         if let start {
-            parameters["aistart"] = start.ISO8601Format()
+            query["aistart"] = start.ISO8601Format()
         }
-        
         if let end {
-            parameters["aiend"] = end.ISO8601Format()
+            query["aiend"] = end.ISO8601Format()
         }
-        
         if let continueString, !continueString.isEmpty {
-            parameters["aicontinue"] = continueString
+            query["aicontinue"] = continueString
         }
         
-        let request = session
-            .request(commonsEndpoint, method: .get, parameters: parameters)
-            .serializingDecodable(QueryResponse<AllImagesListResponse>.self, decoder: jsonDecoder)
-        
-        let responseValue = try await request.value
-        
+        let request = try URLRequest.GET(url: commonsEndpoint, query: query)
+        let (data, response) = try await urlSession.data(for: request)
+        let responseValue = try parse(QueryResponse<AllImagesListResponse>.self, from: data, response: response)
+
         // NOTE: "allimages" list doesnt return pageid for some reason (only with generator, which
         // we like to avoid due to sort order and pagination complications.
         let titles = responseValue.query?.allimages.map(\.title) ?? []
+        
         return .init(continueString: responseValue.continue?.aicontinue, titles: titles)
     }
     
@@ -469,29 +367,28 @@ public actor API {
     
     /// returns parent and sub-categories and wikidata item if available
     public func fetchCategoryInfo(of category: String) async throws -> CommonsCategoryInfo? {
-        let parameters: Parameters = [
+        let query: Parameters = [
             "action": "query",
-            "formatversion": 2,
+            "formatversion": "2",
             "list": "categorymembers",
             "prop": "categories|pageprops",
             "cmtitle": "Category:\(category)",
             "titles": "Category:\(category)",
             "cmprop": "title",
             "cmtype": "subcat",
-            "cmnamespace": MediawikiNamespace.category.rawValue,
-            "cmlimit": 500,
-            "cllimit": 500,
+            "cmnamespace": String(MediawikiNamespace.category.rawValue),
+            "cmlimit": "500",
+            "cllimit": "500",
             "clshow": "!hidden",
             "format": "json",
-            "curtimestamp": 1
+            "curtimestamp": "1"
         ]
         
-        let request = session
-            .request(commonsEndpoint, method: .get, parameters: parameters)
-            .serializingDecodable(QueryResponse<CategoryResponse>.self, decoder: jsonDecoder)
-
+        let request = try URLRequest.GET(url: commonsEndpoint, query: query)
+        let (data, response) = try await urlSession.data(for: request)
+        let result = try parse(QueryResponse<CategoryResponse>.self, from: data, response: response)
         
-        guard let result = try await request.value.query else {
+        guard let result = result.query else {
             return nil
         }
         
@@ -519,32 +416,30 @@ public actor API {
     }
     
     public func listCategoryImagesRaw(of category: String, continueString: String? = nil, limit: ListLimit = .max) async throws -> CategoryImageListResponse {
-        var parameters: Parameters = [
+        var query: Parameters = [
             "action": "query",
             "list": "categorymembers",
-            "redirects": 1,
+            "redirects": "1",
             "prop": "info",
             "clshow": "!hidden",
             "cllimit": "max",
             "cmtitle": "Category:\(category)",
             "cmprop": "ids|title",
             "cmtype": "file",
-            "cmnamespace": MediawikiNamespace.file.rawValue,
+            "cmnamespace": String(MediawikiNamespace.file.rawValue),
             "cmlimit": limit.apiString,
             "format": "json",
-            "formatversion": 2,
-            "curtimestamp": 1
+            "formatversion": "2",
+            "curtimestamp": "1"
         ]
         
         if let continueString {
-            parameters["cmcontinue"] = continueString
+            query["cmcontinue"] = continueString
         }
         
-        let request = session
-            .request(commonsEndpoint, method: .get, parameters: parameters)
-            .serializingDecodable(QueryResponse<CategoryMembersListResponse>.self, decoder: jsonDecoder)
-        
-        let value = try await request.value
+        let request = try URLRequest.GET(url: commonsEndpoint, query: query)
+        let (data, response) = try await urlSession.data(for: request)
+        let value = try parse(QueryResponse<CategoryMembersListResponse>.self, from: data, response: response)
         
         return .init(
             continueString: value.continue?.cmcontinue,
@@ -552,13 +447,6 @@ public actor API {
         )
     }
     
-    
-//    public func listCategoryImages(of category: String) async throws -> [RawFileMetadata] {
-//        let rawImages = try await listCategoryImagesRaw(of: category)
-//        let images = try await fetchFileMetadata(titles: rawImages.map(\.title))
-//        return images
-//    }
-//    
     /// Augment existing partial file info with structured data
     public func fetchFileMetadata(fileMetadataList: [FileMetadata]) async throws -> [RawFileMetadata] {
         let structuredData = try await fetchStructuredData(.pageids(fileMetadataList.map(\.id)))
@@ -611,22 +499,22 @@ public actor API {
     
     // Example: https://commons.wikimedia.org/w/api.php?action=query&format=json&prop=imageinfo&titles=File%3The_Earth_seen_from_Apollo_17.jpg&formatversion=2&iiprop=url%7Cextmetadata&iiurlwidth=640&iiurlheight=640&iiextmetadatamultilang=1
     internal func fetchImageMetadata(_ identifiers: FileIdentifierList) async throws -> [FileMetadata] {
-        var parameters: Parameters = [
+        var query: Parameters = [
             "action": "query",
-            "curtimestamp": 1,
+            "curtimestamp": "1",
             "prop": "imageinfo|categories|info",
             "exportschema": "0.11",
-            "formatversion": 2,
+            "formatversion": "2",
             "clshow": "!hidden",
             "cllimit": "max",
-            "iilimit": 1,
+            "iilimit": "1",
             "inprop": "protection",
             "iiprop": "url|timestamp|user|dimensions|extmetadata|size",
             "iiextmetadatafilter": "ImageDescription|Attribution",
-            "iiurlwidth": 640,
-            "iiurlheight": 640,
-            "smaxage": 60,
-            "maxage": 60,
+            "iiurlwidth": "640",
+            "iiurlheight": "640",
+            "smaxage": "60",
+            "maxage": "60",
             "format": "json"
         ]
         
@@ -636,19 +524,19 @@ public actor API {
                 logger.warning("Trying to fetch metadata for \(titles.count) titles. However only 50 are supported at one time. Will be limited to 10.")
                 titles = Array(titles.prefix(50))
             }
-            parameters["titles"] = titles.joined(separator: "|")
+            query["titles"] = titles.joined(separator: "|")
         case .pageids(var pageIDs):
             if pageIDs.count >= 50 {
                 logger.warning("Trying to fetch metadata for \(pageIDs.count) titles. However only 50 are supported at one time. Will be limited to 10.")
                 pageIDs = Array(pageIDs.prefix(50))
             }
-            parameters["pageids"] = pageIDs.joined(separator: "|")
+            query["pageids"] = pageIDs.joined(separator: "|")
         }
         
-        let request = session.request(commonsEndpoint, method: .get, parameters: parameters)
-            .serializingDecodable(QueryResponse<FileMetadataListResponse>.self, decoder: jsonDecoder)
-
-        let pages = try await request.value.query?.pages ?? []
+        let request = try URLRequest.GET(url: commonsEndpoint, query: query)
+        let (data, response) = try await urlSession.data(for: request)
+        let value = try parse(QueryResponse<FileMetadataListResponse>.self, from: data, response: response)
+        let pages = value.query?.pages ?? []
         return pages
     }
     
@@ -676,38 +564,6 @@ public actor API {
         case random
     }
     
-//    public func search(for term: String, namespaces: [MediawikiNamespace], sort: SearchSort = .relevance, limit: ListLimit = .max, offset: Int? = nil) async throws -> GenericSearchQueryResponse {
-//        //https://commons.wikimedia.org/w/api.php?action=query&format=json&prop=&list=search&meta=&exportschema=0.11&formatversion=2&srsearch=Adlershof&srnamespace=6&srlimit=50&srinfo=totalhits%7Csuggestion%7Crewrittenquery&srprop=timestamp&srenablerewrites=1
-//        var parameters: Parameters = [
-//            "action": "query",
-//            "list": "search",
-//            "srsearch":  term,
-//            "srsort": sort.rawValue,
-//            "srnamespace": namespaces.apiString,
-//            "srlimit": limit.apiString,
-//            "srprop": "timestamp",
-//            "srenablerewrites": "1",
-//            "smaxage": 60,
-//            "maxage": 60,
-//            "exportschema": "0.11",
-//            "formatversion": 2,
-//            "curtimestamp": 1,
-//            "format": "json"
-//        ]
-//        if let offset {
-//            parameters["sroffset"] = offset
-//        }
-//        
-//        let request = session.request(commonsEndpoint, method: .get, parameters: parameters)
-//            .serializingDecodable(QueryResponse<SearchListResponse>.self, decoder: jsonDecoder)
-//        let result = try await request.value
-//        guard let resultQuery = result.query else {
-//            return .init(items: [], offset: nil)
-//        }
-//        return .init(items: resultQuery.search, offset: result.continue?.sroffset)
-//    }
-
-    
     private func search(
         for term: String,
         namespace: MediawikiNamespace,
@@ -717,42 +573,34 @@ public actor API {
         offset: Int? = nil
     ) async throws -> GenericSearchQueryResponse {
 
-        var parameters: Parameters = [
+        var query: Parameters = [
             "action": "query",
             "list": "search",
-            "redirects": 1,
+            "redirects": "1",
             "srsearch":  term,
             "srsort": sort.rawValue,
-            "srnamespace": namespace.rawValue,
+            "srnamespace": String(namespace.rawValue),
             "srlimit": limit.apiString,
             "srprop": "timestamp",
-            "maxage": 60,
+            "maxage": "60",
             "exportschema": "0.11",
-            "formatversion": 2,
-            "curtimestamp": 1,
+            "formatversion": "2",
+            "curtimestamp": "1",
             "format": "json"
         ]
         
         if let additionalParams {
             for (key,value) in additionalParams {
-                parameters[key] = value
+                query[key] = value
             }
         }
         if let offset {
-            parameters["sroffset"] = offset
+            query["sroffset"] = String(offset)
         }
         
-        let request = session.request(
-            commonsEndpoint,
-            method: .get,
-            parameters: parameters
-        )
-        .serializingDecodable(
-            QueryResponse<SearchListResponse>.self,
-            decoder: jsonDecoder
-        )
-        
-        let resultValue = try await request.value
+        let request = try URLRequest.GET(url: commonsEndpoint, query: query)
+        let (data, response) = try await urlSession.data(for: request)
+        let resultValue = try parse(QueryResponse<SearchListResponse>.self, from: data, response: response)
         guard let resultQuery = resultValue.query else {
             return .init(items: [], suggestion: nil, offset: nil)
         }
@@ -776,9 +624,7 @@ public actor API {
         try await search(for: term, namespace: .category, sort: sort, limit: limit, additionalParams: [:], offset: offset)
     }
     
-    
-    
-    // https://commons.wikimedia.org/w/api.php?action=query&format=json&prop=&continue=gsroffset%7C%7C&generator=geosearch&redirects=1&formatversion=2&ggscoord=37.786971%7C-122.399677&ggsradius=5000&ggssort=relevance&ggslimit=500&ggsglobe=earth&ggsnamespace=6&ggsprop=
+    // https://commons.wikimedia.org/w/api.php?action=query&format=json&prop=&continue=gsroffset%7C%7C&generator=geosearch&redirects=1&formatversion=2&ggscoord=37.786971%7C-122.399677&ggsradius=5000&ggssort=relevance&ggsglobe=earth&ggsnamespace=6&ggsprop=
     public func geoSearchFiles(topLeft: CLLocationCoordinate2D, bottomRight: CLLocationCoordinate2D) async throws -> [GeoSearchFileItem] {
         
         enum Sort: String {
@@ -787,23 +633,23 @@ public actor API {
         }
         let boundingBoxString = "\(topLeft.latitude)|\(topLeft.longitude)|\(bottomRight.latitude)|\(bottomRight.longitude)"
         
-        let parameters: Parameters = [
+        let query: Parameters = [
             "action": "query",
             "list": "geosearch",
             "gsbbox": boundingBoxString,
             "gssort": Sort.relevance.rawValue,
-            "gsnamespace": MediawikiNamespace.file.rawValue,
+            "gsnamespace": String(MediawikiNamespace.file.rawValue),
             "gslimit": "max",
-            "maxage": 60,
+            "maxage": "60",
             "exportschema": "0.11",
-            "formatversion": 2,
-            "curtimestamp": 1,
+            "formatversion": "2",
+            "curtimestamp": "1",
             "format": "json"
         ]
         
-        let request = session.request(commonsEndpoint, method: .get, parameters: parameters)
-            .serializingDecodable(QueryResponse<GeosearchListResponse>.self, decoder: jsonDecoder)
-        let resultValue = try await request.value
+        let request = try URLRequest.GET(url: commonsEndpoint, query: query)
+        let (data, response) = try await urlSession.data(for: request)
+        let resultValue = try parse(QueryResponse<GeosearchListResponse>.self, from: data, response: response)
         guard let resultQuery = resultValue.query else {
             return []
         }
@@ -821,24 +667,24 @@ public actor API {
         let radius = Int(radius.rounded(.awayFromZero))
         let gscoord = "\(coordinate.latitude)|\(coordinate.longitude)"
         
-        let parameters: Parameters = [
+        let query: Parameters = [
             "action": "query",
             "list": "geosearch",
             "gscoord": gscoord,
-            "gsradius": radius,
+            "gsradius": String(radius),
             "gssort": Sort.distance.rawValue,
-            "gsnamespace": MediawikiNamespace.file.rawValue,
+            "gsnamespace": String(MediawikiNamespace.file.rawValue),
             "gslimit": "max",
-            "maxage": 60,
+            "maxage": "60",
             "exportschema": "0.11",
-            "formatversion": 2,
-            "curtimestamp": 1,
+            "formatversion": "2",
+            "curtimestamp": "1",
             "format": "json"
         ]
         
-        let request = session.request(commonsEndpoint, method: .get, parameters: parameters)
-            .serializingDecodable(QueryResponse<GeosearchListResponse>.self, decoder: jsonDecoder)
-        let resultValue = try await request.value
+        let request = try URLRequest.GET(url: commonsEndpoint, query: query)
+        let (data, response) = try await urlSession.data(for: request)
+        let resultValue = try parse(QueryResponse<GeosearchListResponse>.self, from: data, response: response)
         guard let resultQuery = resultValue.query else {
             return []
         }
@@ -853,28 +699,27 @@ public actor API {
     /// - Returns: a list of Wikidata Q-Items
     public func searchWikidataItems(term: String, languageCode: String, offset: Int? = nil) async throws -> SearchWikidataEntityResponse {
 //        http://www.wikidata.org/w/api.php?action=wbsearchentities&search=test&language=en&format=json&type=item
-        var parameters: Parameters = [
+        var query: Parameters = [
             "action": "wbsearchentities",
-            "formatversion": 2,
+            "formatversion": "2",
             "language": languageCode,
             "uselang": languageCode,
             "search": term,
             "type": "item",
-            "limit": 20,
+            "limit": "20",
             "format": "json",
-            "smaxage": 3600,
-            "maxage": 3600,
-            "curtimestamp": 1
+            "smaxage": "3600",
+            "maxage": "3600",
+            "curtimestamp": "1"
         ]
         
         if let offset {
-            parameters["continue"] = offset
+            query["continue"] = String(offset)
         }
         
-        let request = session.request(wikidataEndpoint, method: .get, parameters: parameters)
-            .serializingDecodable(SearchWikidataEntityResponse.self, decoder: jsonDecoder)
-        
-        let resultValue = try await request.value
+        let request = try URLRequest.GET(url: wikidataEndpoint, query: query)
+        let (data, response) = try await urlSession.data(for: request)
+        let resultValue = try parse(SearchWikidataEntityResponse.self, from: data, response: response)
         return resultValue
     }
     
@@ -914,16 +759,14 @@ WHERE {
 GROUP BY ?item ?commonsCategory ?area ?location ?label ?image ?description
 """
         
-        let parameters: Parameters = [
+        let query: Parameters = [
             "query": sparqlQuery,
             "format": "json"
         ]
         
-        let request = session.request(wikidataSparqlEndpoint, method: .get, parameters: parameters)
-        
-        let resultValue = try await request
-            .serializingDecodable(SPARQLResponse<SparqlGenericWikidataItem>.self, decoder: jsonDecoder)
-            .value
+        let request = try URLRequest.GET(url: wikidataSparqlEndpoint, query: query)
+        let (data, response) = try await urlSession.data(for: request)
+        let resultValue = try parse(SPARQLResponse<SparqlGenericWikidataItem>.self, from: data, response: response)
         
         let groupedResult = resultValue.results.bindings.map {
             GenericWikidataItem($0, language: languageCode)
@@ -941,7 +784,7 @@ GROUP BY ?item ?commonsCategory ?area ?location ?label ?image ?description
     
     /// Given a list of Q-Items ["Q42", "Q1"] etc. returns their commons categories if they are linked with both P910 (http://www.wikidata.org/entity/Property:P910)
     /// and P373 (http://www.wikidata.org/entity/Property:P373)
-    // eg: https://query.wikidata.org/sparql?query=%20%20SELECT%20%3Fitem%20%3FitemLabel%20%3FcommonsCategory%20%3FcommonsCategoryLabel%20WHERE%20%7B%0A%20%20%20%20VALUES%20%3Fitem%20%7Bwd%3AQ2%20wd%3AQ5%20wd%3AQ42%20%20%7D%20%20%23%20Replace%20these%20with%20your%20Q-items%0A%20%20%20%20%3Fitem%20wdt%3AP910%20%3FcommonsCategory%20.%20%20%20%20%23%20P910%20links%20to%20the%20main%20category%0A%20%20%20%20%3FcommonsCategory%20wdt%3AP373%20%3FcommonsName%20.%20%23%20Filter%20to%20ensure%20it%20has%20a%20Commons%20category%0A%20%20%20%20SERVICE%20wikibase%3Alabel%20%7B%20bd%3AserviceParam%20wikibase%3Alanguage%20%22%5BAUTO_LANGUAGE%5D%2Cen%22.%20%7D%0A%20%20%7D%0A%0A&format=json
+    // eg: https://query.wikidata.org/sparql?query=%20%20SELECT%20%3Fitem%20%3FitemLabel%20%3FcommonsCategory%20%3FcommonsCategoryLabel%20WHERE%20%7B%0A%20%20%20%20VALUES%20%3Fitem%20%7Bwd%3AQ2%20wd%3AQ5%20wd%3AQ42%20%20%7D%20%20%23%20Replace%20these%20with%20your%20Q-items%0A%20%20%20%20%3Fitem%20wdt%3AP910%20%3FcommonsCategory%20.%20%20%20%20%23%20P910%20links%20to%20the%20main%20category%0A%20%20%20%20%3FcommonsCategory%20wdt%3AP373%20%3FcommonsName%20.%20%23%20Filter%20to%20ensure%20it%20has%20a%20Commons%20category%0A%20%20%7D%0A%0A&format=json
     public func findCategoriesForWikidataItems(_ itemIDs: [String], languageCode: String) async throws -> [GenericWikidataItem] {
         let preferredLanguages = ([languageCode] + getPreferredSystemLanguages()).uniqued().joined(separator: ",")
         let ids = itemIDs.reduce("") { partialResult, qItem in
@@ -978,17 +821,14 @@ WHERE {
 GROUP BY ?item ?commonsCategory ?area ?location ?label ?image ?description
 """
         
-        let parameters: Parameters = [
+        let query: Parameters = [
             "query": sparqlQuery,
             "format": "json"
         ]
         
-        let request = session.request(wikidataSparqlEndpoint, method: .get, parameters: parameters)
-            
-        let resultValue = try await request
-            .serializingDecodable(SPARQLResponse<SparqlGenericWikidataItem>.self, decoder: jsonDecoder)
-            .value
-        
+        let request = try URLRequest.GET(url: wikidataSparqlEndpoint, query: query)
+        let (data, response) = try await urlSession.data(for: request)
+        let resultValue = try parse(SPARQLResponse<SparqlGenericWikidataItem>.self, from: data, response: response)
         
         let formattedResult: [GenericWikidataItem] = resultValue.results.bindings.map {
             GenericWikidataItem($0, language: languageCode)
@@ -1041,16 +881,14 @@ WHERE {
 GROUP BY ?item ?commonsCategory ?area ?location ?label ?image ?description
 """
         
-        let parameters: Parameters = [
+        let query: Parameters = [
             "query": sparqlQuery,
             "format": "json"
         ]
         
-        let request = session.request(wikidataSparqlEndpoint, method: .get, parameters: parameters)
-        
-        let resultValue = try await request
-            .serializingDecodable(SPARQLResponse<SparqlGenericWikidataItem>.self, decoder: jsonDecoder)
-            .value
+        let request = try URLRequest.GET(url: wikidataSparqlEndpoint, query: query)
+        let (data, response) = try await urlSession.data(for: request)
+        let resultValue = try parse(SPARQLResponse<SparqlGenericWikidataItem>.self, from: data, response: response)
         
         let groupedResult = resultValue.results.bindings.map {
             GenericWikidataItem($0, language: languageCode)
@@ -1117,16 +955,14 @@ GROUP BY ?item ?commonsCategory ?location ?distance ?area ?label ?image ?descrip
 ORDER BY ?distance LIMIT \(limit)
 """
         
-        let parameters: Parameters = [
+        let query: Parameters = [
             "query": sparqlQuery,
             "format": "json"
         ]
         
-        let request = session.request(wikidataSparqlEndpoint, method: .get, parameters: parameters)
-        
-        let resultValue = try await request
-            .serializingDecodable(SPARQLResponse<SparqlGenericWikidataItem>.self, decoder: jsonDecoder)
-            .value
+        let request = try URLRequest.GET(url: wikidataSparqlEndpoint, query: query)
+        let (data, response) = try await urlSession.data(for: request)
+        let resultValue = try parse(SPARQLResponse<SparqlGenericWikidataItem>.self, from: data, response: response)
         
         let formattedResult: [GenericWikidataItem] = resultValue.results.bindings.map {
             GenericWikidataItem($0, language: languageCode)
@@ -1190,16 +1026,14 @@ LIMIT \(limit)
 """
         
 
-        let parameters: Parameters = [
+        let query: Parameters = [
             "query": sparqlQuery,
             "format": "json"
         ]
         
-        let request = session.request(wikidataSparqlEndpoint, method: .get, parameters: parameters)
-        
-        let resultValue = try await request
-            .serializingDecodable(SPARQLResponse<SparqlGenericWikidataItem>.self, decoder: jsonDecoder)
-            .value
+        let request = try URLRequest.GET(url: wikidataSparqlEndpoint, query: query)
+        let (data, response) = try await urlSession.data(for: request)
+        let resultValue = try parse(SPARQLResponse<SparqlGenericWikidataItem>.self, from: data, response: response)
         
         return resultValue.results.bindings.map {
             GenericWikidataItem($0, language: languageCode)
@@ -1224,43 +1058,46 @@ LIMIT \(limit)
     
     
     
-    /// action=opensearch
+    /// action: opensearch
     /// smaxage=30&maxage=30
     // https://commons.wikimedia.org/wiki/Special:ApiSandbox#action=opensearch&format=json&search=Adlers&namespace=6%7C0&profile=fuzzy&warningsaserror=1&formatversion=2
     public func searchSuggestedSearchTerms(for term: String, limit: ListLimit? = nil, namespaces: [MediawikiNamespace]) async throws -> [String] {
         let cacheDuration = 60 * 60 * 24 * 7 // 1 week
         
-        var parameters: Parameters = [
+        var query: Parameters = [
             "action": "opensearch",
-            "curtimestamp": 1,
+            "curtimestamp": "1",
             "search": term,
             "namespace": namespaces.apiString,
             "profile": "engine_autoselect",
             "format": "json",
-            "smaxage": cacheDuration,
-            "maxage": cacheDuration,
-            "formatversion": 2,
+            "smaxage": String(cacheDuration),
+            "maxage": String(cacheDuration),
+            "formatversion": "2",
             "warningsaserror": "1"
         ]
         
         if let limit {
-            parameters["limit"] = limit.apiString
+            query["limit"] = limit.apiString
         }
         
-        let request = session
-            .request(commonsEndpoint, method: .get, parameters: parameters)
-            .serializingData()
+        let request = try URLRequest.GET(url: commonsEndpoint, query: query)
+        let (data, response) = try await urlSession.data(for: request)
         
-        guard let jsonDict = try await JSONSerialization.jsonObject(with: request.value) as? [Any] else {
+        guard let http = response as? HTTPURLResponse, (200..<300).contains(http.statusCode) else {
+            throw CommonAPIError.invalidResponseType(rawDataString: String(data: data, encoding: .utf8))
+        }
+        
+        guard let jsonArray = try JSONSerialization.jsonObject(with: data) as? [Any] else {
             throw CommonAPIError.failedToDecodeJSONArray
         }
         // This API-action returns the original search term as the first element in the result array.
         assert(
-            (jsonDict[0] as? String) == term,
+            (jsonArray[0] as? String) == term,
             "We expect the the string returned from the API to match our original search term."
         )
 
-        if let suggestedTerms = jsonDict[1] as? [String] {
+        if let suggestedTerms = jsonArray[1] as? [String] {
             return suggestedTerms
         } else {
             return []
@@ -1274,29 +1111,27 @@ LIMIT \(limit)
         // NOTE: In contrast to Q-Items and Properties (P) where only limited language translations are fetched,
         // for files we don't want a reduced language set when calling "wbgetentities" for easier editing.
         
-        var parameters: Parameters = [
+        var query: Parameters = [
             "action": "wbgetentities",
-            "curtimestamp": 1,
+            "curtimestamp": "1",
             "sites": "commonswiki",
             "exportschema": "0.11",
-            "formatversion": 2,
-            "smaxage": 60,
-            "maxage": 60,
+            "formatversion": "2",
+            "smaxage": "60",
+            "maxage": "60",
             "format": "json"
         ]
         
         switch identifiers {
         case .titles(let titles):
-            parameters["titles"] = titles.joined(separator: "|")
+            query["titles"] = titles.joined(separator: "|")
         case .pageids(let pageids):
-            parameters["ids"] = pageids.map{ "M\($0)" }.joined(separator: "|")
+            query["ids"] = pageids.map{ "M\($0)" }.joined(separator: "|")
         }
         
-        let request = session.request(commonsEndpoint, method: .get, parameters: parameters)
-            .serializingDecodable(FileEntitiesResponse.self, decoder: jsonDecoder)
-        
-        let entitiesDict = try await request.value.entities
-        
+        let request = try URLRequest.GET(url: commonsEndpoint, query: query)
+        let (data, response) = try await urlSession.data(for: request)
+        let entitiesDict = try parse(FileEntitiesResponse.self, from: data, response: response).entities
         return entitiesDict
     }
     
@@ -1310,25 +1145,24 @@ LIMIT \(limit)
             throw CommonAPIError.missingLanguageCodes
         }
         
-        let parameters: Parameters = [
+        let query: Parameters = [
             "action": "wbgetentities",
-            "curtimestamp": 1,
+            "curtimestamp": "1",
             "props": "labels|descriptions|info",
             "languages": preferredLanguages.joined(separator: "|"),
             /// languagefallback will return fitting translations even if the preferredLanguage doesn't perfectly match so that there is
             /// always some label proper
             "languagefallback": "1",
             "ids": ids.joined(separator: "|"),
-            "formatversion": 2,
-            "smaxage": 60,
-            "maxage": 60,
+            "formatversion": "2",
+            "smaxage": "60",
+            "maxage": "60",
             "format": "json"
         ]
         
-        let request = session.request(wikidataEndpoint, method: .get, parameters: parameters)
-            .serializingDecodable(EntitiesResponse.self, decoder: jsonDecoder)
-        
-        let responseValue = try await request.value
+        let request = try URLRequest.GET(url: wikidataEndpoint, query: query)
+        let (data, response) = try await urlSession.data(for: request)
+        let responseValue = try parse(EntitiesResponse.self, from: data, response: response)
         
         let result: [String: GenericWikidataItem] = responseValue.entities.mapValues { entity in
             
@@ -1365,53 +1199,40 @@ LIMIT \(limit)
 
     }
     
+    
     /// https://commons.wikimedia.org/w/api.php?action=upload&format=json&filename=&comment=&file=...&stash=1&token=&formatversion=2
     public func publish(file: MediaFileUploadable, csrfToken: String) -> AsyncStream<UploadStatus> {
+        // Thanks to Donny Wals for this informative blog post on multipart requests with URLSession:
+        // https://www.donnywals.com/uploading-images-and-forms-to-a-server-using-urlsession/
+        
         AsyncStream<UploadStatus> { continuation in
             Task<Void, Never> {
                 do {
-                    var parameters: [String: String] = [
+                    var parameters: Parameters = [
                         "action": "upload",
                         "token": csrfToken,
                         "filename": file.filename,
-                        "comment": "uploaded from \(userAgent)",
+                        "comment": uploadComment,
                         "text": file.wikiText,
                         "stash": "1",
                         "formatversion": "2",
                         "format": "json"
                     ]
                     
-                    let request = session.upload(multipartFormData: { formData in
-                        formData.append(file.fileURL, withName: "file")
-                        for parameter in parameters {
-                            guard let data = parameter.value.data(using: .utf8) else {
-                                self.logger.error("failed to convert parameter value to utf8 data")
-                                assertionFailure()
-                                return
-                            }
-                            formData.append(data, withName: parameter.key)
-                        }
-                    }, to: commonsEndpoint)
-                    
-                    
-                    request.resume()
-                    
-                    for await progress in request.uploadProgress() {
-                        logger.debug("Upload progress: \(progress.fractionCompleted)")
+                    let request = try URLRequest.POSTMultipart(
+                        url: commonsEndpoint,
+                        fileURL: file.fileURL,
+                        filename: file.filename,
+                        params: parameters
+                    )
+
+                    let progressDelegate = UploadProgressDelegate { progress in
                         continuation.yield(.uploadingFile(progress))
                     }
-                    
-                    if let error = request.error {
-                        logger.error("AF error: \(error)")
-                        
-                    }
-                    
-                    
 
-                    let responseValue = try await request
-                        .validate()
-                        .serializingDecodable(FileUploadResponse.self)
-                        .value.upload
+                    let (data, response) = try await urlSession.data(for: request, delegate: progressDelegate)
+                    let fileUploadResponse = try parse(FileUploadResponse.self, from: data, response: response)
+                    let responseValue = fileUploadResponse.upload
                     
                     guard responseValue.warnings.isEmpty else {
                         continuation.yield(.uploadWarnings(responseValue.warnings))
@@ -1424,14 +1245,9 @@ LIMIT \(limit)
                     parameters["filekey"] = responseValue.filekey
                     
                     continuation.yield(.unstashingFile)
-                    let result = await session.request(commonsEndpoint, method: .post, parameters: parameters)
-                        .validate()
-                        .serializingString()
-                        .response
-                    
-                    
-                    
-                    logger.debug("action:upload result string:\n\(result)")
+                    let unstashRequest = try URLRequest.POST(url: commonsEndpoint, form: parameters)
+                    let unstashResult = try await urlSession.data(for: unstashRequest)
+                    logger.debug("action:upload result string:\n\(String(data: unstashResult.0, encoding: .utf8) ?? "?")")
                     
                     // NOTE: Structured Data can only be created after the file is public/unstashed
                     // Thats why we do it here and not before unstashing.
@@ -1476,7 +1292,6 @@ LIMIT \(limit)
             dataField.claims = statements
         }
         
-        
         let data = try JSONEncoder().encode(dataField)
         guard let dataString = String(data: data, encoding: .utf8) else {
             throw CommonAPIError.failedToEncodeJSONData
@@ -1497,7 +1312,7 @@ LIMIT \(limit)
             assertionFailure()
         }
 
-        let parameters: Parameters = [
+        let form: Parameters = [
             "action": "wbeditentity",
             "comment": commentString,
             "token": token,
@@ -1505,19 +1320,18 @@ LIMIT \(limit)
             "title": title,
             "site": "commonswiki",
             "data": dataString,
-            "formatversion": 2,
-            "clear": true
+            "formatversion": "2",
+            "clear": "true"
         ]
         
-        let rawRequest = session.request(commonsEndpoint, method: .post, parameters: parameters)
-        let request = rawRequest.validate().serializingString()
-            
-//            .serializingDecodable(EntitiesResponse.self, decoder: jsonDecoder)
-        
-        
-        let responseValue = await request.response
-        // FIXME: make this function throw if response is unexpected
-        logger.debug("wbeditentity: \(responseValue.value ?? "")\n\n \(responseValue.debugDescription)")
+        let request = try URLRequest.POST(url: commonsEndpoint, form: form)
+        let (dataOut, response) = try await urlSession.data(for: request)
+        // Log response string for debugging, but don't fail hard if decoding isn't set up.
+        if let responseString = String(data: dataOut, encoding: .utf8) {
+            logger.debug("wbeditentity response: \(responseString)")
+        } else {
+            logger.debug("wbeditentity response (non-utf8, status: \((response as? HTTPURLResponse)?.statusCode ?? -1))")
+        }
     }
 }
 
