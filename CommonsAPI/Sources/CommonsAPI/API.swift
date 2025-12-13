@@ -28,15 +28,12 @@ public actor API {
     let createAccountRedirectURL = URL(string: "https://commons.m.wikimedia.beta.wmflabs.org/w/index.php?title=Main_Page&welcome=yes")!
     
     public static let shared = API()
-
-    private lazy var urlSession: URLSessionProtocol = {
-        let configuration = URLSessionConfiguration.default
-        #if DEBUG
-            return URLSessionProxy(configuration: configuration)
-        #else
-            return URLSession(configuration: configuration)
-        #endif
-    }()
+    
+#if DEBUG
+    let urlSession = URLSessionProxy(configuration: URLSessionConfiguration.default)
+#else
+    let urlSession = URLSession(configuration: URLSessionConfiguration.default)
+#endif
     
     private lazy var jsonDecoder: JSONDecoder = {
         let decoder = JSONDecoder()
