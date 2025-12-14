@@ -8,11 +8,12 @@
 import CommonsAPI
 import FrameUp
 @preconcurrency import MapKit
+import NukeUI
 import SwiftUI
 import TipKit
 import os.log
 
-struct MetadataEditForm: View {
+struct SingleImageDraftView: View {
     @Bindable var model: MediaFileDraftModel
 
     @Environment(\.openURL) private var openURL
@@ -24,6 +25,7 @@ struct MetadataEditForm: View {
     @State private var isLicensePickerShowing = false
     @State private var isTimezonePickerShowning = false
     @State private var locationLabel: String?
+    @State private var isZoomableImageViewerPresented = false
 
     private enum FocusElement: Hashable {
         case title
@@ -35,6 +37,7 @@ struct MetadataEditForm: View {
 
     var body: some View {
         Form {
+            imageView
             captionAndDescriptionSection
             statementsSection
             locationSection
@@ -328,6 +331,34 @@ struct MetadataEditForm: View {
         }
     }
 
+    @ViewBuilder
+    var imageView: some View {
+        // we only expect the model.fileItem?.fileURL, but thumburl is useful for previews
+        Button {
+            isZoomableImageViewerPresented = true
+        } label: {
+            LazyImage(request: model.imageRequest) { phase in
+                if let image = phase.image {
+                    image
+                        .resizable()
+                        .aspectRatio(contentMode: .fill)
+                        .transition(.blurReplace)
+                        .clipShape(.containerRelative)
+                } else {
+                    Color.clear.background(.regularMaterial)
+                }
+            }
+        }
+        .buttonStyle(ImageButtonStyle())
+        .containerRelativeFrame(.horizontal)
+        .listRowInsets(.init())
+        .listRowBackground(Color.clear)
+        .zoomableImageFullscreenCover(
+            imageReference: model.zoomableImageReference,
+            isPresented: $isZoomableImageViewerPresented
+        )
+    }
+
     private var dateTimeSection: some View {
         Section("Creation Date and Time") {
             DatePicker(
@@ -448,12 +479,12 @@ extension [MediaFileDraft.DraftCaptionWithDescription] {
 #Preview("New Draft", traits: .previewEnvironment) {
     @Previewable @State var draft = MediaFileDraftModel(existingDraft: .makeRandomEmptyDraft(id: "1"))
 
-    MetadataEditForm(model: draft)
+    SingleImageDraftView(model: draft)
 }
 
 #Preview("With Metadata", traits: .previewEnvironment) {
     @Previewable @State var draft = MediaFileDraftModel(existingDraft: .makeRandomDraft(id: "2"))
 
-    MetadataEditForm(model: draft)
+    SingleImageDraftView(model: draft)
 
 }

@@ -9,7 +9,7 @@ import MapKit
 import SwiftUI
 
 struct ClusterAnnotation: View {
-    let pickedItemType: MapLayerMode
+    let pickedItemType: MapItemType
     let mediaCount: Int
     let wikiItemCount: Int
     let isSelected: Bool
@@ -86,7 +86,7 @@ struct ClusterAnnotation: View {
 }
 
 #Preview(traits: .previewEnvironment) {
-    @Previewable @State var pickedItemType = MapLayerMode.mediaItem
+    @Previewable @State var pickedItemType = MapItemType.mediaItem
     let onTap = {
         print("tap")
     }
@@ -119,10 +119,10 @@ struct ClusterAnnotation: View {
         Picker("", selection: $pickedItemType) {
 
             Text("Locations")
-                .tag(MapLayerMode.categoryItems)
+                .tag(MapItemType.categoryItems)
 
             Text("Images")
-                .tag(MapLayerMode.mediaItem)
+                .tag(MapItemType.mediaItem)
         }
         .pickerStyle(.segmented)
         .frame(minWidth: 0, maxWidth: .infinity)

@@ -1,9 +1,12 @@
-Neu diese Woche:
+Hi! diese Woche neu:
 
-- feature: Bilder können direkt von einer Kategorie-Detailansicht hochgeladen werden
-- Ein Fehler bei der Auswahl von Punkten auf der Karte wurde gefixt
-- Anpassungen der Item-Dichte auf der Karte
-- Beim App-Start wird die Karte nun auf die User-Position zentriert statt stark rausgezoomte Ansicht mit Kontinenten zu zeigen (sofern die Location-Berechtigungen bestehen)
-- neue bzw. angepasste Icons in verschiedenen Menüs
+Karte:
+Man kann jetzt das Kartenmaterial im Baselayer wechseln (Satellit/Standart)
 
-Beim Update letzte Woche gab es ein großes Update auf der Karte und eine Crash-fix der beim Hochladen unter iOS 26 auftrat.
+Upload/Entwurf
+
+– Das Bild öffnet nun den vollen Zoom-Viewer und verdeckt nicht mehr die Textfelder
+
+Netzwerk (Infrastruktur):
+
+– Die Alamofire wurde entfernt (weniger Wartungsaufwand/Komplexität und kleineres App-Bundle)

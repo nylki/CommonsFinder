@@ -84,6 +84,19 @@ extension MediaFileInfo {
         let urlRequest = URLRequest(url: mediaFile.url, cachePolicy: cachePolicy)
         return .init(urlRequest: urlRequest, processors: [])
     }
+
+    var zoomableImageReference: ZoomableImageReference {
+        .remoteImage(
+            .init(
+                fullImage: originalImageRequest(),
+                maxResizedRequest: maxResizedRequest,
+                largeResized: largeResizedRequest,
+                thumbnail: thumbRequest,
+                fullWidth: mediaFile.width,
+                fullHeight: mediaFile.height,
+                fullByte: mediaFile.size)
+        )
+    }
 }
 
 extension MediaFileDraft {

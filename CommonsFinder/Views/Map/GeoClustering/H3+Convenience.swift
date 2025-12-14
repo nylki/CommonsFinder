@@ -5,9 +5,9 @@
 //  Created by Tom Brewe on 03.03.25.
 //
 
+import CoreLocation
 import Foundation
 import H3kit
-import CoreLocation
 
 nonisolated extension H3 {
     // This is just a rough estimation, to be adjusted.

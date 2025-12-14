@@ -145,7 +145,7 @@ nonisolated struct ExifData: Codable, Equatable, Hashable {
         guard let dateTimeOriginal else { return nil }
         let components = dateTimeOriginal.split(separator: " ")
         guard components.count == 2 else { return nil }
-        let dateComponent = components[0].replacingOccurrences(of: ":", with: "-")
+        let dateComponent = components[0].replacing(":", with: "-")
         let timeComponent = components[1]
         var timezoneOffset = ""
         timezoneOffset = offsetTimeOriginal ?? "Z"
@@ -160,7 +160,7 @@ nonisolated struct ExifData: Codable, Equatable, Hashable {
     var dateOnlyWikidataCompatibleISOString: String? {
         guard let dateTimeOriginal else { return nil }
         let components = dateTimeOriginal.split(separator: " ")
-        guard let dateComponent = components.first?.replacingOccurrences(of: ":", with: "-") else {
+        guard let dateComponent = components.first?.replacing(":", with: "-") else {
             return nil
         }
 
@@ -246,7 +246,7 @@ nonisolated struct ExifData: Codable, Equatable, Hashable {
             self.gpsTimestamp = gpsData[kCGImagePropertyGPSTimeStamp] as? String
             self.gpsDatestamp = gpsData[kCGImagePropertyGPSDateStamp] as? String
             if let gpsDatestamp, let gpsTimestamp {
-                let normalizedDate = String(gpsDatestamp.replacingOccurrences(of: ":", with: "-"))
+                let normalizedDate = String(gpsDatestamp.replacing(":", with: "-"))
                 self.gpsDate = try? .init(
                     "\(normalizedDate)T\(gpsTimestamp)",
                     strategy: .iso8601.year().month().day().time(includingFractionalSeconds: false).timeSeparator(.colon)

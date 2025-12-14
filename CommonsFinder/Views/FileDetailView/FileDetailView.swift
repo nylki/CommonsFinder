@@ -133,7 +133,10 @@ struct FileDetailView: View {
         main
             .navigationTitle(navTitle)
             .navigationBarTitleDisplayMode(.inline)
-            .zoomableImageFullscreenCover(mediaFileInfo: mediaFileInfo, namespace: localNamespace, isPresented: $isShowingFullscreenImage)
+            .zoomableImageFullscreenCover(
+                imageReference: mediaFileInfo.zoomableImageReference,
+                isPresented: $isShowingFullscreenImage
+            )
             .toolbar {
                 ToolbarItem {
                     Button(

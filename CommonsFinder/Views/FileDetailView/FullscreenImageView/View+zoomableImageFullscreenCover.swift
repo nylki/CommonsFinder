@@ -10,14 +10,12 @@ import SwiftUI
 
 extension View {
     func zoomableImageFullscreenCover(
-        mediaFileInfo: MediaFileInfo,
-        namespace: Namespace.ID,
+        imageReference: ZoomableImageReference?,
         isPresented: Binding<Bool>
     ) -> some View {
         modifier(
             FullscreenImageOverlay(
-                mediaFileInfo: mediaFileInfo,
-                namespace: namespace,
+                imageReference: imageReference,
                 isPresented: isPresented
             ))
 
@@ -25,16 +23,20 @@ extension View {
     }
 }
 
+
 private struct FullscreenImageOverlay: ViewModifier {
-    let mediaFileInfo: MediaFileInfo
-    let namespace: Namespace.ID
+    let imageReference: ZoomableImageReference?
     @Binding var isPresented: Bool
 
 
     func body(content: Content) -> some View {
         content
             .fullScreenCover(isPresented: $isPresented) {
-                ZoomableImageView(mediaFileInfo: mediaFileInfo, namespace: namespace, isPresented: $isPresented)
+                if let imageReference {
+                    ZoomableImageView(image: imageReference, isPresented: $isPresented)
+                } else {
+                    Text("Could not load image (this is a bug, please report :)")
+                }
             }
             .transaction(value: isPresented) {
                 /// Opens the fullscreenCover without the regular animation

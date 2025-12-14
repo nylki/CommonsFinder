@@ -77,17 +77,3 @@ import os.log
 
     }
 }
-
-extension MediaFileDraftModel {
-    var temporaryFilePath: URL? {
-        fileItem?.fileURL
-    }
-
-    var temporaryFileImageRequest: ImageRequest? {
-        if let temporaryFilePath {
-            ImageRequest(url: temporaryFilePath)
-        } else {
-            nil
-        }
-    }
-}

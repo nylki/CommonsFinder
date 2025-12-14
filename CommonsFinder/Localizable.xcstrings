@@ -495,6 +495,9 @@
         }
       }
     },
+    "close" : {
+
+    },
     "Close" : {
       "localizations" : {
         "de" : {
@@ -562,6 +565,9 @@
 
     },
     "copyrighted: dedicated to public domain" : {
+
+    },
+    "Could not load image (this is a bug, please report :)" : {
 
     },
     "Creating Account..." : {
@@ -1073,15 +1079,18 @@
         }
       }
     },
-    "Map Mode" : {
+    "Map Details" : {
       "localizations" : {
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Kartenmodus"
+            "value" : "Kartendetails"
           }
         }
       }
+    },
+    "Map Style" : {
+
     },
     "More" : {
       "localizations" : {
@@ -1522,6 +1531,9 @@
         }
       }
     },
+    "Satellite" : {
+      "comment" : "satellite map style"
+    },
     "Save Draft" : {
       "localizations" : {
         "de" : {
@@ -1683,6 +1695,9 @@
           }
         }
       }
+    },
+    "Standard" : {
+      "comment" : "standard map style"
     },
     "Start upload to Wikimedia Commons now?" : {
       "localizations" : {
