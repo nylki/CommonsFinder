@@ -1,9 +1,12 @@
-changes this week:
+hi! new this week:
 
-- feature: upload a new image directly from a Category detail view
-- fix wrong map selection in some situations
-- tweak map item density
-- on app start, position the map at the user location instead of a zoomed out continents view (if location access was previously granted)
-- new and tweaked icons in some context menus
+Map:
+you can now switch between standard and satellite map imagery
 
-Last week's update contained big map changes and a crash fix for uploads on iOS 26.
+Upload/Draft View
+
+- the image preview now opens the full zoom viewer and doesn't hover above (and obstruct) the input fields.
+
+Networking (infrastructure):
+
+-removed Alamofire dependency (results less maintenance complexity and smaller app bundle size)
