@@ -9,4 +9,4 @@ Upload/Entwurf
 
 Netzwerk (Infrastruktur):
 
-– Die Alamofire wurde entfernt (weniger Wartungsaufwand/Komplexität und kleineres App-Bundle)
+– Die Alamofire library wurde entfernt (weniger Wartungsaufwand/Komplexität und kleineres App-Bundle)
