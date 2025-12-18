@@ -13,7 +13,7 @@ import Testing
 @Suite("Database Tests")
 struct DatabaseTests {
 
-    static var fileA: MediaFile {
+    nonisolated static var fileA: MediaFile {
         MediaFile(
             id: UUID().uuidString,
             name: "test title",
@@ -32,7 +32,7 @@ struct DatabaseTests {
         )
     }
 
-    static var fileB: MediaFile {
+    nonisolated static var fileB: MediaFile {
         MediaFile(
             id: UUID().uuidString,
             name: "test title",

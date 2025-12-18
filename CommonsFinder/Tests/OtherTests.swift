@@ -1,6 +1,6 @@
 //
 //  OtherTests.swift
-//  CommonsFinderTests
+//  OtherTests
 //
 //  Created by Tom Brewe on 14.08.25.
 //

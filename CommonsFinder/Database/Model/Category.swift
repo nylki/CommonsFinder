@@ -138,7 +138,7 @@ nonisolated extension Category: FetchableRecord, MutablePersistableRecord {
 
 }
 
-extension Category {
+nonisolated extension Category {
     static func randomItem(id: String) -> Self {
         .init(
             wikidataId: id, commonsCategory: UUID().uuidString, preferredLanguageAtFetchDate: "en", fetchDate: .distantPast, label: "Lorem \(id)",

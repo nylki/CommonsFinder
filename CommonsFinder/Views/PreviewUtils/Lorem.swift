@@ -4,7 +4,7 @@
 import Foundation
 
 /// A lightweight lorem ipsum generator.
-public final class Lorem {
+nonisolated public final class Lorem {
 
     // ======================================================= //
     // MARK: - Text
@@ -203,7 +203,7 @@ public final class Lorem {
 
 }
 
-extension Lorem {
+nonisolated extension Lorem {
 
     fileprivate enum Separator: String {
         case none = ""
