@@ -8,7 +8,7 @@
 import Foundation
 import UniformTypeIdentifiers
 
-extension MediaFileDraft {
+nonisolated extension MediaFileDraft {
     /// DEBUG ONLY value, will always be `false` in Release.
     var isDebugDraft: Bool {
         #if DEBUG

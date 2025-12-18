@@ -107,7 +107,7 @@ nonisolated
     }
 }
 
-extension MediaFileDraft.DraftCaptionWithDescription {
+nonisolated extension MediaFileDraft.DraftCaptionWithDescription {
     init(languageCode: LanguageCode) {
         self.languageCode = languageCode
         caption = ""
