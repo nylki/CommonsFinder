@@ -19,4 +19,5 @@ enum CommonAPIError: Error {
     case failedToDecodeJSONArray
     case failedToEncodeJSONData
     case missingLanguageCodes
+    case missingResponseValues
 }

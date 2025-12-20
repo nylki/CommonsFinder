@@ -205,6 +205,15 @@ struct CommonsEndToEndTests {
 //    func testEditStructuredData(title: String, labels: [String: String], statements: [WikidataClaim]) async throws {
 //        try await CommonsAPI.API.shared.editStructuredData(title: title, labels: labels, statements: statements)
 //    }
+
+    @Test("check if file exists", arguments: [
+        (filename: "The_Earth_seen_from_Apollo_17.jpg", shouldExist: true),
+        (filename: "This_file_should_not_exist_12345.jpg", shouldExist: false)
+    ])
+    func checkIfFileExists(filename: String, shouldExist: Bool) async throws {
+        let exists = try await API.shared.checkIfFileExists(filename: filename)
+        #expect(exists == shouldExist)
+    }
     
     
 }

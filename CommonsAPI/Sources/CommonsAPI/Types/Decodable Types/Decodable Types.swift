@@ -872,6 +872,17 @@ public struct GeosearchListResponse: Decodable, Sendable {
     let geosearch: [GeoSearchFileItem]
 }
 
+internal struct FileExistenceResponse: Decodable, Sendable {
+    let pages: [Item]?
+    
+    struct Item: Decodable, Sendable {
+        let pageid: Int64?
+        let ns: MediawikiNamespace?
+        let title: String?
+        let missing: Bool?
+    }
+}
+
 // query: list=search
 internal struct SearchListResponse: Decodable, Sendable {
     let search: [QueryListItem]

@@ -1132,6 +1132,28 @@ LIMIT \(limit)
         return entitiesDict
     }
     
+    /// Check if a media file already exists on Wikimedia Commons by its filename
+    /// - Parameter filename: The filename to check (without the "File:" prefix)
+    /// - Returns: `true` if the file exists, `false` otherwise
+    public func checkIfFileExists(filename: String) async throws -> Bool {
+        let query: Parameters = [
+            "action": "query",
+            "format": "json",
+            "titles": "File:" + filename,
+            "formatversion": "2",
+            "curtimestamp": "1"
+        ]
+
+        let request = try URLRequest.GET(url: commonsEndpoint, query: query)
+        let (data, response) = try await urlSession.data(for: request)
+        let parsedResponse = try parse(QueryResponse<FileExistenceResponse>.self, from: data, response: response)
+        guard let fileInfo = parsedResponse.query?.pages?.first else {
+            throw CommonAPIError.missingResponseValues
+        }
+        let isMissing = fileInfo.missing ?? false
+        return !isMissing
+    }
+
     /// Returns the labels for Wikidata ids, which can be either WikidataProperties ("P180" etc.) or WikidataEntityIds ("Q1" etc.)
     /// for each id a dictionary is returned with language code keys.
     /// eg.: ["P180":  ["en": "depicted"]]
