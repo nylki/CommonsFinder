@@ -215,6 +215,16 @@ struct CommonsEndToEndTests {
         #expect(exists == shouldExist)
     }
     
+    @Test("validate filename and check if filename is on blacklist", arguments: [
+        (filename: "This is a perfectly valid filename 2025-01-01.jpg", expected: FilenameValidationStatus.ok),
+        (filename: "File:20191208 205403-VideoToMp4(1).webm", expected: FilenameValidationStatus.blacklisted),
+        (filename: "File:this is invalid because {of} brackets", expected: FilenameValidationStatus.invalidtitle),
+    ])
+    func validateFilename(filename: String, expectedResponse: FilenameValidationStatus) async throws {
+        let response = try await API.shared.validateFilename(filename: filename)
+        #expect(response == expectedResponse)
+    }
+    
     
 }
 
