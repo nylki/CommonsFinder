@@ -27,7 +27,7 @@ public actor API {
     let wikidataSparqlEndpoint = URL(string: "https://query.wikidata.org/bigdata/namespace/wdq/sparql")!
     let createAccountRedirectURL = URL(string: "https://commons.m.wikimedia.beta.wmflabs.org/w/index.php?title=Main_Page&welcome=yes")!
     
-    public static let shared = API()
+    let userAgent: String
     
 #if DEBUG
     let urlSession = URLSessionProxy(configuration: URLSessionConfiguration.default)
@@ -42,8 +42,8 @@ public actor API {
     }()
 
 
-    public init() {
-        
+    public init(userAgent: String) {
+        self.userAgent = userAgent
 
  // Un-Comment the following code block to test EmailAuth via email-code (https://www.mediawiki.org/wiki/Help:Extension:EmailAuth)
 //#if DEBUG

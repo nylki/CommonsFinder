@@ -321,7 +321,7 @@ struct ZoomableImageView: View {
 
             switch image {
             case .localImage(let localImageReference):
-                // if its a local image, we can go directly to laoding the full image
+                // if its a local image, we can directly load the full image
                 await loadFullImage(localImage: localImageReference)
 
             case .remoteImage(let remoteImageReference):

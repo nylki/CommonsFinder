@@ -103,18 +103,32 @@ struct CommonsFinderApp: App {
                         logger.error("Error initializing TipKit \(error.localizedDescription)")
                     }
 
-                    /// TESTING NOTE: If tests fail in Pulse package, comment out the following block and try again.
-                    #if DEBUG
-                        RemoteLogger.shared.isAutomaticConnectionEnabled = true
-                        ImagePipeline.Configuration.isSignpostLoggingEnabled = true
-                        (ImagePipeline.shared.configuration.dataLoader as? DataLoader)?.delegate = URLSessionProxyDelegate()
-                    #endif
-
+                    // NUKE setup
                     ImageCache.shared.costLimit = 1024 * 1024 * 1000  // 1000 MB
                     //                    ImageCache.shared.countLimit = 100
                     ImageCache.shared.ttl = 60 * 10  // Invalidate images in memory cache after 10 minutes
                     DataLoader.sharedUrlCache.diskCapacity = 1024 * 1024 * 500  // 500 MB
                     DataLoader.sharedUrlCache.memoryCapacity = 0
+
+                    var pipelineConfig = ImagePipeline.Configuration()
+                    var urlSessionConfig = URLSessionConfiguration.default
+
+                    urlSessionConfig.httpAdditionalHeaders = [
+                        "User-Agent": UserAgentUtil.userAgent
+                    ]
+                    var dataLoader = DataLoader(configuration: urlSessionConfig)
+
+
+                    /// TESTING NOTE: If tests fail in Pulse package, comment out the following block and try again.
+                    #if DEBUG
+                        RemoteLogger.shared.isAutomaticConnectionEnabled = true
+                        ImagePipeline.Configuration.isSignpostLoggingEnabled = true
+                        dataLoader.delegate = URLSessionProxyDelegate()
+                    #endif
+
+                    pipelineConfig.dataLoader = dataLoader
+                    var pipeline = ImagePipeline(configuration: pipelineConfig)
+                    ImagePipeline.shared = pipeline
                 }
         }
 

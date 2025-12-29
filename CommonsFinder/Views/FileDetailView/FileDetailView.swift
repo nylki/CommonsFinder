@@ -96,7 +96,7 @@ struct FileDetailView: View {
     private func refreshFromNetwork() async {
         do {
             guard
-                let result = try await CommonsAPI.API()
+                let result = try await API.shared
                     .fetchFullFileMetadata(.pageids([mediaFileInfo.mediaFile.id])).first
             else {
                 return
