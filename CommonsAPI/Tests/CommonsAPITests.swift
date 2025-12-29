@@ -207,18 +207,19 @@ struct CommonsEndToEndTests {
 //    }
 
     @Test("check if file exists", arguments: [
-        (filename: "The_Earth_seen_from_Apollo_17.jpg", shouldExist: true),
-        (filename: "This_file_should_not_exist_12345.jpg", shouldExist: false)
+        (filename: "The_Earth_seen_from_Apollo_17.jpg", expected: FilenameExistsResult.exists),
+        (filename: "This_file_should_not_exist_12345.jpg", expected: FilenameExistsResult.doesNotExist),
+        (filename: "[invalid<>].jpg", expected: FilenameExistsResult.invalidFilename),
     ])
-    func checkIfFileExists(filename: String, shouldExist: Bool) async throws {
-        let exists = try await API.shared.checkIfFileExists(filename: filename)
-        #expect(exists == shouldExist)
+    func checkIfFileExists(filename: String, expectedValue: FilenameExistsResult) async throws {
+        let result = try await API.shared.checkIfFileExists(filename: filename)
+        #expect(result == expectedValue)
     }
     
     @Test("validate filename and check if filename is on blacklist", arguments: [
         (filename: "This is a perfectly valid filename 2025-01-01.jpg", expected: FilenameValidationStatus.ok),
-        (filename: "File:20191208 205403-VideoToMp4(1).webm", expected: FilenameValidationStatus.blacklisted),
-        (filename: "File:this is invalid because {of} brackets", expected: FilenameValidationStatus.invalidtitle),
+        (filename: "File:20191208 205403-VideoToMp4(1).webm", expected: FilenameValidationStatus.disallowed),
+        (filename: "File:this is invalid because {of} brackets", expected: FilenameValidationStatus.invalid),
     ])
     func validateFilename(filename: String, expectedResponse: FilenameValidationStatus) async throws {
         let response = try await API.shared.validateFilename(filename: filename)

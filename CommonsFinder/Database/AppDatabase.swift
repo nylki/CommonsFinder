@@ -241,6 +241,13 @@ nonisolated final class AppDatabase: Sendable {
                 t.add(column: "size", .integer)
             }
         }
+        
+        migrator.registerMigration("add selectedFilenameType and nameValidationResult to mediaFileDraft") { db in
+            try db.alter(table: "mediaFileDraft") { t in
+                t.add(column: "selectedFilenameType", .jsonText)
+                t.add(column: "nameValidationResult", .jsonText)
+            }
+        }
 
         return migrator
     }
@@ -758,7 +765,6 @@ nonisolated extension AppDatabase {
                 .including(optional: MediaFile.itemInteraction)
                 .asRequest(of: MediaFileInfo.self)
                 .fetchOne(db)
-
         }
     }
 

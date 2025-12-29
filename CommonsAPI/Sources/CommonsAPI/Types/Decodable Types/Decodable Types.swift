@@ -880,6 +880,8 @@ internal struct FileExistenceResponse: Decodable, Sendable {
         let ns: MediawikiNamespace?
         let title: String?
         let missing: Bool?
+        let invalid: Bool?
+        let invalidreason: String?
     }
 }
 
@@ -1192,10 +1194,10 @@ internal struct ValidateFilenameResponse: Sendable, Decodable {
     }
     
     struct Validity: Sendable, Decodable {
-        let result: FilenameValidationStatus
+        let result: Result
         let reason: String?
         
-        enum FilenameValidationStatus: String, Sendable, Decodable {
+        enum Result: String, Sendable, Decodable {
             // from a sample response:
             //"The file name you were trying to upload has been [[c:MediaWiki:Titleblacklist|blacklisted]] because it is very common, uninformative, or spelled in ALLCAPS. Please go back and choose a better file name.  When [[c:Commons:Upload|uploading files to Wikimedia Commons]], please use a file name that describes the content of the image or media file you're uploading and is sufficiently distinctive that no-one else is likely to pick the same name by accident."
             case blacklisted = "blacklisted"
@@ -1206,9 +1208,15 @@ internal struct ValidateFilenameResponse: Sendable, Decodable {
 
 public enum FilenameValidationStatus: Sendable {
     case ok
-    case blacklisted
-    case invalidtitle
+    case disallowed
+    case invalid
     case unknownOther
+}
+
+public enum FilenameExistsResult: Sendable {
+    case exists
+    case doesNotExist
+    case invalidFilename
 }
 
 

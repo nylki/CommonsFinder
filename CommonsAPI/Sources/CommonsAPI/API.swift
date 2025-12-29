@@ -1133,7 +1133,7 @@ LIMIT \(limit)
     }
     
     /// Check if a media file already exists by filename
-    public func checkIfFileExists(filename: String) async throws -> Bool {
+    public func checkIfFileExists(filename: String) async throws -> FilenameExistsResult {
         let query: Parameters = [
             "action": "query",
             "format": "json",
@@ -1148,8 +1148,14 @@ LIMIT \(limit)
         guard let fileInfo = parsedResponse.query?.pages?.first else {
             throw CommonAPIError.missingResponseValues
         }
-        let isMissing = fileInfo.missing ?? false
-        return !isMissing
+        
+        if fileInfo.invalid == true {
+            return .invalidFilename
+        } else if fileInfo.missing == true {
+            return .doesNotExist
+        } else {
+            return .exists
+        }
     }
     
     // action=titleblacklist
@@ -1172,11 +1178,11 @@ LIMIT \(limit)
         
         if let error = parsedResponse.error {
             return switch error.code {
-                case .invalidtitle: .invalidtitle
+                case .invalidtitle: .invalid
             }
         } else if let result = parsedResponse.titleblacklist?.result {
             return switch result {
-                case .blacklisted: .blacklisted
+                case .blacklisted: .disallowed
                 case .ok: .ok
             }
         } else {

@@ -6,7 +6,7 @@
 //
 
 
-enum FileNameType: String, CaseIterable, CustomStringConvertible {
+enum FileNameType: String, CaseIterable, Equatable, Hashable, Codable, Sendable, CustomStringConvertible {
     /// user enters a file name
     case custom
     case captionOnly
@@ -25,4 +25,14 @@ enum FileNameType: String, CaseIterable, CustomStringConvertible {
             "address and date"
         }
     }
+    
+    var systemIconName: String {
+        if self == .custom {
+            "character.cursor.ibeam"
+        } else {
+            "gearshape"
+        }
+    }
+    
+    static let automaticTypes: [FileNameType] = [.captionAndDate, .captionOnly, .geoAndDate]
 }

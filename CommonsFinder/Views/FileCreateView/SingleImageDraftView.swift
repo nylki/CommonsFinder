@@ -12,6 +12,7 @@ import NukeUI
 import SwiftUI
 import TipKit
 import os.log
+import UniformTypeIdentifiers
 
 struct SingleImageDraftView: View {
     @Bindable var model: MediaFileDraftModel
@@ -20,12 +21,14 @@ struct SingleImageDraftView: View {
     @Environment(\.locale) private var locale
     @FocusState private var focus: FocusElement?
 
-    @State private var selectedFilenameType: FileNameType = .captionAndDate
     @State private var filenameSelection: TextSelection?
     @State private var isLicensePickerShowing = false
-    @State private var isTimezonePickerShowning = false
+    @State private var isTimezonePickerShowing = false
     @State private var locationLabel: String?
     @State private var isZoomableImageViewerPresented = false
+        
+    @State private var isCheckingFilename = false
+    @State private var isFilenameEditSheetShowing = false
 
     private enum FocusElement: Hashable {
         case title
@@ -60,9 +63,12 @@ struct SingleImageDraftView: View {
                 }
             )
         }
-        .sheet(isPresented: $isTimezonePickerShowning) {
+        .sheet(isPresented: $isTimezonePickerShowing) {
             TimezonePicker(selectedTimezone: $model.draft.timezone)
                 .presentationDetents([.medium, .large])
+        }
+        .sheet(isPresented: $isFilenameEditSheetShowing) {
+            FilenameSheet(model: model)
         }
         .onAppear {
             if model.draft.captionWithDesc.isEmpty {
@@ -72,7 +78,7 @@ struct SingleImageDraftView: View {
         .onChange(of: model.draft) {
             generateFilename()
         }
-        .onChange(of: selectedFilenameType) { oldValue, newValue in
+        .onChange(of: model.draft.selectedFilenameType) { oldValue, newValue in
             filenameSelection = .none
             if newValue == .custom, oldValue != .custom {
                 focus = .filename
@@ -83,6 +89,9 @@ struct SingleImageDraftView: View {
             } else {
                 generateFilename()
             }
+        }
+        .task(id: model.draft.name) {
+            await validateFilename()
         }
         .task {
             await model.analyzeImage()
@@ -103,7 +112,7 @@ struct SingleImageDraftView: View {
         // TODO: move to model
         Task<Void, Never> {
             let generatedFilename =
-                await selectedFilenameType.generateFilename(
+            await model.draft.selectedFilenameType.generateFilename(
                     coordinate: model.exifData?.coordinate,
                     date: model.draft.inceptionDate,
                     desc: model.draft.captionWithDesc,
@@ -112,6 +121,41 @@ struct SingleImageDraftView: View {
                 ) ?? model.draft.name
 
             model.draft.name = generatedFilename
+        }
+    }
+    
+    private func validateFilename() async {
+        guard let mimeType = model.draft.mimeType,
+              let uniformType = UTType(mimeType: mimeType) else {
+            return
+        }
+        
+        isCheckingFilename = true
+        defer { isCheckingFilename = false }
+
+        let filename = model.draft.name.appendingFileExtension(conformingTo: uniformType)
+        do {
+            async let existsTask = CommonsAPI.API.shared.checkIfFileExists(
+                filename: filename
+            )
+            async let validationTask = CommonsAPI.API.shared.validateFilename(
+                filename: filename
+            )
+            
+            let (existsResult, validationResult) = try await (existsTask, validationTask)
+            
+            model.draft.nameValidationResult = switch existsResult {
+                case .exists: .alreadyExists
+                case .invalidFilename: .invalid
+                case .doesNotExist: switch validationResult {
+                    case .disallowed: .disallowed
+                    case .invalid: .invalid
+                    case .ok: .ok
+                    case .unknownOther: .undefinedAPIResult
+                }
+            }
+        } catch {
+            logger.error("Failed to validate filename \(error)")
         }
     }
 
@@ -211,26 +255,69 @@ struct SingleImageDraftView: View {
 
     private var filenameSection: some View {
         Section {
-            Picker("filename", selection: $selectedFilenameType) {
-                ForEach(FileNameType.allCases, id: \.self) { type in
-                    Text(type.description)
-                }
+//            Picker("filename", selection: $selectedFilenameType) {
+//                ForEach(FileNameType.allCases, id: \.self) { type in
+//                    Text(type.description)
+//                }
+//            }
+            Button {
+                isFilenameEditSheetShowing = true
+            } label: {
+                Text(model.draft.name)
             }
-            TextField("Filename", text: $model.draft.name, selection: $filenameSelection, axis: .vertical)
-                .foregroundStyle(Color.primary.opacity(selectedFilenameType == .custom ? 1 : 0.75))
-                .textInputAutocapitalization(.sentences)
-                .focused($focus, equals: .filename)
-                .disabled(selectedFilenameType != .custom)
 
-            if selectedFilenameType == .custom {
-                TipView(FilenameTip(), arrowEdge: .top) { action in
-                    openURL(.commonsWikiFileNaming)
+
+//                .disabled(selectedFilenameType != .custom)
+                .animation(.default) { view in
+                    view.safeAreaInset(edge: .trailing) {
+                            if isCheckingFilename {
+                                ProgressView()
+                                    .padding(5)
+                            } else {
+                                Group {
+                                    Button {
+                                        
+                                    } label: {
+                                        switch model.draft.nameValidationResult {
+                                        case .alreadyExists:
+                                            Image(systemName: "exclamationmark.circle.fill")
+                                                .foregroundStyle(.red)
+                                        case .disallowed:
+                                            Image(systemName: "exclamationmark.circle.fill")
+                                                .foregroundStyle(.red)
+                                        case .invalid:
+                                            Image(systemName: "characters.uppercase")
+                                                .foregroundStyle(.red)
+                                        case .undefinedAPIResult:
+                                            Color.gray
+                                        case .ok:
+                                            Image(systemName: "checkmark.circle.fill")
+                                                .foregroundStyle(.green)
+                                        case .none:
+                                            Color.clear
+                                        }
+                                    }
+                                }
+                                .imageScale(.large)
+                                .frame(width: 10)
+                            }
+
+                        }
                 }
-            }
+
+
+
+
+
         } header: {
-            Label("file name", systemImage: "character.cursor.ibeam")
+            Text("file name")
+        } footer: {
+            Label(model.draft.selectedFilenameType.description, systemImage: model.draft.selectedFilenameType.systemIconName)
+            Text(model.draft.selectedFilenameType.description)
 
         }
+
+
     }
 
 

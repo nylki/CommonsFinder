@@ -465,6 +465,9 @@
         }
       }
     },
+    "Choose a Filename" : {
+
+    },
     "Choose a License" : {
       "localizations" : {
         "de" : {
@@ -711,22 +714,12 @@
         }
       }
     },
-    "filename" : {
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Dateiname"
-          }
-        }
-      }
-    },
     "Filename" : {
       "localizations" : {
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Dateinahme"
+            "value" : "Dateiname"
           }
         }
       }
@@ -1217,6 +1210,9 @@
       }
     },
     "no rights reserved – public domain or waiver if the PD release is invalidated" : {
+
+    },
+    "Ok" : {
 
     },
     "OK" : {
@@ -1720,6 +1716,9 @@
           }
         }
       }
+    },
+    "suggestions" : {
+
     },
     "Tags" : {
       "localizations" : {

@@ -214,6 +214,7 @@
 				"Views/Extensions/MediaFile+localizedDisplayCaption.swift",
 				"Views/Extensions/MediaFileDraftModel+ImageRequest.swift",
 				Views/FileCreateView/FileCreateView.swift,
+				Views/FileCreateView/FilenameSheet.swift,
 				Views/FileCreateView/FilenameTip.swift,
 				Views/FileCreateView/LicensePicker.swift,
 				Views/FileCreateView/Model/FileCreateViewModel.swift,

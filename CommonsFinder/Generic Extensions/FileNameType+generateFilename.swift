@@ -13,10 +13,10 @@ import os.log
 nonisolated extension FileNameType {
     func generateFilename(
         coordinate: CLLocationCoordinate2D?, date: Date?, desc: [MediaFileDraft.DraftCaptionWithDescription], locale: Locale, tags: [TagItem]
-    ) async
-        -> String?
+        ) async -> String?
     {
-        return switch self {
+        var filename: String? =
+        switch self {
         case .custom:
             nil
         case .captionOnly:
@@ -26,6 +26,11 @@ nonisolated extension FileNameType {
         case .geoAndDate:
             await generateGeoAndDateFilename(date: date, coordinate: coordinate, locale: locale)
         }
+        
+        guard var filename else { return nil }
+        
+        filename = ValidationUtils.sanitzieFileTitle(filename)
+        return filename
     }
 }
 

@@ -20,7 +20,6 @@ import os.log
 // One difference is that it stores the data suited for initial creation
 // avoiding duplicates with wikidata structured data (eg. for location, date etc.)
 
-
 nonisolated
     struct MediaFileDraft: Identifiable, Equatable, Hashable
 {
@@ -31,6 +30,19 @@ nonisolated
 
     /// The unique name without the mediawiki "File:"-prefix and (should be without) any file-extension like .jpeg, editable in UI (eg. "screenshot 2025-01-01")
     var name: String
+    var selectedFilenameType: FileNameType
+        
+    enum NameValidationResult: String, Codable, Equatable, Hashable {
+        case alreadyExists
+        case disallowed
+        /// invalid characters
+        case invalid
+        case undefinedAPIResult
+        case ok
+    }
+
+    var nameValidationResult: NameValidationResult?
+
     /// `name` + file-extension is written just before uploading (eg. "screenshot 2025-01-01.jpeg")
     ///  and can be used for identifying uploaded media and local drafts
     var finalFilename: String
@@ -137,6 +149,8 @@ nonisolated
         case id
         case addedDate
         case name
+        case selectedFilenameType
+        case nameValidationResult
         case finalFilename
         case localFileName
         case mimeType
@@ -157,7 +171,9 @@ nonisolated
         static let id = Column(CodingKeys.id)
         static let addedDate = Column(CodingKeys.addedDate)
         static let name = Column(CodingKeys.name)
+        static let nameValidationResult = Column(CodingKeys.nameValidationResult)
         static let finalFilename = Column(CodingKeys.finalFilename)
+        static let selectedFilenameType = Column(CodingKeys.selectedFilenameType)
 
         static let captionWithDesc = Column(CodingKeys.captionWithDesc)
         static let tags = Column(CodingKeys.tags)
@@ -177,6 +193,8 @@ nonisolated
         self.id = try container.decode(String.self, forKey: .id)
         self.addedDate = try container.decode(Date.self, forKey: .addedDate)
         self.name = try container.decode(String.self, forKey: .name)
+        self.selectedFilenameType = try container.decodeIfPresent(FileNameType.self, forKey: .selectedFilenameType) ?? .custom
+        self.nameValidationResult = try container.decodeIfPresent(NameValidationResult.self, forKey: .nameValidationResult)
         self.finalFilename = try container.decode(String.self, forKey: .finalFilename)
         self.localFileName = try container.decode(String.self, forKey: .localFileName)
         self.mimeType = try container.decodeIfPresent(String.self, forKey: .mimeType)
@@ -241,6 +259,8 @@ extension MediaFileDraft {
         localFileName = fileItem.localFileName
         finalFilename = ""
         name = localFileName
+        nameValidationResult = nil
+        selectedFilenameType = .captionAndDate
 
         let languageCode = Locale.current.wikiLanguageCodeIdentifier
         captionWithDesc = [.init(languageCode: languageCode)]
