@@ -10,8 +10,8 @@ import CoreLocation
 import Testing
 
 @Suite("GeoVectorMathTests")
-struct GeoVectorMathTests {
-    struct GeoTestData {
+nonisolated struct GeoVectorMathTests {
+    nonisolated struct GeoTestData {
         let start: CLLocationCoordinate2D
         let bearing: CLLocationDegrees
         /// distance in meters

@@ -8,7 +8,7 @@
 import Foundation
 import UniformTypeIdentifiers
 
-extension MediaFileDraft {
+nonisolated extension MediaFileDraft {
     /// DEBUG ONLY value, will always be `false` in Release.
     var isDebugDraft: Bool {
         #if DEBUG
@@ -21,7 +21,8 @@ extension MediaFileDraft {
     static func makeRandomEmptyDraft(id: MediaFile.ID) -> MediaFileDraft {
         let date: Date = Date(timeIntervalSince1970: .random(in: 1..<1_576_800_000))
         return MediaFileDraft.init(
-            id: "DEBUG-DRAFT-" + UUID().uuidString, addedDate: .now, name: Lorem.sentence, finalFilename: "", localFileName: "", mimeType: UTType.png.preferredMIMEType,
+            id: "DEBUG-DRAFT-" + UUID().uuidString, addedDate: .now, name: Lorem.sentence, selectedFilenameType: .captionAndDate, uploadPossibleStatus: nil, finalFilename: "", localFileName: "",
+            mimeType: UTType.png.preferredMIMEType!,
             captionWithDesc: [.init(languageCode: "en")], inceptionDate: date,
             timezone: "+01:00",
             locationHandling: .noLocation,
@@ -41,9 +42,11 @@ extension MediaFileDraft {
             id: "DEBUG-DRAFT-" + UUID().uuidString,
             addedDate: .now,
             name: Lorem.sentence,
+            selectedFilenameType: .captionAndDate,
+            uploadPossibleStatus: nil,
             finalFilename: "",
             localFileName: "",
-            mimeType: UTType.png.preferredMIMEType,
+            mimeType: UTType.png.preferredMIMEType!,
             captionWithDesc: [.init(caption: Lorem.paragraph, languageCode: "en")],
             inceptionDate: date,
             timezone: "+01:00",

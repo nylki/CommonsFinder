@@ -108,7 +108,7 @@ struct RegisterView: View {
                 logger.error("Failed to validate! \(error)")
             }
 
-            let isValidEmail = ValidationUtils.isValidEmailAddress(string: email)
+            let isValidEmail = EmailValidation.isValidEmailAddress(string: email)
             if isValidEmail == false {
                 emailValidation = .init(status: .invalid, message: "The email-address is not valid.")
             }

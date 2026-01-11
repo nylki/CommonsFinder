@@ -242,6 +242,13 @@ nonisolated final class AppDatabase: Sendable {
             }
         }
 
+        migrator.registerMigration("add selectedFilenameType and uploadPossibleStatus to mediaFileDraft") { db in
+            try db.alter(table: "mediaFileDraft") { t in
+                t.add(column: "selectedFilenameType", .jsonText)
+                t.add(column: "uploadPossibleStatus", .jsonText)
+            }
+        }
+
         return migrator
     }
 }
@@ -758,7 +765,6 @@ nonisolated extension AppDatabase {
                 .including(optional: MediaFile.itemInteraction)
                 .asRequest(of: MediaFileInfo.self)
                 .fetchOne(db)
-
         }
     }
 
@@ -815,6 +821,12 @@ nonisolated extension AppDatabase {
         return try dbWriter.read { db in
             let pattern = FTS5Pattern(matchingAllPrefixesIn: phrase)
             return try MediaFile.fetchAll(db, sql: sql, arguments: [pattern])
+        }
+    }
+
+    func draftExists(id: MediaFileDraft.ID) throws -> Bool {
+        try dbWriter.read { db in
+            try MediaFileDraft.exists(db, id: id)
         }
     }
 
@@ -892,7 +904,6 @@ nonisolated extension AppDatabase {
         }
     }
 }
-
 nonisolated extension MediaFileInfo {
     static func fetchAll(ids: [String], db: Database) throws -> [Self] {
         try MediaFile

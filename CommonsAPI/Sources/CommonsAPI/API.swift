@@ -1132,6 +1132,66 @@ LIMIT \(limit)
         return entitiesDict
     }
     
+    /// Check if a media file already exists by filename
+    public func checkIfFileExists(filename: String) async throws -> FilenameExistsResult {
+        let query: Parameters = [
+            "action": "query",
+            "format": "json",
+            "titles": "File:" + filename,
+            "formatversion": "2",
+            "curtimestamp": "1"
+        ]
+
+        let request = try URLRequest.GET(url: commonsEndpoint, query: query)
+        let (data, response) = try await urlSession.data(for: request)
+        let parsedResponse = try parse(QueryResponse<FileExistenceResponse>.self, from: data, response: response)
+        guard let fileInfo = parsedResponse.query?.pages?.first else {
+            throw CommonAPIError.missingResponseValues
+        }
+        
+        if fileInfo.invalid == true {
+            return .invalidFilename
+        } else if fileInfo.missing == true {
+            return .doesNotExist
+        } else {
+            return .exists
+        }
+    }
+    
+    // action=titleblacklist
+    /// Validate a filename against the TitleBlacklist.
+    /// see: https://commons.wikimedia.org/wiki/MediaWiki:Titleblacklist
+    public func validateFilename(filename: String) async throws -> FilenameValidationStatus {
+        let query: Parameters = [
+            "action": "titleblacklist",
+            "format": "json",
+            "tbtitle": "File:\(filename)",
+            "tbaction": "create",
+            "tbnooverride": "1",
+            "smaxage": "2400",
+            "maxage": "2400",
+            "formatversion": "2",
+            "curtimestamp": "1"
+        ]
+
+        let request = try URLRequest.GET(url: commonsEndpoint, query: query)
+        let (data, response) = try await urlSession.data(for: request)
+        let parsedResponse = try parse(ValidateFilenameResponse.self, from: data, response: response)
+        
+        if let error = parsedResponse.error {
+            return switch error.code {
+                case .invalidtitle: .invalid
+            }
+        } else if let result = parsedResponse.titleblacklist?.result {
+            return switch result {
+                case .blacklisted: .disallowed
+                case .ok: .ok
+            }
+        } else {
+            throw CommonsAPIDecodingError.needsImplementation("\(String(data: data, encoding: .utf8) ?? "")")
+        }
+    }
+
     /// Returns the labels for Wikidata ids, which can be either WikidataProperties ("P180" etc.) or WikidataEntityIds ("Q1" etc.)
     /// for each id a dictionary is returned with language code keys.
     /// eg.: ["P180":  ["en": "depicted"]]
@@ -1220,6 +1280,7 @@ LIMIT \(limit)
                         url: commonsEndpoint,
                         fileURL: file.fileURL,
                         filename: file.filename,
+                        mimeType: file.mimetype,
                         params: parameters
                     )
 
