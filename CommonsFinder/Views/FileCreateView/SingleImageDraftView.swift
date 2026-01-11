@@ -30,11 +30,7 @@ struct SingleImageDraftView: View {
     @State private var isTimezonePickerShowing = false
     @State private var locationLabel: String?
     @State private var isZoomableImageViewerPresented = false
-
     @State private var isFilenameErrorSheetPresented = false
-
-
-    // TODO: check if any states are superfluous now
     @State private var isShowingDeleteDialog = false
     @State private var isShowingUploadDialog = false
     @State private var isShowingCloseConfirmationDialog = false

@@ -20,6 +20,12 @@
     },
     "%@: %@" : {
       "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@: %2$@"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
@@ -130,6 +136,12 @@
     },
     "%lld×%lld pixel" : {
       "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$lld×%2$lld pixel"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
@@ -456,7 +468,14 @@
 
     },
     "Certain characters are reserved due to technical reasons and cannot be used for file names" : {
-
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bestimmte Zeichen sind aus technischen Gründen reserviert und können nicht für Dateinamen verwendet werden"
+          }
+        }
+      }
     },
     "choose" : {
       "localizations" : {
@@ -469,10 +488,24 @@
       }
     },
     "Choose a descriptive filename without the current prefix." : {
-
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wähle einen deskriptiven Dateinamen, welcher das aktuelle Präfix nicht enthält."
+          }
+        }
+      }
     },
     "Choose a different name." : {
-
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wähle einen anderen Namen."
+          }
+        }
+      }
     },
     "Choose a License" : {
       "localizations" : {
@@ -505,7 +538,14 @@
       }
     },
     "close" : {
-
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Schließen"
+          }
+        }
+      }
     },
     "Close" : {
       "localizations" : {
@@ -610,7 +650,14 @@
       }
     },
     "Currently checking if you can upload. please wait a short moment..." : {
-
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Überprüfe ob die Datei hochgeladen werden kann. Bitte warten…"
+          }
+        }
+      }
     },
     "Delete" : {
       "comment" : "regarding drafts",
@@ -674,7 +721,14 @@
       }
     },
     "Edit the name to make it unique, You could add the date, location, event name or a number." : {
-
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Editiere den Namen um ihn eindeutig und einzigartig zu machen. Du könntest das Datum, den Ort, einen Eventnamen oder eine Nummer anfügen."
+          }
+        }
+      }
     },
     "Email-Code" : {
       "localizations" : {
@@ -697,7 +751,14 @@
       }
     },
     "failed to validate file name due to an unknown error" : {
-
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Validierung des Dateinamens fehlgeschlagen"
+          }
+        }
+      }
     },
     "File" : {
       "localizations" : {
@@ -740,7 +801,14 @@
       }
     },
     "filenames must be unique on the server" : {
-
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dateinamen müssen auf dem Server einzigartig sein"
+          }
+        }
+      }
     },
     "Find Files" : {
       "localizations" : {
@@ -1104,7 +1172,14 @@
       }
     },
     "Map Style" : {
-
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kartenstil"
+          }
+        }
+      }
     },
     "More" : {
       "localizations" : {
@@ -1397,19 +1472,54 @@
       }
     },
     "Please choose a descriptive and meaningful filename." : {
-
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bitte wähle einen deskriptiven und sinnvollen Dateinamen."
+          }
+        }
+      }
     },
     "Please choose a different filename." : {
-
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bitte wähle einen anderen Dateinamen."
+          }
+        }
+      }
     },
     "Please choose a different name." : {
-
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bitte wähle einen anderen Namen."
+          }
+        }
+      }
     },
     "Please choose a longer and more descriptive filename." : {
-
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bitte wähle einen längeren und deskriptiveren Dateinamen."
+          }
+        }
+      }
     },
     "Please choose a more unique name. For example you could add the date, location, an event name or a number." : {
-
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bitte wähle einen einzigartigeren Namen. Du könntest zum Beispiel das Datum, den Ort, einen Ereignisnamen oder eine Nummer hinzufügen."
+          }
+        }
+      }
     },
     "Please enter a code from your two-factor authentication application to continue." : {
       "localizations" : {
@@ -1442,13 +1552,34 @@
       }
     },
     "Please provide a caption or description." : {
-
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bitte "
+          }
+        }
+      }
     },
     "Please remove the disallowed characters." : {
-
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bitte die reservierten Zeichen entfernen."
+          }
+        }
+      }
     },
     "Please remove the extra spaces from the filename." : {
-
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bitte entferne die zusätzlichen Leerzeichen aus dem Dateinamen."
+          }
+        }
+      }
     },
     "public domain" : {
       "localizations" : {
@@ -1573,10 +1704,25 @@
       }
     },
     "sanitize" : {
-
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "korrigieren"
+          }
+        }
+      }
     },
     "Satellite" : {
-      "comment" : "satellite map style"
+      "comment" : "satellite map style",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Satellit"
+          }
+        }
+      }
     },
     "Save Draft" : {
       "localizations" : {
@@ -1730,8 +1876,15 @@
         }
       }
     },
-    "some words or combinations of characters have been blocked by wikimedia commons either because they are to generic and non-descript or due to other reasons." : {
-
+    "some words or combinations of characters have been blocked on the server either because they are to generic and non-descript or due to other reasons." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Einige Wörter oder Kombinationen von Zeichen wurden auf dem Server blockiert, entweder weil sie zu allgemein sind oder aus anderen Gründen."
+          }
+        }
+      }
     },
     "Source" : {
       "localizations" : {
@@ -1798,32 +1951,88 @@
         }
       }
     },
-    "the file contains invalid words" : {
-
-    },
     "the filename already exists" : {
-
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Der Dateiname existiert bereits"
+          }
+        }
+      }
     },
     "The filename consists only of the same repeated character" : {
-
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Der Dateiname besteht nur aus demselben wiederholten Zeichen"
+          }
+        }
+      }
     },
     "the filename contains blocked words or phrases" : {
-
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Der Dateiname enthält gesperrte Wörter oder Phrasen"
+          }
+        }
+      }
     },
     "The filename contains extra spaces at the start or end" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Der Dateiname enthält zusätzliche Leerzeichen am Anfang oder Ende"
+          }
+        }
+      }
+    },
+    "the filename contains invalid words" : {
 
     },
     "The filename contains one or more reserved characters (|:#<>[]{}\\)" : {
-
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Der Dateiname enthält ein oder mehrere reservierte Zeichen (|:#<>[]{}\\)"
+          }
+        }
+      }
     },
     "the filename is invalid" : {
-
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Der Dateiname ist ungültig"
+          }
+        }
+      }
     },
     "The filename is too short (5+ characters)" : {
-
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Der Dateiname ist zu kurz (5+ Zeichen)"
+          }
+        }
+      }
     },
     "The filename starts with a disallowed prefix" : {
-
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Der Dateinamen fängt mit einem ungültigen Prefix an"
+          }
+        }
+      }
     },
     "The original full-sized image was not loaded automatically. Turn on Wifi or explicitly load the full image here." : {
       "localizations" : {
@@ -1886,7 +2095,14 @@
       }
     },
     "There was an error validating the file name." : {
-
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Es gab einen Fehler den Dateinamen zu validieren"
+          }
+        }
+      }
     },
     "thumbnail" : {
       "localizations" : {
@@ -1919,7 +2135,14 @@
       }
     },
     "Unknown error, please make a screenshot and report this issue if you see this." : {
-
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Unbekannter Fehler, bitte mach einen Screenshot und melde dieses Problem. Danke!"
+          }
+        }
+      }
     },
     "Upload" : {
       "localizations" : {
@@ -1942,7 +2165,14 @@
       }
     },
     "Upload not possible" : {
-
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Upload nicht möglich"
+          }
+        }
+      }
     },
     "uploaded %@ ago" : {
       "localizations" : {
@@ -2105,10 +2335,24 @@
       }
     },
     "You must be logged in to a Wikimedia account to upload files." : {
-
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Du musst in einen Wikimedia-Account eingeloggt sein um Dateien hochzuladen"
+          }
+        }
+      }
     },
     "You must choose the license under which you want to publish the file." : {
-
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Du must die Lizenz wählen unter der du die Datei veröffentlichen willst"
+          }
+        }
+      }
     },
     "You reached the end of %lld files!" : {
       "localizations" : {
@@ -2151,7 +2395,14 @@
       }
     },
     "You should add atleast one category or depicted item in the Tags-section." : {
-
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Du solltest mindestens eine Kategorie oder Motiv-Item in der Tag-Sektion hinzufügen."
+          }
+        }
+      }
     },
     "You will find a history of your previously viewed categories here." : {
       "comment" : "A description displayed when no recently viewed categories are found.",

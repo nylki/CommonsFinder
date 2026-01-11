@@ -139,7 +139,7 @@ enum NameValidationError: LocalizedError, Codable, Hashable, Equatable {
         case .alreadyExists:
             String(localized: "filenames must be unique on the server")
         case .disallowed:
-            String(localized: "some words or combinations of characters have been blocked by wikimedia commons either because they are to generic and non-descript or due to other reasons.")
+            String(localized: "some words or combinations of characters have been blocked on the server either because they are to generic and non-descript or due to other reasons.")
         case .invalid(let localValidationError):
             switch localValidationError {
             case .tooShort:
@@ -195,7 +195,7 @@ enum NameValidationError: LocalizedError, Codable, Hashable, Equatable {
         case .disallowed:
             String(localized: "Choose a different name.")
         case .invalid:
-            String(localized: "the file contains invalid words")
+            String(localized: "the filename contains invalid words")
         case .undefinedAPIResult:
             nil
         }
