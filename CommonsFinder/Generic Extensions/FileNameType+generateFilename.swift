@@ -13,29 +13,28 @@ import os.log
 nonisolated extension FileNameType {
     func generateFilename(
         coordinate: CLLocationCoordinate2D?, date: Date?, desc: [MediaFileDraft.DraftCaptionWithDescription], locale: Locale, tags: [TagItem]
-        ) async -> String?
-    {
-        var filename: String? =
-        switch self {
-        case .custom:
-            nil
-        case .captionOnly:
-            generateCaptionFilename(desc: desc, locale: locale)
-        case .captionAndDate:
-            generateCaptionAndDateFilename(desc: desc, date: date, locale: locale)
-        case .geoAndDate:
-            await generateGeoAndDateFilename(date: date, coordinate: coordinate, locale: locale)
-        }
-        
+    ) async -> String? {
+        let filename: String? =
+            switch self {
+            case .custom:
+                nil
+            case .captionOnly:
+                generateCaptionFilename(desc: desc, locale: locale)
+            case .captionAndDate:
+                generateCaptionAndDateFilename(desc: desc, date: date, locale: locale)
+            case .geoAndDate:
+                await generateGeoAndDateFilename(date: date, coordinate: coordinate, locale: locale)
+            }
+
         guard var filename else { return nil }
-        
-        filename = ValidationUtils.sanitzieFileTitle(filename)
+
+        filename = LocalFileNameValidation.sanitizeFileName(filename)
         return filename
     }
 }
 
 
-nonisolated private func generateCaptionFilename(desc: [MediaFileDraft.DraftCaptionWithDescription], locale: Locale) -> String {
+nonisolated private func generateCaptionFilename(desc: [MediaFileDraft.DraftCaptionWithDescription], locale: Locale) -> String? {
 
     // For caption only we select the caption matching the current locales language code if it exists
     // otherwise just the first available caption.
@@ -44,12 +43,13 @@ nonisolated private func generateCaptionFilename(desc: [MediaFileDraft.DraftCapt
     {
         return localeCaption
     } else {
-        return desc.first { !$0.caption.isEmpty }?.caption ?? ""
+        return desc.first { !$0.caption.isEmpty }?.caption
     }
 }
 
-nonisolated private func generateCaptionAndDateFilename(desc: [MediaFileDraft.DraftCaptionWithDescription], date: Date?, locale: Locale) -> String {
+nonisolated private func generateCaptionAndDateFilename(desc: [MediaFileDraft.DraftCaptionWithDescription], date: Date?, locale: Locale) -> String? {
     let caption = generateCaptionFilename(desc: desc, locale: locale)
+    guard let caption else { return nil }
 
     let date = date?.ISO8601Format(.iso8601.year().month().day()) ?? ""
 

@@ -138,7 +138,7 @@ struct ContentView: View {
             let drafts: [MediaFileDraft] = urls.compactMap { temporaryPath in
                 do {
                     let fileItem = try FileItem(movingLocalFileFromPath: temporaryPath)
-                    let draft = MediaFileDraft(fileItem)
+                    let draft = try MediaFileDraft(fileItem)
                     return try appDatabase.upsertAndFetch(draft)
                 } catch {
                     logger.error("Failed to move draft file from ShareExtension. \(error)")

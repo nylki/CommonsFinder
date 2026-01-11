@@ -29,7 +29,7 @@ struct DraftFileListItem: View {
     var body: some View {
         lazy var uploadStatus = uploadManager.uploadStatus[draft.id]
         let isUploading = uploadStatus != nil
-        let canUpload = (account.activeUser != nil) && draft.canUpload && !isUploading
+        let canUpload = draft.uploadPossibleStatus == .uploadPossible && !isUploading
 
         Button {
             navigationModel.editDrafts(drafts: [draft])

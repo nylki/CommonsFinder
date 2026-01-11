@@ -45,13 +45,6 @@ enum DraftError: Error {
         }
     }
 
-    var canSafeDrafts: Bool {
-        !editedDrafts.isEmpty
-            && editedDrafts.allSatisfy { _, value in
-                !value.draft.name.isEmpty
-            }
-    }
-
     var fileCount: Int {
         photosPickerSelection.count + editedDrafts.count
     }
@@ -114,7 +107,7 @@ enum DraftError: Error {
                 do {
                     let fileItem = try await FileItem.init(photoPickerItem: photoItem)
                     try Task.checkCancellation()
-                    let draft = MediaFileDraftModel(fileItem: fileItem, newDraftOptions: newDraftOptions)
+                    let draft = try MediaFileDraftModel(fileItem: fileItem, newDraftOptions: newDraftOptions)
                     editedDrafts[draft.id] = draft
                 } catch {
                     logger.error("Failed to create fileItem of photo \(photoItem.itemIdentifier ?? ""): \(error)")
@@ -130,7 +123,7 @@ enum DraftError: Error {
                 for url in fileURLs {
                     do {
                         let fileItem = try await loadFileItem(url: url)
-                        let newDraft = MediaFileDraftModel(fileItem: fileItem, newDraftOptions: newDraftOptions)
+                        let newDraft = try MediaFileDraftModel(fileItem: fileItem, newDraftOptions: newDraftOptions)
                         editedDrafts[newDraft.id] = newDraft
                     } catch {
                         logger.error("Failed to import file. \(error)")
@@ -164,7 +157,7 @@ enum DraftError: Error {
 
 
             let fileItem = try FileItem.init(uiImage: uiImage, metadata: metadata, location: cameraLocation)
-            let newDraft = MediaFileDraftModel(fileItem: fileItem, newDraftOptions: newDraftOptions)
+            let newDraft = try MediaFileDraftModel(fileItem: fileItem, newDraftOptions: newDraftOptions)
 
             editedDrafts[newDraft.id] = newDraft
         }
@@ -174,19 +167,5 @@ enum DraftError: Error {
     private func loadFileItem(url: URL) async throws -> FileItem {
         assert(url.isFileURL, "This function only expects file URLs.")
         return try FileItem(copyingDataFromLocalFile: url)
-    }
-
-    func saveAllChanges() throws {
-        for draftModel in editedDrafts.values {
-            if let fileItem = draftModel.fileItem {
-                draftModel.draft.localFileName = fileItem.localFileName
-            }
-
-            try appDatabase.upsert(draftModel.draft)
-        }
-    }
-
-    func deleteDrafts() throws {
-        try appDatabase.delete(editedDrafts.values.map(\.draft))
     }
 }

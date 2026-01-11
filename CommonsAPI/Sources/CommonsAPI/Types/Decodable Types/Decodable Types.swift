@@ -750,6 +750,7 @@ public struct MediaFileUploadable: Identifiable, Hashable, Equatable, Sendable, 
     
     /// How the file should be named on the other side (including the file extension which _must_ be present) : eg. "file 123.jpg" but not "file 123"
     public let filename: String
+    public let mimetype: String
     
     public let wikiText: String
     public let captions: [LanguageString]
@@ -766,6 +767,7 @@ public struct MediaFileUploadable: Identifiable, Hashable, Equatable, Sendable, 
         id: String,
         fileURL: URL,
         filename: String,
+        mimetype: String,
         claims: [WikidataClaim],
         captions: [LanguageString],
         wikitext: String
@@ -777,6 +779,7 @@ public struct MediaFileUploadable: Identifiable, Hashable, Equatable, Sendable, 
         
         self.id = id
         self.filename = filename
+        self.mimetype = mimetype
         self.fileURL = fileURL
         self.captions = captions
         self.claims = claims

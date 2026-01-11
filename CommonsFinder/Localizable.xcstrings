@@ -455,6 +455,9 @@
     "CC0" : {
 
     },
+    "Certain characters are reserved due to technical reasons and cannot be used for file names" : {
+
+    },
     "choose" : {
       "localizations" : {
         "de" : {
@@ -465,7 +468,10 @@
         }
       }
     },
-    "Choose a Filename" : {
+    "Choose a descriptive filename without the current prefix." : {
+
+    },
+    "Choose a different name." : {
 
     },
     "Choose a License" : {
@@ -603,6 +609,9 @@
         }
       }
     },
+    "Currently checking if you can upload. please wait a short moment..." : {
+
+    },
     "Delete" : {
       "comment" : "regarding drafts",
       "localizations" : {
@@ -664,6 +673,9 @@
         }
       }
     },
+    "Edit the name to make it unique, You could add the date, location, event name or a number." : {
+
+    },
     "Email-Code" : {
       "localizations" : {
         "de" : {
@@ -683,6 +695,9 @@
           }
         }
       }
+    },
+    "failed to validate file name due to an unknown error" : {
+
     },
     "File" : {
       "localizations" : {
@@ -723,6 +738,9 @@
           }
         }
       }
+    },
+    "filenames must be unique on the server" : {
+
     },
     "Find Files" : {
       "localizations" : {
@@ -865,6 +883,9 @@
           }
         }
       }
+    },
+    "Info" : {
+
     },
     "It cannot be changed once upload and must be unique! A good filename should be descriptive, appropriate and concise, but also clear and recognizable to a wider audience.\n\n- Avoid abbreviations and random characters\n\n- Including a date and location is often a good idea" : {
       "localizations" : {
@@ -1375,6 +1396,21 @@
         }
       }
     },
+    "Please choose a descriptive and meaningful filename." : {
+
+    },
+    "Please choose a different filename." : {
+
+    },
+    "Please choose a different name." : {
+
+    },
+    "Please choose a longer and more descriptive filename." : {
+
+    },
+    "Please choose a more unique name. For example you could add the date, location, an event name or a number." : {
+
+    },
     "Please enter a code from your two-factor authentication application to continue." : {
       "localizations" : {
         "de" : {
@@ -1404,6 +1440,15 @@
           }
         }
       }
+    },
+    "Please provide a caption or description." : {
+
+    },
+    "Please remove the disallowed characters." : {
+
+    },
+    "Please remove the extra spaces from the filename." : {
+
     },
     "public domain" : {
       "localizations" : {
@@ -1526,6 +1571,9 @@
           }
         }
       }
+    },
+    "sanitize" : {
+
     },
     "Satellite" : {
       "comment" : "satellite map style"
@@ -1682,6 +1730,9 @@
         }
       }
     },
+    "some words or combinations of characters have been blocked by wikimedia commons either because they are to generic and non-descript or due to other reasons." : {
+
+    },
     "Source" : {
       "localizations" : {
         "de" : {
@@ -1717,9 +1768,6 @@
         }
       }
     },
-    "suggestions" : {
-
-    },
     "Tags" : {
       "localizations" : {
         "de" : {
@@ -1749,6 +1797,33 @@
           }
         }
       }
+    },
+    "the file contains invalid words" : {
+
+    },
+    "the filename already exists" : {
+
+    },
+    "The filename consists only of the same repeated character" : {
+
+    },
+    "the filename contains blocked words or phrases" : {
+
+    },
+    "The filename contains extra spaces at the start or end" : {
+
+    },
+    "The filename contains one or more reserved characters (|:#<>[]{}\\)" : {
+
+    },
+    "the filename is invalid" : {
+
+    },
+    "The filename is too short (5+ characters)" : {
+
+    },
+    "The filename starts with a disallowed prefix" : {
+
     },
     "The original full-sized image was not loaded automatically. Turn on Wifi or explicitly load the full image here." : {
       "localizations" : {
@@ -1810,6 +1885,9 @@
         }
       }
     },
+    "There was an error validating the file name." : {
+
+    },
     "thumbnail" : {
       "localizations" : {
         "de" : {
@@ -1840,6 +1918,9 @@
         }
       }
     },
+    "Unknown error, please make a screenshot and report this issue if you see this." : {
+
+    },
     "Upload" : {
       "localizations" : {
         "de" : {
@@ -1859,6 +1940,9 @@
           }
         }
       }
+    },
+    "Upload not possible" : {
+
     },
     "uploaded %@ ago" : {
       "localizations" : {
@@ -2020,6 +2104,12 @@
         }
       }
     },
+    "You must be logged in to a Wikimedia account to upload files." : {
+
+    },
+    "You must choose the license under which you want to publish the file." : {
+
+    },
     "You reached the end of %lld files!" : {
       "localizations" : {
         "de" : {
@@ -2059,6 +2149,9 @@
           }
         }
       }
+    },
+    "You should add atleast one category or depicted item in the Tags-section." : {
+
     },
     "You will find a history of your previously viewed categories here." : {
       "comment" : "A description displayed when no recently viewed categories are found.",

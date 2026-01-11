@@ -241,11 +241,11 @@ nonisolated final class AppDatabase: Sendable {
                 t.add(column: "size", .integer)
             }
         }
-        
-        migrator.registerMigration("add selectedFilenameType and nameValidationResult to mediaFileDraft") { db in
+
+        migrator.registerMigration("add selectedFilenameType and uploadPossibleStatus to mediaFileDraft") { db in
             try db.alter(table: "mediaFileDraft") { t in
                 t.add(column: "selectedFilenameType", .jsonText)
-                t.add(column: "nameValidationResult", .jsonText)
+                t.add(column: "uploadPossibleStatus", .jsonText)
             }
         }
 
@@ -824,6 +824,12 @@ nonisolated extension AppDatabase {
         }
     }
 
+    func draftExists(id: MediaFileDraft.ID) throws -> Bool {
+        try dbWriter.read { db in
+            try MediaFileDraft.exists(db, id: id)
+        }
+    }
+
     func fetchAllDrafts() throws -> [MediaFileDraft] {
         try dbWriter.read { db in
             try MediaFileDraft
@@ -898,7 +904,6 @@ nonisolated extension AppDatabase {
         }
     }
 }
-
 nonisolated extension MediaFileInfo {
     static func fetchAll(ids: [String], db: Database) throws -> [Self] {
         try MediaFile

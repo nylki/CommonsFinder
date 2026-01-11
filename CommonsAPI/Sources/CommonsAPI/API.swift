@@ -1168,6 +1168,8 @@ LIMIT \(limit)
             "tbtitle": "File:\(filename)",
             "tbaction": "create",
             "tbnooverride": "1",
+            "smaxage": "2400",
+            "maxage": "2400",
             "formatversion": "2",
             "curtimestamp": "1"
         ]
@@ -1278,6 +1280,7 @@ LIMIT \(limit)
                         url: commonsEndpoint,
                         fileURL: file.fileURL,
                         filename: file.filename,
+                        mimeType: file.mimetype,
                         params: parameters
                     )
 

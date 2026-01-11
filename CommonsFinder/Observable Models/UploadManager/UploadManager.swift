@@ -95,9 +95,7 @@ class UploadManager {
     }
 
     private func updateDraftWithFinalFilename(draft: MediaFileDraft) throws(UploadManagerError) -> MediaFileDraft {
-        guard let mimeType = draft.mimeType,
-            let uniformType = UTType(mimeType: mimeType)
-        else {
+        guard let uniformType = UTType(mimeType: draft.mimeType) else {
             throw UploadManagerError.missingMimetypePreventedFinalFilenameGeneration
         }
 
@@ -129,15 +127,15 @@ class UploadManager {
             performUpload(draft.id)
 
         } catch (.databaseErrorOnFinalFilenameUpdate(let error)) {
-            print("Failed to update draft in SQL DB with final filename! \(error)")
+            logger.error("Failed to update draft in SQL DB with final filename! \(error)")
         } catch (.missingMimetypePreventedFinalFilenameGeneration) {
-            print("Failed to create uploadable because the final filename with file-ending (eg. .jpg) could be be generated because the mimeType is unknown")
+            logger.error("Failed to create uploadable because the final filename with file-ending (eg. .jpg) could be be generated because the mimeType is unknown")
         } catch (.fileURLMissing) {
-            print("Failed to create uploadable because fileURL field is missing")
+            logger.error("Failed to create uploadable because fileURL field is missing")
         } catch (.onlyDraftsCanBeUploaded) {
-            print("Failed to create uploadable because it must be a local draft.")
+            logger.error("Failed to create uploadable because it must be a local draft.")
         } catch (.failedToOverwriteExifLocation(let error)) {
-            print("Failed to overwrite exif location.")
+            logger.error("Failed to overwrite exif location \(error)")
         } catch {
             // Swift 6.0 compiler correctly produces warning: “Case will never be executed”
             // retry in XCode 16.3-4

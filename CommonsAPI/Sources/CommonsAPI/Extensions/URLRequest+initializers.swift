@@ -33,7 +33,7 @@ extension URLRequest {
         return request
     }
     
-    static func POSTMultipart(url: URL, fileURL: URL, filename: String, params: [String:String]) throws -> Self {
+    static func POSTMultipart(url: URL, fileURL: URL, filename: String, mimeType: String, params: [String:String]) throws -> Self {
         let boundary = "Boundary-\(UUID().uuidString)"
         
         var request = URLRequest(url: url)
@@ -49,7 +49,7 @@ extension URLRequest {
         httpBody.append(MultipartSupport.convertFileData(
             fieldName: "file",
             fileName: filename,
-            mimeType: "image/jpg",
+            mimeType: mimeType,
             fileData: fileData,
             using: boundary
         ))
