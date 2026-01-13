@@ -18,10 +18,10 @@ extension MediaFileDraftModel {
             })
         {
             .missingCaptionOrDescription
-        } else if draft.license == nil {
-            .missingLicense
         } else if draft.tags.isEmpty {
             .missingTags
+        } else if draft.license == nil {
+            .missingLicense
         } else if let nameValidationResult {
             switch nameValidationResult {
             case .failure(let nameValidationError):
@@ -30,7 +30,7 @@ extension MediaFileDraftModel {
                 .uploadPossible
             }
         } else {
-            .failedToValidate
+            nil
         }
     }
 

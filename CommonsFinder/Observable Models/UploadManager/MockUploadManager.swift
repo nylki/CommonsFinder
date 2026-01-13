@@ -31,30 +31,23 @@ final class MockUploadManager: UploadManager {
         print("simulateRegularUpload")
         Task {
             try? await Task.sleep(for: .milliseconds(100))
-            uploadStatus[id] = .uploading(0.01)
-
+            updateUploadStatus(for: id, to: .uploading(0.01))
             try? await Task.sleep(for: .milliseconds(500))
-            uploadStatus[id] = .uploading(0.1)
-
+            updateUploadStatus(for: id, to: .uploading(0.1))
             try? await Task.sleep(for: .milliseconds(500))
-            uploadStatus[id] = .uploading(0.2)
-
+            updateUploadStatus(for: id, to: .uploading(0.2))
             try? await Task.sleep(for: .milliseconds(500))
-            uploadStatus[id] = .uploading(0.5)
-
+            updateUploadStatus(for: id, to: .uploading(0.5))
             try? await Task.sleep(for: .milliseconds(500))
-            uploadStatus[id] = .uploading(0.8)
-
+            updateUploadStatus(for: id, to: .uploading(0.8))
             try? await Task.sleep(for: .milliseconds(500))
-            uploadStatus[id] = .uploading(1)
+            updateUploadStatus(for: id, to: .uploading(1))
             try? await Task.sleep(for: .milliseconds(500))
-            uploadStatus[id] = .unstashingFile
-
+            updateUploadStatus(for: id, to: .unstashingFile)
             try? await Task.sleep(for: .milliseconds(600))
-            uploadStatus[id] = .creatingWikidataClaims
-
+            updateUploadStatus(for: id, to: .creatingWikidataClaims)
             try? await Task.sleep(for: .milliseconds(600))
-            uploadStatus[id] = .published
+            updateUploadStatus(for: id, to: .published)
             try? await Task.sleep(for: .milliseconds(1000))
         }
     }
@@ -63,13 +56,13 @@ final class MockUploadManager: UploadManager {
         print("simulateErrorUpload")
         Task {
             try? await Task.sleep(for: .milliseconds(100))
-            uploadStatus[id] = .uploading(0.01)
+            updateUploadStatus(for: id, to: .uploading(0.01))
 
             try? await Task.sleep(for: .milliseconds(500))
-            uploadStatus[id] = .uploading(0.1)
+            updateUploadStatus(for: id, to: .uploading(0.1))
 
             try? await Task.sleep(for: .milliseconds(1000))
-            uploadStatus[id] = .uploadWarnings([.existsNormalized(normalizedName: "Some-similar-name.jpeg")])
+            updateUploadStatus(for: id, to: .uploadWarnings([.existsNormalized(normalizedName: "Some-similar-name.jpeg")]))
         }
     }
 

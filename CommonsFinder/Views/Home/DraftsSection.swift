@@ -25,16 +25,33 @@ struct DraftsSection: View {
 }
 
 #Preview("Regular Upload", traits: .previewEnvironment(uploadSimulation: .regular)) {
+    @Previewable @Environment(\.appDatabase) var appDatabase
+    @Previewable @Query(AllDraftsRequest()) var drafts
+
     ScrollView(.vertical) {
-        DraftsSection(drafts: [.makeRandomDraft(id: "1")])
+        DraftsSection(drafts: drafts)
     }
     .shadow(radius: 30)
-
+    .task {
+        _ = try? appDatabase.deleteAllDrafts()
+        try? appDatabase.upsert(
+            .makeRandomDraft(id: "1", uploadPossibleStatus: .uploadPossible)
+        )
+    }
 }
 
 #Preview("Error Upload", traits: .previewEnvironment(uploadSimulation: .withErrors)) {
+    @Previewable @Environment(\.appDatabase) var appDatabase
+    @Previewable @Query(AllDraftsRequest()) var drafts
+
     ScrollView(.vertical) {
-        DraftsSection(drafts: [.makeRandomDraft(id: "1")])
+        DraftsSection(drafts: drafts)
     }
     .shadow(radius: 30)
+    .task {
+        _ = try? appDatabase.deleteAllDrafts()
+        try? appDatabase.upsert(
+            .makeRandomDraft(id: "2", uploadPossibleStatus: .uploadPossible)
+        )
+    }
 }

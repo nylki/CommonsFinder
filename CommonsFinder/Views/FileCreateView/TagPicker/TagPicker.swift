@@ -125,7 +125,7 @@ private struct NavHeader: View {
                 Button(action: dismiss.callAsFunction) {
                     Label("Cancel", systemImage: "xmark")
                         .font(.headline)
-                        .frame(width: 26, height: 34)
+                        .frame(width: 20, height: 28)
                         .labelStyle(.iconOnly)
                 }
                 .glassButtonStyle()
@@ -138,7 +138,7 @@ private struct NavHeader: View {
                 Button(role: .fallbackConfirm, action: onAccept) {
                     Label("Accept", systemImage: "checkmark")
                         .font(.headline)
-                        .frame(width: 26, height: 34)
+                        .frame(width: 20, height: 28)
                         .labelStyle(.iconOnly)
                 }
                 .glassButtonStyle(prominent: true)

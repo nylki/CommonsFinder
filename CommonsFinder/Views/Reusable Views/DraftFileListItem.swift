@@ -7,6 +7,7 @@
 
 import CommonsAPI
 import FrameUp
+import GRDBQuery
 import NukeUI
 import SwiftUI
 import os.log
@@ -25,37 +26,42 @@ struct DraftFileListItem: View {
     @State private var isShowingUploadDialog = false
     @State private var isShowingErrorSheet = false
 
+    private func editDraft() {
+        navigationModel.editDrafts(drafts: [draft])
+    }
+
+    private func showDeleteDialog() {
+        isShowingDeleteDialog = true
+    }
+
+    private func showUploadDialog() {
+        isShowingUploadDialog = true
+    }
+
 
     var body: some View {
-        lazy var uploadStatus = uploadManager.uploadStatus[draft.id]
-        let isUploading = uploadStatus != nil
-        let canUpload = draft.uploadPossibleStatus == .uploadPossible && !isUploading
+        lazy var uploadStatus = draft.uploadStatus
 
-        Button {
-            navigationModel.editDrafts(drafts: [draft])
-        } label: {
+        let canUpload = draft.uploadPossibleStatus == .uploadPossible && draft.uploadStatus == nil
+        let isPublishingCurrently = uploadStatus?.isAnyPublishingStatus == true
+        Button(action: editDraft) {
             imageView
-                .blur(radius: isUploading ? 20 : 0)
+                .blur(radius: isPublishingCurrently ? 20 : 0)
         }
         .buttonStyle(MediaCardButtonStyle())
         .matchedTransitionSource(id: draft.id, in: navigationNamespace)
         .contextMenu(
             menuItems: {
-                if !isUploading {
-                    Button("Publish", systemImage: "arrowshape.up") {
-                        isShowingUploadDialog = true
+                if !isPublishingCurrently {
+                    if canUpload {
+                        Button("Publish", systemImage: "arrowshape.up", action: showUploadDialog)
                     }
-                    .disabled(!canUpload)
 
-                    Button("Edit", systemImage: "pencil") {
-                        navigationModel.editDrafts(drafts: [draft])
-                    }
+                    Button("Edit", systemImage: "pencil", action: editDraft)
 
                     Divider()
 
-                    Button("Delete", systemImage: "trash", role: .destructive) {
-                        isShowingDeleteDialog = true
-                    }
+                    Button("Delete", systemImage: "trash", role: .destructive, action: showDeleteDialog)
                 } else {
                     // TODO: show more upload info?
                 }
@@ -84,19 +90,15 @@ struct DraftFileListItem: View {
         .overlay(alignment: .bottomTrailing) {
             ZStack {
                 if canUpload {
-                    Button("Publish", systemImage: "arrowshape.up.fill") {
-                        isShowingUploadDialog = true
-                    }
-                } else if !isUploading {
-                    Button("Edit", systemImage: "square.and.pencil") {
-                        navigationModel.editDrafts(drafts: [draft])
-                    }
+                    Button("Publish", systemImage: "arrowshape.up.fill", action: showUploadDialog)
+                } else if uploadStatus == nil {
+                    Button("Edit", systemImage: "square.and.pencil", action: editDraft)
                 }
             }
             .glassButtonStyle()
             .padding()
         }
-        .disabled(isUploading)
+        .disabled(isPublishingCurrently)
         .overlay {
             uploadProgressOverlay
         }
@@ -165,7 +167,7 @@ struct DraftFileListItem: View {
     @ViewBuilder
     private var uploadProgressOverlay: some View {
 
-        lazy var uploadStatus = uploadManager.uploadStatus[draft.id]
+        lazy var uploadStatus = draft.uploadStatus
 
         ZStack {
             if let uploadStatus {
@@ -173,14 +175,13 @@ struct DraftFileListItem: View {
                 case .uploading, .creatingWikidataClaims, .unstashingFile:
                     ProgressView(value: uploadStatus.uploadProgress, total: 1)
                 case .published:
-                    Label {
-                        Text("Finished")
-                    } icon: {
-                        Image(systemName: "checkmark.circle")
-                    }
-                    .font(.title3)
-                    .transition(.blurReplace.animation(.bouncy))
-                case .uploadWarnings(_), .unspecifiedError(_), .twoFactorCodeRequired,
+                    Image(systemName: "checkmark.circle.fill")
+                        .resizable()
+                        .scaledToFit()
+                        .padding()
+                        .foregroundStyle(.regularMaterial)
+                        .transition(.blurReplace.animation(.bouncy(extraBounce: 0.2)))
+                case .uploadWarnings(_), .twoFactorCodeRequired,
                     .emailCodeRequired, .error(_):
                     errorButton
                 }
@@ -188,16 +189,14 @@ struct DraftFileListItem: View {
         }
         .frame(minWidth: 0, maxWidth: .infinity, minHeight: 0, maxHeight: .infinity)
         .padding()
-        .background {
-            switch uploadStatus {
-            case .published: Color.green.opacity(0.5)
-            case .unspecifiedError, .uploadWarnings: Color.orange.opacity(0.5)
-            default: Color.clear
-            }
-        }
         .clipShape(.rect(cornerRadius: 16))
         .animation(.default, value: uploadStatus)
-        .uploadErrorDetailsSheet(uploadManager.uploadStatus[draft.id], isPresented: $isShowingErrorSheet)
+        .uploadErrorDetailsSheet(
+            draft.uploadStatus,
+            isPresented: $isShowingErrorSheet,
+            onEditDraft: editDraft,
+            onDeleteDraft: showDeleteDialog
+        )
 
     }
 
@@ -214,18 +213,5 @@ struct DraftFileListItem: View {
         .transition(.blurReplace.animation(.bouncy))
         .foregroundStyle(.primary)
         .glassButtonStyle()
-    }
-}
-
-
-#Preview("Regular Upload", traits: .previewEnvironment(uploadSimulation: .regular)) {
-    LazyVStack {
-        DraftFileListItem(draft: .makeRandomDraft(id: "1"))
-    }
-}
-
-#Preview("Error Upload", traits: .previewEnvironment(uploadSimulation: .withErrors)) {
-    LazyVStack {
-        DraftFileListItem(draft: .makeRandomDraft(id: "1"))
     }
 }

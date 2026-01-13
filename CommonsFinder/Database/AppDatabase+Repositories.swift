@@ -65,7 +65,7 @@ extension AppDatabase {
     }
 
     static let sampleDraft: MediaFileDraft = MediaFileDraft.makeRandomDraft(id: "draftID-1")
-
+    static let uploadableSampleDraft: MediaFileDraft = MediaFileDraft.makeRandomDraft(id: "draftID-uploadable-2", uploadPossibleStatus: .uploadPossible)
     /// Returns an in-memory repository that contains one draft and one uploaded media file,
     /// for previews and tests.
     ///

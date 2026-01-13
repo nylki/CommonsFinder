@@ -15,6 +15,7 @@ enum DatabaseError: Error {
     case failedToFetchAfterUpdate
     case failedToCreateOrFetchItemInteraction
     case itemInteractionEmptyID
+    case itemNotFound
 }
 
 /// The AppDatabase holding image models, drafts and user info.
@@ -242,10 +243,11 @@ nonisolated final class AppDatabase: Sendable {
             }
         }
 
-        migrator.registerMigration("add selectedFilenameType and uploadPossibleStatus to mediaFileDraft") { db in
+        migrator.registerMigration("add selectedFilenameType, uploadPossibleStatus, uploadStatus to mediaFileDraft") { db in
             try db.alter(table: "mediaFileDraft") { t in
                 t.add(column: "selectedFilenameType", .jsonText)
                 t.add(column: "uploadPossibleStatus", .jsonText)
+                t.add(column: "uploadStatus", .jsonText)
             }
         }
 
@@ -738,6 +740,10 @@ extension AppDatabase {
     //        }
     //    }
     //
+    func deleteAllDrafts() throws -> Int {
+        try dbWriter.write(MediaFileDraft.deleteAll)
+    }
+
     func deleteDrafts(ids: [MediaFileDraft.ID]) throws -> Int {
         try dbWriter.write { db in
             try MediaFileDraft
@@ -827,6 +833,23 @@ nonisolated extension AppDatabase {
     func draftExists(id: MediaFileDraft.ID) throws -> Bool {
         try dbWriter.read { db in
             try MediaFileDraft.exists(db, id: id)
+        }
+    }
+
+    func fetchDraft(id: MediaFileDraft.ID) throws -> MediaFileDraft? {
+        try dbWriter.read { db in
+            try MediaFileDraft.fetchOne(db, id: id)
+        }
+    }
+
+    func updateDraft(id: MediaFileDraft.ID, withUploadStatus uploadStatus: UploadStatus?) throws {
+        try dbWriter.write { db in
+            guard var draft = try MediaFileDraft.fetchOne(db, id: id) else {
+                throw DatabaseError.itemNotFound
+            }
+            try draft.updateChanges(db) { draft in
+                draft.uploadStatus = uploadStatus
+            }
         }
     }
 

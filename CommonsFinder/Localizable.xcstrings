@@ -821,6 +821,7 @@
       }
     },
     "Finished" : {
+      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -1556,7 +1557,7 @@
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Bitte "
+            "value" : "Bitte füge einen Kurztitel oder eine Beschreibung hinzz"
           }
         }
       }
@@ -1971,22 +1972,22 @@
         }
       }
     },
-    "the filename contains blocked words or phrases" : {
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Der Dateiname enthält gesperrte Wörter oder Phrasen"
-          }
-        }
-      }
-    },
     "The filename contains extra spaces at the start or end" : {
       "localizations" : {
         "de" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Der Dateiname enthält zusätzliche Leerzeichen am Anfang oder Ende"
+          }
+        }
+      }
+    },
+    "the filename contains invalid character sequences or blocked words" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Der Dateiname enthält ungültige Zeichenfolgen oder blockierte Wörter"
           }
         }
       }

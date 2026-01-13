@@ -15,7 +15,7 @@ import UIKit
 import UniformTypeIdentifiers
 import os.log
 
-enum UploadManagerStatus: Equatable, Sendable, Identifiable, CustomStringConvertible {
+nonisolated enum UploadStatus: Equatable, Sendable, Identifiable, CustomStringConvertible, Codable, Hashable {
     case uploading(_ fractionCompleted: Double)
     case twoFactorCodeRequired
     case emailCodeRequired
@@ -23,8 +23,7 @@ enum UploadManagerStatus: Equatable, Sendable, Identifiable, CustomStringConvert
     case unstashingFile
     case published
     case uploadWarnings([FileUploadResponse.Warning])
-    case unspecifiedError(Error)
-    case error(LocalizedError)
+    case error(errorDescription: String?, recoverySuggestion: String?)
 
     var uploadProgress: Double? {
         if case .uploading(let fractionCompleted) = self {
@@ -54,15 +53,24 @@ enum UploadManagerStatus: Equatable, Sendable, Identifiable, CustomStringConvert
             "published"
         case .uploadWarnings(let array):
             "uploadWarnings \(array.description)"
-        case .unspecifiedError(let error):
-            "unspecifiedError \(error.localizedDescription)"
-        case .error(let localizedError):
-            "error \(localizedError)"
+        case .error(let errorDescription, let recoverySuggestion):
+            "error \(errorDescription ?? ""), \(recoverySuggestion ?? "")"
         }
     }
 
-    static func == (lhs: UploadManagerStatus, rhs: UploadManagerStatus) -> Bool {
+    static func == (lhs: UploadStatus, rhs: UploadStatus) -> Bool {
         lhs.description == rhs.description
+    }
+}
+
+extension UploadStatus {
+    var isAnyPublishingStatus: Bool {
+        switch self {
+        case .uploading(_), .creatingWikidataClaims, .unstashingFile, .published:
+            true
+        case .twoFactorCodeRequired, .emailCodeRequired, .uploadWarnings(_), .error(_, _):
+            false
+        }
     }
 }
 
@@ -82,14 +90,14 @@ class UploadManager {
     private var registeredBGTaskIDs: Set<String> = .init()
 
     // UploadStatus should be something scoped to the App, not the API package
-    var uploadStatus: [MediaFileDraft.ID: UploadManagerStatus]
+    //    var uploadStatus: [MediaFileDraft.ID: UploadStatus]
     var didFinishUpload: PassthroughSubject<MediaFileDraft.ID, Never>
 
 
     init(appDatabase: AppDatabase) {
         self.appDatabase = appDatabase
         tasks = .init()
-        uploadStatus = .init()
+        //        uploadStatus = .init()
         didFinishUpload = .init()
 
     }
@@ -105,6 +113,15 @@ class UploadManager {
             return try appDatabase.upsertAndFetch(draft)
         } catch {
             throw .databaseErrorOnFinalFilenameUpdate(error)
+        }
+    }
+
+    /// Updates both the in-memory upload status and persists it to the database
+    func updateUploadStatus(for draftID: MediaFileDraft.ID, to status: UploadStatus?) {
+        do {
+            try appDatabase.updateDraft(id: draftID, withUploadStatus: status)
+        } catch {
+            logger.error("Failed to update upload status in database for draft \(draftID): \(error.localizedDescription)")
         }
     }
 
@@ -211,13 +228,13 @@ class UploadManager {
                 case .twoFactorCodeRequired:
                     // FIXME: actual trigger a re-login when auth failed (eg. due to 2fa, or password change)
                     // and ability to retry/resume
-                    uploadStatus[id] = .twoFactorCodeRequired
+                    updateUploadStatus(for: id, to: .twoFactorCodeRequired)
                     bgTask?.setTaskCompleted(success: false)
                     return
                 case .emailCodeRequired:
                     // FIXME: actual trigger a re-login when auth failed (eg. due to 2fa, or password change)
                     // and ability to retry/resume
-                    uploadStatus[id] = .emailCodeRequired
+                    updateUploadStatus(for: id, to: .emailCodeRequired)
                     bgTask?.setTaskCompleted(success: false)
                     return
                 case .tokenReceived(let token):
@@ -226,7 +243,7 @@ class UploadManager {
             } catch {
                 logger.error("failed to fetch CSRF token for upload: \(error)")
                 bgTask?.setTaskCompleted(success: false)
-                uploadStatus[id] = .unspecifiedError(error)
+                updateUploadStatus(for: id, to: .error(errorDescription: error.localizedDescription, recoverySuggestion: nil))
                 return
             }
 
@@ -236,13 +253,13 @@ class UploadManager {
 
                 guard !Task.isCancelled else {
                     bgTask?.setTaskCompleted(success: false)
-                    uploadStatus[id] = nil
+                    //                    uploadStatus[id] = nil
                     return
                 }
 
                 switch status {
                 case .uploadingFile(let progress):
-                    uploadStatus[id] = .uploading(progress.fractionCompleted)
+                    updateUploadStatus(for: id, to: .uploading(progress.fractionCompleted))
                     if #available(iOS 26.0, *), let bgTask = bgTask as? BGContinuedProcessingTask {
                         let percentCompleted = Int64(progress.fractionCompleted * 100)
                         bgTask.updateTitle(
@@ -253,15 +270,14 @@ class UploadManager {
                     }
 
                 case .creatingWikidataClaims:
-                    uploadStatus[id] = .creatingWikidataClaims
-
+                    updateUploadStatus(for: id, to: .creatingWikidataClaims)
                     if #available(iOS 26.0, *), let bgTask = bgTask as? BGContinuedProcessingTask {
                         bgTask.progress.completedUnitCount += 5
                         bgTask.updateTitle(bgTask.title, subtitle: "creating metadata...")
                     }
 
                 case .unstashingFile:
-                    uploadStatus[id] = .unstashingFile
+                    updateUploadStatus(for: id, to: .unstashingFile)
                     if #available(iOS 26.0, *),
                         let bgTask = bgTask as? BGContinuedProcessingTask
                     {
@@ -270,7 +286,7 @@ class UploadManager {
                     }
 
                 case .published:
-                    uploadStatus[id] = .published
+                    updateUploadStatus(for: id, to: .published)
                     if #available(iOS 26.0, *),
                         let bgTask = bgTask as? BGContinuedProcessingTask
                     {
@@ -285,15 +301,13 @@ class UploadManager {
                     if #available(iOS 26.0, *) {
                         bgTask?.setTaskCompleted(success: false)
                     }
-
-                    uploadStatus[id] = .uploadWarnings(warnings)
+                    updateUploadStatus(for: id, to: .uploadWarnings(warnings))
 
                 case .unspecifiedError(let error):
                     if #available(iOS 26.0, *) {
                         bgTask?.setTaskCompleted(success: false)
                     }
-
-                    uploadStatus[id] = .unspecifiedError(error)
+                    updateUploadStatus(for: id, to: .error(errorDescription: error.localizedDescription, recoverySuggestion: nil))
                 }
             }
         }

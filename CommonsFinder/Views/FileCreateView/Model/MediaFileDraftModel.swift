@@ -126,7 +126,7 @@ enum NameValidationError: LocalizedError, Codable, Hashable, Equatable {
         case .alreadyExists:
             String(localized: "the filename already exists")
         case .disallowed:
-            String(localized: "the filename contains blocked words or phrases")
+            String(localized: "the filename contains invalid character sequences or blocked words")
         case .invalid:
             String(localized: "the filename is invalid")
         case .undefinedAPIResult:

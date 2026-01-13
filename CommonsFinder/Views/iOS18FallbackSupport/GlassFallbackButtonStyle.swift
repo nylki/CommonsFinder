@@ -88,7 +88,7 @@ private struct GlassFallbackButtonStyle: ButtonStyle {
     .padding()
     .background {
         #if DEBUG
-        Image(.debugDraft)
+            Image(.debugDraft)
         #endif
     }
 }

@@ -21,7 +21,14 @@ nonisolated extension MediaFileDraft {
     static func makeRandomEmptyDraft(id: MediaFile.ID) -> MediaFileDraft {
         let date: Date = Date(timeIntervalSince1970: .random(in: 1..<1_576_800_000))
         return MediaFileDraft.init(
-            id: "DEBUG-DRAFT-" + UUID().uuidString, addedDate: .now, name: Lorem.sentence, selectedFilenameType: .captionAndDate, uploadPossibleStatus: nil, finalFilename: "", localFileName: "",
+            id: "DEBUG-DRAFT-" + UUID().uuidString,
+            addedDate: .now,
+            name: Lorem.sentence,
+            selectedFilenameType: .captionAndDate,
+            uploadPossibleStatus: nil,
+            uploadStatus: nil,
+            finalFilename: "",
+            localFileName: "",
             mimeType: UTType.png.preferredMIMEType!,
             captionWithDesc: [.init(languageCode: "en")], inceptionDate: date,
             timezone: "+01:00",
@@ -36,14 +43,16 @@ nonisolated extension MediaFileDraft {
     static func makeRandomDraft(
         id: MediaFile.ID,
         named: String = Lorem.sentence,
-        date: Date = .init(timeIntervalSince1970: .random(in: 1..<1_576_800_000))
+        date: Date = .init(timeIntervalSince1970: .random(in: 1..<1_576_800_000)),
+        uploadPossibleStatus: UploadPossibleStatus? = nil,
     ) -> MediaFileDraft {
         MediaFileDraft(
             id: "DEBUG-DRAFT-" + UUID().uuidString,
             addedDate: .now,
             name: Lorem.sentence,
             selectedFilenameType: .captionAndDate,
-            uploadPossibleStatus: nil,
+            uploadPossibleStatus: uploadPossibleStatus,
+            uploadStatus: nil,
             finalFilename: "",
             localFileName: "",
             mimeType: UTType.png.preferredMIMEType!,

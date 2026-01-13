@@ -32,6 +32,7 @@ nonisolated
     var name: String
     var selectedFilenameType: FileNameType
     var uploadPossibleStatus: UploadPossibleStatus?
+    var uploadStatus: UploadStatus?
 
     /// `name` + file-extension is written just before uploading (eg. "screenshot 2025-01-01.jpeg")
     ///  and can be used for identifying uploaded media and local drafts
@@ -141,6 +142,7 @@ nonisolated
         case name
         case selectedFilenameType
         case uploadPossibleStatus
+        case uploadStatus
         case finalFilename
         case localFileName
         case mimeType
@@ -197,6 +199,7 @@ nonisolated
         self.source = try container.decodeIfPresent(MediaFileDraft.DraftSource.self, forKey: .source)
         self.width = try container.decodeIfPresent(Int.self, forKey: .width)
         self.height = try container.decodeIfPresent(Int.self, forKey: .height)
+        self.uploadStatus = try container.decodeIfPresent(UploadStatus.self, forKey: .uploadStatus)
 
         if let tags = try? container.decode([TagItem].self, forKey: .tags) {
             self.tags = tags
@@ -266,6 +269,7 @@ extension MediaFileDraft {
         locationHandling = .noLocation
         inceptionDate = .now
         timezone = TimeZone.current.identifier
+        uploadStatus = nil
 
         // Read EXIF-Data and update relevant values
         if let exifData = loadExifData() {

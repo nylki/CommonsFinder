@@ -103,7 +103,7 @@ public enum UploadStatus: Sendable, Equatable, CustomStringConvertible {
 public struct FileUploadResponse: Decodable, Sendable {
     public let upload: Upload
 
-    public enum Warning: Error, Decodable, Identifiable, Equatable, Hashable, Sendable, CustomStringConvertible, CustomLocalizedStringResourceConvertible {
+    public enum Warning: Error, Codable, Identifiable, Equatable, Hashable, Sendable, CustomStringConvertible, CustomLocalizedStringResourceConvertible {
         // see: https://github.com/wikimedia/mediawiki/blob/a8df7e081a4b231de43420f9e730a35d6aff0c27/includes/upload/UploadBase.php#L1349
         // and: https://www.mediawiki.org/wiki/API:Upload
         case exists
