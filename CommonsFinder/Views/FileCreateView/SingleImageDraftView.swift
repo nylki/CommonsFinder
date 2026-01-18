@@ -351,8 +351,6 @@ struct SingleImageDraftView: View {
                     systemImage: model.draft.selectedFilenameType.systemIconName
                 )
             }
-
-
         }
         .task(id: model.draft.name) {
             // TODO: generate in model of name change

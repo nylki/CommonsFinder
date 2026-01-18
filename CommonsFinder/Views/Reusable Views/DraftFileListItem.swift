@@ -38,12 +38,22 @@ struct DraftFileListItem: View {
         isShowingUploadDialog = true
     }
 
+    private func continueUpload() {
+        isShowingErrorSheet = false
+        if let activeUser = account.activeUser,
+            let draft = try? appDatabase.updateDraft(id: draft.id, withPublishingError: nil)
+        {
+            uploadManager.upload(draft, username: activeUser.username)
+        }
+    }
+
 
     var body: some View {
-        lazy var uploadStatus = draft.uploadStatus
+        lazy var publishingState = draft.publishingState
 
-        let canUpload = draft.uploadPossibleStatus == .uploadPossible && draft.uploadStatus == nil
-        let isPublishingCurrently = uploadStatus?.isAnyPublishingStatus == true
+        let canUpload = draft.uploadPossibleStatus == .uploadPossible && draft.publishingState == nil
+        let isPublishingCurrently = publishingState != nil && draft.publishingError == nil
+
         Button(action: editDraft) {
             imageView
                 .blur(radius: isPublishingCurrently ? 20 : 0)
@@ -56,8 +66,9 @@ struct DraftFileListItem: View {
                     if canUpload {
                         Button("Publish", systemImage: "arrowshape.up", action: showUploadDialog)
                     }
-
-                    Button("Edit", systemImage: "pencil", action: editDraft)
+                    if draft.publishingState != .creatingWikidataClaims {
+                        Button("Edit", systemImage: "pencil", action: editDraft)
+                    }
 
                     Divider()
 
@@ -91,7 +102,7 @@ struct DraftFileListItem: View {
             ZStack {
                 if canUpload {
                     Button("Publish", systemImage: "arrowshape.up.fill", action: showUploadDialog)
-                } else if uploadStatus == nil {
+                } else if publishingState == nil {
                     Button("Edit", systemImage: "square.and.pencil", action: editDraft)
                 }
             }
@@ -167,13 +178,18 @@ struct DraftFileListItem: View {
     @ViewBuilder
     private var uploadProgressOverlay: some View {
 
-        lazy var uploadStatus = draft.uploadStatus
+        lazy var publishingState = draft.publishingState
+        lazy var publishingError = draft.publishingError
 
         ZStack {
-            if let uploadStatus {
-                switch uploadStatus {
-                case .uploading, .creatingWikidataClaims, .unstashingFile:
-                    ProgressView(value: uploadStatus.uploadProgress, total: 1)
+            if publishingError != nil {
+                errorButton
+            } else if let publishingState {
+                switch publishingState {
+                case .uploading:
+                    ProgressView(value: publishingState.uploadProgress, total: 1)
+                case .creatingWikidataClaims, .unstashingFile, .uploaded(filekey: _):
+                    ProgressView().progressViewStyle(.circular)
                 case .published:
                     Image(systemName: "checkmark.circle.fill")
                         .resizable()
@@ -181,23 +197,22 @@ struct DraftFileListItem: View {
                         .padding()
                         .foregroundStyle(.regularMaterial)
                         .transition(.blurReplace.animation(.bouncy(extraBounce: 0.2)))
-                case .uploadWarnings(_), .twoFactorCodeRequired,
-                    .emailCodeRequired, .error(_):
-                    errorButton
                 }
             }
         }
         .frame(minWidth: 0, maxWidth: .infinity, minHeight: 0, maxHeight: .infinity)
         .padding()
         .clipShape(.rect(cornerRadius: 16))
-        .animation(.default, value: uploadStatus)
-        .uploadErrorDetailsSheet(
-            draft.uploadStatus,
+        .animation(.default, value: publishingState)
+        .animation(.default, value: publishingError)
+        .publishingErrorDetailsSheet(
+            draft.publishingState,
+            draft.publishingError,
             isPresented: $isShowingErrorSheet,
             onEditDraft: editDraft,
-            onDeleteDraft: showDeleteDialog
+            onDeleteDraft: showDeleteDialog,
+            onContinueUpload: continueUpload
         )
-
     }
 
 
@@ -206,7 +221,6 @@ struct DraftFileListItem: View {
             isShowingErrorSheet = true
         } label: {
             Label("upload failed", systemImage: "exclamationmark.triangle.fill")
-                .fallbackGlassEffect()
                 .symbolRenderingMode(.hierarchical)
 
         }

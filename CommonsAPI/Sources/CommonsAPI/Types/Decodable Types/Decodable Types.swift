@@ -62,16 +62,19 @@ public enum UploadStatus: Sendable, Equatable, CustomStringConvertible {
         lhs.description == rhs.description
     }
     
-
     /// Step 1: file is uploaded to the stash first (will be unstashed in Step 3.)
     case uploadingFile(Progress)
-    /// Step 2
+    /// Step 2b: data upload is done and we get a filekey back. The filekey can be used to resume from here, should there be a error or network interruption after this stop or during the unstash.
+    case fileKeyObtained(filekey: String)
+    /// Step 2: unstashing must happen before creating structured data
+    case unstashingFile(filekey: String)
+    /// Step 3: the file is published and visible, but the structured data are not yet crated
     case creatingWikidataClaims
-    /// Step 3
-    case unstashingFile
-    // Step 4: the file is published and visible online
+    /// Step 4: the file is is now completely published
     case published
+    case fileKeyMissingAfterUpload
     case uploadWarnings([FileUploadResponse.Warning])
+    case urlError(URLError)
     case unspecifiedError(Error)
     
     var isError: Bool {
@@ -84,16 +87,22 @@ public enum UploadStatus: Sendable, Equatable, CustomStringConvertible {
         switch self {
         case .uploadingFile(let progress):
             "uploadingFile-\(progress)"
+        case .fileKeyObtained(let filekey):
+            "fileKeyObtained-\(filekey)"
         case .creatingWikidataClaims:
             "creatingWikidataClaims"
         case .unstashingFile:
             "unstashingFile"
         case .published:
             "published"
+        case .fileKeyMissingAfterUpload:
+            "fileKeyMissingAfterUpload"
         case .uploadWarnings(let array):
             "uploadWarnings \(array.hashValue)"
         case .unspecifiedError(let error):
             "unspecifiedError \(error.localizedDescription)"
+        case .urlError(let urlError):
+            "urlError: \(urlError.code.rawValue), \(urlError.localizedDescription)"
         }
     }
     

@@ -176,19 +176,6 @@ final class AccountModel {
             }
         }
     }
-
-    func removeUploadedDrafts(ids: [MediaFileDraft.ID]) {
-        do {
-            let deletedFileCount = try appDatabase.deleteDrafts(ids: ids)
-            if deletedFileCount != 0 {
-                logger.info("Deleted \(deletedFileCount) drafts that have been uploaded.")
-            }
-        } catch {
-            logger.error("Failed to remove drafts after upload \(error)")
-        }
-
-    }
-
     /// Looks for Drafts that are already known as MediaFile (thus have been uploaded) and removes them
     func cleanupOldDrafts() throws {
         guard let username = activeUser?.username else {

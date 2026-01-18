@@ -26,7 +26,9 @@ nonisolated extension MediaFileDraft {
             name: Lorem.sentence,
             selectedFilenameType: .captionAndDate,
             uploadPossibleStatus: nil,
-            uploadStatus: nil,
+            publishingState: nil,
+            publishingError: nil,
+            publishingStateVerificationRequired: false,
             finalFilename: "",
             localFileName: "",
             mimeType: UTType.png.preferredMIMEType!,
@@ -45,6 +47,8 @@ nonisolated extension MediaFileDraft {
         named: String = Lorem.sentence,
         date: Date = .init(timeIntervalSince1970: .random(in: 1..<1_576_800_000)),
         uploadPossibleStatus: UploadPossibleStatus? = nil,
+        publishingState: PublishingState? = nil,
+        publishingError: PublishingError? = nil
     ) -> MediaFileDraft {
         MediaFileDraft(
             id: "DEBUG-DRAFT-" + UUID().uuidString,
@@ -52,7 +56,9 @@ nonisolated extension MediaFileDraft {
             name: Lorem.sentence,
             selectedFilenameType: .captionAndDate,
             uploadPossibleStatus: uploadPossibleStatus,
-            uploadStatus: nil,
+            publishingState: publishingState,
+            publishingError: publishingError,
+            publishingStateVerificationRequired: false,
             finalFilename: "",
             localFileName: "",
             mimeType: UTType.png.preferredMIMEType!,

@@ -55,3 +55,21 @@ struct DraftsSection: View {
         )
     }
 }
+
+#Preview("Previous Error Upload", traits: .previewEnvironment(uploadSimulation: .withErrors)) {
+    @Previewable @Environment(\.appDatabase) var appDatabase
+    @Previewable @Query(AllDraftsRequest()) var drafts
+
+    ScrollView(.vertical) {
+        DraftsSection(drafts: drafts)
+    }
+    .shadow(radius: 30)
+    .task {
+        _ = try? appDatabase.deleteAllDrafts()
+        try? appDatabase.upsert(
+            .makeRandomDraft(
+                id: "2", uploadPossibleStatus: .uploadPossible, publishingState: PublishingState.unstashingFile(filekey: "12345"),
+                publishingError: PublishingError.error(errorDescription: "Some Error", recoverySuggestion: "Retry?"))
+        )
+    }
+}

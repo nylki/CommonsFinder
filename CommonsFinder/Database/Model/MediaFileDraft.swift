@@ -32,7 +32,12 @@ nonisolated
     var name: String
     var selectedFilenameType: FileNameType
     var uploadPossibleStatus: UploadPossibleStatus?
-    var uploadStatus: UploadStatus?
+    var publishingState: PublishingState?
+    var publishingError: PublishingError?
+    /// indicates whether a publishingState stuck after an error (especially network interruptions) is correct
+    /// sometimes an interruption occurs when a network POST was send, but no answer was recieved yet:
+    /// in such a case the publishingState may be correct or it should be on the next step already, if the backend succesfully processed the POST (but app didn't recive the ack)
+    var publishingStateVerificationRequired: Bool
 
     /// `name` + file-extension is written just before uploading (eg. "screenshot 2025-01-01.jpeg")
     ///  and can be used for identifying uploaded media and local drafts
@@ -142,7 +147,9 @@ nonisolated
         case name
         case selectedFilenameType
         case uploadPossibleStatus
-        case uploadStatus
+        case publishingState
+        case publishingError
+        case publishingStateVerificationRequired
         case finalFilename
         case localFileName
         case mimeType
@@ -166,7 +173,9 @@ nonisolated
         static let uploadDisabledReason = Column(CodingKeys.uploadPossibleStatus)
         static let finalFilename = Column(CodingKeys.finalFilename)
         static let selectedFilenameType = Column(CodingKeys.selectedFilenameType)
-
+        static let publishingState = Column(CodingKeys.publishingState)
+        static let publishingError = Column(CodingKeys.publishingError)
+        static let publishingStateVerificationRequired = Column(CodingKeys.publishingStateVerificationRequired)
         static let captionWithDesc = Column(CodingKeys.captionWithDesc)
         static let tags = Column(CodingKeys.tags)
         static let inceptionDate = Column(CodingKeys.inceptionDate)
@@ -199,8 +208,9 @@ nonisolated
         self.source = try container.decodeIfPresent(MediaFileDraft.DraftSource.self, forKey: .source)
         self.width = try container.decodeIfPresent(Int.self, forKey: .width)
         self.height = try container.decodeIfPresent(Int.self, forKey: .height)
-        self.uploadStatus = try container.decodeIfPresent(UploadStatus.self, forKey: .uploadStatus)
-
+        self.publishingState = try container.decodeIfPresent(PublishingState.self, forKey: .publishingState)
+        self.publishingError = try container.decodeIfPresent(PublishingError.self, forKey: .publishingError)
+        self.publishingStateVerificationRequired = try container.decodeIfPresent(Bool.self, forKey: .publishingStateVerificationRequired) ?? false
         if let tags = try? container.decode([TagItem].self, forKey: .tags) {
             self.tags = tags
         } else {
@@ -269,7 +279,9 @@ extension MediaFileDraft {
         locationHandling = .noLocation
         inceptionDate = .now
         timezone = TimeZone.current.identifier
-        uploadStatus = nil
+        publishingState = nil
+        publishingError = nil
+        publishingStateVerificationRequired = false
 
         // Read EXIF-Data and update relevant values
         if let exifData = loadExifData() {

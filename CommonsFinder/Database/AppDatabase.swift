@@ -247,7 +247,9 @@ nonisolated final class AppDatabase: Sendable {
             try db.alter(table: "mediaFileDraft") { t in
                 t.add(column: "selectedFilenameType", .jsonText)
                 t.add(column: "uploadPossibleStatus", .jsonText)
-                t.add(column: "uploadStatus", .jsonText)
+                t.add(column: "publishingState", .jsonText)
+                t.add(column: "publishingStateVerificationRequired", .boolean)
+                t.add(column: "publishingError", .jsonText)
             }
         }
 
@@ -704,6 +706,29 @@ extension AppDatabase {
         }
     }
 
+    @discardableResult
+    func updateDraft(id: MediaFileDraft.ID, withPublishingStep publishingState: PublishingState?, verificationRequired: Bool) throws -> MediaFileDraft {
+        try dbWriter.write { db in
+            guard var draft = try MediaFileDraft.fetchOne(db, id: id) else {
+                throw DatabaseError.itemNotFound
+            }
+            draft.publishingState = publishingState
+            draft.publishingStateVerificationRequired = verificationRequired
+            return try draft.upsertAndFetch(db)
+        }
+    }
+
+    @discardableResult
+    func updateDraft(id: MediaFileDraft.ID, withPublishingError publishingError: PublishingError?) throws -> MediaFileDraft {
+        try dbWriter.write { db in
+            guard var draft = try MediaFileDraft.fetchOne(db, id: id) else {
+                throw DatabaseError.itemNotFound
+            }
+            draft.publishingError = publishingError
+            return try draft.upsertAndFetch(db)
+        }
+    }
+
     func upsert(_ draft: MediaFileDraft) throws {
         try dbWriter.write { db in
             var draft = draft
@@ -842,20 +867,25 @@ nonisolated extension AppDatabase {
         }
     }
 
-    func updateDraft(id: MediaFileDraft.ID, withUploadStatus uploadStatus: UploadStatus?) throws {
-        try dbWriter.write { db in
-            guard var draft = try MediaFileDraft.fetchOne(db, id: id) else {
-                throw DatabaseError.itemNotFound
-            }
-            try draft.updateChanges(db) { draft in
-                draft.uploadStatus = uploadStatus
-            }
-        }
-    }
-
     func fetchAllDrafts() throws -> [MediaFileDraft] {
         try dbWriter.read { db in
             try MediaFileDraft
+                .fetchAll(db)
+        }
+    }
+
+    func fetchDraftsWithPendingUploadButNoError() throws -> [MediaFileDraft] {
+        try dbWriter.read { db in
+            try MediaFileDraft
+                .filter { $0.publishingState != nil && $0.publishingError == nil }
+                .fetchAll(db)
+        }
+    }
+
+    func fetchInterruptedDraftsRequiringVerification() throws -> [MediaFileDraft] {
+        try dbWriter.read { db in
+            try MediaFileDraft
+                .filter { $0.publishingStateVerificationRequired == true }
                 .fetchAll(db)
         }
     }

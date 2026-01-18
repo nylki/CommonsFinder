@@ -71,7 +71,7 @@ nonisolated enum LocalFileNameValidation {
     static func sanitizeFileName(_ filename: String, replaceExtraSpaces: Bool = true) -> String {
         var sanitized =
             filename
-            .replacing(disallowedCharactersPattern, with: "_")
+            .replacing(disallowedCharactersPattern, with: "")
             .replacing(leadingTrailingUnderscorePattern, with: "")
             .replacing(disallowedPrefixPattern, with: "")
 

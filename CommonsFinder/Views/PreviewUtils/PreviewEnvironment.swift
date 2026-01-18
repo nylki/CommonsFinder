@@ -26,14 +26,15 @@ struct PopulatedPreviewEnvironment: PreviewModifier {
         prefilledSearchMedia: [MediaFileInfo] = [],
         prefilledSearchCategories: [CategoryInfo] = []
     ) {
-        mockUploadManager = MockUploadManager(
-            mockSimulation: uploadSimulation,
-            appDatabase: Self.previewDatabase
-        )
-
         account = AccountModel(
             appDatabase: Self.previewDatabase,
             withTestUser: .init(username: "DebugTester")
+        )
+
+        mockUploadManager = MockUploadManager(
+            mockSimulation: uploadSimulation,
+            appDatabase: Self.previewDatabase,
+            accountModel: account
         )
 
         searchModel = SearchModel(

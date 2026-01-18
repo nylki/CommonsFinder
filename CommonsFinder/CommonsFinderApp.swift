@@ -43,7 +43,7 @@ struct CommonsFinderApp: App {
         let searchModel = SearchModel(appDatabase: appDatabase)
         self.searchModel = searchModel
 
-        let uploadManager = UploadManager(appDatabase: appDatabase)
+        let uploadManager = UploadManager(appDatabase: appDatabase, accountModel: account)
         self.uploadManager = uploadManager
 
         let mediaFileCache = MediaFileReactiveCache(appDatabase: appDatabase)
@@ -108,11 +108,13 @@ struct CommonsFinderApp: App {
     }
 
     private func postLaunchMaintenance() {
-        do {
-            try account.cleanupOldDrafts()
-        } catch {
-            logger.error("Failed postLaunchMaintenance cleanupOldDrafts! \(error)")
-        }
+        //        do {
+        //            try account.cleanupOldDrafts()
+        //        } catch {
+        //            logger.error("Failed postLaunchMaintenance cleanupOldDrafts! \(error)")
+        //        }
+
+        uploadManager.runPostLaunchOperations()
     }
 }
 
@@ -130,8 +132,8 @@ private func configureNetworking() {
     urlSessionConfig.httpAdditionalHeaders = [
         "User-Agent": UserAgentUtil.userAgent
     ]
-    let dataLoader = DataLoader(configuration: urlSessionConfig)
 
+    let dataLoader = DataLoader(configuration: urlSessionConfig)
 
     /// TESTING NOTE: If tests fail in Pulse package, comment out the following block and try again.
     #if DEBUG

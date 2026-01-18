@@ -273,6 +273,12 @@
         }
       }
     },
+    "An error occured after the file was published. Captions and other structured metadata are missing and may still be created." : {
+
+    },
+    "An error occured after the file was uploaded. It is still un-published and missing metadata." : {
+
+    },
     "Antarctica" : {
       "localizations" : {
         "de" : {
@@ -560,6 +566,9 @@
     "Commons" : {
 
     },
+    "Complete Details" : {
+
+    },
     "Console" : {
       "localizations" : {
         "de" : {
@@ -720,6 +729,16 @@
         }
       }
     },
+    "Edit Draft" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Entwurf Bearbeiten"
+          }
+        }
+      }
+    },
     "Edit the name to make it unique, You could add the date, location, event name or a number." : {
       "localizations" : {
         "de" : {
@@ -729,6 +748,9 @@
           }
         }
       }
+    },
+    "Either you or somebody already uploaded this file in the past. You may remove the draft." : {
+
     },
     "Email-Code" : {
       "localizations" : {
@@ -884,6 +906,7 @@
       }
     },
     "If you see this error dialog, please file a bugreport for the app, thanks! You file appears to still being uploaded or succesfully uploaded and this should not appear." : {
+      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -902,6 +925,9 @@
           }
         }
       }
+    },
+    "If your internet connection is unreliable or expensive at the moment try to continue the upload later. Otherwise please check if you can reach and login to Wikimedia Commons in a regular browser." : {
+
     },
     "Images" : {
       "localizations" : {
@@ -1201,6 +1227,9 @@
           }
         }
       }
+    },
+    "More…" : {
+
     },
     "Nearby Tags" : {
       "comment" : "A button that expands a list of nearby tags.",
@@ -1704,6 +1733,12 @@
         }
       }
     },
+    "Retry and continue the upload when you have a stable internet connection." : {
+
+    },
+    "Retry Upload" : {
+
+    },
     "sanitize" : {
       "localizations" : {
         "de" : {
@@ -1942,6 +1977,12 @@
         }
       }
     },
+    "The app was closed or crashed while uploading." : {
+
+    },
+    "The data upload was interrupted at %lld%%." : {
+
+    },
     "The email-address is not valid." : {
       "localizations" : {
         "de" : {
@@ -2054,6 +2095,9 @@
           }
         }
       }
+    },
+    "The server appears to be currently down or experiencing maintenance issues, try again later to resume the upload." : {
+
     },
     "The text was not correct, please try again." : {
       "localizations" : {
@@ -2294,6 +2338,9 @@
           }
         }
       }
+    },
+    "What can you do?" : {
+
     },
     "Wiki" : {
       "localizations" : {

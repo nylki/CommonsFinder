@@ -80,15 +80,6 @@ struct ContentView: View {
                 accountModel.syncUserData()
             }
         }
-        .onReceive(uploadManager.didFinishUpload) { draftID in
-            accountModel.syncUserData()
-
-            Task {
-                // We want to give the user some time to realize that the file has been uploaded, via the green checkmark etc.
-                try? await Task.sleep(for: .milliseconds(2000))
-                accountModel.removeUploadedDrafts(ids: [draftID])
-            }
-        }
     }
 
     private func subsequentTap(on tab: Navigation.TabItem) {
