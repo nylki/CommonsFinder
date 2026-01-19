@@ -1,12 +1,9 @@
-Hi! diese Woche neu:
+Diese Woche neu: Verbesserungen beim Upload-Flow
 
-Karte:
-Man kann jetzt das Kartenmaterial im Baselayer wechseln (Satellit/Standart)
+- Infos über leere Pflichtfelder, wenn man auf den ausgegrauten Upload-Button drückt
+- Validierung und Bereinigung von Dateinamen vor dem Upload
+- Bei einem fehlgeschlagenen Upload werden nun detailliertere Informationen zum Problem angezeigt
+- Fehlgeschlagene Uploads können nun fortgesetzt bzw. wiederholt werden (je nach Art des Fehlers)
+- Kleinere Anpassungen am UI
 
-Upload/Entwurf
-
-– Das Bild öffnet nun den vollen Zoom-Viewer und verdeckt nicht mehr die Textfelder
-
-Netzwerk (Infrastruktur):
-
-– Die Alamofire library wurde entfernt (weniger Wartungsaufwand/Komplexität und kleineres App-Bundle)
+Vielen Dank an alle, die Feedback geschickt haben!

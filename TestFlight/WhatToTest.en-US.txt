@@ -1,12 +1,9 @@
-hi! new this week:
+New this week: Upload-Flow Improvements
 
-Map:
-you can now switch between standard and satellite map imagery
+- info about missing required fields when tapping the greyed-out upload button
+- validate and sanitize filenames before upload
+- when an upload did fail, you can now see more details about the issue
+- failed uploads can now be resumed or retried (depending on the type of error)
+- smaller UI styling adjustments in a few places
 
-Upload/Draft View
-
-- the image preview now opens the full zoom viewer and doesn't hover above (and obstruct) the input fields.
-
-Networking (infrastructure):
-
--removed Alamofire dependency (results less maintenance complexity and smaller app bundle size)
+Thanks everybody who send feedback, much appreciated!
