@@ -111,55 +111,134 @@ private struct PublishingErrorDetailsSheet: View {
 
         NavigationStack {
             ScrollView {
-                VStack(alignment: .leading, spacing: 20) {
-                    switch publishingStatus {
-                    case .uploading(let fractionCompleted):
-                        Text("The data upload was interrupted at \(Int(fractionCompleted * 100))%.")
-                    case .uploaded(_), .unstashingFile(_):
-                        Text("An error occured after the file was uploaded. It is still un-published and missing metadata.")
-                    case .creatingWikidataClaims:
-                        Text("An error occured after the file was published. Captions and other structured metadata are missing and may still be created.")
-                    case .published, nil:
-                        EmptyView()
+                detailsList
+            }
+            .safeAreaInset(edge: .bottom) {
+                bottomButtons
+            }
+            .scenePadding([.horizontal, .top])
+            .navigationBarTitle("", displayMode: .inline)
+            .toolbar {
+                ToolbarItem(placement: .title) {
+                    Text("\(Image(systemName: "square.and.arrow.up.trianglebadge.exclamationmark.fill")) Upload Error")
+                        .bold()
+                        .symbolRenderingMode(.multicolor)
+                        .foregroundStyle(.primary)
+                }
+                if !uploadManager.isVerifyingErrorDrafts {
+                    ToolbarItem {
+                        Menu("More…", systemImage: "ellipsis") {
+                            if isEditingPossible {
+                                Button("Edit Draft", systemImage: "square.and.pencil", action: onEditDraft)
+                            }
+                            Button("Delete Draft", systemImage: "trash", role: .destructive, action: onDeleteDraft)
+                        }
                     }
 
+                    ToolbarItem(placement: .cancellationAction) {
+                        Button("Close", systemImage: "xmark", role: .cancel, action: dismiss.callAsFunction)
+                    }
+                }
+            }
+        }
+        .onAppear {
+            uploadManager.verifyDraftsWithErrors()
+        }
+
+
+    }
+
+    @ViewBuilder
+    private var detailsList: some View {
+        VStack {
+            //            GroupBox(label: Label("Last Status", systemImage: "info.circle")) {
+            //                HStack {
+            //                    switch publishingStatus {
+            //                    case .uploading(let fractionCompleted):
+            //                        Text("The data upload was interrupted at \(Int(fractionCompleted * 100))%.")
+            //                    case .uploaded(_), .unstashingFile(_):
+            //                        Text("File was uploaded, but is still **un-published** and also **missing structured metadata**.")
+            //                    case .creatingWikidataClaims:
+            //                        Text("file was uploaded and published. Captions and other structured metadata are not yet created though.")
+            //                    case .published, nil:
+            //                        EmptyView()
+            //                    }
+            //                    Spacer(minLength: 0)
+            //                }
+            //                .padding(5)
+            //
+            //            }
+
+
+            GroupBox {
+                HStack {
                     switch error {
                     case .appQuitOrCrash:
                         Text("The app was closed or crashed while uploading.")
                     case .uploadWarnings(let warnings):
                         ForEach(warnings) { warning in
-                            HStack {
-                                Text("•")
-                                Text(warning.localizedStringResource)
-                            }
-                            .padding(.bottom, 5)
-                        }
-                        if warnings.contains(.duplicate) || warnings.contains(.duplicateArchive) {
-                            Text("What can you do?")
-                                .bold()
-                            Text("Either you or somebody already uploaded this file in the past. You may remove the draft.")
+                            Text(warning.localizedStringResource)
+                                .padding(.bottom)
                         }
                     case .urlError(let urlErrorCode, let errorDescription):
                         let errorCode = URLError.Code(rawValue: urlErrorCode)
 
-                        HStack {
-                            Text("•")
-                            switch errorCode {
-                            case .networkConnectionLost: Text("Network connection lost")
-                            case .badServerResponse: Text("Bad server response")
-                            case .notConnectedToInternet: Text("not connected To the Internet")
-                            case .dataLengthExceedsMaximum: Text("Data-length exceeds maximum")
-                            case .secureConnectionFailed: Text("Secure connection failed")
-                            case .timedOut: Text("Network Connection timed out")
-                            case .dnsLookupFailed: Text("DNS Lookup Failed")
-                            case .userAuthenticationRequired: Text("User authentication required")
-                            default: Text(errorDescription)
-                            }
+                        switch errorCode {
+                        case .networkConnectionLost: Text("Network connection lost")
+                        case .badServerResponse: Text("Bad server response")
+                        case .notConnectedToInternet: Text("not connected To the Internet")
+                        case .dataLengthExceedsMaximum: Text("Data-length exceeds maximum")
+                        case .secureConnectionFailed: Text("Secure connection failed")
+                        case .timedOut: Text("Network Connection timed out")
+                        case .dnsLookupFailed: Text("DNS Lookup Failed")
+                        case .userAuthenticationRequired: Text("User authentication required")
+                        default: Text(errorDescription)
                         }
-                        .padding(.bottom, 5)
 
-                        Text("What can you do?")
-                            .bold()
+                    case .error(let errorDescription, _):
+
+                        Text(errorDescription ?? "Unknown Error")
+                            .padding(.bottom, 5)
+                    case .emailCodeRequired, .twoFactorCodeRequired:
+                        Text(
+                            "Authentication failed: 2-factor code required"
+                        )
+                    case .none:
+                        Text("There may have been a problem during upload, but no details can be display. Please report this as a Bug in the app, thanks!")
+
+                    }
+
+                    Spacer(minLength: 0)
+                }
+                .monospaced()
+                .padding(5)
+
+            } label: {
+                switch publishingStatus {
+                case .uploading(let fractionCompleted):
+                    Label("Data upload interrupted at \(Int(fractionCompleted * 100))%", systemImage: "exclamationmark.triangle")
+                case .uploaded(_), .unstashingFile(_):
+                    Label("File uploaded, but not yet public (stashed) and missing structured data", systemImage: "exclamationmark.triangle")
+                case .creatingWikidataClaims:
+                    Label("file was uploaded and published. Captions and other structured metadata are not yet created though", systemImage: "exclamationmark.triangle")
+                case .published, nil:
+                    Label("", systemImage: "exclamationmark.triangle")
+                }
+            }
+
+
+            GroupBox(label: Label("What can you do?", systemImage: "info.bubble")) {
+                HStack {
+                    switch error {
+                    case .appQuitOrCrash:
+                        Text("You may attempt to retry the upload.")
+                    case .uploadWarnings(let warnings):
+                        if warnings.contains(.duplicate) || warnings.contains(.duplicateArchive) {
+                            Text("Either you or somebody already uploaded this file in the past. You may remove the draft.")
+                        }
+                    case .urlError(let urlErrorCode, _):
+                        let errorCode = URLError.Code(rawValue: urlErrorCode)
+
                         switch errorCode {
                         case .cannotConnectToHost, .cannotFindHost, .badServerResponse:
                             Text("The server appears to be currently down or experiencing maintenance issues, try again later to resume the upload.")
@@ -171,93 +250,58 @@ private struct PublishingErrorDetailsSheet: View {
                             )
                         }
 
-                    case .error(let errorDescription, let recoverySuggestion):
-
-                        Text(errorDescription ?? "Unknown Error")
-                            .padding(.bottom, 5)
-
+                    case .error(_, let recoverySuggestion):
                         if let recoverySuggestion {
-                            Text("• What can you do?")
                             Text(recoverySuggestion)
+                        } else {
+                            Text("You may attempt to retry the upload, edit the draft or delete the draft.")
                         }
                     case .emailCodeRequired, .twoFactorCodeRequired:
                         Text(
                             "Your account requires a 2-factor code to authenticate.\nYou may have added this security step recently after you added your account to the app. Currently this requires you to fully logout and re-login in the app, sorry for the inconvenience!"
                         )
-                    //                    case .authenticationError(let error):
-                    //                        // show a warning directly on the profile icon that there is an auth error, and requiring to (re)-authenticate with username/password etc.
-                    //                        Text("There was a problem authenticating your user. There are a few different reasons why this could happen. Perhaps you recently changed your Wikimedia account credentials. \n You can retry the upload, otherwise check that you can login normally in the web and try to logout and re-login inside the app.")
-                    //
-                    //                        if let error {
-                    //                            Text(error.localizedDescription)
-                    //                        }
                     case .none:
                         Text("There may have been a problem during upload, but no details can be display. Please report this as a Bug in the app, thanks!")
                     }
-
                     Spacer(minLength: 0)
                 }
+                .padding(5)
             }
-            .safeAreaInset(edge: .bottom) {
 
-                if isContinuationPossible {
-                    Button(action: onContinueUpload) {
-                        if uploadManager.isVerifyingErrorDrafts {
-                            ProgressView().progressViewStyle(.circular)
-                        } else {
-                            Group {
-                                if publishingStatus == .creatingWikidataClaims {
-                                    Label("Complete Details", systemImage: "arrow.trianglehead.2.clockwise.rotate.90")
-                                } else {
-                                    Label("Retry Upload", systemImage: "arrow.trianglehead.2.clockwise.rotate.90")
-                                }
-                            }
-                            .frame(minWidth: 0, maxWidth: .infinity)
-                            .padding()
-                        }
-                    }
-                    .glassButtonStyle()
-                } else {
-                    Button(action: onDeleteDraft) {
-                        Label("Delete Draft", systemImage: "trash")
-                    }
-                }
-
-
-            }
-            .scenePadding([.horizontal, .top])
-            .navigationBarTitle("", displayMode: .inline)
-            .toolbar {
-                ToolbarItem(placement: .title) {
-                    Text("\(Image(systemName: "square.and.arrow.up.trianglebadge.exclamationmark.fill")) Upload Error")
-                        .bold()
-                        .symbolRenderingMode(.multicolor)
-                        .foregroundStyle(.primary)
-                }
-
-                ToolbarItem {
-                    Menu("More…", systemImage: "ellipsis") {
-                        if isEditingPossible {
-                            Button("Edit Draft", systemImage: "square.and.pencil", action: onEditDraft)
-                        }
-                        Button("Delete Draft", systemImage: "trash", role: .destructive, action: onDeleteDraft)
-                    }
-                }
-
-                ToolbarItem(placement: .cancellationAction) {
-                    Button("Close", systemImage: "xmark", role: .cancel, action: dismiss.callAsFunction)
-                }
-            }
-        }
-        .onAppear {
-            uploadManager.verifyDraftsWithErrors()
         }
 
 
     }
+
+    @ViewBuilder
+    private var bottomButtons: some View {
+        if uploadManager.isVerifyingErrorDrafts {
+            ProgressView().progressViewStyle(.circular)
+        } else {
+            if isContinuationPossible {
+                Button(action: onContinueUpload) {
+                    Label(
+                        publishingStatus == .creatingWikidataClaims ? "Finish Details" : "Retry Upload",
+                        systemImage: "arrow.trianglehead.2.clockwise.rotate.90"
+                    )
+                    .frame(minWidth: 0, maxWidth: .infinity)
+                    .padding(10)
+                }
+                .glassButtonStyle(prominent: true)
+            } else {
+                Button(role: .destructive, action: onDeleteDraft) {
+                    Label("Delete Draft", systemImage: "trash")
+                        .frame(minWidth: 0, maxWidth: .infinity)
+                        .padding(10)
+                        .foregroundStyle(.red)
+                }
+                .glassButtonStyle()
+            }
+        }
+    }
 }
 
-#Preview("network error") {
+#Preview("network error", traits: .previewEnvironment) {
     @Previewable @State var isPresented = true
     Button("show error sheet") {
         isPresented = true
@@ -272,7 +316,7 @@ private struct PublishingErrorDetailsSheet: View {
         onContinueUpload: {}
     )
 }
-#Preview("multiple warnings") {
+#Preview("multiple warnings", traits: .previewEnvironment) {
     @Previewable @State var isPresented = true
     Button("show error sheet") {
         isPresented = true
@@ -289,7 +333,7 @@ private struct PublishingErrorDetailsSheet: View {
 }
 
 
-#Preview("single warning") {
+#Preview("single warning", traits: .previewEnvironment) {
     @Previewable @State var isPresented = true
     Button("show error sheet") {
         isPresented = true
@@ -305,7 +349,7 @@ private struct PublishingErrorDetailsSheet: View {
     )
 }
 
-#Preview("long error") {
+#Preview("long error", traits: .previewEnvironment) {
     @Previewable @State var isPresented = true
     Button("show error sheet") {
         isPresented = true
@@ -321,7 +365,7 @@ private struct PublishingErrorDetailsSheet: View {
     )
 }
 
-#Preview("unspecified error") {
+#Preview("unspecified error", traits: .previewEnvironment) {
     @Previewable @State var isPresented = true
     Button("show error sheet") {
         isPresented = true

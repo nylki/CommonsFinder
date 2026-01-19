@@ -150,6 +150,7 @@ class UploadManager {
         verifyTask?.cancel()
         verifyTask = Task<Void, Never> {
             defer { verifyTask = nil }
+            try? await Task.sleep(for: .seconds(2))
             let drafts: [MediaFileDraft]
             do {
                 drafts = try appDatabase.fetchInterruptedDraftsRequiringVerification()
