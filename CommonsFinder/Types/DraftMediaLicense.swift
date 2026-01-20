@@ -14,7 +14,7 @@ import SwiftUI
 // due to several license versions and legacy or edge-cases licenses that are better
 // handled separately and a bit differently, see `MediaFileLicense`.
 
-enum DraftMediaLicense: String, Codable, Hashable, Equatable, CaseIterable {
+enum DraftMediaLicense: String, Codable, Hashable, Equatable, CaseIterable, RawRepresentable {
     //    case CC_PUBLIC_DOMAIN
     case CC0
     case CC_BY

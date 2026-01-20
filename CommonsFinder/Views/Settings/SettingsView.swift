@@ -21,6 +21,9 @@ struct SettingsView: View {
 
     @State private var isShowingLogoutDialog = false
     @State private var isShowingUserDialog = false
+    @State private var isLicensePickerShowing = false
+
+    @AppStorage("defaultPublishingLicense") private var defaultPublishingLicense: DraftMediaLicense?
 
     var body: some View {
         List {
@@ -82,7 +85,37 @@ struct SettingsView: View {
                         .foregroundStyle(.white)
                 }
                 .listRowBackground(Color.accentColor)
+            }
 
+            Section("Upload") {
+                Button {
+                    isLicensePickerShowing = true
+                } label: {
+
+                    HStack {
+                        VStack(alignment: .leading) {
+                            Text("Default License")
+                                .tint(Color.primary)
+                            Text("This license will be pre-selected when you upload an image")
+                                .font(.footnote)
+                                .tint(.secondary)
+                                .padding(.trailing)
+                        }
+
+                        Spacer(minLength: 0)
+                        if let license = defaultPublishingLicense {
+                            Text(license.abbreviation)
+                        } else {
+                            Text("choose")
+                        }
+                        Image(systemName: "chevron.up.chevron.down")
+                    }
+
+
+                }
+                .sheet(isPresented: $isLicensePickerShowing) {
+                    LicensePicker(selectedLicense: $defaultPublishingLicense, allowsEmptySelection: true)
+                }
             }
 
 

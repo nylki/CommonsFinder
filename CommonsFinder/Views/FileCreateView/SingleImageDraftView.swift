@@ -480,7 +480,7 @@ struct SingleImageDraftView: View {
 
             }
             .sheet(isPresented: $isLicensePickerShowing) {
-                LicensePicker(selectedLicense: $model.draft.license)
+                LicensePicker(selectedLicense: $model.draft.license, allowsEmptySelection: false)
             }
 
 

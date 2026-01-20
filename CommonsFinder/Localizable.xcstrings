@@ -679,6 +679,9 @@
     "Data-length exceeds maximum" : {
 
     },
+    "Default License" : {
+      "comment" : "Standardlizenz"
+    },
     "Delete" : {
       "comment" : "regarding drafts",
       "localizations" : {
@@ -2229,6 +2232,9 @@
           }
         }
       }
+    },
+    "This license will be pre-selected when you upload an image" : {
+      "comment" : "Diese Lizenz wird beim Bild-Upload vorausgewählt"
     },
     "thumbnail" : {
       "localizations" : {
