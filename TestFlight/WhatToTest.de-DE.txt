@@ -6,4 +6,13 @@ Diese Woche neu: Verbesserungen beim Upload-Flow
 - Fehlgeschlagene Uploads können nun fortgesetzt bzw. wiederholt werden (je nach Art des Fehlers)
 - Kleinere Anpassungen am UI
 
+Diese Änderungen machen den Upload robuster und eventuelle Fehler nachvollziehbarer.
+
+Bekanntes Problem:
+Das Originalbild wird beim Öffnen des Zoom-Viewers manchmal nicht geladen.
+Das liegt zum Teil an Backend-Änderungen bei Wikimedia und es gibt eine vorläufige Lösung (Referer-Headers bei requests hinzufügen). Die bedarf aber noch ein etwas mehr Klarheit und Diskussion. Siehe Phabrikator-Ticket T413570.
+
+
+Übersetzt mit DeepL.com (kostenlose Version)
+
 Vielen Dank an alle, die Feedback geschickt haben!

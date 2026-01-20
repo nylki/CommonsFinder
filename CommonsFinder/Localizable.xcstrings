@@ -150,10 +150,8 @@
         }
       }
     },
-    "•" : {
-      "shouldTranslate" : false
-    },
     "• What can you do?" : {
+      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -273,12 +271,6 @@
         }
       }
     },
-    "An error occured after the file was published. Captions and other structured metadata are missing and may still be created." : {
-
-    },
-    "An error occured after the file was uploaded. It is still un-published and missing metadata." : {
-
-    },
     "Antarctica" : {
       "localizations" : {
         "de" : {
@@ -361,6 +353,9 @@
           }
         }
       }
+    },
+    "Authentication failed: 2-factor code required" : {
+
     },
     "Bad server response" : {
 
@@ -569,9 +564,6 @@
     "Commons" : {
 
     },
-    "Complete Details" : {
-
-    },
     "Console" : {
       "localizations" : {
         "de" : {
@@ -670,6 +662,9 @@
           }
         }
       }
+    },
+    "Data upload interrupted at %lld%%" : {
+
     },
     "Data-length exceeds maximum" : {
 
@@ -821,6 +816,12 @@
         }
       }
     },
+    "File uploaded, but not yet public (stashed) and missing structured data" : {
+
+    },
+    "file was uploaded and published. Captions and other structured metadata are not yet created though" : {
+
+    },
     "Filename" : {
       "localizations" : {
         "de" : {
@@ -850,6 +851,9 @@
           }
         }
       }
+    },
+    "Finish Details" : {
+
     },
     "Finished" : {
       "extractionState" : "stale",
@@ -2001,9 +2005,6 @@
     "The app was closed or crashed while uploading." : {
 
     },
-    "The data upload was interrupted at %lld%%." : {
-
-    },
     "The email-address is not valid." : {
       "localizations" : {
         "de" : {
@@ -2405,6 +2406,12 @@
           }
         }
       }
+    },
+    "You may attempt to retry the upload, edit the draft or delete the draft." : {
+
+    },
+    "You may attempt to retry the upload." : {
+
     },
     "You must be logged in to a Wikimedia account to upload files." : {
       "localizations" : {

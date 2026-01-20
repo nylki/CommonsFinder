@@ -6,4 +6,11 @@ New this week: Upload-Flow Improvements
 - failed uploads can now be resumed or retried (depending on the type of error)
 - smaller UI styling adjustments in a few places
 
+This set changes should make uploads more robust, easier to reason about and easier to recover from failed uploads.
+
+Known Issue:
+The original fullsized image sometimes fails to load when opening the zoom viewer.
+This is partly due to a change on the backend and there is a tentative fix (adding a referer header to requests),
+but needs further discussion. See Phabrikator-Ticket T413570.
+
 Thanks everybody who send feedback, much appreciated!
