@@ -754,7 +754,14 @@
       }
     },
     "Either you or somebody already uploaded this file in the past. You may remove the draft." : {
-
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Du oder jemand anderes hat diese Datei in der Vergangenheit bereits hochgeladen. Die kannst du Entwurf entfernen."
+          }
+        }
+      }
     },
     "Email-Code" : {
       "localizations" : {
@@ -817,10 +824,24 @@
       }
     },
     "File uploaded, but not yet public (stashed) and missing structured data" : {
-
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Datei hochgeladen, aber noch nicht veröffentlicht (stashed) und noch fehlende strukturierte Metadaten"
+          }
+        }
+      }
     },
     "file was uploaded and published. Captions and other structured metadata are not yet created though" : {
-
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Datei wurde hochgeladen und veröffentlicht. Kurzbeschreibungen und andere strukturierte Metadaten wurden jedoch noch nicht erstellt"
+          }
+        }
+      }
     },
     "Filename" : {
       "localizations" : {
@@ -940,7 +961,14 @@
       }
     },
     "If your internet connection is unreliable or expensive at the moment try to continue the upload later. Otherwise please check if you can reach and login to Wikimedia Commons in a regular browser." : {
-
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wenn deine Internetverbindung im Moment unzuverlässig oder eingeschränkt ist, versuche später den Upload später fortzusetzen. Andernfalls prüfe bitte, ob du dich in einem normalen Browser auf Wikimedia Commons zugreifen dich anmelden kannst."
+          }
+        }
+      }
     },
     "Images" : {
       "localizations" : {
@@ -1358,7 +1386,14 @@
 
     },
     "not connected To the Internet" : {
-
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nicht mit dem Internet verbunden"
+          }
+        }
+      }
     },
     "Ok" : {
 
@@ -1608,7 +1643,7 @@
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Bitte füge einen Kurztitel oder eine Beschreibung hinzz"
+            "value" : "Bitte füge einen Kurztitel oder eine Beschreibung hinzu"
           }
         }
       }
@@ -2056,7 +2091,14 @@
       }
     },
     "the filename contains invalid words" : {
-
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Der Dateiname enthält ungültige Wörter"
+          }
+        }
+      }
     },
     "The filename contains one or more reserved characters (|:#<>[]{}\\)" : {
       "localizations" : {
@@ -2119,7 +2161,14 @@
       }
     },
     "The server appears to be currently down or experiencing maintenance issues, try again later to resume the upload." : {
-
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Der Server scheint derzeit nicht erreichbar zu sein oder Wartungsprobleme zu haben. Versuche es später noch einmal den Upload fortzusetzen."
+          }
+        }
+      }
     },
     "The text was not correct, please try again." : {
       "localizations" : {
@@ -2292,7 +2341,14 @@
       }
     },
     "User authentication required" : {
-
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nutzer-Authentifizierung erforderlich"
+          }
+        }
+      }
     },
     "Username" : {
       "localizations" : {
@@ -2365,7 +2421,14 @@
       }
     },
     "What can you do?" : {
-
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Was kannst du tun?"
+          }
+        }
+      }
     },
     "Wiki" : {
       "localizations" : {
