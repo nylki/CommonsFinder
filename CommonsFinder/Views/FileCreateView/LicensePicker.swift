@@ -9,6 +9,8 @@ import SwiftUI
 
 struct LicensePicker: View {
     @Binding var selectedLicense: DraftMediaLicense?
+    let allowsEmptySelection: Bool
+
     @Environment(\.dismiss) private var dismiss
 
     // TODO: show licensing tutorial image
@@ -23,7 +25,11 @@ struct LicensePicker: View {
             VStack(alignment: .leading, spacing: 20) {
                 ForEach(DraftMediaLicense.allCases, id: \.rawValue) { license in
                     LicenseButton(license: license, isSelected: license == selectedLicense) {
-                        selectedLicense = license
+                        if allowsEmptySelection, selectedLicense == license {
+                            selectedLicense = nil
+                        } else {
+                            selectedLicense = license
+                        }
                     }
                 }
             }
@@ -60,7 +66,6 @@ private struct LicenseButton: View {
     var body: some View {
         Button(action: action) {
             VStack(alignment: .leading, spacing: 10) {
-
                 Text(license.shortDescription).bold()
                 Text(license.explanation)
             }
@@ -82,7 +87,7 @@ private struct LicenseButton: View {
 #Preview("LicensePicker") {
     @Previewable @State var selected: DraftMediaLicense? = nil
     Color.clear.sheet(isPresented: .constant(true)) {
-        LicensePicker(selectedLicense: $selected)
+        LicensePicker(selectedLicense: $selected, allowsEmptySelection: false)
     }
 }
 
@@ -92,7 +97,7 @@ private struct LicenseButton: View {
 
     ZStack {}
         .sheet(isPresented: .constant(true)) {
-            LicensePicker(selectedLicense: $selected)
+            LicensePicker(selectedLicense: $selected, allowsEmptySelection: false)
                 .presentationDetents([.medium, .large])
         }
 }

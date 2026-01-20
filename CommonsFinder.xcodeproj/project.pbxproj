@@ -214,6 +214,7 @@
 				"Views/Extensions/CLLocationManager+isLocationAutorized.swift",
 				"Views/Extensions/MediaFile+localizedDisplayCaption.swift",
 				"Views/Extensions/MediaFileDraftModel+ImageRequest.swift",
+				"Views/Extensions/UserDefaults+accessors.swift",
 				Views/FileCreateView/FileCreateView.swift,
 				Views/FileCreateView/FilenameTip.swift,
 				Views/FileCreateView/LicensePicker.swift,

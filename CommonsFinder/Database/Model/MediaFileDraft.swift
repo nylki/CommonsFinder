@@ -265,7 +265,7 @@ extension MediaFileDraft {
         captionWithDesc = [.init(languageCode: languageCode)]
 
         tags = []
-        license = nil
+        license = UserDefaults.standard.defaultPublishingLicense
         author = .appUser
         source = .own
 
@@ -282,6 +282,7 @@ extension MediaFileDraft {
         publishingState = nil
         publishingError = nil
         publishingStateVerificationRequired = false
+
 
         // Read EXIF-Data and update relevant values
         if let exifData = loadExifData() {
