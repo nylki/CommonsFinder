@@ -159,11 +159,22 @@ struct FileDetailView: View {
                             navigation.showOnMap(mediaFile: mediaFileInfo.mediaFile, mapModel: mapModel)
                         }
 
+                        Divider()
+
                         ShareLink(item: mediaFileInfo.mediaFile.descriptionURL)
 
                         Link(destination: mediaFileInfo.mediaFile.descriptionURL) {
                             Label("Open in Browser", systemImage: "globe")
                         }
+
+                        Button {
+                            UIPasteboard.general.string = mediaFileInfo.mediaFile.name
+                        } label: {
+                            Image(systemName: "clipboard")
+                            Text("Copy Filename")
+                            Text(mediaFileInfo.mediaFile.name)
+                        }
+
                     } label: {
                         Image(systemName: "ellipsis")
                             .font(.title2)

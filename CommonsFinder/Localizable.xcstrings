@@ -604,6 +604,16 @@
         }
       }
     },
+    "Copy Filename" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dateinamen kopieren"
+          }
+        }
+      }
+    },
     "Copy ID" : {
       "localizations" : {
         "de" : {
