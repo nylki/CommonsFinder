@@ -29,14 +29,7 @@ struct CommonsFinderApp: App {
 
     init() {
         postInstallMaintenance()
-
-        /** _Comment from Apple's AppIntentsSampleApp_:
-        
-         Register important objects that are required as dependencies of an `AppIntent` or an `EntityQuery`.
-         The system automatically sets the value of properties in the intent or entity query to these values when the property is annotated with
-         `@Dependency`. Intents that launch the app in the background won't have associated UI scenes, so the app must register these values
-         as soon as possible in code paths that don't assume visible UI, such as the `App` initialization.
-         */
+        configureNetworking()
 
         let appDatabase = AppDatabase.shared
         self.appDatabase = appDatabase
@@ -50,7 +43,7 @@ struct CommonsFinderApp: App {
         let searchModel = SearchModel(appDatabase: appDatabase)
         self.searchModel = searchModel
 
-        let uploadManager = UploadManager(appDatabase: appDatabase)
+        let uploadManager = UploadManager(appDatabase: appDatabase, accountModel: account)
         self.uploadManager = uploadManager
 
         let mediaFileCache = MediaFileReactiveCache(appDatabase: appDatabase)
@@ -59,7 +52,13 @@ struct CommonsFinderApp: App {
         let mapModel = MapModel(appDatabase: appDatabase, navigation: navigation, mediaFileCache: mediaFileCache)
         self.mapModel = mapModel
 
-
+        /** _Comment from Apple's AppIntentsSampleApp_:
+        
+         Register important objects that are required as dependencies of an `AppIntent` or an `EntityQuery`.
+         The system automatically sets the value of properties in the intent or entity query to these values when the property is annotated with
+         `@Dependency`. Intents that launch the app in the background won't have associated UI scenes, so the app must register these values
+         as soon as possible in code paths that don't assume visible UI, such as the `App` initialization.
+         */
         AppDependencyManager.shared.add(dependency: appDatabase)
         AppDependencyManager.shared.add(dependency: account)
         AppDependencyManager.shared.add(dependency: navigation)
@@ -86,7 +85,6 @@ struct CommonsFinderApp: App {
                 .environment(mediaFileCache)
                 .environment(mapModel)
                 .task {
-                    postLaunchMaintennce()
 
                     // Configure and load your TipKit tips at app launch.
                     do {
@@ -103,30 +101,50 @@ struct CommonsFinderApp: App {
                         logger.error("Error initializing TipKit \(error.localizedDescription)")
                     }
 
-                    /// TESTING NOTE: If tests fail in Pulse package, comment out the following block and try again.
-                    #if DEBUG
-                        RemoteLogger.shared.isAutomaticConnectionEnabled = true
-                        ImagePipeline.Configuration.isSignpostLoggingEnabled = true
-                        (ImagePipeline.shared.configuration.dataLoader as? DataLoader)?.delegate = URLSessionProxyDelegate()
-                    #endif
-
-                    ImageCache.shared.costLimit = 1024 * 1024 * 1000  // 1000 MB
-                    //                    ImageCache.shared.countLimit = 100
-                    ImageCache.shared.ttl = 60 * 10  // Invalidate images in memory cache after 10 minutes
-                    DataLoader.sharedUrlCache.diskCapacity = 1024 * 1024 * 500  // 500 MB
-                    DataLoader.sharedUrlCache.memoryCapacity = 0
+                    postLaunchMaintenance()
                 }
         }
 
     }
 
-    private func postLaunchMaintennce() {
-        do {
-            try account.cleanupOldDrafts()
-        } catch {
-            logger.error("Failed postLaunchMaintennce cleanupOldDrafts! \(error)")
-        }
+    private func postLaunchMaintenance() {
+        //        do {
+        //            try account.cleanupOldDrafts()
+        //        } catch {
+        //            logger.error("Failed postLaunchMaintenance cleanupOldDrafts! \(error)")
+        //        }
+
+        uploadManager.runPostLaunchOperations()
     }
+}
+
+private func configureNetworking() {
+    // NUKE setup
+    ImageCache.shared.costLimit = 1024 * 1024 * 1000  // 1000 MB
+    //                    ImageCache.shared.countLimit = 100
+    ImageCache.shared.ttl = 60 * 10  // Invalidate images in memory cache after 10 minutes
+    DataLoader.sharedUrlCache.diskCapacity = 1024 * 1024 * 500  // 500 MB
+    DataLoader.sharedUrlCache.memoryCapacity = 0
+
+    var pipelineConfig = ImagePipeline.Configuration()
+    let urlSessionConfig = URLSessionConfiguration.default
+
+    urlSessionConfig.httpAdditionalHeaders = [
+        "User-Agent": UserAgentUtil.userAgent
+    ]
+
+    let dataLoader = DataLoader(configuration: urlSessionConfig)
+
+    /// TESTING NOTE: If tests fail in Pulse package, comment out the following block and try again.
+    #if DEBUG
+        RemoteLogger.shared.isAutomaticConnectionEnabled = true
+        ImagePipeline.Configuration.isSignpostLoggingEnabled = true
+        dataLoader.delegate = URLSessionProxyDelegate()
+    #endif
+
+    pipelineConfig.dataLoader = dataLoader
+    let pipeline = ImagePipeline(configuration: pipelineConfig)
+    ImagePipeline.shared = pipeline
 }
 
 private func postInstallMaintenance() {

@@ -19,7 +19,7 @@ nonisolated
         URL(filePath: self).pathExtension
     }
 
-    /// constructs full filename with extension (eg. "test file 123", .jpeg) -> "test file 123.jpg", makes sure to not add it if it exists alreadsy
+    /// constructs full filename with extension (eg. "test file 123", .jpeg) -> "test file 123.jpg", makes sure to not add it if it exists already
     func appendingFileExtension(conformingTo type: UTType) -> String {
         URL(filePath: "")
             .appendingPathComponent(self, conformingTo: type)

@@ -29,20 +29,6 @@
 		E29112B62DF34733007A3998 /* WhatToTest.de-DE.txt in Resources */ = {isa = PBXBuildFile; fileRef = E29112B52DF3463E007A3998 /* WhatToTest.de-DE.txt */; };
 		E29112B72DF34733007A3998 /* WhatToTest.en-US.txt in Resources */ = {isa = PBXBuildFile; fileRef = E29112B42DF344F0007A3998 /* WhatToTest.en-US.txt */; };
 		E2C92DD32ED60D4000EAA248 /* ObservableLRUCache in Frameworks */ = {isa = PBXBuildFile; productRef = E2C92DD22ED60D4000EAA248 /* ObservableLRUCache */; };
-		E2D7EF412EA692080058BE29 /* Intersect.swift in Sources */ = {isa = PBXBuildFile; fileRef = E2D7EF3D2EA692080058BE29 /* Intersect.swift */; };
-		E2D7EF422EA692080058BE29 /* ConcaveHull.swift in Sources */ = {isa = PBXBuildFile; fileRef = E2D7EF3B2EA692080058BE29 /* ConcaveHull.swift */; };
-		E2D7EF442EA692080058BE29 /* HullHelper.swift in Sources */ = {isa = PBXBuildFile; fileRef = E2D7EF3C2EA692080058BE29 /* HullHelper.swift */; };
-		E2D7EF452EA692080058BE29 /* Convex.swift in Sources */ = {isa = PBXBuildFile; fileRef = E2D7EF382EA692080058BE29 /* Convex.swift */; };
-		E2D7EF462EA692080058BE29 /* Grid.swift in Sources */ = {isa = PBXBuildFile; fileRef = E2D7EF3A2EA692080058BE29 /* Grid.swift */; };
-		E2D7EF482EA692080058BE29 /* LICENSE in Resources */ = {isa = PBXBuildFile; fileRef = E2D7EF3E2EA692080058BE29 /* LICENSE */; };
-		E2D7EF492EA692080058BE29 /* Intersect.swift in Sources */ = {isa = PBXBuildFile; fileRef = E2D7EF3D2EA692080058BE29 /* Intersect.swift */; };
-		E2D7EF4A2EA692080058BE29 /* ConcaveHull.swift in Sources */ = {isa = PBXBuildFile; fileRef = E2D7EF3B2EA692080058BE29 /* ConcaveHull.swift */; };
-		E2D7EF4C2EA692080058BE29 /* HullHelper.swift in Sources */ = {isa = PBXBuildFile; fileRef = E2D7EF3C2EA692080058BE29 /* HullHelper.swift */; };
-		E2D7EF4D2EA692080058BE29 /* Convex.swift in Sources */ = {isa = PBXBuildFile; fileRef = E2D7EF382EA692080058BE29 /* Convex.swift */; };
-		E2D7EF4E2EA692080058BE29 /* Grid.swift in Sources */ = {isa = PBXBuildFile; fileRef = E2D7EF3A2EA692080058BE29 /* Grid.swift */; };
-		E2D7EF502EA692080058BE29 /* LICENSE in Resources */ = {isa = PBXBuildFile; fileRef = E2D7EF3E2EA692080058BE29 /* LICENSE */; };
-		E2D7EF522EA69DDF0058BE29 /* README.md in Sources */ = {isa = PBXBuildFile; fileRef = E2D7EF512EA69DDA0058BE29 /* README.md */; };
-		E2D7EF532EA69DDF0058BE29 /* README.md in Sources */ = {isa = PBXBuildFile; fileRef = E2D7EF512EA69DDA0058BE29 /* README.md */; };
 		E2D8C66A2ECF5B8200CEBB37 /* GEOSwiftMapKit in Frameworks */ = {isa = PBXBuildFile; productRef = E2D8C6692ECF5B8200CEBB37 /* GEOSwiftMapKit */; };
 		E2E2BFD52D8718AE00751949 /* Algorithms in Frameworks */ = {isa = PBXBuildFile; productRef = E2E2BFD42D8718AE00751949 /* Algorithms */; };
 		E2F19BC62CA43C6400E19DCD /* SwiftSecurity in Frameworks */ = {isa = PBXBuildFile; productRef = E2F19BC52CA43C6400E19DCD /* SwiftSecurity */; };
@@ -98,13 +84,6 @@
 		E2839FF82CA2DD910053C312 /* CommonsFinderTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = CommonsFinderTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		E29112B42DF344F0007A3998 /* WhatToTest.en-US.txt */ = {isa = PBXFileReference; lastKnownFileType = text; path = "WhatToTest.en-US.txt"; sourceTree = "<group>"; };
 		E29112B52DF3463E007A3998 /* WhatToTest.de-DE.txt */ = {isa = PBXFileReference; lastKnownFileType = text; path = "WhatToTest.de-DE.txt"; sourceTree = "<group>"; };
-		E2D7EF382EA692080058BE29 /* Convex.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Convex.swift; sourceTree = "<group>"; };
-		E2D7EF3A2EA692080058BE29 /* Grid.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Grid.swift; sourceTree = "<group>"; };
-		E2D7EF3B2EA692080058BE29 /* ConcaveHull.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConcaveHull.swift; sourceTree = "<group>"; };
-		E2D7EF3C2EA692080058BE29 /* HullHelper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HullHelper.swift; sourceTree = "<group>"; };
-		E2D7EF3D2EA692080058BE29 /* Intersect.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Intersect.swift; sourceTree = "<group>"; };
-		E2D7EF3E2EA692080058BE29 /* LICENSE */ = {isa = PBXFileReference; lastKnownFileType = text; path = LICENSE; sourceTree = "<group>"; };
-		E2D7EF512EA69DDA0058BE29 /* README.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
 		E2F19BC72CA45AF600E19DCD /* CommonsAPI */ = {isa = PBXFileReference; lastKnownFileType = wrapper; path = CommonsAPI; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -192,26 +171,31 @@
 				"Observable Models/UploadManager/UploadManager.swift",
 				"Preview Content/Preview Assets.xcassets",
 				Tests/DatabaseTests.swift,
+				Tests/FilenameTests.swift,
 				Tests/GeoVectorMathTests.swift,
 				Tests/OtherTests.swift,
 				Types/DraftAnalysisResult.swift,
 				Types/DraftMediaLicense.swift,
 				"Types/DraftMediaLicense+CommonsAPI.swift",
 				Types/FileNameType.swift,
+				Types/FileNameTypeTuple.swift,
+				"Types/MediaFileDraft+uploadDisabledReason.swift",
 				Types/NewDraftOptions.swift,
 				Types/TagItem.swift,
+				Types/UploadPossibleStatus.swift,
 				Types/WikidataStatement.swift,
 				Types/WikimediaLanguage.swift,
 				Utilities/APIUtils.swift,
 				Utilities/Authentication.swift,
 				"Utilities/CLLocation+gpsDictionary.swift",
+				"Utilities/CommonsAPI+shared.swift",
 				Utilities/DraftAnalysis.swift,
 				Utilities/ExifData.swift,
 				Utilities/GeoPlacemarkCache.swift,
 				Utilities/GeoVectorMath.swift,
 				Utilities/Logging.swift,
 				Utilities/MediaDownloading.swift,
-				Utilities/ValidationUtils.swift,
+				Utilities/UserAgent.swift,
 				Utilities/zippedFlatMap.swift,
 				Views/AuthView/AuthView.swift,
 				Views/AuthView/LoginView.swift,
@@ -246,8 +230,11 @@
 				Views/FileDetailView/FileDetailView.swift,
 				Views/FileDetailView/FileGroupBoxStyle.swift,
 				Views/FileDetailView/FileLoadView.swift,
+				Views/FileDetailView/FullscreenImageView/FullImageLoadingTip.swift,
+				Views/FileDetailView/FullscreenImageView/ResolutionButton.swift,
 				"Views/FileDetailView/FullscreenImageView/View+zoomableImageFullscreenCover.swift",
 				Views/FileDetailView/FullscreenImageView/ZoomableImageView.swift,
+				Views/FileDetailView/FullscreenImageView/ZoomableScrollView.swift,
 				Views/FileDetailView/TagsContainerView.swift,
 				Views/Home/DraftsSection.swift,
 				Views/Home/HomeView.swift,
@@ -275,6 +262,7 @@
 				Views/Map/MapSelectionSheet/MapSheetToolbar.swift,
 				Views/Map/MapSelectionSheet/MediaCircleSheet.swift,
 				Views/Map/MapSelectionSheet/MediaClusterSheet.swift,
+				Views/Map/MapStyleSheet/MapStyleSheet.swift,
 				Views/Map/MapUserLocateButtonCustom.swift,
 				Views/Map/MapView.swift,
 				Views/Map/MediaAnnotationView.swift,
@@ -324,6 +312,7 @@
 			membershipExceptions = (
 				Info.plist,
 				Tests/DatabaseTests.swift,
+				Tests/FilenameTests.swift,
 				Tests/GeoVectorMathTests.swift,
 				Tests/OtherTests.swift,
 			);
@@ -427,7 +416,6 @@
 				E2839FE82CA2DD900053C312 /* Products */,
 				E2F19BC72CA45AF600E19DCD /* CommonsAPI */,
 				E2035C432D52544D0079235B /* Frameworks */,
-				E2D7EF402EA692080058BE29 /* Libraries */,
 			);
 			sourceTree = "<group>";
 		};
@@ -448,28 +436,6 @@
 				E29112B42DF344F0007A3998 /* WhatToTest.en-US.txt */,
 			);
 			path = TestFlight;
-			sourceTree = "<group>";
-		};
-		E2D7EF3F2EA692080058BE29 /* ConcaveHull */ = {
-			isa = PBXGroup;
-			children = (
-				E2D7EF512EA69DDA0058BE29 /* README.md */,
-				E2D7EF382EA692080058BE29 /* Convex.swift */,
-				E2D7EF3A2EA692080058BE29 /* Grid.swift */,
-				E2D7EF3B2EA692080058BE29 /* ConcaveHull.swift */,
-				E2D7EF3C2EA692080058BE29 /* HullHelper.swift */,
-				E2D7EF3D2EA692080058BE29 /* Intersect.swift */,
-				E2D7EF3E2EA692080058BE29 /* LICENSE */,
-			);
-			path = ConcaveHull;
-			sourceTree = "<group>";
-		};
-		E2D7EF402EA692080058BE29 /* Libraries */ = {
-			isa = PBXGroup;
-			children = (
-				E2D7EF3F2EA692080058BE29 /* ConcaveHull */,
-			);
-			path = Libraries;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -641,7 +607,6 @@
 			buildActionMask = 2147483647;
 			files = (
 				E29112B62DF34733007A3998 /* WhatToTest.de-DE.txt in Resources */,
-				E2D7EF482EA692080058BE29 /* LICENSE in Resources */,
 				E29112B72DF34733007A3998 /* WhatToTest.en-US.txt in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -650,7 +615,6 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				E2D7EF502EA692080058BE29 /* LICENSE in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -668,12 +632,6 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				E2D7EF522EA69DDF0058BE29 /* README.md in Sources */,
-				E2D7EF412EA692080058BE29 /* Intersect.swift in Sources */,
-				E2D7EF422EA692080058BE29 /* ConcaveHull.swift in Sources */,
-				E2D7EF442EA692080058BE29 /* HullHelper.swift in Sources */,
-				E2D7EF452EA692080058BE29 /* Convex.swift in Sources */,
-				E2D7EF462EA692080058BE29 /* Grid.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -681,12 +639,6 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				E2D7EF492EA692080058BE29 /* Intersect.swift in Sources */,
-				E2D7EF4A2EA692080058BE29 /* ConcaveHull.swift in Sources */,
-				E2D7EF4C2EA692080058BE29 /* HullHelper.swift in Sources */,
-				E2D7EF4D2EA692080058BE29 /* Convex.swift in Sources */,
-				E2D7EF4E2EA692080058BE29 /* Grid.swift in Sources */,
-				E2D7EF532EA69DDF0058BE29 /* README.md in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -917,7 +869,6 @@
 				CODE_SIGN_ENTITLEMENTS = CommonsFinder/CommonsFinder.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
-				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_ASSET_PATHS = "\"CommonsFinder/Preview Content\"";
 				ENABLE_APP_SANDBOX = YES;
 				ENABLE_HARDENED_RUNTIME = YES;
@@ -957,7 +908,6 @@
 				SUPPORTS_MACCATALYST = NO;
 				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = NO;
 				SUPPORTS_XR_DESIGNED_FOR_IPHONE_IPAD = NO;
-				SWIFT_EMIT_LOC_STRINGS = YES;
 				TARGETED_DEVICE_FAMILY = 1;
 				XROS_DEPLOYMENT_TARGET = 2.1;
 				_EXPERIMENTAL_SWIFT_EXPLICIT_MODULES = YES;
@@ -976,7 +926,6 @@
 				CODE_SIGN_ENTITLEMENTS = CommonsFinder/CommonsFinder.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
-				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_ASSET_PATHS = "\"CommonsFinder/Preview Content\"";
 				ENABLE_APP_SANDBOX = YES;
 				ENABLE_HARDENED_RUNTIME = YES;
@@ -1016,7 +965,6 @@
 				SUPPORTS_MACCATALYST = NO;
 				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = NO;
 				SUPPORTS_XR_DESIGNED_FOR_IPHONE_IPAD = NO;
-				SWIFT_EMIT_LOC_STRINGS = YES;
 				TARGETED_DEVICE_FAMILY = 1;
 				XROS_DEPLOYMENT_TARGET = 2.1;
 				_EXPERIMENTAL_SWIFT_EXPLICIT_MODULES = YES;

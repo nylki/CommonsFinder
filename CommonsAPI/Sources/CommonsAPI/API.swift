@@ -27,7 +27,7 @@ public actor API {
     let wikidataSparqlEndpoint = URL(string: "https://query.wikidata.org/bigdata/namespace/wdq/sparql")!
     let createAccountRedirectURL = URL(string: "https://commons.m.wikimedia.beta.wmflabs.org/w/index.php?title=Main_Page&welcome=yes")!
     
-    public static let shared = API()
+    let userAgent: String
     
 #if DEBUG
     let urlSession = URLSessionProxy(configuration: URLSessionConfiguration.default)
@@ -42,8 +42,8 @@ public actor API {
     }()
 
 
-    public init() {
-        
+    public init(userAgent: String) {
+        self.userAgent = userAgent
 
  // Un-Comment the following code block to test EmailAuth via email-code (https://www.mediawiki.org/wiki/Help:Extension:EmailAuth)
 //#if DEBUG
@@ -1132,6 +1132,66 @@ LIMIT \(limit)
         return entitiesDict
     }
     
+    /// Check if a media file already exists by filename
+    public func checkIfFileExists(filename: String) async throws -> FilenameExistsResult {
+        let query: Parameters = [
+            "action": "query",
+            "format": "json",
+            "titles": "File:" + filename,
+            "formatversion": "2",
+            "curtimestamp": "1"
+        ]
+
+        let request = try URLRequest.GET(url: commonsEndpoint, query: query)
+        let (data, response) = try await urlSession.data(for: request)
+        let parsedResponse = try parse(QueryResponse<FileExistenceResponse>.self, from: data, response: response)
+        guard let fileInfo = parsedResponse.query?.pages?.first else {
+            throw CommonAPIError.missingResponseValues
+        }
+        
+        if fileInfo.invalid == true {
+            return .invalidFilename
+        } else if fileInfo.missing == true {
+            return .doesNotExist
+        } else {
+            return .exists
+        }
+    }
+    
+    // action=titleblacklist
+    /// Validate a filename against the TitleBlacklist.
+    /// see: https://commons.wikimedia.org/wiki/MediaWiki:Titleblacklist
+    public func validateFilename(filename: String) async throws -> FilenameValidationStatus {
+        let query: Parameters = [
+            "action": "titleblacklist",
+            "format": "json",
+            "tbtitle": "File:\(filename)",
+            "tbaction": "create",
+            "tbnooverride": "1",
+            "smaxage": "2400",
+            "maxage": "2400",
+            "formatversion": "2",
+            "curtimestamp": "1"
+        ]
+
+        let request = try URLRequest.GET(url: commonsEndpoint, query: query)
+        let (data, response) = try await urlSession.data(for: request)
+        let parsedResponse = try parse(ValidateFilenameResponse.self, from: data, response: response)
+        
+        if let error = parsedResponse.error {
+            return switch error.code {
+                case .invalidtitle: .invalid
+            }
+        } else if let result = parsedResponse.titleblacklist?.result {
+            return switch result {
+                case .blacklisted: .disallowed
+                case .ok: .ok
+            }
+        } else {
+            throw CommonsAPIDecodingError.needsImplementation("\(String(data: data, encoding: .utf8) ?? "")")
+        }
+    }
+
     /// Returns the labels for Wikidata ids, which can be either WikidataProperties ("P180" etc.) or WikidataEntityIds ("Q1" etc.)
     /// for each id a dictionary is returned with language code keys.
     /// eg.: ["P180":  ["en": "depicted"]]
@@ -1197,54 +1257,96 @@ LIMIT \(limit)
     }
     
     
+    public enum PublishingStep: Equatable {
+        // NOTE: uploadDataAndUnstash is one stage combined, because the unstash depends on knowing the filekey
+        case uploadData
+        case unstash(filekey: String)
+        case createStructuredData
+        
+        public var unstashRequired: Bool {
+            switch self {
+            case .uploadData: true
+            case .unstash(_):  true
+            case .createStructuredData: false
+            }
+        }
+    }
+
+    
     /// https://commons.wikimedia.org/w/api.php?action=upload&format=json&filename=&comment=&file=...&stash=1&token=&formatversion=2
-    public func publish(file: MediaFileUploadable, csrfToken: String) -> AsyncStream<UploadStatus> {
+    public func publish(file: MediaFileUploadable, csrfToken: String, startStep: PublishingStep = .uploadData) -> AsyncStream<UploadStatus> {
         // Thanks to Donny Wals for this informative blog post on multipart requests with URLSession:
         // https://www.donnywals.com/uploading-images-and-forms-to-a-server-using-urlsession/
         
         AsyncStream<UploadStatus> { continuation in
             Task<Void, Never> {
                 do {
-                    var parameters: Parameters = [
-                        "action": "upload",
-                        "token": csrfToken,
-                        "filename": file.filename,
-                        "comment": uploadComment,
-                        "text": file.wikiText,
-                        "stash": "1",
-                        "formatversion": "2",
-                        "format": "json"
-                    ]
+                    if startStep.unstashRequired {
+                        var parameters: Parameters = [
+                            "action": "upload",
+                            "token": csrfToken,
+                            "filename": file.filename,
+                            "comment": uploadComment,
+                            "text": file.wikiText,
+                            "stash": "1",
+                            "formatversion": "2",
+                            "format": "json"
+                        ]
+                        
+                        var filekey: String?
+                        
+                        if startStep == .uploadData {
+                            let request = try URLRequest.POSTMultipart(
+                                url: commonsEndpoint,
+                                fileURL: file.fileURL,
+                                filename: file.filename,
+                                mimeType: file.mimetype,
+                                params: parameters
+                            )
+                            
+                            let progressDelegate = UploadProgressDelegate { progress in
+                                continuation.yield(.uploadingFile(progress))
+                            }
+                            
+                            let (data, response) = try await urlSession.data(for: request, delegate: progressDelegate)
+                            let fileUploadResponse = try parse(FileUploadResponse.self, from: data, response: response)
+                            let responseValue = fileUploadResponse.upload
+                            filekey = responseValue.filekey
+                            
+                            if let filekey {
+                                continuation.yield(.fileKeyObtained(filekey: filekey))
+                            }
+                            
+                            guard responseValue.warnings.isEmpty else {
+                                continuation.yield(.uploadWarnings(responseValue.warnings))
+                                continuation.finish()
+                                return
+                            }
+                        } else if case let .unstash(key) = startStep {
+                                filekey = key
+                        } else {
+                            filekey = nil
+                            assertionFailure()
+                        }
                     
-                    let request = try URLRequest.POSTMultipart(
-                        url: commonsEndpoint,
-                        fileURL: file.fileURL,
-                        filename: file.filename,
-                        params: parameters
-                    )
-
-                    let progressDelegate = UploadProgressDelegate { progress in
-                        continuation.yield(.uploadingFile(progress))
+                        guard let filekey else {
+                            continuation.yield(.fileKeyMissingAfterUpload)
+                            continuation.finish()
+                            return
+                        }
+                        print("filekey: \(filekey)")
+                        
+                        // All uploads done un-stash the file now
+                        parameters.removeValue(forKey: "stash")
+                        parameters["filekey"] = filekey
+                        
+                        continuation.yield(.unstashingFile(filekey: filekey))
+                        let unstashRequest = try URLRequest.POST(url: commonsEndpoint, form: parameters)
+                        let unstashResult = try await urlSession.data(for: unstashRequest)
+                        logger.debug("action:upload result string:\n\(String(data: unstashResult.0, encoding: .utf8) ?? "?")")
                     }
-
-                    let (data, response) = try await urlSession.data(for: request, delegate: progressDelegate)
-                    let fileUploadResponse = try parse(FileUploadResponse.self, from: data, response: response)
-                    let responseValue = fileUploadResponse.upload
                     
-                    guard responseValue.warnings.isEmpty else {
-                        continuation.yield(.uploadWarnings(responseValue.warnings))
-                        continuation.finish()
-                        return
-                    }
-                    
-                    // All uploads done and claims created, un-stash the file
-                    parameters.removeValue(forKey: "stash")
-                    parameters["filekey"] = responseValue.filekey
-                    
-                    continuation.yield(.unstashingFile)
-                    let unstashRequest = try URLRequest.POST(url: commonsEndpoint, form: parameters)
-                    let unstashResult = try await urlSession.data(for: unstashRequest)
-                    logger.debug("action:upload result string:\n\(String(data: unstashResult.0, encoding: .utf8) ?? "?")")
+                    continuation.yield(.creatingWikidataClaims)
                     
                     // NOTE: Structured Data can only be created after the file is public/unstashed
                     // Thats why we do it here and not before unstashing.
@@ -1254,8 +1356,12 @@ LIMIT \(limit)
                         statements: file.claims,
                         comment: nil
                     )
-
+                    
                     continuation.yield(.published)
+                    continuation.finish()
+                } catch let urlError as URLError {
+                    logger.error("Failed uploading a file due to a url error: \(urlError.errorCode) \(urlError.localizedDescription)")
+                    continuation.yield(.urlError(urlError))
                     continuation.finish()
                 } catch {
                     logger.error("Failed uploading a file \(error)")

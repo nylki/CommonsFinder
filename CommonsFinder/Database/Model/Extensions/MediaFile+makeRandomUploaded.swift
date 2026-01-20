@@ -9,7 +9,7 @@ import CommonsAPI
 import Foundation
 import UniformTypeIdentifiers
 
-extension MediaFile {
+nonisolated extension MediaFile {
     static func makeRandomUploaded(id: MediaFile.ID, _ imageType: TestImageType) -> MediaFile {
         let date: Date = .init(timeIntervalSince1970: 3600 * Double(UInt.random(in: 1..<1234)))
         return MediaFile.init(
@@ -38,7 +38,7 @@ extension MediaFile {
     }
 }
 
-enum TestImageType: String {
+nonisolated enum TestImageType: String {
     case verticalImage = "https://upload.wikimedia.org/wikipedia/commons/4/41/Vertical_panorama_-_Prescott_%2821174589204%29.jpg"
     case horizontalImage = "https://upload.wikimedia.org/wikipedia/commons/9/97/Banner_wikigap2023_1.jpg"
     case squareImage = "https://upload.wikimedia.org/wikipedia/commons/d/d1/CommonsAppTest_3.jpg"
@@ -46,7 +46,7 @@ enum TestImageType: String {
     var url: URL { URL(string: rawValue)! }
 }
 
-extension TestImageType {
+nonisolated extension TestImageType {
     var aspect: Double? {
         switch self {
         case .verticalImage:

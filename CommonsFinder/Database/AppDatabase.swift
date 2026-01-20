@@ -15,6 +15,7 @@ enum DatabaseError: Error {
     case failedToFetchAfterUpdate
     case failedToCreateOrFetchItemInteraction
     case itemInteractionEmptyID
+    case itemNotFound
 }
 
 /// The AppDatabase holding image models, drafts and user info.
@@ -239,6 +240,16 @@ nonisolated final class AppDatabase: Sendable {
         migrator.registerMigration("add size (in byte) to mediaFile") { db in
             try db.alter(table: "mediaFile") { t in
                 t.add(column: "size", .integer)
+            }
+        }
+
+        migrator.registerMigration("add selectedFilenameType, uploadPossibleStatus, uploadStatus to mediaFileDraft") { db in
+            try db.alter(table: "mediaFileDraft") { t in
+                t.add(column: "selectedFilenameType", .jsonText)
+                t.add(column: "uploadPossibleStatus", .jsonText)
+                t.add(column: "publishingState", .jsonText)
+                t.add(column: "publishingStateVerificationRequired", .boolean)
+                t.add(column: "publishingError", .jsonText)
             }
         }
 
@@ -695,6 +706,29 @@ extension AppDatabase {
         }
     }
 
+    @discardableResult
+    func updateDraft(id: MediaFileDraft.ID, withPublishingStep publishingState: PublishingState?, verificationRequired: Bool) throws -> MediaFileDraft {
+        try dbWriter.write { db in
+            guard var draft = try MediaFileDraft.fetchOne(db, id: id) else {
+                throw DatabaseError.itemNotFound
+            }
+            draft.publishingState = publishingState
+            draft.publishingStateVerificationRequired = verificationRequired
+            return try draft.upsertAndFetch(db)
+        }
+    }
+
+    @discardableResult
+    func updateDraft(id: MediaFileDraft.ID, withPublishingError publishingError: PublishingError?) throws -> MediaFileDraft {
+        try dbWriter.write { db in
+            guard var draft = try MediaFileDraft.fetchOne(db, id: id) else {
+                throw DatabaseError.itemNotFound
+            }
+            draft.publishingError = publishingError
+            return try draft.upsertAndFetch(db)
+        }
+    }
+
     func upsert(_ draft: MediaFileDraft) throws {
         try dbWriter.write { db in
             var draft = draft
@@ -731,6 +765,10 @@ extension AppDatabase {
     //        }
     //    }
     //
+    func deleteAllDrafts() throws -> Int {
+        try dbWriter.write(MediaFileDraft.deleteAll)
+    }
+
     func deleteDrafts(ids: [MediaFileDraft.ID]) throws -> Int {
         try dbWriter.write { db in
             try MediaFileDraft
@@ -758,7 +796,6 @@ nonisolated extension AppDatabase {
                 .including(optional: MediaFile.itemInteraction)
                 .asRequest(of: MediaFileInfo.self)
                 .fetchOne(db)
-
         }
     }
 
@@ -818,9 +855,37 @@ nonisolated extension AppDatabase {
         }
     }
 
+    func draftExists(id: MediaFileDraft.ID) throws -> Bool {
+        try dbWriter.read { db in
+            try MediaFileDraft.exists(db, id: id)
+        }
+    }
+
+    func fetchDraft(id: MediaFileDraft.ID) throws -> MediaFileDraft? {
+        try dbWriter.read { db in
+            try MediaFileDraft.fetchOne(db, id: id)
+        }
+    }
+
     func fetchAllDrafts() throws -> [MediaFileDraft] {
         try dbWriter.read { db in
             try MediaFileDraft
+                .fetchAll(db)
+        }
+    }
+
+    func fetchDraftsWithPendingUploadButNoError() throws -> [MediaFileDraft] {
+        try dbWriter.read { db in
+            try MediaFileDraft
+                .filter { $0.publishingState != nil && $0.publishingError == nil }
+                .fetchAll(db)
+        }
+    }
+
+    func fetchInterruptedDraftsRequiringVerification() throws -> [MediaFileDraft] {
+        try dbWriter.read { db in
+            try MediaFileDraft
+                .filter { $0.publishingStateVerificationRequired == true }
                 .fetchAll(db)
         }
     }
@@ -892,7 +957,6 @@ nonisolated extension AppDatabase {
         }
     }
 }
-
 nonisolated extension MediaFileInfo {
     static func fetchAll(ids: [String], db: Database) throws -> [Self] {
         try MediaFile

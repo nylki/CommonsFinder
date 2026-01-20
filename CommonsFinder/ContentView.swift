@@ -80,15 +80,6 @@ struct ContentView: View {
                 accountModel.syncUserData()
             }
         }
-        .onReceive(uploadManager.didFinishUpload) { draftID in
-            accountModel.syncUserData()
-
-            Task {
-                // We want to give the user some time to realize that the file has been uploaded, via the green checkmark etc.
-                try? await Task.sleep(for: .milliseconds(2000))
-                accountModel.removeUploadedDrafts(ids: [draftID])
-            }
-        }
     }
 
     private func subsequentTap(on tab: Navigation.TabItem) {
@@ -138,7 +129,7 @@ struct ContentView: View {
             let drafts: [MediaFileDraft] = urls.compactMap { temporaryPath in
                 do {
                     let fileItem = try FileItem(movingLocalFileFromPath: temporaryPath)
-                    let draft = MediaFileDraft(fileItem)
+                    let draft = try MediaFileDraft(fileItem)
                     return try appDatabase.upsertAndFetch(draft)
                 } catch {
                     logger.error("Failed to move draft file from ShareExtension. \(error)")

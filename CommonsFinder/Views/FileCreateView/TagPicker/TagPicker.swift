@@ -32,6 +32,13 @@ struct TagPicker: View {
 
     @State private var model: TagPickerModel?
 
+    private var hasUserMadeChanges: Bool {
+        guard let model else { return false }
+        let initial: Set<TagItem> = Set(initialTags)
+        let picked: Set<TagItem> = Set(model.pickedTags.map(\.tagItem))
+        return initial != picked
+    }
+
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
             if let model {
@@ -48,6 +55,7 @@ struct TagPicker: View {
                         searchText: $model.searchText,
                         categoryCount: model.pickedCategories.count,
                         depictCount: model.pickedDepictions.count,
+                        hasUserMadeChanges: hasUserMadeChanges,
                         onAccept: accept
                     )
                     .frame(minWidth: 0, maxWidth: .infinity)
@@ -106,27 +114,41 @@ private struct NavHeader: View {
     @Binding var searchText: String
     let categoryCount: Int
     let depictCount: Int
+    let hasUserMadeChanges: Bool
     let onAccept: () -> Void
 
     @Environment(\.dismiss) private var dismiss
 
     var body: some View {
-
         VStack {
             HStack {
-                Button("Cancel", action: dismiss.callAsFunction)
-                    .frame(width: 75)
+                Button(action: dismiss.callAsFunction) {
+                    Label("Cancel", systemImage: "xmark")
+                        .font(.headline)
+                        .frame(width: 20, height: 28)
+                        .labelStyle(.iconOnly)
+                }
+                .glassButtonStyle()
 
                 Spacer()
 
                 Text("Categories & Depicted").bold()
 
                 Spacer()
-
-                Button("Accept", action: onAccept)
-                    .frame(width: 75)
+                Button(role: .fallbackConfirm, action: onAccept) {
+                    Label("Accept", systemImage: "checkmark")
+                        .font(.headline)
+                        .frame(width: 20, height: 28)
+                        .labelStyle(.iconOnly)
+                }
+                .glassButtonStyle(prominent: true)
+                .disabled(!hasUserMadeChanges)
             }
+            .padding(.bottom)
+            .animation(.default, value: hasUserMadeChanges)
+
             SearchBar(text: $searchText)
+
             HStack {
                 categoryHeader
                 Spacer(minLength: 0)

@@ -226,9 +226,7 @@ extension MediaFileUploadable {
             }
         }
 
-        if let mimeType = draft.mimeType {
-            statements.append(.mimeType(mimeType))
-        }
+        statements.append(.mimeType(draft.mimeType))
 
         let nonEmptyDescriptions: [(languageCode: LanguageCode, string: String)] = draft.captionWithDesc.compactMap {
             $0.fullDescription.isEmpty ? nil : ($0.languageCode, $0.fullDescription)
@@ -285,6 +283,7 @@ extension MediaFileUploadable {
             id: draft.id,
             fileURL: localFileURL,
             filename: finalFileName,
+            mimetype: draft.mimeType,
             claims: statements,
             captions: captions,
             wikitext: wikiText

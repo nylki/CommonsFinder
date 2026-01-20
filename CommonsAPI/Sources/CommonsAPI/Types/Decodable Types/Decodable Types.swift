@@ -62,16 +62,19 @@ public enum UploadStatus: Sendable, Equatable, CustomStringConvertible {
         lhs.description == rhs.description
     }
     
-
     /// Step 1: file is uploaded to the stash first (will be unstashed in Step 3.)
     case uploadingFile(Progress)
-    /// Step 2
+    /// Step 2b: data upload is done and we get a filekey back. The filekey can be used to resume from here, should there be a error or network interruption after this stop or during the unstash.
+    case fileKeyObtained(filekey: String)
+    /// Step 2: unstashing must happen before creating structured data
+    case unstashingFile(filekey: String)
+    /// Step 3: the file is published and visible, but the structured data are not yet crated
     case creatingWikidataClaims
-    /// Step 3
-    case unstashingFile
-    // Step 4: the file is published and visible online
+    /// Step 4: the file is is now completely published
     case published
+    case fileKeyMissingAfterUpload
     case uploadWarnings([FileUploadResponse.Warning])
+    case urlError(URLError)
     case unspecifiedError(Error)
     
     var isError: Bool {
@@ -84,16 +87,22 @@ public enum UploadStatus: Sendable, Equatable, CustomStringConvertible {
         switch self {
         case .uploadingFile(let progress):
             "uploadingFile-\(progress)"
+        case .fileKeyObtained(let filekey):
+            "fileKeyObtained-\(filekey)"
         case .creatingWikidataClaims:
             "creatingWikidataClaims"
         case .unstashingFile:
             "unstashingFile"
         case .published:
             "published"
+        case .fileKeyMissingAfterUpload:
+            "fileKeyMissingAfterUpload"
         case .uploadWarnings(let array):
             "uploadWarnings \(array.hashValue)"
         case .unspecifiedError(let error):
             "unspecifiedError \(error.localizedDescription)"
+        case .urlError(let urlError):
+            "urlError: \(urlError.code.rawValue), \(urlError.localizedDescription)"
         }
     }
     
@@ -103,7 +112,7 @@ public enum UploadStatus: Sendable, Equatable, CustomStringConvertible {
 public struct FileUploadResponse: Decodable, Sendable {
     public let upload: Upload
 
-    public enum Warning: Error, Decodable, Identifiable, Equatable, Hashable, Sendable, CustomStringConvertible, CustomLocalizedStringResourceConvertible {
+    public enum Warning: Error, Codable, Identifiable, Equatable, Hashable, Sendable, CustomStringConvertible, CustomLocalizedStringResourceConvertible {
         // see: https://github.com/wikimedia/mediawiki/blob/a8df7e081a4b231de43420f9e730a35d6aff0c27/includes/upload/UploadBase.php#L1349
         // and: https://www.mediawiki.org/wiki/API:Upload
         case exists
@@ -750,6 +759,7 @@ public struct MediaFileUploadable: Identifiable, Hashable, Equatable, Sendable, 
     
     /// How the file should be named on the other side (including the file extension which _must_ be present) : eg. "file 123.jpg" but not "file 123"
     public let filename: String
+    public let mimetype: String
     
     public let wikiText: String
     public let captions: [LanguageString]
@@ -766,6 +776,7 @@ public struct MediaFileUploadable: Identifiable, Hashable, Equatable, Sendable, 
         id: String,
         fileURL: URL,
         filename: String,
+        mimetype: String,
         claims: [WikidataClaim],
         captions: [LanguageString],
         wikitext: String
@@ -777,6 +788,7 @@ public struct MediaFileUploadable: Identifiable, Hashable, Equatable, Sendable, 
         
         self.id = id
         self.filename = filename
+        self.mimetype = mimetype
         self.fileURL = fileURL
         self.captions = captions
         self.claims = claims
@@ -870,6 +882,19 @@ internal struct FileMetadataListResponse: Decodable, Sendable {
 
 public struct GeosearchListResponse: Decodable, Sendable {
     let geosearch: [GeoSearchFileItem]
+}
+
+internal struct FileExistenceResponse: Decodable, Sendable {
+    let pages: [Item]?
+    
+    struct Item: Decodable, Sendable {
+        let pageid: Int64?
+        let ns: MediawikiNamespace?
+        let title: String?
+        let missing: Bool?
+        let invalid: Bool?
+        let invalidreason: String?
+    }
 }
 
 // query: list=search
@@ -1163,6 +1188,47 @@ internal struct ValidatePasswordResponse: Sendable, Decodable {
             case invalid = "Invalid"
         }
     }
+}
+
+///action:titleblacklist
+internal struct ValidateFilenameResponse: Sendable, Decodable {
+    let titleblacklist: Validity?
+    let error: ValidateError?
+    
+    struct ValidateError: Sendable, Decodable {
+        let code: Code
+        let info: String
+        let docref: String
+        
+        enum Code: String, Sendable, Decodable {
+            case invalidtitle = "invalidtitle"
+        }
+    }
+    
+    struct Validity: Sendable, Decodable {
+        let result: Result
+        let reason: String?
+        
+        enum Result: String, Sendable, Decodable {
+            // from a sample response:
+            //"The file name you were trying to upload has been [[c:MediaWiki:Titleblacklist|blacklisted]] because it is very common, uninformative, or spelled in ALLCAPS. Please go back and choose a better file name.  When [[c:Commons:Upload|uploading files to Wikimedia Commons]], please use a file name that describes the content of the image or media file you're uploading and is sufficiently distinctive that no-one else is likely to pick the same name by accident."
+            case blacklisted = "blacklisted"
+            case ok
+        }
+    }
+}
+
+public enum FilenameValidationStatus: Sendable {
+    case ok
+    case disallowed
+    case invalid
+    case unknownOther
+}
+
+public enum FilenameExistsResult: Sendable {
+    case exists
+    case doesNotExist
+    case invalidFilename
 }
 
 

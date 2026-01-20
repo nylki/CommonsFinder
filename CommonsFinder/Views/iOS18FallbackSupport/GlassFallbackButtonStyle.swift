@@ -9,11 +9,15 @@ import SwiftUI
 
 extension View {
     @ViewBuilder
-    func glassButtonStyle() -> some View {
+    func glassButtonStyle(prominent: Bool = false) -> some View {
         if #available(iOS 26.0, *) {
-            buttonStyle(.glass)
+            if prominent {
+                buttonStyle(.glassProminent)
+            } else {
+                buttonStyle(.glass)
+            }
         } else {
-            buttonStyle(GlassFallbackButtonStyle())
+            buttonStyle(GlassFallbackButtonStyle(prominent: prominent))
         }
     }
 }
@@ -42,20 +46,49 @@ extension View {
 
 
 private struct GlassFallbackButtonStyle: ButtonStyle {
+    let prominent: Bool
+
+    @Environment(\.isEnabled) private var isEnabled: Bool
     func makeBody(configuration: Configuration) -> some View {
-        configuration.label
-            .padding(.vertical, 5)
-            .padding(.horizontal, 10)
-            .background(.regularMaterial, in: Capsule())
-            .clipShape(Capsule())
-            .contentShape(Capsule())
-            .opacity(configuration.isPressed ? 0.5 : 1)
+
+        if prominent {
+            configuration.label
+                .padding(.vertical, 5)
+                .padding(.horizontal, 10)
+                .background(.thinMaterial, in: Capsule())
+                .background(isEnabled ? .accent : .clear, in: Capsule())
+                .clipShape(Capsule())
+                .contentShape(Capsule())
+                .opacity(!isEnabled || configuration.isPressed ? 0.5 : 1)
+        } else {
+            configuration.label
+                .padding(.vertical, 5)
+                .padding(.horizontal, 10)
+                .background(.regularMaterial, in: Capsule())
+                .clipShape(Capsule())
+                .contentShape(Capsule())
+                .opacity(!isEnabled || configuration.isPressed ? 0.5 : 1)
+        }
+
     }
 }
 
 #Preview {
-    Button(action: { print("Pressed") }) {
-        Label("Press Me", systemImage: "star")
+    VStack {
+        Button(action: { print("Pressed") }) {
+            Label("Press Me", systemImage: "star")
+        }
+        .buttonStyle(GlassFallbackButtonStyle(prominent: false))
+
+        Button(action: { print("Pressed") }) {
+            Label("Press Me", systemImage: "star")
+        }
+        .buttonStyle(GlassFallbackButtonStyle(prominent: true))
     }
-    .buttonStyle(GlassFallbackButtonStyle())
+    .padding()
+    .background {
+        #if DEBUG
+            Image(.debugDraft)
+        #endif
+    }
 }

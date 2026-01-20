@@ -20,7 +20,6 @@ import os.log
 // One difference is that it stores the data suited for initial creation
 // avoiding duplicates with wikidata structured data (eg. for location, date etc.)
 
-
 nonisolated
     struct MediaFileDraft: Identifiable, Equatable, Hashable
 {
@@ -31,6 +30,15 @@ nonisolated
 
     /// The unique name without the mediawiki "File:"-prefix and (should be without) any file-extension like .jpeg, editable in UI (eg. "screenshot 2025-01-01")
     var name: String
+    var selectedFilenameType: FileNameType
+    var uploadPossibleStatus: UploadPossibleStatus?
+    var publishingState: PublishingState?
+    var publishingError: PublishingError?
+    /// indicates whether a publishingState stuck after an error (especially network interruptions) is correct
+    /// sometimes an interruption occurs when a network POST was send, but no answer was recieved yet:
+    /// in such a case the publishingState may be correct or it should be on the next step already, if the backend succesfully processed the POST (but app didn't recive the ack)
+    var publishingStateVerificationRequired: Bool
+
     /// `name` + file-extension is written just before uploading (eg. "screenshot 2025-01-01.jpeg")
     ///  and can be used for identifying uploaded media and local drafts
     var finalFilename: String
@@ -38,7 +46,7 @@ nonisolated
     /// The filename, If the represented media file exists locally on disk
     /// May be identical to "name", but not guaranteed (eg. drafts)
     var localFileName: String
-    var mimeType: String?
+    var mimeType: String
 
     var captionWithDesc: [DraftCaptionWithDescription]
 
@@ -107,7 +115,7 @@ nonisolated
     }
 }
 
-extension MediaFileDraft.DraftCaptionWithDescription {
+nonisolated extension MediaFileDraft.DraftCaptionWithDescription {
     init(languageCode: LanguageCode) {
         self.languageCode = languageCode
         caption = ""
@@ -137,6 +145,11 @@ nonisolated
         case id
         case addedDate
         case name
+        case selectedFilenameType
+        case uploadPossibleStatus
+        case publishingState
+        case publishingError
+        case publishingStateVerificationRequired
         case finalFilename
         case localFileName
         case mimeType
@@ -157,8 +170,12 @@ nonisolated
         static let id = Column(CodingKeys.id)
         static let addedDate = Column(CodingKeys.addedDate)
         static let name = Column(CodingKeys.name)
+        static let uploadDisabledReason = Column(CodingKeys.uploadPossibleStatus)
         static let finalFilename = Column(CodingKeys.finalFilename)
-
+        static let selectedFilenameType = Column(CodingKeys.selectedFilenameType)
+        static let publishingState = Column(CodingKeys.publishingState)
+        static let publishingError = Column(CodingKeys.publishingError)
+        static let publishingStateVerificationRequired = Column(CodingKeys.publishingStateVerificationRequired)
         static let captionWithDesc = Column(CodingKeys.captionWithDesc)
         static let tags = Column(CodingKeys.tags)
         static let inceptionDate = Column(CodingKeys.inceptionDate)
@@ -177,9 +194,11 @@ nonisolated
         self.id = try container.decode(String.self, forKey: .id)
         self.addedDate = try container.decode(Date.self, forKey: .addedDate)
         self.name = try container.decode(String.self, forKey: .name)
+        self.selectedFilenameType = try container.decodeIfPresent(FileNameType.self, forKey: .selectedFilenameType) ?? .custom
+        self.uploadPossibleStatus = try container.decodeIfPresent(UploadPossibleStatus.self, forKey: .uploadPossibleStatus)
         self.finalFilename = try container.decode(String.self, forKey: .finalFilename)
         self.localFileName = try container.decode(String.self, forKey: .localFileName)
-        self.mimeType = try container.decodeIfPresent(String.self, forKey: .mimeType)
+        self.mimeType = try container.decode(String.self, forKey: .mimeType)
         self.captionWithDesc = try container.decode([MediaFileDraft.DraftCaptionWithDescription].self, forKey: .captionWithDesc)
         self.inceptionDate = try container.decode(Date.self, forKey: .inceptionDate)
         self.timezone = try container.decodeIfPresent(String.self, forKey: .timezone)
@@ -189,7 +208,9 @@ nonisolated
         self.source = try container.decodeIfPresent(MediaFileDraft.DraftSource.self, forKey: .source)
         self.width = try container.decodeIfPresent(Int.self, forKey: .width)
         self.height = try container.decodeIfPresent(Int.self, forKey: .height)
-
+        self.publishingState = try container.decodeIfPresent(PublishingState.self, forKey: .publishingState)
+        self.publishingError = try container.decodeIfPresent(PublishingError.self, forKey: .publishingError)
+        self.publishingStateVerificationRequired = try container.decodeIfPresent(Bool.self, forKey: .publishingStateVerificationRequired) ?? false
         if let tags = try? container.decode([TagItem].self, forKey: .tags) {
             self.tags = tags
         } else {
@@ -215,10 +236,6 @@ nonisolated extension MediaFileDraft {
             name
         }
     }
-
-    var canUpload: Bool {
-        !name.isEmpty && !captionWithDesc.isEmpty && license != nil && !tags.isEmpty
-    }
 }
 
 extension MediaFileDraft {
@@ -235,12 +252,14 @@ extension MediaFileDraft {
 extension MediaFileDraft {
 
     /// creates a new draft from an FileItem by reading its EXIF-Data filling the fields as complete as possible at this stage
-    init(_ fileItem: FileItem) {
+    init(_ fileItem: FileItem) throws {
         id = UUID().uuidString
         addedDate = .now
         localFileName = fileItem.localFileName
         finalFilename = ""
         name = localFileName
+        uploadPossibleStatus = nil
+        selectedFilenameType = .captionAndDate
 
         let languageCode = Locale.current.wikiLanguageCodeIdentifier
         captionWithDesc = [.init(languageCode: languageCode)]
@@ -254,11 +273,15 @@ extension MediaFileDraft {
             self.mimeType = mimeType
         } else {
             assertionFailure("We expect the file to have a mime type")
+            throw MediaFileDraftError.failedToReadMimetype
         }
 
         locationHandling = .noLocation
         inceptionDate = .now
         timezone = TimeZone.current.identifier
+        publishingState = nil
+        publishingError = nil
+        publishingStateVerificationRequired = false
 
         // Read EXIF-Data and update relevant values
         if let exifData = loadExifData() {
@@ -279,4 +302,8 @@ extension MediaFileDraft {
 
         }
     }
+}
+
+enum MediaFileDraftError: Error {
+    case failedToReadMimetype
 }
