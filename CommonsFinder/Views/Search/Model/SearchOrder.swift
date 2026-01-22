@@ -7,14 +7,16 @@
 
 import Foundation
 
-enum SearchOrder: Hashable, CaseIterable, CustomLocalizedStringResourceConvertible {
+enum SearchOrder: Hashable, Equatable, CaseIterable, CustomLocalizedStringResourceConvertible {
     var localizedStringResource: LocalizedStringResource {
         switch self {
         case .relevance: LocalizedStringResource(stringLiteral: "Relevance")
         case .newest: LocalizedStringResource(stringLiteral: "Newest")
+        case .oldest: LocalizedStringResource(stringLiteral: "Oldest")
         }
     }
 
     case relevance
     case newest
+    case oldest
 }

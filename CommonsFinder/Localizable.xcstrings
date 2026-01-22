@@ -1023,6 +1023,9 @@
         }
       }
     },
+    "Include Subcategories" : {
+
+    },
     "Indian" : {
       "localizations" : {
         "de" : {
@@ -1353,12 +1356,46 @@
         }
       }
     },
+    "No images depicting **%@** and no images found in subcategories of **%@**." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "No images depicting **%1$@** and no images found in subcategories of **%2$@**."
+          }
+        }
+      }
+    },
+    "No images depicting **%@** or tagged with the category." : {
+
+    },
     "No images depicting *%@* or tagged with the category." : {
+      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Keine Bilder mit Motiv oder Kategorie *%@*."
+          }
+        }
+      }
+    },
+    "No images for \"%@\" in **%@**." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "No images for \"%1$@\" in **%2$@**."
+          }
+        }
+      }
+    },
+    "No images for %@ in **%@**. Try to include subcategories for more results." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "No images for %1$@ in **%2$@**. Try to include subcategories for more results."
           }
         }
       }
@@ -1420,6 +1457,9 @@
           }
         }
       }
+    },
+    "Oldest" : {
+
     },
     "Open Details" : {
       "localizations" : {
@@ -1859,6 +1899,9 @@
           }
         }
       }
+    },
+    "Search in this category" : {
+
     },
     "Search on Wikimedia Commons" : {
       "localizations" : {

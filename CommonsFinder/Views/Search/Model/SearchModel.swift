@@ -81,11 +81,16 @@ import os.log
         searchFieldFocusTrigger += 1
     }
 
-    func setOrder(_ order: SearchOrder) {
-        self.order = order
-        mediaResults = nil
-        categoryResults = nil
-        search()
+    var orderBinding: Binding<SearchOrder> {
+        .init(
+            get: { self.order },
+            set: { newValue in
+                guard newValue != self.order else { return }
+                self.order = newValue
+                self.mediaResults = nil
+                self.categoryResults = nil
+                self.search()
+            })
     }
 
     /// sets `text`as the searchText and  immediately submits the search
