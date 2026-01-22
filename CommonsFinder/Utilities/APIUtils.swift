@@ -80,6 +80,7 @@ extension SearchOrder {
         switch self {
         case .relevance: .relevance
         case .newest: .createTimestampDesc
+        case .oldest: .createTimestampAsc
         }
     }
 }

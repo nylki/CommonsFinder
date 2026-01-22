@@ -30,14 +30,19 @@ struct CategoryView: View {
     @State private var item: CategoryInfo?
 
     @State private var paginationModel: PaginatableCategoryMediaFiles? = nil
+    @State private var paginationedLoadedDate: Date?
+    @State private var paginationModelNeedsReloadDate: Date?
+    @State private var searchOrder: SearchOrder = .relevance
+    @State private var deepCategoryEnabled = false
+    @State private var searchString = ""
+    @State private var isSearchPresented = false
 
     @State private var subCategories: [CategoryInfo] = []
     @State private var parentCategories: [CategoryInfo] = []
     @State private var selectedMediaTab: MediaTab = .category
+
     @State private var isSubCategoriesExpanded = false
     @State private var isParentCategoriesExpanded = false
-    @State private var showTitleInToolbar = false
-
     @State private var hasBeenInitialized = false
 
     @Environment(\.appDatabase) private var appDatabase
@@ -54,6 +59,163 @@ struct CategoryView: View {
         item?.base.label ?? resolvedCategoryName ?? ""
     }
 
+    private func loadPaginationModel() async {
+        do {
+            paginationModel = try await .init(
+                appDatabase: appDatabase,
+                categoryName: resolvedCategoryName,
+                depictItemID: item?.base.wikidataId,
+                order: searchOrder,
+                deepCategorySearch: deepCategoryEnabled,
+                searchString: searchString
+            )
+        } catch {
+            logger.error("failed to set pagination model for new search order \(error)")
+        }
+    }
+
+    var body: some View {
+        ScrollView(.vertical) {
+            VStack(alignment: .leading) {
+                if !isSearchPresented {
+                    header
+                    Divider()
+                }
+
+                HStack {
+                    SearchOrderButton(searchOrder: $searchOrder)
+                    Spacer()
+                    DeepCategoryToggle(enabled: $deepCategoryEnabled)
+                        .disabled(subCategories.isEmpty)
+                }
+                .padding(.horizontal)
+
+                mediaList
+
+                Spacer()
+            }
+            .animation(.default, value: isSearchPresented)
+        }
+
+        .containerRelativeFrame(.horizontal)
+        .navigationTitle(title)
+        .navigationBarTitleDisplayMode(.inline)
+        .toolbar { toolbar }
+        .toolbar(removing: .title)
+        .searchable(
+            text: $searchString,
+            isPresented: $isSearchPresented,
+            prompt: "Search in this category"
+        )
+        .onAppear {
+            if databaseTask == nil {
+                startDatabaseTask(incrementViewCount: true)
+            }
+        }
+        .onDisappear {
+            databaseTask?.cancel()
+            databaseTask = nil
+        }
+        .onChange(of: item) { oldValue, newValue in
+            guard oldValue != newValue else { return }
+            guard !hasBeenInitialized, networkInitTask == nil else {
+                return
+            }
+
+            startInitialNetworkTask()
+        }
+        .onChange(of: searchString) { oldValue, newValue in
+            guard newValue != oldValue else { return }
+            paginationModelNeedsReloadDate = .now
+        }
+        .onChange(of: searchOrder) { oldValue, newValue in
+            guard newValue != oldValue else { return }
+            paginationModelNeedsReloadDate = .now
+        }
+        .onChange(of: deepCategoryEnabled) { oldValue, newValue in
+            guard newValue != oldValue else { return }
+            paginationModelNeedsReloadDate = .now
+        }
+        .task(id: paginationModelNeedsReloadDate) {
+            guard let paginationModelNeedsReloadDate else { return }
+            let lastRefresh = (paginationedLoadedDate ?? Date.distantPast).distance(to: paginationModelNeedsReloadDate)
+            guard lastRefresh > 0 else { return }
+            paginationModel = nil
+            try? await Task.sleep(for: .milliseconds(500))
+            paginationedLoadedDate = paginationModelNeedsReloadDate
+            await loadPaginationModel()
+        }
+    }
+
+    @ViewBuilder
+    private var mediaList: some View {
+        ZStack {
+            if let paginationModel, !paginationModel.isEmpty {
+                PaginatableMediaList(
+                    items: paginationModel.mediaFileInfos,
+                    status: paginationModel.status,
+                    paginationRequest: paginationModel.paginate
+                )
+            } else if paginationModel?.isEmpty == true {
+                mediaUnavailableView
+                    .padding()
+            } else {
+                Color.clear.frame(height: 500)
+                    .overlay(alignment: .top) {
+                        ProgressView()
+                            .progressViewStyle(.circular)
+                            .padding()
+                    }
+            }
+        }
+        .animation(.snappy, value: paginationModel == nil)
+    }
+    
+    @ViewBuilder
+    private var mediaUnavailableView: some View {
+        ContentUnavailableView {
+            Label("No Images", systemImage: "photo.stack")
+        } description: {
+            if !searchString.isEmpty {
+                if deepCategoryEnabled {
+                    Text("No images for \"\(searchString)\" in **\(title)**.")
+                } else {
+                    Text("No images for \(searchString) in **\(title)**. Try to include subcategories for more results.")
+                }
+            } else {
+                if deepCategoryEnabled {
+                    Text("No images depicting **\(title)** and no images found in subcategories of **\(title)**.")
+                } else {
+                    Text("No images depicting **\(title)** or tagged with the category.")
+                }
+                
+                
+            }
+        }
+    }
+
+    @ViewBuilder
+    private var header: some View {
+        VStack(alignment: .leading) {
+            Text(title)
+                .font(.largeTitle).bold()
+            subheadline
+            if let item, let coordinate = item.base.coordinate {
+                InlineMap(
+                    coordinate: coordinate,
+                    item: .category(item.base),
+                    knownName: title,
+                    mapPinStyle: .pinOnly,
+                    details: .none
+                )
+                .padding(.vertical)
+            }
+            relatedCategoriesView
+        }
+        .animation(.default, value: item)
+        .animation(.default, value: item?.base.coordinate)
+        .scenePadding()
+    }
 
     @ViewBuilder
     private var subheadline: some View {
@@ -81,74 +243,6 @@ struct CategoryView: View {
         }
     }
 
-    var body: some View {
-        ScrollView(.vertical) {
-            VStack(alignment: .leading) {
-                VStack(alignment: .leading) {
-                    Text(title)
-                        .font(.largeTitle).bold()
-                    subheadline
-                    if let item, let coordinate = item.base.coordinate {
-                        InlineMap(
-                            coordinate: coordinate,
-                            item: .category(item.base),
-                            knownName: title,
-                            mapPinStyle: .pinOnly,
-                            details: .none
-                        )
-                        .padding(.vertical)
-                    }
-                    relatedCategoriesView
-                }
-                .animation(.default, value: item)
-                .scenePadding()
-
-                Divider()
-
-                if let paginationModel {
-                    if !paginationModel.isEmpty {
-                        PaginatableMediaList(
-                            items: paginationModel.mediaFileInfos,
-                            status: paginationModel.status,
-                            paginationRequest: paginationModel.paginate
-                        )
-                    } else {
-                        ContentUnavailableView {
-                            Label("No Images", systemImage: "photo.stack")
-                        } description: {
-                            Text("No images depicting *\(title)* or tagged with the category.")
-                        }
-                        .padding()
-                    }
-                }
-
-                Spacer()
-            }
-            .onAppear {
-                if databaseTask == nil {
-                    startDatabaseTask(incrementViewCount: true)
-                }
-            }
-            .onDisappear {
-                databaseTask?.cancel()
-                databaseTask = nil
-            }
-            .onChange(of: item) { oldValue, newValue in
-                guard !hasBeenInitialized, networkInitTask == nil else {
-                    return
-                }
-
-                startInitialNetworkTask()
-            }
-        }
-        .containerRelativeFrame(.horizontal)
-        .animation(.default, value: paginationModel == nil)
-        .navigationTitle(title)
-        .navigationBarTitleDisplayMode(.inline)
-        .toolbar { toolbar }
-        .toolbar(removing: .title)
-    }
-
     @ToolbarContentBuilder
     private var toolbar: some ToolbarContent {
         //            ToolbarItem(placement: .principal) {
@@ -161,6 +255,7 @@ struct CategoryView: View {
         //                        .allowsTightening(true)
         //                }
         //            }
+
 
         ToolbarItem(placement: .automatic) {
             let isBookmarked = (item ?? initialItem).isBookmarked
@@ -213,6 +308,8 @@ struct CategoryView: View {
                 .disabled(subCategories.isEmpty)
             }
         }
+        .animation(.default, value: subCategories)
+        .animation(.default, value: parentCategories)
     }
 
     private func startDatabaseTask(incrementViewCount: Bool) {
@@ -259,6 +356,11 @@ struct CategoryView: View {
 
         hasBeenInitialized = false
         guard let item else { return }
+
+        if item.base.wikidataId != nil && item.base.commonsCategory != nil {
+            paginationModelNeedsReloadDate = .now
+        }
+
         networkInitTask?.cancel()
         networkInitTask = Task<Void, Never> {
             #if DEBUG
@@ -267,6 +369,7 @@ struct CategoryView: View {
             #endif
             do {
                 if let wikidataID = item.base.wikidataId {
+
                     let result = try await DataAccess.fetchCategoriesFromAPI(
                         wikidataIDs: [wikidataID],
                         shouldCache: true,
@@ -277,12 +380,6 @@ struct CategoryView: View {
                         if let commonsCategory = fetchedCategory.commonsCategory {
                             try await resolveCategoryDetails(category: commonsCategory)
                         }
-
-                        paginationModel = try await .init(
-                            appDatabase: appDatabase,
-                            categoryName: fetchedCategory.commonsCategory,
-                            depictItemID: wikidataID
-                        )
                     }
                 } else if let commonsCategory = initialItem.base.commonsCategory {
 
@@ -297,12 +394,6 @@ struct CategoryView: View {
                         let fetchedCategory = Category(apiItem: apiItem)
                         try appDatabase.upsert(fetchedCategory)
                     }
-
-                    paginationModel = try await .init(
-                        appDatabase: appDatabase,
-                        categoryName: commonsCategory,
-                        depictItemID: item.base.wikidataId
-                    )
                 }
 
                 // Expand sub-categories if there are no images to show
@@ -336,6 +427,7 @@ struct CategoryView: View {
         do {
             let refreshedItem = try await DataAccess.refreshCategoryInfoFromAPI(categoryInfo: item, appDatabase: appDatabase)
 
+
             if let refreshedItem {
                 if refreshedItem.base.id != item.base.id {
                     logger.debug("CategoryView: item has a one DB-ID! this edge-case can caused due to redirects.")
@@ -346,13 +438,25 @@ struct CategoryView: View {
                 // TODO: inform the user somehow that the item was merged into another if one if those above ^ happened?
 
                 databaseTask?.cancel()
-                self.item = refreshedItem
+
+                if self.item?.base.commonsCategory != refreshedItem.base.commonsCategory || self.item?.base.wikidataId != refreshedItem.base.wikidataId {
+                    paginationModelNeedsReloadDate = .now
+                }
+                if self.item != refreshedItem {
+                    self.item = refreshedItem
+                }
+
+
                 startDatabaseTask(incrementViewCount: false)
             }
 
             print("refreshed item \(refreshedItem.debugDescription)")
         } catch {
             logger.error("Failed to fetch category freshly from network")
+        }
+
+        if paginationModel == nil, paginationModelNeedsReloadDate == nil {
+            paginationModelNeedsReloadDate = .now
         }
     }
 

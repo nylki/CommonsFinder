@@ -15,35 +15,25 @@ struct SearchView: View {
 
     @FocusState private var isSearchFieldFocused: Bool
 
-    @State private var isOptionBarVisible = true
-    @State private var isScrolledDown = false
-
-
     var body: some View {
         @Bindable var searchModel = searchModel
 
         VStack {
             if searchModel.isSearching {
                 ProgressView().frame(height: 500)
-            } else if searchModel.bindableSearchText.isEmpty {
-                searchResultView
             } else {
                 searchResultView
             }
-
-        }
-        .onScrollPhaseChange { oldPhase, newPhase, context in
-            let geometry = context.geometry
-            withAnimation {
-                isOptionBarVisible = (newPhase == .idle)
-            }
-
-            let totalScrollOffset = geometry.contentOffset.y + geometry.contentInsets.top
-            isScrolledDown = totalScrollOffset > 1
         }
         .scrollDismissesKeyboard(.immediately)
         .overlay(alignment: .top) {
-            if !searchModel.isSearching, isOptionBarVisible { optionBar }
+            if !searchModel.isSearching {
+                HStack {
+                    SearchOrderButton(searchOrder: searchModel.orderBinding)
+                    Spacer(minLength: 0)
+                }
+                .padding(.horizontal)
+            }
         }
         .onChange(of: searchModel.searchFieldFocusTrigger) {
             isSearchFieldFocused = true
@@ -82,8 +72,6 @@ struct SearchView: View {
                     toolOverlayPadding: false,
                     paginationRequest: searchModel.mediaPagination
                 )
-
-
             }
             .id("all")
         case .categories:
@@ -153,66 +141,6 @@ struct SearchView: View {
         .animation(.default, value: hasCategoriesLoaded)
         .animation(.default, value: searchModel.categoryPaginationStatus)
         .animation(.default, value: searchModel.categoryResults?.rawCount)
-    }
-
-
-    private var optionBar: some View {
-        HStack {
-            Menu {
-                ForEach(SearchOrder.allCases, id: \.self) { order in
-                    Button(action: { searchModel.setOrder(order) }) {
-                        Label {
-                            Text(order.localizedStringResource)
-                        } icon: {
-                            if order == searchModel.order {
-                                Image(systemName: "checkmark")
-                            }
-                        }
-                    }
-                }
-            } label: {
-                Label {
-                    Text(searchModel.order.localizedStringResource)
-                } icon: {
-                    Image(systemName: "arrow.up.arrow.down")
-                }
-                .padding(.horizontal, 11)
-                .padding(.vertical, 9)
-                .glassButtonStyle()
-                //                .background(.regularMaterial, in: .capsule)
-
-                .font(.footnote)
-                .frame(minWidth: 100)
-                .fallbackGlassEffect(in: .capsule)
-                .scenePadding(.horizontal)
-                .padding(.vertical, 5)
-                .padding(.top, isScrolledDown ? 5 : 0)
-                .contentShape(.capsule)
-
-            }
-
-
-            Spacer()
-
-            //            Button {
-            //
-            //            } label: {
-            //                Image(systemName: "square.grid.2x2")
-            //                    .padding(.horizontal, 9)
-            //                    .padding(.vertical, 9)
-            //                    .background(.regularMaterial, in: .capsule)
-            //                    .font(.footnote)
-            //
-            //            }
-            //            .disabled(true)
-
-        }
-        .buttonStyle(.plain)
-        .transition(
-            .asymmetric(
-                insertion: .opacity.animation(.default.speed(0.5)),
-                removal: .opacity.combined(with: .offset(y: -10)))
-        )
     }
 }
 

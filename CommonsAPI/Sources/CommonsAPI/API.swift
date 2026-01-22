@@ -376,6 +376,9 @@ public actor API {
             "cmnamespace": String(MediawikiNamespace.category.rawValue),
             "cmlimit": "500",
             "cllimit": "500",
+            "smaxage": "600",
+            "maxage": "600",
+            "uselang": "content",
             "clshow": "!hidden",
             "format": "json",
             "curtimestamp": "1"
@@ -423,6 +426,9 @@ public actor API {
             "cmtitle": "Category:\(category)",
             "cmprop": "ids|title",
             "cmtype": "file",
+            "smaxage": "600",
+            "maxage": "600",
+            "uselang": "content",
             "cmnamespace": String(MediawikiNamespace.file.rawValue),
             "cmlimit": limit.apiString,
             "format": "json",
@@ -510,8 +516,8 @@ public actor API {
             "iiextmetadatafilter": "ImageDescription|Attribution",
             "iiurlwidth": "640",
             "iiurlheight": "640",
-            "smaxage": "60",
-            "maxage": "60",
+            "smaxage": "600",
+            "maxage": "600",
             "format": "json"
         ]
         
@@ -579,10 +585,12 @@ public actor API {
             "srnamespace": String(namespace.rawValue),
             "srlimit": limit.apiString,
             "srprop": "timestamp",
-            "maxage": "60",
+            "smaxage": "600",
+            "maxage": "600",
             "exportschema": "0.11",
             "formatversion": "2",
             "curtimestamp": "1",
+            "uselang": "content",
             "format": "json"
         ]
         
@@ -637,7 +645,10 @@ public actor API {
             "gssort": Sort.relevance.rawValue,
             "gsnamespace": String(MediawikiNamespace.file.rawValue),
             "gslimit": "max",
-            "maxage": "60",
+            /// uselang: content can be used when the results do not need to be localized, this supposedly improves caching: https://phabricator.wikimedia.org/T97096
+            "uselang": "content",
+            "smaxage": "600",
+            "maxage": "600",
             "exportschema": "0.11",
             "formatversion": "2",
             "curtimestamp": "1",
@@ -672,7 +683,7 @@ public actor API {
             "gssort": Sort.distance.rawValue,
             "gsnamespace": String(MediawikiNamespace.file.rawValue),
             "gslimit": "max",
-            "maxage": "60",
+            "maxage": "600",
             "exportschema": "0.11",
             "formatversion": "2",
             "curtimestamp": "1",
@@ -700,7 +711,7 @@ public actor API {
             "action": "wbsearchentities",
             "formatversion": "2",
             "language": languageCode,
-            "uselang": languageCode,
+            "uselang": "content",
             "search": term,
             "type": "item",
             "limit": "20",
@@ -1070,6 +1081,7 @@ LIMIT \(limit)
             "format": "json",
             "smaxage": String(cacheDuration),
             "maxage": String(cacheDuration),
+            "uselang": "content",
             "formatversion": "2",
             "warningsaserror": "1"
         ]
@@ -1114,8 +1126,9 @@ LIMIT \(limit)
             "sites": "commonswiki",
             "exportschema": "0.11",
             "formatversion": "2",
-            "smaxage": "60",
-            "maxage": "60",
+            "smaxage": "600",
+            "maxage": "600",
+            "uselang": "content",
             "format": "json"
         ]
         
@@ -1170,6 +1183,7 @@ LIMIT \(limit)
             "tbnooverride": "1",
             "smaxage": "2400",
             "maxage": "2400",
+            "uselang": "content",
             "formatversion": "2",
             "curtimestamp": "1"
         ]
@@ -1212,8 +1226,9 @@ LIMIT \(limit)
             "languagefallback": "1",
             "ids": ids.joined(separator: "|"),
             "formatversion": "2",
-            "smaxage": "60",
-            "maxage": "60",
+            "smaxage": "600",
+            "maxage": "600",
+            "uselang": "content",
             "format": "json"
         ]
         

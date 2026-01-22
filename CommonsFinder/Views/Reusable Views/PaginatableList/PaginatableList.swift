@@ -36,7 +36,6 @@ struct PaginatableList<Item: Equatable & Identifiable, ItemView: View>: View {
             .compositingGroup()
             .scenePadding()
             .padding(.top, toolOverlayPadding ? 40 : 0)
-            .safeAreaPadding(.trailing)
             .shadow(color: .black.opacity(0.15), radius: 10)
         }
         .scrollIndicators(.visible, axes: .vertical)
