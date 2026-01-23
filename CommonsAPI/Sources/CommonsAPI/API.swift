@@ -297,7 +297,8 @@ public actor API {
             "ucnamespace": String(MediawikiNamespace.file.rawValue),
             "uclimit": limit.apiString,
             "format": "json",
-            "formatversion": "2"
+            "formatversion": "2",
+            "uselang": "content"
         ]
         
         let request = try URLRequest.GET(url: commonsEndpoint, query: query)
@@ -518,6 +519,7 @@ public actor API {
             "iiurlheight": "640",
             "smaxage": "600",
             "maxage": "600",
+            "uselang": "content",
             "format": "json"
         ]
         
@@ -711,13 +713,13 @@ public actor API {
             "action": "wbsearchentities",
             "formatversion": "2",
             "language": languageCode,
-            "uselang": "content",
             "search": term,
             "type": "item",
             "limit": "20",
             "format": "json",
             "smaxage": "3600",
             "maxage": "3600",
+            "uselang": "content",
             "curtimestamp": "1"
         ]
         

@@ -7,6 +7,7 @@
 
 
 import CommonsAPI
+import CoreLocation
 import FrameUp
 import GRDB
 import SwiftUI
@@ -37,6 +38,11 @@ struct CategoryView: View {
     @State private var searchString = ""
     @State private var isSearchPresented = false
 
+    @Namespace private var namespace
+
+    @State private var isOptionsBarSticky = false
+    @State private var scrollState: ScrollState = .init()
+
     @State private var subCategories: [CategoryInfo] = []
     @State private var parentCategories: [CategoryInfo] = []
     @State private var selectedMediaTab: MediaTab = .category
@@ -49,14 +55,16 @@ struct CategoryView: View {
     @Environment(\.locale) private var locale
     @Environment(Navigation.self) private var navigation
     @Environment(MapModel.self) private var mapModel
-    @Namespace private var namespace
-
     private var resolvedCategoryName: String? {
-        item?.base.commonsCategory
+        item?.base.commonsCategory ?? initialItem.base.commonsCategory
     }
 
     private var title: String {
-        item?.base.label ?? resolvedCategoryName ?? ""
+        initialItem.base.label ?? initialItem.base.label ?? resolvedCategoryName ?? ""
+    }
+
+    private var coordinate: CLLocationCoordinate2D? {
+        item?.base.coordinate ?? initialItem.base.coordinate
     }
 
     private func loadPaginationModel() async {
@@ -75,20 +83,31 @@ struct CategoryView: View {
     }
 
     var body: some View {
+        let dragGesture = DragGesture(minimumDistance: 25, coordinateSpace: .local)
+            .onChanged { v in
+                let newDirection: ScrollState.Direction =
+                    if v.predictedEndLocation.y > v.startLocation.y {
+                        .up
+                    } else if v.predictedEndLocation.y < v.startLocation.y {
+                        .down
+                    } else {
+                        .none
+                    }
+
+                guard newDirection != scrollState.lastDirection else { return }
+                scrollState.lastDirection = newDirection
+            }
+
         ScrollView(.vertical) {
             VStack(alignment: .leading) {
-                if !isSearchPresented {
-                    header
-                    Divider()
-                }
+                header
 
-                HStack {
-                    SearchOrderButton(searchOrder: $searchOrder)
-                    Spacer()
-                    DeepCategoryToggle(enabled: $deepCategoryEnabled)
-                        .disabled(subCategories.isEmpty)
-                }
-                .padding(.horizontal)
+                optionsBar
+                    .opacity(isOptionsBarSticky ? 0 : 1)
+                    .allowsHitTesting(!isOptionsBarSticky)
+                    .onScrollVisibilityChange(threshold: 0.1) { visible in
+                        isOptionsBarSticky = !visible
+                    }
 
                 mediaList
 
@@ -96,8 +115,21 @@ struct CategoryView: View {
             }
             .animation(.default, value: isSearchPresented)
         }
+        .onScrollPhaseChange { oldPhase, newPhase, context in
+            guard oldPhase != newPhase else { return }
+            scrollState.phase = newPhase
+        }
+        .overlay(alignment: .top) {
+            let stickyOptionsBarVisible =
+                isOptionsBarSticky && paginationModel != nil && paginationModel?.isEmpty != true && scrollState.lastDirection == .up && scrollState.phase == .idle
 
+            if stickyOptionsBarVisible {
+                optionsBar
+            }
+        }
+        .animation(.linear(duration: 0.25), value: scrollState)
         .containerRelativeFrame(.horizontal)
+        .simultaneousGesture(dragGesture, isEnabled: isOptionsBarSticky)
         .navigationTitle(title)
         .navigationBarTitleDisplayMode(.inline)
         .toolbar { toolbar }
@@ -148,29 +180,50 @@ struct CategoryView: View {
     }
 
     @ViewBuilder
+    private var optionsBar: some View {
+        HStack {
+            SearchOrderButton(searchOrder: $searchOrder)
+            DeepCategoryToggle(enabled: $deepCategoryEnabled)
+                .disabled(subCategories.isEmpty)
+            if !isSearchPresented {
+                Button {
+                    isSearchPresented.toggle()
+                } label: {
+                    Label("Search", systemImage: "magnifyingglass")
+                }
+                .labelStyle(.iconOnly)
+                .glassButtonStyle()
+            }
+
+
+            Spacer(minLength: 0)
+        }
+        .padding(.horizontal)
+    }
+
+    @ViewBuilder
     private var mediaList: some View {
-        ZStack {
+        VStack {
             if let paginationModel, !paginationModel.isEmpty {
                 PaginatableMediaList(
                     items: paginationModel.mediaFileInfos,
                     status: paginationModel.status,
                     paginationRequest: paginationModel.paginate
                 )
+                .transition(.opacity)
             } else if paginationModel?.isEmpty == true {
                 mediaUnavailableView
                     .padding()
             } else {
-                Color.clear.frame(height: 500)
-                    .overlay(alignment: .top) {
-                        ProgressView()
-                            .progressViewStyle(.circular)
-                            .padding()
-                    }
+                ProgressView()
+                    .progressViewStyle(.circular)
+                    .padding()
             }
         }
+        .frame(minWidth: 0, maxWidth: .infinity)
         .animation(.snappy, value: paginationModel == nil)
     }
-    
+
     @ViewBuilder
     private var mediaUnavailableView: some View {
         ContentUnavailableView {
@@ -178,9 +231,9 @@ struct CategoryView: View {
         } description: {
             if !searchString.isEmpty {
                 if deepCategoryEnabled {
-                    Text("No images for \"\(searchString)\" in **\(title)**.")
+                    Text("No images for **\(searchString)** in **\(title)**.")
                 } else {
-                    Text("No images for \(searchString) in **\(title)**. Try to include subcategories for more results.")
+                    Text("No images for **\(searchString)** in **\(title)**. Try to include subcategories for more results.")
                 }
             } else {
                 if deepCategoryEnabled {
@@ -188,8 +241,8 @@ struct CategoryView: View {
                 } else {
                     Text("No images depicting **\(title)** or tagged with the category.")
                 }
-                
-                
+
+
             }
         }
     }
@@ -199,18 +252,23 @@ struct CategoryView: View {
         VStack(alignment: .leading) {
             Text(title)
                 .font(.largeTitle).bold()
-            subheadline
-            if let item, let coordinate = item.base.coordinate {
-                InlineMap(
-                    coordinate: coordinate,
-                    item: .category(item.base),
-                    knownName: title,
-                    mapPinStyle: .pinOnly,
-                    details: .none
-                )
-                .padding(.vertical)
+
+            if !isSearchPresented {
+                subheadline
+
+                if let coordinate {
+                    InlineMap(
+                        coordinate: coordinate,
+                        item: .category(item?.base ?? initialItem.base),
+                        knownName: title,
+                        mapPinStyle: .pinOnly,
+                        details: .none
+                    )
+                    .padding(.vertical)
+                }
+                relatedCategoriesView
             }
-            relatedCategoriesView
+
         }
         .animation(.default, value: item)
         .animation(.default, value: item?.base.coordinate)
@@ -220,7 +278,7 @@ struct CategoryView: View {
     @ViewBuilder
     private var subheadline: some View {
 
-        let description = item?.base.description
+        let description = item?.base.description ?? initialItem.base.description
         let shouldShowCategory = (resolvedCategoryName != title) && !title.isEmpty
 
         if shouldShowCategory, let resolvedCategoryName {
@@ -245,18 +303,6 @@ struct CategoryView: View {
 
     @ToolbarContentBuilder
     private var toolbar: some ToolbarContent {
-        //            ToolbarItem(placement: .principal) {
-        //                if showTitleInToolbar {
-        //                    Text(title)
-        //                        .font(.headline)
-        //                        .lineLimit(2)
-        //                        .fixedSize(horizontal: false, vertical: true)
-        //                        .padding(.vertical, 3)
-        //                        .allowsTightening(true)
-        //                }
-        //            }
-
-
         ToolbarItem(placement: .automatic) {
             let isBookmarked = (item ?? initialItem).isBookmarked
             Button(
@@ -289,24 +335,22 @@ struct CategoryView: View {
     @ViewBuilder private var relatedCategoriesView: some View {
 
         VStack(alignment: .leading) {
-            if !parentCategories.isEmpty || !subCategories.isEmpty {
-                DisclosureGroup(
-                    "\(parentCategories.count) Parent Categories",
-                    isExpanded: $isParentCategoriesExpanded
-                ) {
-                    RelatedCategoryView(categories: parentCategories)
-                }
-                .disabled(parentCategories.isEmpty)
-
-
-                DisclosureGroup(
-                    "\(subCategories.count) Subcategories",
-                    isExpanded: $isSubCategoriesExpanded
-                ) {
-                    RelatedCategoryView(categories: subCategories)
-                }
-                .disabled(subCategories.isEmpty)
+            DisclosureGroup(
+                "\(parentCategories.count) Parent Categories",
+                isExpanded: $isParentCategoriesExpanded
+            ) {
+                RelatedCategoryView(categories: parentCategories)
             }
+            .disabled(parentCategories.isEmpty)
+
+
+            DisclosureGroup(
+                "\(subCategories.count) Subcategories",
+                isExpanded: $isSubCategoriesExpanded
+            ) {
+                RelatedCategoryView(categories: subCategories)
+            }
+            .disabled(subCategories.isEmpty)
         }
         .animation(.default, value: subCategories)
         .animation(.default, value: parentCategories)

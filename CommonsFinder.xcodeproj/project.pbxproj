@@ -181,6 +181,8 @@
 				Types/FileNameTypeTuple.swift,
 				"Types/MediaFileDraft+uploadDisabledReason.swift",
 				Types/NewDraftOptions.swift,
+				Types/OptionBarState.swift,
+				Types/ScrollState.swift,
 				Types/TagItem.swift,
 				Types/UploadPossibleStatus.swift,
 				Types/WikidataStatement.swift,

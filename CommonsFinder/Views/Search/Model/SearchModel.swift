@@ -46,7 +46,6 @@ import os.log
     var mediaItems: [MediaFileInfo] { mediaResults?.mediaFileInfos ?? [] }
     var categoryItems: [CategoryInfo] { categoryResults?.categoryInfos ?? [] }
 
-
     var mediaPaginationStatus: PaginationStatus {
         mediaResults?.status ?? .unknown
     }

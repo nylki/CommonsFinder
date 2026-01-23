@@ -29,7 +29,6 @@ struct SearchOrderButton: View {
                 Image(systemName: "arrow.up.arrow.down")
             }
             .tint(.primary)
-            .padding(.vertical, 5)
             .font(.footnote)
         }
         .glassButtonStyle()
