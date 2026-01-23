@@ -1380,22 +1380,22 @@
         }
       }
     },
-    "No images for \"%@\" in **%@**." : {
+    "No images for **%@** in **%@**." : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "new",
-            "value" : "No images for \"%1$@\" in **%2$@**."
+            "value" : "No images for **%1$@** in **%2$@**."
           }
         }
       }
     },
-    "No images for %@ in **%@**. Try to include subcategories for more results." : {
+    "No images for **%@** in **%@**. Try to include subcategories for more results." : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "new",
-            "value" : "No images for %1$@ in **%2$@**. Try to include subcategories for more results."
+            "value" : "No images for **%1$@** in **%2$@**. Try to include subcategories for more results."
           }
         }
       }

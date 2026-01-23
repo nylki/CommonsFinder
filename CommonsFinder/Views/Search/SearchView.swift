@@ -15,24 +15,28 @@ struct SearchView: View {
 
     @FocusState private var isSearchFieldFocused: Bool
 
+    @State private var isOptionsBarSticky = false
+    @State private var scrollState: ScrollState = .init()
+
     var body: some View {
         @Bindable var searchModel = searchModel
 
         VStack {
             if searchModel.isSearching {
-                ProgressView().frame(height: 500)
+                ProgressView()
             } else {
                 searchResultView
             }
         }
         .scrollDismissesKeyboard(.immediately)
         .overlay(alignment: .top) {
-            if !searchModel.isSearching {
-                HStack {
-                    SearchOrderButton(searchOrder: searchModel.orderBinding)
-                    Spacer(minLength: 0)
+            if !searchModel.isSearching, !searchModel.bindableSearchText.isEmpty {
+                let stickyOptionsBarVisible =
+                    isOptionsBarSticky && searchModel.mediaResults != nil && searchModel.mediaResults?.isEmpty != nil && scrollState.lastDirection == .up && scrollState.phase == .idle
+
+                if stickyOptionsBarVisible {
+                    optionsBar
                 }
-                .padding(.horizontal)
             }
         }
         .onChange(of: searchModel.searchFieldFocusTrigger) {
@@ -62,10 +66,37 @@ struct SearchView: View {
 
     @ViewBuilder
     private var searchResultView: some View {
+        let dragGesture = DragGesture(minimumDistance: 25, coordinateSpace: .local)
+            .onChanged { v in
+                let newDirection: ScrollState.Direction =
+                    if v.predictedEndLocation.y > v.startLocation.y {
+                        .up
+                    } else if v.predictedEndLocation.y < v.startLocation.y {
+                        .down
+                    } else {
+                        .none
+                    }
+
+                guard newDirection != scrollState.lastDirection else { return }
+                scrollState.lastDirection = newDirection
+            }
+
         switch searchModel.scope {
         case .all:
             ScrollView(.vertical) {
+
                 HorizontalCategoryList
+                    .padding(.bottom)
+
+                if !searchModel.isSearching, !searchModel.bindableSearchText.isEmpty, searchModel.mediaResults != nil {
+                    optionsBar
+                        .opacity(isOptionsBarSticky ? 0 : 1)
+                        .allowsHitTesting(!isOptionsBarSticky)
+                        .onScrollVisibilityChange(threshold: 0.1) { visible in
+                            isOptionsBarSticky = !visible
+                        }
+                }
+
                 PaginatableMediaList(
                     items: searchModel.mediaItems,
                     status: searchModel.mediaPaginationStatus,
@@ -73,6 +104,7 @@ struct SearchView: View {
                     paginationRequest: searchModel.mediaPagination
                 )
             }
+            .simultaneousGesture(dragGesture)
             .id("all")
         case .categories:
             PaginatableCategoryList(
@@ -90,6 +122,15 @@ struct SearchView: View {
             )
             .id("images")
         }
+    }
+
+    @ViewBuilder
+    private var optionsBar: some View {
+        HStack {
+            SearchOrderButton(searchOrder: searchModel.orderBinding)
+            Spacer(minLength: 0)
+        }
+        .padding(.horizontal)
     }
 
     @ViewBuilder

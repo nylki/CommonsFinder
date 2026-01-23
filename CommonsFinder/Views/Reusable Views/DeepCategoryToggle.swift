@@ -17,7 +17,6 @@ struct DeepCategoryToggle: View {
             Label("Include Subcategories", systemImage: "list.bullet.indent")
                 .contentTransition(.symbolEffect)
                 .tint(.primary)
-                .padding(.vertical, 5)
                 .font(.footnote)
         }
         .glassButtonStyle(prominent: enabled)
