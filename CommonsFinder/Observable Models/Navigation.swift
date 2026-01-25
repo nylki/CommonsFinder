@@ -48,14 +48,7 @@ import os.log
 
     private var path: [TabItem: [NavigationStackItem]] = [.home: [], .map: [], .events: [], .search: []] {
         didSet {
-            //print("Nav change: \(path)")
-
-            if let currentPath = currentPath.last {
-                Networking.shared.referer = "CommonsFinder://\(currentPath.refererPath)"
-            } else {
-                Networking.shared.referer = "CommonsFinder://\(selectedTab.refererPath)"
-            }
-            logger.debug("Referer: \(Networking.shared.referer)")
+            updateReferer()
         }
     }
 
@@ -64,7 +57,20 @@ import os.log
     }
 
 
-    var selectedTab: TabItem = .home
+    var selectedTab: TabItem = .home {
+        didSet {
+            updateReferer()
+        }
+    }
+
+    private func updateReferer() {
+        if let currentPath = currentPath.last {
+            Networking.shared.referer = "CommonsFinder://\(currentPath.refererPath)"
+        } else {
+            Networking.shared.referer = "CommonsFinder://\(selectedTab.refererPath)"
+        }
+        logger.debug("Referer: \(Networking.shared.referer)")
+    }
 
     //    var isViewingFileSheetOpen: MediaFile.ID?
     var isEditingDraft: DraftSheetNavItem?
