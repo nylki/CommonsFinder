@@ -118,13 +118,7 @@ class UploadManager {
             logger.error("Failed to markUnfinishedUploadsAfterAppStartWithError \(error)")
         }
 
-        Task<Void, Never> {
-            do {
-                try await verifyDraftsWithErrors()
-            } catch {
-                logger.error("Failed to verify interruptedUploads in UploadManager post launch ops.")
-            }
-        }
+        verifyDraftsWithErrors()
     }
 
     /// this relates to all drafts whose upload was started, but the app was closed by the user or by a crash.

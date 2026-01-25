@@ -104,7 +104,7 @@ final class TagPickerModel {
         copySuggestedTags()
 
         guard !searchText.isEmpty else { return }
-        guard let appDatabase else {
+        guard appDatabase != nil else {
             assertionFailure("We expect the appDatabase to be initialized by now")
             return
         }

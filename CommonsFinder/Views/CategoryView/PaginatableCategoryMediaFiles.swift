@@ -51,9 +51,6 @@ import os.log
     }
 
     private func fetchRawContinueDepictItems() async throws -> (pageIDs: [String], Int?)? {
-        return nil
-
-
         if let depictItemID {
             let result = try await CommonsAPI.API.shared.searchFiles(
                 for: "haswbstatement:P180=\(depictItemID)",
