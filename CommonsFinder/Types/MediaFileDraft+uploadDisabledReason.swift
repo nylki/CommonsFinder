@@ -57,10 +57,10 @@ extension MediaFileDraftModel {
         let filename = draft.name.appendingFileExtension(conformingTo: uniformType)
 
         do {
-            async let existsTask = CommonsAPI.API.shared.checkIfFileExists(
+            async let existsTask = Networking.shared.api.checkIfFileExists(
                 filename: filename
             )
-            async let validationTask = CommonsAPI.API.shared.validateFilename(
+            async let validationTask = Networking.shared.api.validateFilename(
                 filename: filename
             )
 

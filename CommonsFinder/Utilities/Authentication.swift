@@ -120,12 +120,12 @@ extension Authentication {
             if let oneTimeCode, !oneTimeCode.isEmpty {
                 switch oneTimeCode.type {
                 case .twoFactor:
-                    response = try await API.shared.continueLogin(twoFactorCode: oneTimeCode.baseValue)
+                    response = try await Networking.shared.api.continueLogin(twoFactorCode: oneTimeCode.baseValue)
                 case .email:
-                    response = try await API.shared.continueLogin(emailCode: oneTimeCode.baseValue)
+                    response = try await Networking.shared.api.continueLogin(emailCode: oneTimeCode.baseValue)
                 }
             } else {
-                response = try await API.shared.login(username: username, password: password)
+                response = try await Networking.shared.api.login(username: username, password: password)
             }
 
         } catch {
@@ -195,7 +195,7 @@ extension Authentication {
     }
 
     static func fetchCreateAccountTokenAndCaptchaInfo() async throws -> TokenAndCaptchaURL {
-        let info = try await API.shared.fetchCreateAccountInfo()
+        let info = try await Networking.shared.api.fetchCreateAccountInfo()
         guard let captchaURL = info.captchaURL, let captchaID = info.captchaID else {
             throw AuthenticationResponseError.captchaInfoMissing
         }
@@ -203,7 +203,7 @@ extension Authentication {
     }
 
     static func validateUsernamePassword(username: String, password: String, email: String) async throws -> UsernamePasswordValidation {
-        let validation = try await API.shared.validateUsernamePassword(username: username, password: password, email: email)
+        let validation = try await Networking.shared.api.validateUsernamePassword(username: username, password: password, email: email)
         return validation
     }
 
@@ -219,7 +219,7 @@ extension Authentication {
     ) async throws(AuthError) {
         let response: CreateAccountResponse
         do {
-            response = try await API.shared.createAccount(
+            response = try await Networking.shared.api.createAccount(
                 usingCreateAccountToken: token,
                 captchaWord: captchaWord,
                 captchaID: captchaID,
@@ -275,7 +275,7 @@ extension Authentication {
     /// Will re-login with keychain credentials if necessary.
     static func fetchCSRFToken() async throws(AuthError) -> TokenRequestSuccess {
         do {
-            let token = try await API.shared.fetchCSRFToken()
+            let token = try await Networking.shared.api.fetchCSRFToken()
             return .tokenReceived(token: token)
         } catch {
             return try await retryFetchingCSRFToken()

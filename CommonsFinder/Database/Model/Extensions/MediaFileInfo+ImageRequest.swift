@@ -38,7 +38,8 @@ extension MediaFileInfo {
 
         if let thumbURL = mediaFile.thumbURL {
             let imageResize = ImageProcessors.Resize(size: .init(width: max, height: max))
-            let urlRequest = URLRequest(url: thumbURL, cachePolicy: .returnCacheDataElseLoad)
+            var urlRequest = URLRequest(url: thumbURL, cachePolicy: .returnCacheDataElseLoad)
+            urlRequest.setValue(Networking.shared.referer, forHTTPHeaderField: "Referer")
             return .init(urlRequest: urlRequest, processors: [imageResize])
         }
         return nil
@@ -62,7 +63,8 @@ extension MediaFileInfo {
         let w = min(max, mediaFile.width ?? max)
         if let resizedURL = try? mediaFile.url.resizedCommonsImageURL(maxWidth: w) {
             let imageResize = ImageProcessors.Resize(size: .init(width: w, height: w))
-            let urlRequest = URLRequest(url: resizedURL, cachePolicy: .returnCacheDataElseLoad)
+            var urlRequest = URLRequest(url: resizedURL, cachePolicy: .returnCacheDataElseLoad)
+            urlRequest.setValue(Networking.shared.referer, forHTTPHeaderField: "Referer")
             return .init(urlRequest: urlRequest, processors: [imageResize])
         }
         return nil
@@ -74,14 +76,17 @@ extension MediaFileInfo {
         let w = min(max, mediaFile.width ?? max)
         if let resizedURL = try? mediaFile.url.resizedCommonsImageURL(maxWidth: w) {
             let imageResize = ImageProcessors.Resize(size: .init(width: w, height: w))
-            let urlRequest = URLRequest(url: resizedURL, cachePolicy: .returnCacheDataElseLoad)
+            var urlRequest = URLRequest(url: resizedURL, cachePolicy: .returnCacheDataElseLoad)
+            urlRequest.setValue(Networking.shared.referer, forHTTPHeaderField: "Referer")
             return .init(urlRequest: urlRequest, processors: [imageResize])
         }
         return nil
     }
 
     func originalImageRequest(cachePolicy: URLRequest.CachePolicy = .returnCacheDataElseLoad) -> ImageRequest {
-        let urlRequest = URLRequest(url: mediaFile.url, cachePolicy: cachePolicy)
+
+        var urlRequest = URLRequest(url: mediaFile.url, cachePolicy: cachePolicy)
+        urlRequest.setValue(Networking.shared.referer, forHTTPHeaderField: "Referer")
         return .init(urlRequest: urlRequest, processors: [])
     }
 

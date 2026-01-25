@@ -26,7 +26,7 @@ private final class
     override internal func
         fetchRawContinuePaginationItems() async throws -> (fileIdentifiers: CommonsAPI.FileIdentifierList, canContinue: Bool)
     {
-        let result = try await CommonsAPI.API.shared.listUserImages(
+        let result = try await Networking.shared.api.listUserImages(
             of: username,
             limit: .count(500),
             start: .now,

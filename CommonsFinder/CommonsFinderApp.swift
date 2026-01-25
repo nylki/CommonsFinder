@@ -29,7 +29,7 @@ struct CommonsFinderApp: App {
 
     init() {
         postInstallMaintenance()
-        configureNetworking()
+        configureNukeAndPulse()
 
         let appDatabase = AppDatabase.shared
         self.appDatabase = appDatabase
@@ -118,7 +118,7 @@ struct CommonsFinderApp: App {
     }
 }
 
-private func configureNetworking() {
+private func configureNukeAndPulse() {
     // NUKE setup
     ImageCache.shared.costLimit = 1024 * 1024 * 1000  // 1000 MB
     //                    ImageCache.shared.countLimit = 100
@@ -130,7 +130,8 @@ private func configureNetworking() {
     let urlSessionConfig = URLSessionConfiguration.default
 
     urlSessionConfig.httpAdditionalHeaders = [
-        "User-Agent": UserAgentUtil.userAgent
+        "User-Agent": Networking.shared.userAgent,
+        "Referer": Networking.shared.referer,
     ]
 
     let dataLoader = DataLoader(configuration: urlSessionConfig)

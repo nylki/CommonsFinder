@@ -400,7 +400,7 @@ private func fetchWikiItems(region: MKCoordinateRegion, maxDiagonalMapLength: Do
     do {
         let getAllItems = region.diagonalMeters < 7500
 
-        let items: [Category] = try await API.shared
+        let items: [Category] = try await Networking.shared.api
             .getWikidataItemsInBoundingBox(
                 cornerSouthWest: bbox.southWest,
                 cornerNorthEast: bbox.northEast,
@@ -425,7 +425,7 @@ private func fetchWikiItems(around coordinate: CLLocationCoordinate2D, radius: C
     do {
         let getAllItems = (radius * 2) < 7500
 
-        let items: [Category] = try await API.shared
+        let items: [Category] = try await Networking.shared.api
             .getWikidataItemsAroundCoordinate(
                 coordinate,
                 kilometerRadius: radius / 1000,
@@ -450,7 +450,7 @@ private func fetchMediaFiles(region: MKCoordinateRegion, maxDiagonalMapLength: D
         let boundingBox = region.paddedBoundingBox()
         assert(boundingBox.bottomRight != boundingBox.topLeft, "bounding box corners must be different")
 
-        let items: [GeoSearchFileItem] = try await API.shared
+        let items: [GeoSearchFileItem] = try await Networking.shared.api
             .geoSearchFiles(
                 topLeft: boundingBox.topLeft,
                 bottomRight: boundingBox.bottomRight
@@ -466,7 +466,7 @@ private func fetchMediaFiles(region: MKCoordinateRegion, maxDiagonalMapLength: D
 private func fetchMediaFiles(around coordinate: CLLocationCoordinate2D, radius: CLLocationDistance) async -> [GeoSearchFileItem] {
     assert(radius != 0, "Radius should not be 0")
     do {
-        let items: [GeoSearchFileItem] = try await API.shared
+        let items: [GeoSearchFileItem] = try await Networking.shared.api
             .geoSearchFiles(around: coordinate, radius: radius)
 
         return items
