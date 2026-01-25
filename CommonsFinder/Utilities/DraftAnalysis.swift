@@ -151,7 +151,7 @@ nonisolated enum DraftAnalysis {
             for circle in circles {
                 group.addTask {
                     do {
-                        let categories = try await CommonsAPI.API.shared
+                        let categories = try await Networking.shared.api
                             .getWikidataItemsAroundCoordinate(
                                 circle.coordinate,
                                 kilometerRadius: circle.radius / 1000,
@@ -181,7 +181,7 @@ nonisolated enum DraftAnalysis {
 
     private static func fetchCategoriesWithAreas(around coordinate: CLLocationCoordinate2D, radiusMeters: CLLocationDistance, minAreaQm: Double, limit: Int = 25) async -> [Category] {
         do {
-            let result = try await CommonsAPI.API.shared
+            let result = try await Networking.shared.api
                 .getWikidataItemsAroundCoordinate(
                     coordinate,
                     kilometerRadius: radiusMeters / 1000,
@@ -211,7 +211,7 @@ nonisolated enum DraftAnalysis {
 
             for kmDiameter in kmDiameters {
                 let limit = 50
-                let categories = try await CommonsAPI.API.shared
+                let categories = try await Networking.shared.api
                     .getWikidataItemsAroundCoordinate(
                         coordinate,
                         kilometerRadius: kmDiameter,

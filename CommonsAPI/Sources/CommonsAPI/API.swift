@@ -27,7 +27,8 @@ public actor API {
     let wikidataSparqlEndpoint = URL(string: "https://query.wikidata.org/bigdata/namespace/wdq/sparql")!
     let createAccountRedirectURL = URL(string: "https://commons.m.wikimedia.beta.wmflabs.org/w/index.php?title=Main_Page&welcome=yes")!
     
-    let userAgent: String
+    private(set) var userAgent: String
+    var referer: String
     
 #if DEBUG
     let urlSession = URLSessionProxy(configuration: URLSessionConfiguration.default)
@@ -42,8 +43,9 @@ public actor API {
     }()
 
 
-    public init(userAgent: String) {
+    public init(userAgent: String, referer: String) {
         self.userAgent = userAgent
+        self.referer = referer
 
  // Un-Comment the following code block to test EmailAuth via email-code (https://www.mediawiki.org/wiki/Help:Extension:EmailAuth)
 //#if DEBUG
@@ -110,7 +112,7 @@ public actor API {
             query["meta"] = "tokens"
         }
 
-        let request = try URLRequest.GET(url: commonsEndpoint, query: query)
+        let request = try GET(url: commonsEndpoint, query: query)
         let (data, response) = try await urlSession.data(for: request)
 
         let value = try parse(QueryResponse<AuthManagerOrTokensResponse>.self, from: data, response: response)
@@ -173,7 +175,7 @@ public actor API {
             "password": password,
             "rememberMe": "1"
         ]
-        var request = try URLRequest.POST(url: commonsEndpoint, form: form)
+        var request = try POST(url: commonsEndpoint, form: form)
         // Optional: Referer can help in some CSRF contexts; generally not required for clientlogin.
         request.setValue("https://commons.wikimedia.org/wiki/Special:UserLogin", forHTTPHeaderField: "Referer")
 
@@ -203,7 +205,7 @@ public actor API {
             "captchaId": captchaID,
             "email": email
         ]
-        var request = try URLRequest.POST(url: commonsEndpoint, form: form)
+        var request = try POST(url: commonsEndpoint, form: form)
         request.setValue("https://commons.wikimedia.org/wiki/Special:CreateAccount", forHTTPHeaderField: "Referer")
 
         let (data, response) = try await urlSession.data(for: request)
@@ -235,7 +237,7 @@ public actor API {
             "token": emailCode,
             "logincontinue": "1"
         ]
-        var request = try URLRequest.POST(url: commonsEndpoint, form: form)
+        var request = try POST(url: commonsEndpoint, form: form)
         request.setValue("https://commons.wikimedia.org/wiki/Special:UserLogin", forHTTPHeaderField: "Referer")
 
         let (data, response) = try await urlSession.data(for: request)
@@ -256,7 +258,7 @@ public actor API {
             "OATHToken": twoFactorCode,
             "logincontinue": "1"
         ]
-        var request = try URLRequest.POST(url: commonsEndpoint, form: form)
+        var request = try POST(url: commonsEndpoint, form: form)
         request.setValue("https://commons.wikimedia.org/wiki/Special:UserLogin", forHTTPHeaderField: "Referer")
 
         let (data, response) = try await urlSession.data(for: request)
@@ -275,7 +277,7 @@ public actor API {
             "formatversion": "2"
         ]
         
-        let request = try URLRequest.POST(url: commonsEndpoint, form: form)
+        let request = try POST(url: commonsEndpoint, form: form)
         let (data, response) = try await urlSession.data(for: request)
         
         let responseValue = try parse(ValidatePasswordResponse.self, from: data, response: response)
@@ -301,7 +303,7 @@ public actor API {
             "uselang": "content"
         ]
         
-        let request = try URLRequest.GET(url: commonsEndpoint, query: query)
+        let request = try GET(url: commonsEndpoint, query: query)
         let (data, response) = try await urlSession.data(for: request)
         let responseValue = try parse(QueryResponse<UserContributionListResponse>.self, from: data, response: response)
         return responseValue.query?.usercontribs ?? []
@@ -341,7 +343,7 @@ public actor API {
             query["aicontinue"] = continueString
         }
         
-        let request = try URLRequest.GET(url: commonsEndpoint, query: query)
+        let request = try GET(url: commonsEndpoint, query: query)
         let (data, response) = try await urlSession.data(for: request)
         let responseValue = try parse(QueryResponse<AllImagesListResponse>.self, from: data, response: response)
 
@@ -385,7 +387,7 @@ public actor API {
             "curtimestamp": "1"
         ]
         
-        let request = try URLRequest.GET(url: commonsEndpoint, query: query)
+        let request = try GET(url: commonsEndpoint, query: query)
         let (data, response) = try await urlSession.data(for: request)
         let result = try parse(QueryResponse<CategoryResponse>.self, from: data, response: response)
         
@@ -441,7 +443,7 @@ public actor API {
             query["cmcontinue"] = continueString
         }
         
-        let request = try URLRequest.GET(url: commonsEndpoint, query: query)
+        let request = try GET(url: commonsEndpoint, query: query)
         let (data, response) = try await urlSession.data(for: request)
         let value = try parse(QueryResponse<CategoryMembersListResponse>.self, from: data, response: response)
         
@@ -538,7 +540,7 @@ public actor API {
             query["pageids"] = pageIDs.joined(separator: "|")
         }
         
-        let request = try URLRequest.GET(url: commonsEndpoint, query: query)
+        let request = try GET(url: commonsEndpoint, query: query)
         let (data, response) = try await urlSession.data(for: request)
         let value = try parse(QueryResponse<FileMetadataListResponse>.self, from: data, response: response)
         let pages = value.query?.pages ?? []
@@ -605,7 +607,7 @@ public actor API {
             query["sroffset"] = String(offset)
         }
         
-        let request = try URLRequest.GET(url: commonsEndpoint, query: query)
+        let request = try GET(url: commonsEndpoint, query: query)
         let (data, response) = try await urlSession.data(for: request)
         let resultValue = try parse(QueryResponse<SearchListResponse>.self, from: data, response: response)
         guard let resultQuery = resultValue.query else {
@@ -657,7 +659,7 @@ public actor API {
             "format": "json"
         ]
         
-        let request = try URLRequest.GET(url: commonsEndpoint, query: query)
+        let request = try GET(url: commonsEndpoint, query: query)
         let (data, response) = try await urlSession.data(for: request)
         let resultValue = try parse(QueryResponse<GeosearchListResponse>.self, from: data, response: response)
         guard let resultQuery = resultValue.query else {
@@ -692,7 +694,7 @@ public actor API {
             "format": "json"
         ]
         
-        let request = try URLRequest.GET(url: commonsEndpoint, query: query)
+        let request = try GET(url: commonsEndpoint, query: query)
         let (data, response) = try await urlSession.data(for: request)
         let resultValue = try parse(QueryResponse<GeosearchListResponse>.self, from: data, response: response)
         guard let resultQuery = resultValue.query else {
@@ -727,7 +729,7 @@ public actor API {
             query["continue"] = String(offset)
         }
         
-        let request = try URLRequest.GET(url: wikidataEndpoint, query: query)
+        let request = try GET(url: wikidataEndpoint, query: query)
         let (data, response) = try await urlSession.data(for: request)
         let resultValue = try parse(SearchWikidataEntityResponse.self, from: data, response: response)
         return resultValue
@@ -774,7 +776,7 @@ GROUP BY ?item ?commonsCategory ?area ?location ?label ?image ?description
             "format": "json"
         ]
         
-        let request = try URLRequest.GET(url: wikidataSparqlEndpoint, query: query)
+        let request = try GET(url: wikidataSparqlEndpoint, query: query)
         let (data, response) = try await urlSession.data(for: request)
         let resultValue = try parse(SPARQLResponse<SparqlGenericWikidataItem>.self, from: data, response: response)
         
@@ -836,7 +838,7 @@ GROUP BY ?item ?commonsCategory ?area ?location ?label ?image ?description
             "format": "json"
         ]
         
-        let request = try URLRequest.GET(url: wikidataSparqlEndpoint, query: query)
+        let request = try GET(url: wikidataSparqlEndpoint, query: query)
         let (data, response) = try await urlSession.data(for: request)
         let resultValue = try parse(SPARQLResponse<SparqlGenericWikidataItem>.self, from: data, response: response)
         
@@ -896,7 +898,7 @@ GROUP BY ?item ?commonsCategory ?area ?location ?label ?image ?description
             "format": "json"
         ]
         
-        let request = try URLRequest.GET(url: wikidataSparqlEndpoint, query: query)
+        let request = try GET(url: wikidataSparqlEndpoint, query: query)
         let (data, response) = try await urlSession.data(for: request)
         let resultValue = try parse(SPARQLResponse<SparqlGenericWikidataItem>.self, from: data, response: response)
         
@@ -970,7 +972,7 @@ ORDER BY ?distance LIMIT \(limit)
             "format": "json"
         ]
         
-        let request = try URLRequest.GET(url: wikidataSparqlEndpoint, query: query)
+        let request = try GET(url: wikidataSparqlEndpoint, query: query)
         let (data, response) = try await urlSession.data(for: request)
         let resultValue = try parse(SPARQLResponse<SparqlGenericWikidataItem>.self, from: data, response: response)
         
@@ -1041,7 +1043,7 @@ LIMIT \(limit)
             "format": "json"
         ]
         
-        let request = try URLRequest.GET(url: wikidataSparqlEndpoint, query: query)
+        let request = try GET(url: wikidataSparqlEndpoint, query: query)
         let (data, response) = try await urlSession.data(for: request)
         let resultValue = try parse(SPARQLResponse<SparqlGenericWikidataItem>.self, from: data, response: response)
         
@@ -1092,7 +1094,7 @@ LIMIT \(limit)
             query["limit"] = limit.apiString
         }
         
-        let request = try URLRequest.GET(url: commonsEndpoint, query: query)
+        let request = try GET(url: commonsEndpoint, query: query)
         let (data, response) = try await urlSession.data(for: request)
         
         guard let http = response as? HTTPURLResponse, (200..<300).contains(http.statusCode) else {
@@ -1141,7 +1143,7 @@ LIMIT \(limit)
             query["ids"] = pageids.map{ "M\($0)" }.joined(separator: "|")
         }
         
-        let request = try URLRequest.GET(url: commonsEndpoint, query: query)
+        let request = try GET(url: commonsEndpoint, query: query)
         let (data, response) = try await urlSession.data(for: request)
         let entitiesDict = try parse(FileEntitiesResponse.self, from: data, response: response).entities
         return entitiesDict
@@ -1157,7 +1159,7 @@ LIMIT \(limit)
             "curtimestamp": "1"
         ]
 
-        let request = try URLRequest.GET(url: commonsEndpoint, query: query)
+        let request = try GET(url: commonsEndpoint, query: query)
         let (data, response) = try await urlSession.data(for: request)
         let parsedResponse = try parse(QueryResponse<FileExistenceResponse>.self, from: data, response: response)
         guard let fileInfo = parsedResponse.query?.pages?.first else {
@@ -1190,7 +1192,7 @@ LIMIT \(limit)
             "curtimestamp": "1"
         ]
 
-        let request = try URLRequest.GET(url: commonsEndpoint, query: query)
+        let request = try GET(url: commonsEndpoint, query: query)
         let (data, response) = try await urlSession.data(for: request)
         let parsedResponse = try parse(ValidateFilenameResponse.self, from: data, response: response)
         
@@ -1234,7 +1236,7 @@ LIMIT \(limit)
             "format": "json"
         ]
         
-        let request = try URLRequest.GET(url: wikidataEndpoint, query: query)
+        let request = try GET(url: wikidataEndpoint, query: query)
         let (data, response) = try await urlSession.data(for: request)
         let responseValue = try parse(EntitiesResponse.self, from: data, response: response)
         
@@ -1313,7 +1315,7 @@ LIMIT \(limit)
                         var filekey: String?
                         
                         if startStep == .uploadData {
-                            let request = try URLRequest.POSTMultipart(
+                            let request = try POSTMultipart(
                                 url: commonsEndpoint,
                                 fileURL: file.fileURL,
                                 filename: file.filename,
@@ -1358,7 +1360,7 @@ LIMIT \(limit)
                         parameters["filekey"] = filekey
                         
                         continuation.yield(.unstashingFile(filekey: filekey))
-                        let unstashRequest = try URLRequest.POST(url: commonsEndpoint, form: parameters)
+                        let unstashRequest = try POST(url: commonsEndpoint, form: parameters)
                         let unstashResult = try await urlSession.data(for: unstashRequest)
                         logger.debug("action:upload result string:\n\(String(data: unstashResult.0, encoding: .utf8) ?? "?")")
                     }
@@ -1444,7 +1446,7 @@ LIMIT \(limit)
             "clear": "true"
         ]
         
-        let request = try URLRequest.POST(url: commonsEndpoint, form: form)
+        let request = try POST(url: commonsEndpoint, form: form)
         let (dataOut, response) = try await urlSession.data(for: request)
         // Log response string for debugging, but don't fail hard if decoding isn't set up.
         if let responseString = String(data: dataOut, encoding: .utf8) {

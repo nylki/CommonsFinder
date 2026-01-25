@@ -428,7 +428,7 @@ struct CategoryView: View {
                 } else if let commonsCategory = initialItem.base.commonsCategory {
 
                     async let categoryTask: () = resolveCategoryDetails(category: commonsCategory)
-                    async let itemsTask = CommonsAPI.API.shared.findWikidataItemsForCategories(
+                    async let itemsTask = Networking.shared.api.findWikidataItemsForCategories(
                         [commonsCategory],
                         languageCode: locale.wikiLanguageCodeIdentifier
                     )
@@ -520,7 +520,7 @@ struct CategoryView: View {
 
 
     private func resolveCategoryDetails(category: String) async throws {
-        let relatedCategories = try await CommonsAPI.API.shared.fetchCategoryInfo(of: category)
+        let relatedCategories = try await Networking.shared.api.fetchCategoryInfo(of: category)
         // FIXME: cross-resolve against database / and or fetch wikidata items if possible
         if let relatedCategories {
             subCategories = relatedCategories.subCategories.map({ categoryName in

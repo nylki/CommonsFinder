@@ -37,7 +37,7 @@ import os.log
     private func fetchRawContinueCategoryItems() async throws -> (pageIDs: [String], Int?)? {
         if let categoryName {
             let searchString = searchString.isEmpty ? "" : "\"\(searchString)\""
-            let result = try await CommonsAPI.API.shared.searchFiles(
+            let result = try await Networking.shared.api.searchFiles(
                 for: "\(deepCategorySearch ? "deepcategory" : "incategory"):\"\(categoryName)\" \(searchString)",
                 sort: order.apiType,
                 limit: .max,
@@ -52,7 +52,7 @@ import os.log
 
     private func fetchRawContinueDepictItems() async throws -> (pageIDs: [String], Int?)? {
         if let depictItemID {
-            let result = try await CommonsAPI.API.shared.searchFiles(
+            let result = try await Networking.shared.api.searchFiles(
                 for: "haswbstatement:P180=\(depictItemID)",
                 sort: order.apiType,
                 limit: .max,

@@ -153,7 +153,7 @@ import os.log
 
                 guard !Task.isCancelled else { return }
                 logger.debug("Searching suggestions for \"\(text)\"")
-                let terms = try await API.shared.searchSuggestedSearchTerms(for: text, limit: .max, namespaces: [.category, .main])
+                let terms = try await Networking.shared.api.searchSuggestedSearchTerms(for: text, limit: .max, namespaces: [.category, .main])
                 guard !Task.isCancelled else { return }
                 suggestions =
                     terms.map { term in

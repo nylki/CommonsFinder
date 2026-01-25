@@ -130,10 +130,10 @@ enum DataAccess {
                 // FIXME: Otherwise: better define different return types to not expect fields
                 // that are not filled from one API (eg. redirects) !
 
-                async let wikiItemsTask = API.shared
+                async let wikiItemsTask = Networking.shared.api
                     .fetchGenericWikidataItems(itemIDs: ids, languageCode: languageCode)
 
-                async let actionAPITask = API.shared
+                async let actionAPITask = Networking.shared.api
                     .fetchWikidataEntities(ids: ids, preferredLanguages: [languageCode])
 
                 let (wikiItems, actionAPIResults) = try await (wikiItemsTask, actionAPITask)

@@ -105,7 +105,7 @@ import os.log
             // NOTE: limit is 50
             for ids in chunkedIDs {
                 do {
-                    let apiItems = try await API.shared.fetchFullFileMetadata(.pageids(Array(ids)))
+                    let apiItems = try await Networking.shared.api.fetchFullFileMetadata(.pageids(Array(ids)))
                     let fetchedMediaFiles: [MediaFile] = apiItems.map(MediaFile.init)
 
                     for mediaFile in fetchedMediaFiles {

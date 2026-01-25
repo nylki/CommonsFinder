@@ -142,7 +142,7 @@ import os.log
                 }
 
                 // returns unsorted
-                let wikidataIDsForCategories = try await CommonsAPI.API.shared
+                let wikidataIDsForCategories = try await Networking.shared.api
                     .findWikidataItemsForCategories(commonsCategoriesToFetch, languageCode: Locale.current.wikiLanguageCodeIdentifier)
                     .map(\.id)
 
@@ -195,7 +195,7 @@ import os.log
     }
 
     private func rawWikidataPagination() async throws {
-        let result = try await CommonsAPI.API.shared.searchWikidataItems(
+        let result = try await Networking.shared.api.searchWikidataItems(
             term: searchString,
             languageCode: Locale.current.wikiLanguageCodeIdentifier,
             offset: wikidataOffset
@@ -213,7 +213,7 @@ import os.log
 
 
     private func rawCommonsCategoryPagination() async throws {
-        let result = try await CommonsAPI.API.shared.searchCategories(
+        let result = try await Networking.shared.api.searchCategories(
             for: searchString,
             sort: sort.apiType,
             limit: .max,

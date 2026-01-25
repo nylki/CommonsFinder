@@ -14,10 +14,23 @@ import CoreLocation
 
 @Suite("Wikidata E2E Tests", .serialized)
 struct WikidataEndToEndTests {
+
+    let api: CommonsAPI.API = {
+        let info = Bundle.main.infoDictionary
+        let executable = (info?["CFBundleExecutable"] as? String) ?? (ProcessInfo.processInfo.arguments.first?.split(separator: "/").last.map(String.init)) ?? "Unknown"
+        let bundle = info?["CFBundleIdentifier"] as? String ?? "Unknown"
+        let appVersion = info?["CFBundleShortVersionString"] as? String ?? "Unknown"
+        let appBuild = info?["CFBundleVersion"] as? String ?? "Unknown"
+
+        let contactInfo = "https://github.com/nylki/CommonsFinder"
+
+        let userAgent = "\(executable)/\(appBuild) (\(contactInfo)) \(osNameVersion)"
+        return CommonsAPI.API(userAgent: userAgent, referer: "CommonsFinder://UnitTests")
+    }()
     
     @Test("Searching Q-Items", arguments: [("tree", "en"), ("Baum", "de")])
     func searchItems(term: String, languageCode: String) async throws {
-        let result = try await CommonsAPI.API.shared.searchWikidataItems(term: term, languageCode: languageCode)
+        let result = try await api.searchWikidataItems(term: term, languageCode: languageCode)
         print("Q-Item results for \"\(term)\"")
         let items = result.search
         for item in items {
@@ -29,7 +42,7 @@ struct WikidataEndToEndTests {
     
     @Test("Find Common Categories for  Q-Items", arguments: [["Q1", "Q2", "Q3", "Q42"]])
     func findCommonCategories(ids: [String]) async throws {
-        let result = try await CommonsAPI.API.shared.findCategoriesForWikidataItems(ids, languageCode: "en")
+        let result = try await api.findCategoriesForWikidataItems(ids, languageCode: "en")
         for item in result {
             print("\(item.id): \(item.commonsCategory ?? "-") \(item.label ?? "-") \(item.description ?? "-")")
         }
@@ -43,7 +56,7 @@ struct WikidataEndToEndTests {
         ]
     )
     func findItemIDsForCommonCategories(categories: [String]) async throws {
-        let result = try await CommonsAPI.API.shared.findWikidataItemsForCategories(categories, languageCode: "en")
+        let result = try await api.findWikidataItemsForCategories(categories, languageCode: "en")
         for item in result {
             print("\(item.id): \(item.commonsCategory ?? "-") \(item.label ?? "-") \(item.description ?? "-")")
         }
@@ -54,7 +67,7 @@ struct WikidataEndToEndTests {
             [["Q1"], ["Q1", "Q2", "Q42"]], ["en", "de"]
     )
     func fetchGenericWikidataItem(ids: [String], languageCode: String) async throws {
-        let result = try await CommonsAPI.API.shared.fetchGenericWikidataItems(itemIDs: ids, languageCode: languageCode)
+        let result = try await api.fetchGenericWikidataItems(itemIDs: ids, languageCode: languageCode)
         #expect(result.count == ids.count)
         let resultIDs = Set(result.map(\.id))
         #expect(resultIDs == Set(ids))
@@ -67,7 +80,7 @@ struct WikidataEndToEndTests {
     ]
     )
     func fetchWikidataItemsAroundCoordinateRadius(coordinate: CLLocationCoordinate2D) async throws {
-        let result = try await CommonsAPI.API.shared.getWikidataItemsAroundCoordinate(coordinate, kilometerRadius: 0.5, limit: 3, languageCode: "en")
+        let result = try await api.getWikidataItemsAroundCoordinate(coordinate, kilometerRadius: 0.5, limit: 3, languageCode: "en")
         
         #expect(result.isEmpty == false)
         #expect(result.count <= 3)

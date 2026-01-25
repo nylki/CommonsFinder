@@ -48,7 +48,14 @@ import os.log
 
     private var path: [TabItem: [NavigationStackItem]] = [.home: [], .map: [], .events: [], .search: []] {
         didSet {
-            print("Nav change: \(path)")
+            //print("Nav change: \(path)")
+
+            if let currentPath = currentPath.last {
+                Networking.shared.referer = "CommonsFinder://\(currentPath.refererPath)"
+            } else {
+                Networking.shared.referer = "CommonsFinder://\(selectedTab.refererPath)"
+            }
+            logger.debug("Referer: \(Networking.shared.referer)")
         }
     }
 
@@ -82,6 +89,19 @@ import os.log
         case map
         case events
         case search
+
+        var refererPath: String {
+            switch self {
+            case .home:
+                "Home"
+            case .map:
+                "Map"
+            case .events:
+                "Events"
+            case .search:
+                "Search"
+            }
+        }
     }
 }
 
@@ -116,6 +136,22 @@ enum NavigationStackItem: Hashable, CustomStringConvertible {
             "recentlyViewedCategories"
         case .bookmarkedCategories:
             "bookmarkedCategories"
+        }
+    }
+
+    var refererPath: String {
+        switch self {
+        case .settings: ""
+        case .viewFile(let mediaFileInfo, _):
+            "File:\(mediaFileInfo.mediaFile.name)"
+        case .loadFile(let title, _):
+            "File:\(title)"
+        case .wikidataItem(let item):
+            "Wikidata:\(item.id)"
+        case .userUploads(let username):
+            "User:\(username)"
+        case .recentlyViewedMedia, .bookmarkedMedia, .recentlyViewedCategories, .bookmarkedCategories:
+            ""
         }
     }
 }

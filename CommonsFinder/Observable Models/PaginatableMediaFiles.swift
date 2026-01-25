@@ -179,7 +179,7 @@ private enum PaginationFileIdentifierType {
                     case .title: .titles(idsToFetch)
                     }
 
-                let fetchedMediaFiles: [MediaFile] = try await CommonsAPI.API.shared
+                let fetchedMediaFiles: [MediaFile] = try await Networking.shared.api
                     .fetchFullFileMetadata(apiIDsToFetch)
                     .map(MediaFile.init)
 

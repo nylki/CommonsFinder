@@ -50,22 +50,6 @@ let osNameVersion: String = {
 ///
 /// See the [User-Agent header documentation](https://tools.ietf.org/html/rfc7231#section-5.5.3).
 ///
-let userAgent: String = {
-    let info = Bundle.main.infoDictionary
-    let executable = (info?["CFBundleExecutable"] as? String) ??
-    (ProcessInfo.processInfo.arguments.first?.split(separator: "/").last.map(String.init)) ??
-    "Unknown"
-    let bundle = info?["CFBundleIdentifier"] as? String ?? "Unknown"
-    let appVersion = info?["CFBundleShortVersionString"] as? String ?? "Unknown"
-    let appBuild = info?["CFBundleVersion"] as? String ?? "Unknown"
-    
-    let contactInfo = "https://github.com/nylki/CommonsFinder"
-    
-    let userAgent = "\(executable)/\(appBuild) (\(contactInfo)) \(osNameVersion)"
-    
-    return userAgent
-}()
-
 
 let uploadComment: String = {
     let info = Bundle.main.infoDictionary
