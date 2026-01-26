@@ -101,13 +101,13 @@
             "plural" : {
               "one" : {
                 "stringUnit" : {
-                  "state" : "needs_review",
+                  "state" : "translated",
                   "value" : "1 Unterkategorie"
                 }
               },
               "other" : {
                 "stringUnit" : {
-                  "state" : "needs_review",
+                  "state" : "translated",
                   "value" : "%lld Unterkategorien"
                 }
               }
@@ -120,13 +120,13 @@
               "one" : {
                 "stringUnit" : {
                   "state" : "translated",
-                  "value" : "1 Sub-Category"
+                  "value" : "1 Subcategory"
                 }
               },
               "other" : {
                 "stringUnit" : {
                   "state" : "translated",
-                  "value" : "%lld Sub-Categories"
+                  "value" : "%lld Subcategories"
                 }
               }
             }
@@ -146,17 +146,6 @@
           "stringUnit" : {
             "state" : "new",
             "value" : "%1$lld×%2$lld pixel"
-          }
-        }
-      }
-    },
-    "• What can you do?" : {
-      "extractionState" : "stale",
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "• What kann man tun?"
           }
         }
       }
@@ -355,10 +344,24 @@
       }
     },
     "Authentication failed: 2-factor code required" : {
-
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Authentifizierung fehlgeschlagen: 2-Faktor-Authentifizierung erforderlich"
+          }
+        }
+      }
     },
     "Bad server response" : {
-
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fehlerhafte Serverantwort"
+          }
+        }
+      }
     },
     "Bookmarked Categories" : {
       "comment" : "Label for a section showing bookmarked categories.",
@@ -625,13 +628,34 @@
       }
     },
     "copyrighted" : {
-
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "urheberrechtlich geschützt"
+          }
+        }
+      }
     },
     "copyrighted: dedicated to public domain" : {
-
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "urheberrechtlich geschützt: der Gemeinfreiheit gewidmet"
+          }
+        }
+      }
     },
     "Could not load image (this is a bug, please report :)" : {
-
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Konnte Bild nicht laden (Das ist ein Bug, bitte reporten :)"
+          }
+        }
+      }
     },
     "Creating Account..." : {
       "localizations" : {
@@ -674,13 +698,35 @@
       }
     },
     "Data upload interrupted at %lld%%" : {
-
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Datenupload bei %lld%% unterbrochen"
+          }
+        }
+      }
     },
     "Data-length exceeds maximum" : {
-
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Datenlänge überschreitet Maximum"
+          }
+        }
+      }
     },
     "Default License" : {
-      "comment" : "Standardlizenz"
+      "comment" : "Standardlizenz",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Standardlizenz"
+          }
+        }
+      }
     },
     "Delete" : {
       "comment" : "regarding drafts",
@@ -724,7 +770,14 @@
       }
     },
     "DNS Lookup Failed" : {
-
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "DNS-Lookup fehlgeschlagen"
+          }
+        }
+      }
     },
     "E-Mail Address" : {
       "localizations" : {
@@ -887,15 +940,11 @@
       }
     },
     "Finish Details" : {
-
-    },
-    "Finished" : {
-      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Abgeschlossen"
+            "value" : "Details abschließen"
           }
         }
       }
@@ -948,17 +997,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Übersicht"
-          }
-        }
-      }
-    },
-    "If you see this error dialog, please file a bugreport for the app, thanks! You file appears to still being uploaded or succesfully uploaded and this should not appear." : {
-      "extractionState" : "stale",
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Wenn Sie diesen Fehlerdialog sehen, reichen Sie bitte einen Bug-Report für die App ein, Danke! Ihre Datei wird anscheinend noch hochgeladen oder erfolgreich hochgeladen, und dies sollte nicht angezeigt werden."
           }
         }
       }
@@ -1024,7 +1062,14 @@
       }
     },
     "Include Subcategories" : {
-
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "inkl. Unterkategorien"
+          }
+        }
+      }
     },
     "Indian" : {
       "localizations" : {
@@ -1037,7 +1082,14 @@
       }
     },
     "Info" : {
-
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Info"
+          }
+        }
+      }
     },
     "It cannot be changed once upload and must be unique! A good filename should be descriptive, appropriate and concise, but also clear and recognizable to a wider audience.\n\n- Avoid abbreviations and random characters\n\n- Including a date and location is often a good idea" : {
       "localizations" : {
@@ -1286,7 +1338,14 @@
       }
     },
     "More…" : {
-
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mehr…"
+          }
+        }
+      }
     },
     "Nearby Tags" : {
       "comment" : "A button that expands a list of nearby tags.",
@@ -1301,10 +1360,24 @@
       }
     },
     "Network connection lost" : {
-
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Netzwerkverbindung verloren"
+          }
+        }
+      }
     },
     "Network Connection timed out" : {
-
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zeitüberschreitung der Netzwerkverbindung"
+          }
+        }
+      }
     },
     "new account" : {
       "localizations" : {
@@ -1357,7 +1430,14 @@
       }
     },
     "No images depicting **%@** and no images found in subcategories of **%@**." : {
+      "comment" : "title, title",
       "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Keine Bilder mit Motiv **%1$@** und keine Bilder in den Unterkategorien von **%2$@** gefunden."
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
@@ -1367,21 +1447,25 @@
       }
     },
     "No images depicting **%@** or tagged with the category." : {
-
-    },
-    "No images depicting *%@* or tagged with the category." : {
-      "extractionState" : "stale",
+      "comment" : "title, title",
       "localizations" : {
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Keine Bilder mit Motiv oder Kategorie *%@*."
+            "value" : "Keine Bilder mit Motiv bzw. Kategorie **%@**."
           }
         }
       }
     },
     "No images for **%@** in **%@**." : {
+      "comment" : "searchString, title",
       "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Keine Bilder zu **%1$@** in **%2$@** gefunden."
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
@@ -1391,7 +1475,14 @@
       }
     },
     "No images for **%@** in **%@**. Try to include subcategories for more results." : {
+      "comment" : "searchString, title",
       "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Keine Bilder zu **%1$@** in **%2$@** gefunden. Versuche Unterkategorien einzuschließen."
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
@@ -1433,7 +1524,14 @@
       }
     },
     "no rights reserved – public domain or waiver if the PD release is invalidated" : {
-
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Keine Rechte vorbehalten – Gemeinfreiheit oder Verzichtserklärung, falls die Freigabeerklärung für gemeinfreie Inhalte ungültig ist"
+          }
+        }
+      }
     },
     "not connected To the Internet" : {
       "localizations" : {
@@ -1446,7 +1544,14 @@
       }
     },
     "Ok" : {
-
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ok"
+          }
+        }
+      }
     },
     "OK" : {
       "localizations" : {
@@ -1459,7 +1564,14 @@
       }
     },
     "Oldest" : {
-
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Älteste"
+          }
+        }
+      }
     },
     "Open Details" : {
       "localizations" : {
@@ -1725,7 +1837,7 @@
       "localizations" : {
         "de" : {
           "stringUnit" : {
-            "state" : "needs_review",
+            "state" : "translated",
             "value" : "Gemeinfrei"
           }
         }
@@ -1735,7 +1847,7 @@
       "localizations" : {
         "de" : {
           "stringUnit" : {
-            "state" : "needs_review",
+            "state" : "translated",
             "value" : "Gemeinfrei"
           }
         }
@@ -1847,7 +1959,14 @@
 
     },
     "Retry Upload" : {
-
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Upload erneut versuchen"
+          }
+        }
+      }
     },
     "sanitize" : {
       "localizations" : {
@@ -1901,7 +2020,14 @@
       }
     },
     "Search in this category" : {
-
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "In dieser Kategorie suchen"
+          }
+        }
+      }
     },
     "Search on Wikimedia Commons" : {
       "localizations" : {
@@ -1926,7 +2052,14 @@
       }
     },
     "Secure connection failed" : {
-
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sichere Verbindung fehlgeschlagen"
+          }
+        }
+      }
     },
     "Select Language" : {
       "localizations" : {
@@ -2012,8 +2145,8 @@
       "localizations" : {
         "de" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "some rights reserved – attribution and sharing alike required"
+            "state" : "translated",
+            "value" : "Einige Rechte vorbehalten – Namensnennung und Weitergabe unter gleichen Bedingungen erforderlich"
           }
         }
       }
@@ -2022,8 +2155,8 @@
       "localizations" : {
         "de" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "some rights reserved – attribution required"
+            "state" : "translated",
+            "value" : "Einige Rechte vorbehalten – Namensnennung und erforderlich"
           }
         }
       }
@@ -2049,7 +2182,15 @@
       }
     },
     "Standard" : {
-      "comment" : "standard map style"
+      "comment" : "standard map style",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Standard"
+          }
+        }
+      }
     },
     "Start upload to Wikimedia Commons now?" : {
       "localizations" : {
@@ -2094,7 +2235,14 @@
       }
     },
     "The app was closed or crashed while uploading." : {
-
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Die App wurde während des Uploads geschlossen oder ist abgestürzt"
+          }
+        }
+      }
     },
     "The email-address is not valid." : {
       "localizations" : {
@@ -2277,7 +2425,15 @@
       }
     },
     "This license will be pre-selected when you upload an image" : {
-      "comment" : "Diese Lizenz wird beim Bild-Upload vorausgewählt"
+      "comment" : "Diese Lizenz wird beim Bild-Upload vorausgewählt",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Diese Lizenz wird beim Upload vorausgewählt."
+          }
+        }
+      }
     },
     "thumbnail" : {
       "localizations" : {
@@ -2530,10 +2686,24 @@
       }
     },
     "You may attempt to retry the upload, edit the draft or delete the draft." : {
-
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Du könntest versuchen den Upload zu wiederholen, den Entwurf zu bearbeiten oder zu löschen."
+          }
+        }
+      }
     },
     "You may attempt to retry the upload." : {
-
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Du könntest versuchen den Upload zu wiederholen"
+          }
+        }
+      }
     },
     "You must be logged in to a Wikimedia account to upload files." : {
       "localizations" : {
@@ -2638,7 +2808,14 @@
       }
     },
     "Zero Public Domain, \"No Rights Reserved\"" : {
-
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zero Public Domain, \"Keine Rechte vorbehalten\""
+          }
+        }
+      }
     }
   },
   "version" : "1.1"

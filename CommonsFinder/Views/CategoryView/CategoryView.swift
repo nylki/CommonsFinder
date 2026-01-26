@@ -231,15 +231,15 @@ struct CategoryView: View {
         } description: {
             if !searchString.isEmpty {
                 if deepCategoryEnabled {
-                    Text("No images for **\(searchString)** in **\(title)**.")
+                    Text("No images for **\(searchString)** in **\(title)**.", comment: "searchString, title")
                 } else {
-                    Text("No images for **\(searchString)** in **\(title)**. Try to include subcategories for more results.")
+                    Text("No images for **\(searchString)** in **\(title)**. Try to include subcategories for more results.", comment: "searchString, title")
                 }
             } else {
                 if deepCategoryEnabled {
-                    Text("No images depicting **\(title)** and no images found in subcategories of **\(title)**.")
+                    Text("No images depicting **\(title)** and no images found in subcategories of **\(title)**.", comment: "title, title")
                 } else {
-                    Text("No images depicting **\(title)** or tagged with the category.")
+                    Text("No images depicting **\(title)** or tagged with the category.", comment: "title, title")
                 }
 
 
