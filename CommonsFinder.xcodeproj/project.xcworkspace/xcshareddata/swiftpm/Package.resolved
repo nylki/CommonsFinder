@@ -42,8 +42,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/groue/GRDB.swift.git",
       "state" : {
-        "revision" : "18497b68fdbb3a09528d260a0a0e1e7e61c8c53d",
-        "version" : "7.8.0"
+        "revision" : "aa0079aeb82a4bf00324561a40bffe68c6fe1c26",
+        "version" : "7.9.0"
       }
     },
     {
@@ -123,8 +123,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/apple/swift-async-algorithms.git",
       "state" : {
-        "branch" : "1.0.4",
-        "revision" : "042e1c4d9d19748c9c228f8d4ebc97bb1e339b0b"
+        "branch" : "1.1.1",
+        "revision" : "6c050d5ef8e1aa6342528460db614e9770d7f804"
       }
     },
     {
@@ -159,8 +159,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/dm-zharov/swift-security",
       "state" : {
-        "revision" : "d29203624538b6fdcd465ae9086510f652df057b",
-        "version" : "2.5.0"
+        "revision" : "7b17d3b0e9974d69082c1ef2d5b6504033470fd1",
+        "version" : "2.5.1"
       }
     },
     {
