@@ -7,8 +7,8 @@
 
 import Foundation
 
-extension URLRequest {
-    static func GET(url: URL, query: [String: String]) throws -> URLRequest {
+extension API {
+    func GET(url: URL, query: [String: String]) throws -> URLRequest {
         guard var components = URLComponents(url: url, resolvingAgainstBaseURL: false) else {
             throw CommonAPIError.invalidQueryParams
         }
@@ -19,25 +19,28 @@ extension URLRequest {
         var request = URLRequest(url: finalURL)
         request.httpMethod = "GET"
         request.setValue(userAgent, forHTTPHeaderField: "User-Agent")
+        request.setValue(referer, forHTTPHeaderField: "Referer")
         request.setValue("application/json", forHTTPHeaderField: "Accept")
         return request
     }
     
-    static func POST(url: URL, form: [String: String]) throws -> URLRequest {
+    func POST(url: URL, form: [String: String]) throws -> URLRequest {
         var request = URLRequest(url: url)
         request.httpMethod = "POST"
         request.setValue(userAgent, forHTTPHeaderField: "User-Agent")
+        request.setValue(referer, forHTTPHeaderField: "Referer")
         request.setValue("application/x-www-form-urlencoded; charset=utf-8", forHTTPHeaderField: "Content-Type")
         request.setValue("application/json", forHTTPHeaderField: "Accept")
         request.httpBody = formURLEncode(form)
         return request
     }
     
-    static func POSTMultipart(url: URL, fileURL: URL, filename: String, mimeType: String, params: [String:String]) throws -> Self {
+    func POSTMultipart(url: URL, fileURL: URL, filename: String, mimeType: String, params: [String:String]) throws -> URLRequest {
         let boundary = "Boundary-\(UUID().uuidString)"
         
         var request = URLRequest(url: url)
         request.httpMethod = "POST"
+        request.setValue(referer, forHTTPHeaderField: "Referer")
         request.setValue("multipart/form-data; boundary=\(boundary)", forHTTPHeaderField: "Content-Type")
         let httpBody = NSMutableData()
         for (key, value) in params {

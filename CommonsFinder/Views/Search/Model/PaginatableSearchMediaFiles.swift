@@ -29,7 +29,7 @@ import SwiftUI
     override internal func
         fetchRawContinuePaginationItems() async throws -> (fileIdentifiers: FileIdentifierList, canContinue: Bool)
     {
-        let result = try await CommonsAPI.API.shared.searchFiles(
+        let result = try await Networking.shared.api.searchFiles(
             for: searchString,
             sort: sort.apiType,
             limit: .max,

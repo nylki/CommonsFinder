@@ -181,6 +181,8 @@
 				Types/FileNameTypeTuple.swift,
 				"Types/MediaFileDraft+uploadDisabledReason.swift",
 				Types/NewDraftOptions.swift,
+				Types/OptionBarState.swift,
+				Types/ScrollState.swift,
 				Types/TagItem.swift,
 				Types/UploadPossibleStatus.swift,
 				Types/WikidataStatement.swift,
@@ -188,14 +190,14 @@
 				Utilities/APIUtils.swift,
 				Utilities/Authentication.swift,
 				"Utilities/CLLocation+gpsDictionary.swift",
-				"Utilities/CommonsAPI+shared.swift",
 				Utilities/DraftAnalysis.swift,
 				Utilities/ExifData.swift,
 				Utilities/GeoPlacemarkCache.swift,
 				Utilities/GeoVectorMath.swift,
 				Utilities/Logging.swift,
 				Utilities/MediaDownloading.swift,
-				Utilities/UserAgent.swift,
+				Utilities/Networking.swift,
+				Utilities/ValidationUtils.swift,
 				Utilities/zippedFlatMap.swift,
 				Views/AuthView/AuthView.swift,
 				Views/AuthView/LoginView.swift,
@@ -214,6 +216,7 @@
 				"Views/Extensions/CLLocationManager+isLocationAutorized.swift",
 				"Views/Extensions/MediaFile+localizedDisplayCaption.swift",
 				"Views/Extensions/MediaFileDraftModel+ImageRequest.swift",
+				"Views/Extensions/UserDefaults+accessors.swift",
 				Views/FileCreateView/FileCreateView.swift,
 				Views/FileCreateView/FilenameTip.swift,
 				Views/FileCreateView/LicensePicker.swift,
@@ -279,6 +282,7 @@
 				"Views/Reusable Views/CategoryTeaserBackground.swift",
 				"Views/Reusable Views/CircularProgressShape.swift",
 				"Views/Reusable Views/CounterView.swift",
+				"Views/Reusable Views/DeepCategoryToggle.swift",
 				"Views/Reusable Views/Deprecated/DraggablePseudoSheet.swift",
 				"Views/Reusable Views/Deprecated/PseudoSheet.swift",
 				"Views/Reusable Views/DraftFileListItem.swift",
@@ -289,6 +293,7 @@
 				"Views/Reusable Views/PaginatableList/PaginatableList.swift",
 				"Views/Reusable Views/PaginatableList/PaginatableMediaList.swift",
 				"Views/Reusable Views/SearchBar.swift",
+				"Views/Reusable Views/SearchOrderButton.swift",
 				"Views/Reusable Views/UploadErrorDetailsSheet.swift",
 				Views/Search/Model/PaginatableSearchMediaFiles.swift,
 				Views/Search/Model/SearchModel.swift,
@@ -1104,7 +1109,7 @@
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/apple/swift-async-algorithms.git";
 			requirement = {
-				branch = 1.0.4;
+				branch = 1.1.1;
 				kind = branch;
 			};
 		};
@@ -1169,7 +1174,7 @@
 			repositoryURL = "https://github.com/dm-zharov/swift-security";
 			requirement = {
 				kind = exactVersion;
-				version = 2.5.0;
+				version = 2.5.1;
 			};
 		};
 		E2F1B9D32CD006C700410991 /* XCRemoteSwiftPackageReference "GRDB.swift" */ = {
@@ -1177,7 +1182,7 @@
 			repositoryURL = "https://github.com/groue/GRDB.swift.git";
 			requirement = {
 				kind = exactVersion;
-				version = 7.8.0;
+				version = 7.9.0;
 			};
 		};
 /* End XCRemoteSwiftPackageReference section */

@@ -13,7 +13,7 @@ import Testing
 
 /// without filetype ending (.jpg, etc.)
 nonisolated private let badFileTitles: [String] = [
-    "test   ",
+    "test1234   ",
     "Foo:bar",
     "foo|bar",
     "foo/bar/blub",
@@ -23,10 +23,15 @@ nonisolated private let badFileTitles: [String] = [
 
 @Test(arguments: badFileTitles)
 func testBadFileSanitization(badFilename: String) {
-    let initialValidation = ValidationUtils.validateFileTitle(badFilename)
-    #expect(initialValidation != .ok)
-    let sanitized = ValidationUtils.sanitzieFileTitle(badFilename)
-    let validation = ValidationUtils.validateFileTitle(sanitized)
-    print("\(badFilename) -> \(sanitized)")
-    #expect(validation == .ok)
+
+    switch LocalFileNameValidation.validateFileName(badFilename) {
+    case .success(_): Issue.record("\(badFilename) succeded, but is expected to be bad.")
+    case .failure(_): break
+    }
+
+    let sanitized = LocalFileNameValidation.sanitizeFileName(badFilename)
+    switch LocalFileNameValidation.validateFileName(sanitized) {
+    case .success(_): break
+    case .failure(let failure): Issue.record(failure)
+    }
 }

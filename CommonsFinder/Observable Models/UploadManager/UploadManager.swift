@@ -118,13 +118,7 @@ class UploadManager {
             logger.error("Failed to markUnfinishedUploadsAfterAppStartWithError \(error)")
         }
 
-        Task<Void, Never> {
-            do {
-                try await verifyDraftsWithErrors()
-            } catch {
-                logger.error("Failed to verify interruptedUploads in UploadManager post launch ops.")
-            }
-        }
+        verifyDraftsWithErrors()
     }
 
     /// this relates to all drafts whose upload was started, but the app was closed by the user or by a crash.
@@ -175,7 +169,7 @@ class UploadManager {
                         continue
                     case .uploaded(let filekey), .unstashingFile(let filekey):
                         // We have to check if it was perhaps already unstashed.
-                        let result = try await API.shared.checkIfFileExists(filename: draft.finalFilename)
+                        let result = try await Networking.shared.api.checkIfFileExists(filename: draft.finalFilename)
                         switch result {
                         case .exists:
                             try setPublishingState(for: draft.id, to: .creatingWikidataClaims, verificationRequired: false)
@@ -187,7 +181,7 @@ class UploadManager {
                     case .creatingWikidataClaims:
                         // The file is expected to be un-stashed and therefore public, we have to check if the wikidata items have already been created.
 
-                        let fileMetadata = try await API.shared.fetchFullFileMetadata(FileIdentifierList.titles(["File:\(draft.finalFilename)"])).first
+                        let fileMetadata = try await Networking.shared.api.fetchFullFileMetadata(FileIdentifierList.titles(["File:\(draft.finalFilename)"])).first
 
                         if let fileMetadata {
                             if fileMetadata.structuredData.statements.isEmpty {
@@ -371,7 +365,7 @@ class UploadManager {
                 return
             }
 
-            let request = await API.shared.publish(file: uploadable, csrfToken: csrfToken, startStep: startStep)
+            let request = await Networking.shared.api.publish(file: uploadable, csrfToken: csrfToken, startStep: startStep)
 
             for await status in request {
 

@@ -8,7 +8,7 @@
 import MapKit
 import SwiftUI
 
-enum WrappedMapStyle: String, CaseIterable, Identifiable {
+enum WrappedMapStyle: String, CaseIterable, Identifiable, RawRepresentable {
     case standard
     case satellite
 

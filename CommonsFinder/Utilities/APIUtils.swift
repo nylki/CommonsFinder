@@ -18,9 +18,9 @@ nonisolated enum APIUtils {
     static func searchCategories(for searchText: String) async throws -> [Category] {
         let languageCode = Locale.current.language.languageCode?.identifier ?? "en"
 
-        async let wikidataSearchTask = try await API.shared
+        async let wikidataSearchTask = try await Networking.shared.api
             .searchWikidataItems(term: searchText, languageCode: languageCode)
-        async let categorySearchTask = try await API.shared
+        async let categorySearchTask = try await Networking.shared.api
             .searchCategories(for: searchText, limit: .count(50))
 
         let (searchItems, searchCategories) = try await (
@@ -35,11 +35,11 @@ nonisolated enum APIUtils {
     /// returns an array of unique Categories by resolving both argument arrays deduplicating their results
     static func fetchCombinedCategories(wikidataItems: [WikidataSearchItem], commonsCategories: [String]) async throws -> [Category] {
         let languageCode = Locale.current.wikiLanguageCodeIdentifier
-        async let resolvedWikiItemsTask = API.shared
+        async let resolvedWikiItemsTask = Networking.shared.api
             .fetchGenericWikidataItems(itemIDs: wikidataItems.map(\.id), languageCode: languageCode)
 
         /// categories often have associated wikidataItems( & vice-versa, see above), resolve wiki items for the found categories:
-        async let resolvedCategoryItemsTask = API.shared
+        async let resolvedCategoryItemsTask = Networking.shared.api
             .findWikidataItemsForCategories(commonsCategories, languageCode: languageCode)
 
         let (resolvedWikiItems, resolvedCategoryItems) = try await (resolvedWikiItemsTask, resolvedCategoryItemsTask)
@@ -80,6 +80,7 @@ extension SearchOrder {
         switch self {
         case .relevance: .relevance
         case .newest: .createTimestampDesc
+        case .oldest: .createTimestampAsc
         }
     }
 }

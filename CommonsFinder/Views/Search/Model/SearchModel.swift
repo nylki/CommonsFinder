@@ -46,7 +46,6 @@ import os.log
     var mediaItems: [MediaFileInfo] { mediaResults?.mediaFileInfos ?? [] }
     var categoryItems: [CategoryInfo] { categoryResults?.categoryInfos ?? [] }
 
-
     var mediaPaginationStatus: PaginationStatus {
         mediaResults?.status ?? .unknown
     }
@@ -81,11 +80,16 @@ import os.log
         searchFieldFocusTrigger += 1
     }
 
-    func setOrder(_ order: SearchOrder) {
-        self.order = order
-        mediaResults = nil
-        categoryResults = nil
-        search()
+    var orderBinding: Binding<SearchOrder> {
+        .init(
+            get: { self.order },
+            set: { newValue in
+                guard newValue != self.order else { return }
+                self.order = newValue
+                self.mediaResults = nil
+                self.categoryResults = nil
+                self.search()
+            })
     }
 
     /// sets `text`as the searchText and  immediately submits the search
@@ -149,7 +153,7 @@ import os.log
 
                 guard !Task.isCancelled else { return }
                 logger.debug("Searching suggestions for \"\(text)\"")
-                let terms = try await API.shared.searchSuggestedSearchTerms(for: text, limit: .max, namespaces: [.category, .main])
+                let terms = try await Networking.shared.api.searchSuggestedSearchTerms(for: text, limit: .max, namespaces: [.category, .main])
                 guard !Task.isCancelled else { return }
                 suggestions =
                     terms.map { term in

@@ -214,7 +214,7 @@ final class AccountModel {
             return
         }
 
-        let response = try await API.shared.listUserImages(
+        let response = try await Networking.shared.api.listUserImages(
             of: username,
             limit: .max,
             start: nil,
@@ -231,7 +231,7 @@ final class AccountModel {
         let titlesChunked = titles.chunks(ofCount: apiFetchLimit)
 
         for titleChunk in titlesChunked {
-            let mediaFiles = try await API.shared
+            let mediaFiles = try await Networking.shared.api
                 .fetchFullFileMetadata(.titles(Array(titleChunk)))
                 .map(MediaFile.init)
 

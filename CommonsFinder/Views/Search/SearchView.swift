@@ -15,35 +15,29 @@ struct SearchView: View {
 
     @FocusState private var isSearchFieldFocused: Bool
 
-    @State private var isOptionBarVisible = true
-    @State private var isScrolledDown = false
-
+    @State private var isOptionsBarSticky = false
+    @State private var scrollState: ScrollState = .init()
 
     var body: some View {
         @Bindable var searchModel = searchModel
 
         VStack {
             if searchModel.isSearching {
-                ProgressView().frame(height: 500)
-            } else if searchModel.bindableSearchText.isEmpty {
-                searchResultView
+                ProgressView()
             } else {
                 searchResultView
             }
-
-        }
-        .onScrollPhaseChange { oldPhase, newPhase, context in
-            let geometry = context.geometry
-            withAnimation {
-                isOptionBarVisible = (newPhase == .idle)
-            }
-
-            let totalScrollOffset = geometry.contentOffset.y + geometry.contentInsets.top
-            isScrolledDown = totalScrollOffset > 1
         }
         .scrollDismissesKeyboard(.immediately)
         .overlay(alignment: .top) {
-            if !searchModel.isSearching, isOptionBarVisible { optionBar }
+            if !searchModel.isSearching, !searchModel.bindableSearchText.isEmpty {
+                let stickyOptionsBarVisible =
+                    isOptionsBarSticky && searchModel.mediaResults != nil && searchModel.mediaResults?.isEmpty != nil && scrollState.lastDirection == .up && scrollState.phase == .idle
+
+                if stickyOptionsBarVisible {
+                    optionsBar
+                }
+            }
         }
         .onChange(of: searchModel.searchFieldFocusTrigger) {
             isSearchFieldFocused = true
@@ -72,19 +66,45 @@ struct SearchView: View {
 
     @ViewBuilder
     private var searchResultView: some View {
+        let dragGesture = DragGesture(minimumDistance: 25, coordinateSpace: .local)
+            .onChanged { v in
+                let newDirection: ScrollState.Direction =
+                    if v.predictedEndLocation.y > v.startLocation.y {
+                        .up
+                    } else if v.predictedEndLocation.y < v.startLocation.y {
+                        .down
+                    } else {
+                        .none
+                    }
+
+                guard newDirection != scrollState.lastDirection else { return }
+                scrollState.lastDirection = newDirection
+            }
+
         switch searchModel.scope {
         case .all:
             ScrollView(.vertical) {
+
                 HorizontalCategoryList
+                    .padding(.bottom)
+
+                if !searchModel.isSearching, !searchModel.bindableSearchText.isEmpty, searchModel.mediaResults != nil {
+                    optionsBar
+                        .opacity(isOptionsBarSticky ? 0 : 1)
+                        .allowsHitTesting(!isOptionsBarSticky)
+                        .onScrollVisibilityChange(threshold: 0.1) { visible in
+                            isOptionsBarSticky = !visible
+                        }
+                }
+
                 PaginatableMediaList(
                     items: searchModel.mediaItems,
                     status: searchModel.mediaPaginationStatus,
                     toolOverlayPadding: false,
                     paginationRequest: searchModel.mediaPagination
                 )
-
-
             }
+            .simultaneousGesture(dragGesture)
             .id("all")
         case .categories:
             PaginatableCategoryList(
@@ -102,6 +122,15 @@ struct SearchView: View {
             )
             .id("images")
         }
+    }
+
+    @ViewBuilder
+    private var optionsBar: some View {
+        HStack {
+            SearchOrderButton(searchOrder: searchModel.orderBinding)
+            Spacer(minLength: 0)
+        }
+        .padding(.horizontal)
     }
 
     @ViewBuilder
@@ -153,66 +182,6 @@ struct SearchView: View {
         .animation(.default, value: hasCategoriesLoaded)
         .animation(.default, value: searchModel.categoryPaginationStatus)
         .animation(.default, value: searchModel.categoryResults?.rawCount)
-    }
-
-
-    private var optionBar: some View {
-        HStack {
-            Menu {
-                ForEach(SearchOrder.allCases, id: \.self) { order in
-                    Button(action: { searchModel.setOrder(order) }) {
-                        Label {
-                            Text(order.localizedStringResource)
-                        } icon: {
-                            if order == searchModel.order {
-                                Image(systemName: "checkmark")
-                            }
-                        }
-                    }
-                }
-            } label: {
-                Label {
-                    Text(searchModel.order.localizedStringResource)
-                } icon: {
-                    Image(systemName: "arrow.up.arrow.down")
-                }
-                .padding(.horizontal, 11)
-                .padding(.vertical, 9)
-                .glassButtonStyle()
-                //                .background(.regularMaterial, in: .capsule)
-
-                .font(.footnote)
-                .frame(minWidth: 100)
-                .fallbackGlassEffect(in: .capsule)
-                .scenePadding(.horizontal)
-                .padding(.vertical, 5)
-                .padding(.top, isScrolledDown ? 5 : 0)
-                .contentShape(.capsule)
-
-            }
-
-
-            Spacer()
-
-            //            Button {
-            //
-            //            } label: {
-            //                Image(systemName: "square.grid.2x2")
-            //                    .padding(.horizontal, 9)
-            //                    .padding(.vertical, 9)
-            //                    .background(.regularMaterial, in: .capsule)
-            //                    .font(.footnote)
-            //
-            //            }
-            //            .disabled(true)
-
-        }
-        .buttonStyle(.plain)
-        .transition(
-            .asymmetric(
-                insertion: .opacity.animation(.default.speed(0.5)),
-                removal: .opacity.combined(with: .offset(y: -10)))
-        )
     }
 }
 

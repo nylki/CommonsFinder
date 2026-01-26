@@ -1,16 +1,19 @@
-New this week: Upload-Flow Improvements
+New this week:
 
-- info about missing required fields when tapping the greyed-out upload button
-- validate and sanitize filenames before upload
-- when an upload did fail, you can now see more details about the issue
-- failed uploads can now be resumed or retried (depending on the type of error)
-- smaller UI styling adjustments in a few places
+- Search within categories
 
-This set changes should make uploads more robust, easier to reason about and easier to recover from failed uploads.
+- Include subcategories for image list and search inside categories
 
-Known Issue:
-The original fullsized image sometimes fails to load when opening the zoom viewer.
-This is partly due to a change on the backend and there is a tentative fix (adding a referer header to requests),
-but needs further discussion. See Phabrikator-Ticket T413570.
+- Potentially improved image loading behavior (referrer header added; see Phabrikator ticket T413570)
 
-Thanks everybody who send feedback, much appreciated!
+- default license: in the preferences you may now select a license that will be preselected when uploading an image
+
+- Remember the last map base layer when the app is closed (satellite/default)
+
+- Image Detail View: The filename can now be copied via the menu (top-right)
+
+- Added a few missing German translations
+
+Last week, there were major changes to the upload process to make it more robust.
+
+Thanks to all the testers! <3
