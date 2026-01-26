@@ -10,9 +10,9 @@ import Foundation
 extension UserDefaults {
     var defaultPublishingLicense: DraftMediaLicense? {
         if let rawValue = string(forKey: "defaultPublishingLicense") {
-            return DraftMediaLicense(rawValue: rawValue)
+            DraftMediaLicense(rawValue: rawValue)
         } else {
-            return nil
+            nil
         }
     }
 }

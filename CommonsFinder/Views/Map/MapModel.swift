@@ -44,7 +44,6 @@ enum MapError: Error {
 
     private(set) var clusters: [H3Index: GeoCluster] = .init()
 
-    var mapStyle: WrappedMapStyle = .standard
 
     private(set) var itemType: MapItemType = .categoryItems
     private(set) var selectedMapItem: SelectedMapItemModel?

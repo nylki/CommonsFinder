@@ -30,6 +30,7 @@ struct MapView: View {
     @Environment(\.scenePhase) private var scenePhase
 
     @Environment(MapModel.self) private var mapModel
+    @AppStorage("mapStyle") var mapStyle = WrappedMapStyle.standard
 
     /// this is either a media item or a wiki item
     private var focusedMapSheetItem: GeoItem? {
@@ -166,7 +167,7 @@ struct MapView: View {
                 MapScaleView()
             }
             .mapControlVisibility(.visible)
-            .mapStyle(mapModel.mapStyle.asMKMapStyle)
+            .mapStyle(mapStyle.asMKMapStyle)
             .overlay(alignment: .trailing) {
                 VStack {
                     MapUserLocateButtonCustom(mapModel: mapModel)
@@ -187,7 +188,7 @@ struct MapView: View {
                 content: { sheetType in
                     switch sheetType {
                     case .mapStyle:
-                        MapStyleSheet(activeStyle: $mapModel.mapStyle)
+                        MapStyleSheet(activeStyle: $mapStyle)
                     case .mapSelection:
                         if let model = (mapModel.selectedMapItem as? MediaInClusterModel) {
                             @Bindable var model = model
