@@ -274,7 +274,7 @@ class UploadManager {
             // Swift 6.0 compiler correctly produces warning: “Case will never be executed”
             // retry in XCode 16.3-4
             // see: https://github.com/swiftlang/swift/issues/74555
-            print("this is required to silence 'non-exhaustive' error, but generates a 'will never be executed' warning")
+            logger.error("this is required to silence 'non-exhaustive' error, but generates a 'will never be executed' warning")
         }
     }
 
@@ -312,7 +312,7 @@ class UploadManager {
         do {
             try bgTaskScheduler.submit(bgRequest)
         } catch {
-            print("Failed to submit request: \(error)")
+            logger.error("Failed to submit request: \(error)")
         }
     }
 

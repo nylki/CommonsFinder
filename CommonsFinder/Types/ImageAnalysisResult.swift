@@ -1,5 +1,5 @@
 //
-//  DraftAnalysisResult.swift
+//  ImageAnalysisResult.swift
 //  CommonsFinder
 //
 //  Created by Tom Brewe on 11.07.25.
@@ -7,7 +7,7 @@
 
 import Foundation
 
-struct DraftAnalysisResult: Equatable, Hashable, CustomDebugStringConvertible {
+struct ImageAnalysisResult: Equatable, Hashable, CustomDebugStringConvertible {
     var isLowQuality: Bool?
     var nearbyCategories: [Category]
     var faceCount: Int?

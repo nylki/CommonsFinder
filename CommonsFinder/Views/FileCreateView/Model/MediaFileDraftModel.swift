@@ -20,9 +20,20 @@ import os.log
     var draft: MediaFileDraft
     let addedDate: Date
 
-    var isShowingStatementPicker = false
+    var isShowingTagsPicker = false
     var isShowingCategoryPicker = false
-    var analysisResult: DraftAnalysisResult?
+
+    enum ImageAnalysisStatus: Equatable {
+        case none
+        case analyzing
+        case finished(ImageAnalysisResult?)
+
+        var result: ImageAnalysisResult? {
+            if case .finished(let res) = self { res } else { nil }
+        }
+    }
+
+    var analysisResult: ImageAnalysisStatus = .none
 
     var suggestedFilenames: [FileNameTypeTuple] = []
     var nameValidationResult: NameValidationResult?
@@ -58,13 +69,18 @@ import os.log
     private var imageLoadTask: Task<Void, Never>?
 
     // TODO: move to parent, to handle potentially multiple drafts at once
-    func analyzeImage() async {
-        guard analysisResult == nil else { return }
+    func analyzeImage(appDatabase: AppDatabase) async {
+        switch analysisResult {
+        case .none: break
+        case .analyzing, .finished(_): return
+        }
+
+        analysisResult = .analyzing
 
         logger.debug("analyzing draft image...")
-        let result = await DraftAnalysis.analyze(draft: draft)
+        let result = await ImageAnalysis.analyze(draft: draft, appDatabase: appDatabase)
         logger.debug("analyzing draft image finished! \(result?.debugDescription ?? "")")
-        self.analysisResult = result
+        self.analysisResult = .finished(result)
     }
 
     var choosenCoordinate: CLLocationCoordinate2D? {

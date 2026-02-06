@@ -77,6 +77,8 @@ extension MediaFileDraftModel {
                 case .unknownOther: return .failure(.undefinedAPIResult)
                 }
             }
+        } catch is CancellationError {
+            return nil
         } catch {
             logger.error("Failed to validate filename \(error)")
             return .failure(.undefinedAPIResult)

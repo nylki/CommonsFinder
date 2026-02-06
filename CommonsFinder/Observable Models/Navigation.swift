@@ -73,10 +73,10 @@ import os.log
     }
 
     //    var isViewingFileSheetOpen: MediaFile.ID?
-    var isEditingDraft: DraftSheetNavItem?
+    var isEditingDraft: FileCreateViewModel?
     var isAuthSheetOpen: AuthNavigationDestination?
 
-    enum DraftSheetNavItem: Identifiable {
+    enum DraftSheetNavItem: Identifiable, Equatable {
         case newDraft(NewDraftOptions?)
         case existing([MediaFileDraft])
 
@@ -168,15 +168,15 @@ extension Navigation {
     }
 
     func editDrafts(drafts: [MediaFileDraft]) {
-        isEditingDraft = .existing(drafts)
+        isEditingDraft = .init(existingDrafts: drafts)
     }
 
     func openNewDraft(options: NewDraftOptions) {
-        isEditingDraft = .newDraft(options)
+        isEditingDraft = .init(newDraftOptions: options)
     }
 
     func openNewDraft() {
-        isEditingDraft = .newDraft(nil)
+        isEditingDraft = .init(newDraftOptions: nil)
     }
 
     func viewFile(mediaFile: MediaFileInfo, namespace: Namespace.ID) {
