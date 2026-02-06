@@ -13,6 +13,11 @@ extension API {
             throw CommonAPIError.invalidQueryParams
         }
         components.queryItems = query.map { URLQueryItem(name: $0.key, value: $0.value) }
+        
+        // URLQueryItem leaves literal "+" unchanged in values; MediaWiki treats "+" as a space in query parsing.
+        if let percentEncodedQuery = components.percentEncodedQuery {
+            components.percentEncodedQuery = percentEncodedQuery.replacing("+", with: "%2B")
+        }
         guard let finalURL = components.url else {
             throw CommonAPIError.invalidQueryParams
         }
@@ -74,8 +79,8 @@ private func formURLEncode(_ form: [String: String]) -> Data {
         let k = key.addingPercentEncoding(withAllowedCharacters: allowed) ?? key
         let vEncoded = value
             .addingPercentEncoding(withAllowedCharacters: allowed)?
-            .replacingOccurrences(of: "%20", with: "+")
-        ?? value.replacingOccurrences(of: " ", with: "+")
+            .replacing("%20", with: "+")
+        ?? value.replacing(" ", with: "+")
         return "\(k)=\(vEncoded)"
     }
     .sorted()
@@ -113,4 +118,3 @@ extension NSMutableData {
     }
   }
 }
-
