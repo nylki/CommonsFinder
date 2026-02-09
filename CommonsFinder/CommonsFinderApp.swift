@@ -127,14 +127,7 @@ private func configureNukeAndPulse() {
     DataLoader.sharedUrlCache.memoryCapacity = 0
 
     var pipelineConfig = ImagePipeline.Configuration()
-    let urlSessionConfig = URLSessionConfiguration.default
-
-    urlSessionConfig.httpAdditionalHeaders = [
-        "User-Agent": Networking.shared.userAgent,
-        "Referer": Networking.shared.referer,
-    ]
-
-    let dataLoader = DataLoader(configuration: urlSessionConfig)
+    let dataLoader = DataLoader(configuration: Networking.shared.config)
 
     /// TESTING NOTE: If tests fail in Pulse package, comment out the following block and try again.
     #if DEBUG

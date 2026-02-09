@@ -65,9 +65,9 @@ import os.log
 
     private func updateReferer() {
         if let currentPath = currentPath.last {
-            Networking.shared.referer = "CommonsFinder://\(currentPath.refererPath)"
+            Networking.shared.setReferer("CommonsFinder://\(currentPath.refererPath)")
         } else {
-            Networking.shared.referer = "CommonsFinder://\(selectedTab.refererPath)"
+            Networking.shared.setReferer("CommonsFinder://\(selectedTab.refererPath)")
         }
         logger.debug("Referer: \(Networking.shared.referer)")
     }

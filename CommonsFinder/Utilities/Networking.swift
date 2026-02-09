@@ -8,12 +8,13 @@
 import CommonsAPI
 import Foundation
 
-struct Networking {
+final class Networking {
     static var shared: Networking = .init()
 
-    var referer: String
+    private(set) var referer: String
     let userAgent: String
     let uploadComment: String
+    let config: URLSessionConfiguration
     let api: API
 
     init() {
@@ -21,15 +22,31 @@ struct Networking {
 
         let info = Bundle.main.infoDictionary
         let executable = (info?["CFBundleExecutable"] as? String) ?? (ProcessInfo.processInfo.arguments.first?.split(separator: "/").last.map(String.init)) ?? "Unknown"
-        let bundle = info?["CFBundleIdentifier"] as? String ?? "Unknown"
-        let appVersion = info?["CFBundleShortVersionString"] as? String ?? "Unknown"
+        //        let bundle = info?["CFBundleIdentifier"] as? String ?? "Unknown"
+        //        let appVersion = info?["CFBundleShortVersionString"] as? String ?? "Unknown"
         let appBuild = info?["CFBundleVersion"] as? String ?? "Unknown"
 
         let contactInfo = "https://github.com/nylki/CommonsFinder"
 
         userAgent = "\(executable)/\(appBuild) (\(contactInfo)) \(osNameVersion)"
         uploadComment = "uploaded from \(executable)/\(appBuild) \(osNameVersion)"
-        api = API(userAgent: userAgent, referer: referer)
+        let urlSessionConfig = URLSessionConfiguration.default
+        urlSessionConfig.httpShouldSetCookies = true
+        urlSessionConfig.httpCookieAcceptPolicy = .always
+        urlSessionConfig.httpAdditionalHeaders = [
+            "User-Agent": userAgent,
+            // NOTE: this is just the initial referer, will be updated via setReferer().
+            "Referer": referer,
+        ]
+        config = urlSessionConfig
+        api = API(config: urlSessionConfig, userAgent: userAgent, referer: referer)
+    }
+
+    func setReferer(_ newReferer: String) {
+        referer = newReferer
+        Task<Void, Never> {
+            await api.setReferer(newReferer)
+        }
     }
 
     // Preferred format for User-Agent headers for wikimedia prohects (see: https://www.mediawiki.org/wiki/API:Etiquette#The_User-Agent_header)
