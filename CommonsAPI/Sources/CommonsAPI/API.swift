@@ -188,6 +188,7 @@ public actor API {
 
         let (data, response) = try await urlSession.data(for: request)
         let wrapped = try parse(LoginResponseWrapped.self, from: data, response: response)
+        HTTPCookieStorage.shared.cloneCentralAuthCookies()
         return wrapped.clientlogin
     }
     
@@ -247,6 +248,7 @@ public actor API {
 
         let (data, response) = try await urlSession.data(for: request)
         let wrapped = try parse(LoginResponseWrapped.self, from: data, response: response)
+        HTTPCookieStorage.shared.cloneCentralAuthCookies()
         return wrapped.clientlogin
     }
     
@@ -285,6 +287,7 @@ public actor API {
         let (data, response) = try await urlSession.data(for: request)
         
         let responseValue = try parse(ValidatePasswordResponse.self, from: data, response: response)
+        HTTPCookieStorage.shared.cloneCentralAuthCookies()
         return UsernamePasswordValidation(withRawResponse: responseValue)
     }
     
@@ -1381,6 +1384,7 @@ LIMIT \(limit)
                     )
                     
                     continuation.yield(.published)
+                    HTTPCookieStorage.shared.cloneCentralAuthCookies()
                     continuation.finish()
                 } catch let urlError as URLError {
                     logger.error("Failed uploading a file due to a url error: \(urlError.errorCode) \(urlError.localizedDescription)")

@@ -49,6 +49,7 @@ final class Networking {
         }
     }
 
+
     // Preferred format for User-Agent headers for wikimedia prohects (see: https://www.mediawiki.org/wiki/API:Etiquette#The_User-Agent_header)
     // <client name>/<version> (<contact information>) <library/framework name>/<version>
 
