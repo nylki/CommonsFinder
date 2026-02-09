@@ -28,14 +28,13 @@ public actor API {
     let createAccountRedirectURL = URL(string: "https://commons.m.wikimedia.beta.wmflabs.org/w/index.php?title=Main_Page&welcome=yes")!
     
     private(set) var userAgent: String
-    var referer: String
-    
+    private(set) var referer: String
 #if DEBUG
-    let urlSession = URLSessionProxy(configuration: URLSessionConfiguration.default)
+    let urlSession: URLSessionProxy
 #else
-    let urlSession = URLSession(configuration: URLSessionConfiguration.default)
+    let urlSession: URLSession
 #endif
-    
+
     private lazy var jsonDecoder: JSONDecoder = {
         let decoder = JSONDecoder()
         decoder.dateDecodingStrategy = .iso8601
@@ -43,9 +42,15 @@ public actor API {
     }()
 
 
-    public init(userAgent: String, referer: String) {
+    public init(config: URLSessionConfiguration, userAgent: String, referer: String) {
         self.userAgent = userAgent
         self.referer = referer
+#if DEBUG
+    urlSession = URLSessionProxy(configuration: config)
+#else
+    urlSession = URLSession(configuration: config)
+#endif
+        
 
  // Un-Comment the following code block to test EmailAuth via email-code (https://www.mediawiki.org/wiki/Help:Extension:EmailAuth)
 //#if DEBUG
@@ -76,7 +81,11 @@ public actor API {
         
 //        var eventMonitors: [any EventMonitor] = [AlamofireNotifications()]
         
-}
+    }
+    
+    public func setReferer(_ newReferer: String) {
+        referer = newReferer
+    }
     
     private func parse<T: Decodable>(_ type: T.Type, from data: Data, response: URLResponse) throws -> T {
         guard let http = response as? HTTPURLResponse else {
@@ -175,9 +184,7 @@ public actor API {
             "password": password,
             "rememberMe": "1"
         ]
-        var request = try POST(url: commonsEndpoint, form: form)
-        // Optional: Referer can help in some CSRF contexts; generally not required for clientlogin.
-        request.setValue("https://commons.wikimedia.org/wiki/Special:UserLogin", forHTTPHeaderField: "Referer")
+        let request = try POST(url: commonsEndpoint, form: form)
 
         let (data, response) = try await urlSession.data(for: request)
         let wrapped = try parse(LoginResponseWrapped.self, from: data, response: response)
@@ -205,8 +212,7 @@ public actor API {
             "captchaId": captchaID,
             "email": email
         ]
-        var request = try POST(url: commonsEndpoint, form: form)
-        request.setValue("https://commons.wikimedia.org/wiki/Special:CreateAccount", forHTTPHeaderField: "Referer")
+        let request = try POST(url: commonsEndpoint, form: form)
 
         let (data, response) = try await urlSession.data(for: request)
         let wrapped = try parse(CreateAccountResponseWrapped.self, from: data, response: response)
@@ -237,8 +243,7 @@ public actor API {
             "token": emailCode,
             "logincontinue": "1"
         ]
-        var request = try POST(url: commonsEndpoint, form: form)
-        request.setValue("https://commons.wikimedia.org/wiki/Special:UserLogin", forHTTPHeaderField: "Referer")
+        let request = try POST(url: commonsEndpoint, form: form)
 
         let (data, response) = try await urlSession.data(for: request)
         let wrapped = try parse(LoginResponseWrapped.self, from: data, response: response)
@@ -258,8 +263,7 @@ public actor API {
             "OATHToken": twoFactorCode,
             "logincontinue": "1"
         ]
-        var request = try POST(url: commonsEndpoint, form: form)
-        request.setValue("https://commons.wikimedia.org/wiki/Special:UserLogin", forHTTPHeaderField: "Referer")
+        let request = try POST(url: commonsEndpoint, form: form)
 
         let (data, response) = try await urlSession.data(for: request)
         let wrapped = try parse(LoginResponseWrapped.self, from: data, response: response)
