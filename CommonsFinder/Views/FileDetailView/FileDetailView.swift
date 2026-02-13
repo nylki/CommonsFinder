@@ -14,33 +14,6 @@ import NukeUI
 import SwiftUI
 import os.log
 
-//struct ___FileShowView: View {
-//    private let navigationNamespace: Namespace.ID
-//
-//    // To make this a bit more minimal only one  non-optional @State MediaFile that gets the initial value initialized in Init?
-//    // -> but that is considered bad practice, because it can be confusing that State is only set once in an init...
-//    // But might be alright here, when stated that it is intended....
-//    private let _initialMediaFileInfo: MediaFileInfo
-//    @State private var _updatedMediaFileInfo: MediaFileInfo?
-//    private var mediaFileInfo: MediaFileInfo { _updatedMediaFileInfo ?? _initialMediaFileInfo }
-//    @State private var isShowingEditSheet: MediaFileInfo?
-//    @Environment(\.appDatabase) private var appDatabase
-//
-//    init(_ mediaFileInfo: MediaFileInfo, navigationNamespace: Namespace.ID) {
-//        // The immutable MediaFile is wrapped as an @Observable MediaFileModel here, to allow
-//        // registering changes when user edits the file.
-//        logger.debug("FileShowView Init")
-//        _initialMediaFileInfo = mediaFileInfo
-//        self.navigationNamespace = navigationNamespace
-//    }
-//
-//    var body: some View {
-//        MainFileShowView(mediaFileInfo: mediaFileInfo, navigationNamespace: navigationNamespace, onUpdateBookmark: updateBookmark)
-//
-//    }
-//}
-
-
 struct FileDetailView: View {
     // TODO: maybe convert to @Query (or other observation here) and upsert MediaFile into DB on .task and then do dbMediaFile ?? passedMediaFile
 
@@ -58,16 +31,18 @@ struct FileDetailView: View {
     @Environment(Navigation.self) private var navigation
     @Environment(\.appDatabase) private var appDatabase
     @Environment(MapModel.self) private var mapModel
+    @Environment(EditingManager.self) private var editingManager
 
     @State private var updatedMediaFileInfo: MediaFileInfo?
     private var mediaFileInfo: MediaFileInfo { updatedMediaFileInfo ?? initialMediaFileInfo }
 
-    @State private var isShowingEditSheet: MediaFileInfo?
+    @State private var isShowingEditSheet = false
     @State private var isDescriptionExpanded = false
 
     @State private var isShowingFullscreenImage = false
 
     @State private var resolvedTags: [TagItem] = []
+    @State private var isShowingEditingError = false
 
     private var tagsHashID: String {
         "\(mediaFileInfo.mediaFile.categories.hashValue)-\(mediaFileInfo.mediaFile.statements.hashValue)"
@@ -91,6 +66,13 @@ struct FileDetailView: View {
         }
     }
 
+    private var editingStatus: EditingStatus? {
+        editingManager.status[mediaFileInfo.mediaFile.id]
+    }
+
+    private var editingError: Error? {
+        editingStatus?.error
+    }
 
     @concurrent
     private func refreshFromNetwork() async {
@@ -137,6 +119,14 @@ struct FileDetailView: View {
                 imageReference: mediaFileInfo.zoomableImageReference,
                 isPresented: $isShowingFullscreenImage
             )
+            .sheet(isPresented: $isShowingEditSheet) {
+                FileEditView(mediaFileInfo: mediaFileInfo, resolvedTags: resolvedTags)
+            }
+            .alert("Failed to Publish", isPresented: $isShowingEditingError, presenting: editingError) { _ in
+                Button("OK", role: .cancel) {}
+            } message: { error in
+                Text(error.localizedDescription)
+            }
             .toolbar {
                 ToolbarItem {
                     Button(
@@ -158,6 +148,11 @@ struct FileDetailView: View {
                         Button("Show on Map", systemImage: "map") {
                             navigation.showOnMap(mediaFile: mediaFileInfo.mediaFile, mapModel: mapModel)
                         }
+
+                        Button("Edit", systemImage: "pencil") {
+                            isShowingEditSheet = true
+                        }
+                        .disabled(editingStatus != nil)
 
                         Divider()
 
@@ -222,6 +217,8 @@ struct FileDetailView: View {
                         self.resolvedTags = tags
                         logger.info("Resolving Tags finished.")
                     }
+                } catch is CancellationError {
+                    logger.error("tags resolve cancelled.")
                 } catch {
                     logger.error("Failed to resolve MediaFile tags: \(error)")
                 }
@@ -229,13 +226,20 @@ struct FileDetailView: View {
             .onDisappear {
                 saveFileToLastViewed()
             }
+            .onChange(of: editingStatus) {
+                guard let editingStatus else { return }
+                if editingStatus.error != nil {
+                    isShowingEditingError = true
+                }
+            }
     }
 
     @ViewBuilder
     private var main: some View {
         ScrollView(.vertical) {
             VStack(alignment: .leading) {
-                imageView.frame(minWidth: 0, maxWidth: .infinity)
+                MediaFileImageButton(mediaFileInfo: mediaFileInfo, isShowingFullscreenImage: $isShowingFullscreenImage)
+                    .frame(minWidth: 0, maxWidth: .infinity)
                 detailsView
                     .padding(.horizontal)
             }
@@ -250,6 +254,7 @@ struct FileDetailView: View {
                         .font(.title3)
                         .bold()
                         .multilineTextAlignment(.leading)
+                        .textSelection(.enabled)
                 } else {
                     Color.clear.frame(height: 1).contentShape(.rect)
                 }
@@ -261,6 +266,7 @@ struct FileDetailView: View {
                         Text(fullDescription)
                             .font(.body)
                             .multilineTextAlignment(.leading)
+                            .textSelection(.enabled)
                     }
 
                     VStack(alignment: .leading, spacing: 2) {
@@ -269,6 +275,7 @@ struct FileDetailView: View {
                             .multilineTextAlignment(.leading)
                             .lineLimit(isDescriptionExpanded ? 999 : 5)
                             .padding(.bottom, 0)
+                            .textSelection(.enabled)
 
                         Button(isDescriptionExpanded ? "show less…" : "show more…") {
                             isDescriptionExpanded.toggle()
@@ -281,7 +288,9 @@ struct FileDetailView: View {
             }
 
             if let inceptionDate = mediaFileInfo.mediaFile.inceptionDate {
-                Text(inceptionDate, style: .date).font(.caption)
+                Text(inceptionDate, style: .date)
+                    .font(.caption)
+                    .textSelection(.enabled)
             }
 
             tagSection
@@ -435,7 +444,7 @@ struct FileDetailView: View {
         } else if itemCount > 0 {
             // TODO: better placeholder
             Color.clear.frame(height: Double(itemCount * 30))
-                .overlay {
+                .overlay(alignment: .top) {
                     ProgressView().progressViewStyle(.circular)
                 }
         }
@@ -455,30 +464,6 @@ struct LandscapeOrientationModifier: ViewModifier {
         }
     }
 }
-
-nonisolated extension WikidataItemID {
-    static let preferredLicenses: [WikidataItemID] = [
-        .CC0, .CC_BY_4_0, .CC_BY_SA_4_0, PDM_1_0,
-    ]
-
-    static let acceptableLicenses: [WikidataItemID] = [
-        CC0,
-        PDM_1_0,
-        CC_BY_4_0,
-        CC_BY_3_0,
-        CC_BY_IGO_3_0,
-        CC_BY_2_5,
-        CC_BY_1_0,
-        CC_BY_2_0,
-        CC_BY_SA_4_0,
-        CC_BY_SA_3_0,
-        CC_BY_SA_IGO_3_0,
-        CC_BY_SA_2_5,
-        CC_BY_SA_2_0,
-        CC_BY_SA_1_0,
-    ]
-}
-
 
 #Preview(traits: .previewEnvironment) {
     @Previewable @Namespace var namespace
