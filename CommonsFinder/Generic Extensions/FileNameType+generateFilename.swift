@@ -12,7 +12,7 @@ import os.log
 
 nonisolated extension FileNameType {
     func generateFilename(
-        coordinate: CLLocationCoordinate2D?, date: Date?, desc: [MediaFileDraft.DraftCaptionWithDescription], locale: Locale, tags: [TagItem]
+        coordinate: CLLocationCoordinate2D?, date: Date?, desc: [CaptionWithDescription], locale: Locale, tags: [TagItem]
     ) async -> String? {
         let filename: String? =
             switch self {
@@ -34,7 +34,7 @@ nonisolated extension FileNameType {
 }
 
 
-nonisolated private func generateCaptionFilename(desc: [MediaFileDraft.DraftCaptionWithDescription], locale: Locale) -> String? {
+nonisolated private func generateCaptionFilename(desc: [CaptionWithDescription], locale: Locale) -> String? {
 
     // For caption only we select the caption matching the current locales language code if it exists
     // otherwise just the first available caption.
@@ -47,7 +47,7 @@ nonisolated private func generateCaptionFilename(desc: [MediaFileDraft.DraftCapt
     }
 }
 
-nonisolated private func generateCaptionAndDateFilename(desc: [MediaFileDraft.DraftCaptionWithDescription], date: Date?, locale: Locale) -> String? {
+nonisolated private func generateCaptionAndDateFilename(desc: [CaptionWithDescription], date: Date?, locale: Locale) -> String? {
     let caption = generateCaptionFilename(desc: desc, locale: locale)
     guard let caption else { return nil }
 

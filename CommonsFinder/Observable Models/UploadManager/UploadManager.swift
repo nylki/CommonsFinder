@@ -274,7 +274,7 @@ class UploadManager {
             // Swift 6.0 compiler correctly produces warning: “Case will never be executed”
             // retry in XCode 16.3-4
             // see: https://github.com/swiftlang/swift/issues/74555
-            print("this is required to silence 'non-exhaustive' error, but generates a 'will never be executed' warning")
+            logger.error("this is required to silence 'non-exhaustive' error, but generates a 'will never be executed' warning")
         }
     }
 
@@ -292,12 +292,18 @@ class UploadManager {
         let bgTaskIdentifier = "app.CommonsFinder.upload.\(id)"
 
         if !registeredBGTaskIDs.contains(bgTaskIdentifier) {
-            bgTaskScheduler.register(forTaskWithIdentifier: bgTaskIdentifier, using: .main) { [self] bgTask in
+            let didRegister = bgTaskScheduler.register(forTaskWithIdentifier: bgTaskIdentifier, using: .main) { [self] bgTask in
                 guard let bgTask = bgTask as? BGContinuedProcessingTask else { return }
                 bgTask.expirationHandler = {
                     self.tasks[id]?.cancel()
                 }
                 performUploadImpl(id: id, startStep: startStep, bgTask: bgTask)
+            }
+            guard didRegister else {
+                logger.error("Failed to register BG task handler for \(bgTaskIdentifier). Falling back to immediate upload.")
+                performUploadImpl(id: id, startStep: startStep)
+                assertionFailure()
+                return
             }
             registeredBGTaskIDs.insert(bgTaskIdentifier)
         }
@@ -312,7 +318,8 @@ class UploadManager {
         do {
             try bgTaskScheduler.submit(bgRequest)
         } catch {
-            print("Failed to submit request: \(error)")
+            logger.error("Failed to submit BG task request for \(bgTaskIdentifier): \(error). Falling back to immediate upload.")
+            performUploadImpl(id: id, startStep: startStep)
         }
     }
 

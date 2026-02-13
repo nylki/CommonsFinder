@@ -62,14 +62,15 @@ struct ContentView: View {
             }
         }
         .sheet(item: $navigation.isAuthSheetOpen, content: AuthView.init)
-        .fullScreenCover(item: $navigation.isEditingDraft) { destination in
-            switch destination {
-            case .existing(let files):
-                FileCreateView(appDatabase: appDatabase, files: files)
-            case .newDraft(let options):
-                FileCreateView(appDatabase: appDatabase, newDraftOptions: options)
-            }
-        }
+        //        .sheet(item: $navigation.isEditingDraft) { destination in
+        //            switch destination {
+        //            case .existing(let files):
+        //                FileCreateView(appDatabase: appDatabase, files: files)
+        //            case .newDraft(let options):
+        //                FileCreateView(appDatabase: appDatabase, newDraftOptions: options)
+        //            }
+        //        }
+        .modifier(DraftSheetModifer(model: $navigation.isEditingDraft))
         .onOpenURL(perform: handleURL)
         .onContinueUserActivity(NSUserActivityTypeLiveActivity) { userActivity in
             guard let url = userActivity.webpageURL else { return }

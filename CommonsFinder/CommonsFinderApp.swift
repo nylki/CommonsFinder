@@ -23,6 +23,7 @@ struct CommonsFinderApp: App {
     private let appDatabase: AppDatabase
     private let searchModel: SearchModel
     private let uploadManager: UploadManager
+    private let editingManager: EditingManager
     private let account: AccountModel
     private let mediaFileCache: MediaFileReactiveCache
     private let mapModel: MapModel
@@ -45,6 +46,9 @@ struct CommonsFinderApp: App {
 
         let uploadManager = UploadManager(appDatabase: appDatabase, accountModel: account)
         self.uploadManager = uploadManager
+
+        let editingManager = EditingManager(appDatabase: appDatabase)
+        self.editingManager = editingManager
 
         let mediaFileCache = MediaFileReactiveCache(appDatabase: appDatabase)
         self.mediaFileCache = mediaFileCache
@@ -82,6 +86,7 @@ struct CommonsFinderApp: App {
                 .environment(searchModel)
                 .environment(mapModel)
                 .environment(uploadManager)
+                .environment(editingManager)
                 .environment(mediaFileCache)
                 .environment(mapModel)
                 .task {
@@ -133,11 +138,11 @@ private func configureNukeAndPulse() {
     let dataLoader = DataLoader(configuration: Networking.shared.config)
 
     /// TESTING NOTE: If tests fail in Pulse package, comment out the following block and try again.
-    #if DEBUG
-        RemoteLogger.shared.isAutomaticConnectionEnabled = true
-        ImagePipeline.Configuration.isSignpostLoggingEnabled = true
-        dataLoader.delegate = URLSessionProxyDelegate()
-    #endif
+    //    #if DEBUG
+    //        RemoteLogger.shared.isAutomaticConnectionEnabled = true
+    //        ImagePipeline.Configuration.isSignpostLoggingEnabled = true
+    //        dataLoader.delegate = URLSessionProxyDelegate()
+    //    #endif
 
     pipelineConfig.dataLoader = dataLoader
     let pipeline = ImagePipeline(configuration: pipelineConfig)

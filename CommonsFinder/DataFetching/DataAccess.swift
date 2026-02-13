@@ -16,53 +16,49 @@ import os.log
 enum DataAccess {
 
     /// Will cache the result and return an up-to-date CategoryInfo. (edge case: It may have a different ID as a result of a redirect)
-    static func refreshCategoryInfoFromAPI(categoryInfo: CategoryInfo, appDatabase: AppDatabase) async throws -> CategoryInfo? {
-        guard let wikidataID = categoryInfo.base.wikidataId else {
-            logger.debug("Category \(categoryInfo.base.label ?? categoryInfo.base.commonsCategory ?? "unknown?") has no wikidata ID, cannot refresh.")
-            // TODO: consider what it would mean to refresh a commonsCategory-only `Category`
-            return nil
+    static func refreshCategoryInfoFromAPI(categoryInfo: CategoryInfo, appDatabase: AppDatabase) async throws -> Category? {
+        var wikidataIDs: [String] = []
+        var commonsCategories: [String] = []
+
+        if let wikidataID = categoryInfo.base.wikidataId {
+            wikidataIDs.append(wikidataID)
         }
-        let refreshedCategory = try await fetchCategoriesFromAPI(
-            wikidataIDs: [wikidataID],
-            shouldCache: true,
+        if let commonsCategory = categoryInfo.base.commonsCategory {
+            commonsCategories.append(commonsCategory)
+        }
+
+        let results = try await fetchCombinedCategoriesFromDatabaseOrAPI(
+            wikidataIDs: wikidataIDs,
+            commonsCategories: commonsCategories,
+            forceNetworkRefresh: true,
             appDatabase: appDatabase
         )
-        .fetchedCategories
-        .first
 
-        guard let dbID = refreshedCategory?.id else {
-            assertionFailure("We expect the returned item to be saved in the DB, because `shouldCache: true` (thus having an ID)")
-            return nil
-        }
-
-        return try await appDatabase.reader.read { db in
-            return try Category.filter(id: dbID)
-                .including(required: Category.itemInteraction)
-                .asRequest(of: CategoryInfo.self)
-                .fetchOne(db)
-        }
+        return results.fetchedCategories.first
     }
 
     /// resolves Tags based on commons categories and depict items (eg. from a MediaFile)
     /// will return redirected (merged) items instead of original ones!
-    static func fetchCombinedTagsFromDatabaseOrAPI(
+    static func fetchCombinedCategoriesFromDatabaseOrAPI(
         wikidataIDs: [Category.WikidataID],
         commonsCategories: [String],
         forceNetworkRefresh: Bool = false,
         appDatabase: AppDatabase
-    ) async throws -> [TagItem] {
-        let cachedCategoryInfos: [CategoryInfo] =
-            if forceNetworkRefresh {
-                []
-            } else {
-                (try? appDatabase.fetchCategoryInfos(wikidataIDs: wikidataIDs, resolveRedirections: true)) ?? []
-            }
+    ) async throws -> CategoryFetchResult {
+        let cachedCategoryInfos: [CategoryInfo]
+
+        if forceNetworkRefresh {
+            cachedCategoryInfos = []
+        } else {
+            cachedCategoryInfos = (try? appDatabase.fetchCategoryInfos(wikidataIDs: wikidataIDs, resolveRedirections: true)) ?? []
+        }
 
         let cachedIDs = cachedCategoryInfos.compactMap(\.base.wikidataId)
         let missingIDs = Set(wikidataIDs).subtracting(cachedIDs)
 
         let fetchResult = try await fetchCategoriesFromAPI(
             wikidataIDs: Array(missingIDs),
+            commonsCategories: commonsCategories,
             // if we refresh from network, we want to cache the results
             shouldCache: forceNetworkRefresh,
             appDatabase: appDatabase
@@ -70,39 +66,19 @@ enum DataAccess {
 
         let fetchedCategoryInfos: [CategoryInfo] = fetchResult.fetchedCategories.map { .init($0) }
 
-        let groupedWikidataCategories = Set(consume cachedCategoryInfos + consume fetchedCategoryInfos).grouped(by: \.base.wikidataId)
+        let commonsCategoriesWithoutWikidataItem = Set(fetchedCategoryInfos.compactMap(\.base.commonsCategory))
 
-        // Make sure to continue with results in the original order
-        let orderedIDs = wikidataIDs.map { fetchResult.redirectedIDs[$0] ?? $0 }
-        let depictionTags: [TagItem] =
-            orderedIDs
-            .compactMap { wikidataID in
-                guard let category = groupedWikidataCategories[wikidataID]?.first?.base else {
-                    return nil
-                }
-                var usages: Set<TagType> = [.depict]
-                if let categoryName = category.commonsCategory, commonsCategories.contains(categoryName) {
-                    usages.insert(.category)
-                }
-                return TagItem(category, pickedUsages: usages)
-            }
-
-        let categoriesWithDepiction: [String] =
-            depictionTags
-            .filter { $0.pickedUsages.contains(.category) }
-            .compactMap { depictItem in
-                depictItem.baseItem.commonsCategory
-            }
+        let pureCommonsCategories: [CategoryInfo] = Set(commonsCategories)
+            .subtracting(commonsCategoriesWithoutWikidataItem)
+            .map { .init(Category(commonsCategory: $0)) }
 
 
-        let pureCategoryTags: [TagItem] =
-            commonsCategories
-            .filter { !categoriesWithDepiction.contains($0) }
-            .map { category in
-                .init(Category(commonsCategory: category), pickedUsages: [.category])
-            }
+        let resultCategories = (fetchedCategoryInfos + pureCommonsCategories).map(\.base)
 
-        return depictionTags + pureCategoryTags
+        return .init(
+            fetchedCategories: resultCategories,
+            redirectedIDs: fetchResult.redirectedIDs
+        )
     }
 
 
@@ -111,51 +87,49 @@ enum DataAccess {
         let redirectedIDs: [Category.WikidataID: Category.WikidataID]
     }
 
-    static func fetchCategoriesFromAPI(wikidataIDs: [String], shouldCache: Bool, appDatabase: AppDatabase) async throws -> CategoryFetchResult {
+    static func fetchCategoriesFromAPI(
+        wikidataIDs: [String],
+        commonsCategories: [String],
+        shouldCache: Bool,
+        appDatabase: AppDatabase
+    ) async throws -> CategoryFetchResult {
 
-        let apiFetchLimit = 50
-        let chunkedIDs = wikidataIDs.chunks(ofCount: apiFetchLimit)
+        let languageCode = Locale.current.wikiLanguageCodeIdentifier
 
-        var fetchedCategories: [Category] = []
+
         // TODO: parallelize with taskGroup?
-        for ids in chunkedIDs {
-            do {
-                let ids = Array(ids)
-                let languageCode = Locale.current.wikiLanguageCodeIdentifier
 
 
-                // TODO: MAYBE! fetch claims (for commmonsCategory, length, etc.) in wbgetentities directly
-                // but may be less efficient in the end, because the returned json is much bigger
-                // than performing two queries like this?
-                // FIXME: Otherwise: better define different return types to not expect fields
-                // that are not filled from one API (eg. redirects) !
+        async let resolvedWikiItemsTask = Networking.shared.api
+            .fetchGenericWikidataItems(itemIDs: wikidataIDs, languageCode: languageCode)
 
-                async let wikiItemsTask = Networking.shared.api
-                    .fetchGenericWikidataItems(itemIDs: ids, languageCode: languageCode)
+        /// categories often have associated wikidataItems( & vice-versa, see above), resolve wiki items for the found categories:
+        async let resolvedCategoryItemsTask = Networking.shared.api
+            .findWikidataItemsForCategories(commonsCategories, languageCode: languageCode)
 
-                async let actionAPITask = Networking.shared.api
-                    .fetchWikidataEntities(ids: ids, preferredLanguages: [languageCode])
+        let (resolvedWikiItems, resolvedCategoryItems) = try await (resolvedWikiItemsTask, resolvedCategoryItemsTask)
 
-                let (wikiItems, actionAPIResults) = try await (wikiItemsTask, actionAPITask)
+        let combinedWikidataItems = (resolvedWikiItems + resolvedCategoryItems).uniqued(on: \.id)
 
-                // Since both API endpoints/task return different subsets of data
-                // we merge the fields here
-                let mergedItems: [Category] = wikiItems.compactMap { apiItem in
-                    /// If we encounter a redirect, initialize an empty Category that only has a redirect ID
-                    /// so that it can be resolved separately
-                    if let redirectID = actionAPIResults[apiItem.id]?.redirectsToId {
-                        return .init(wikidataID: apiItem.id, redirectsTo: redirectID)
-                    } else {
-                        var item = Category(apiItem: apiItem)
-                        if let actionAPIResult = actionAPIResults[apiItem.id] {
-                            item.label = actionAPIResult.label ?? item.label
-                            item.description = actionAPIResult.description ?? item.description
-                        }
-                        return item
-                    }
+        let labelsAndRedirects = try await fetchWikidataLabelsAndRedirects(
+            wikidataIDs: combinedWikidataItems.map(\.id),
+            languageCode: languageCode
+        )
+
+        // Since both API endpoints/task return different subsets of data
+        // we merge the fields here
+        let mergedItems: [Category] = combinedWikidataItems.compactMap { apiItem in
+            /// If we encounter a redirect, initialize an empty Category that only has a redirect ID
+            /// so that it can be resolved separately
+            if let redirectID = labelsAndRedirects[apiItem.id]?.redirectsToId {
+                return .init(wikidataID: apiItem.id, redirectsTo: redirectID)
+            } else {
+                var item = Category(apiItem: apiItem)
+                if let actionAPIResult = labelsAndRedirects[apiItem.id] {
+                    item.label = actionAPIResult.label ?? item.label
+                    item.description = actionAPIResult.description ?? item.description
                 }
-
-                fetchedCategories.append(contentsOf: mergedItems)
+                return item
             }
         }
 
@@ -163,7 +137,7 @@ enum DataAccess {
         /// We still save the barebone redirect-Categories
         /// to be able to get the redirected item quickly, without always fetching from network.
         let redirectResult = try await resolveRedirectionsFromAPI(
-            consume fetchedCategories,
+            consume mergedItems,
             shouldCache: shouldCache,
             appDatabase: appDatabase
         )
@@ -178,6 +152,30 @@ enum DataAccess {
         } else {
             return redirectResult
         }
+    }
+
+    private static func fetchWikidataLabelsAndRedirects(wikidataIDs: [String], languageCode: LanguageCode) async throws -> [String: GenericWikidataItem] {
+        let apiFetchLimit = 50
+        let chunkedIDs = wikidataIDs.chunks(ofCount: apiFetchLimit)
+        var result: [String: GenericWikidataItem] = [:]
+
+        for ids in chunkedIDs {
+            do {
+                let ids = Array(ids)
+                let fetchedResult = try await Networking.shared.api
+                    .fetchWikidataEntities(ids: ids, preferredLanguages: [languageCode])
+
+                result.merge(fetchedResult) { current, new in
+                    if current == new {
+                        assertionFailure("Duplicates from api")
+                    }
+                    return current
+                }
+
+            }
+        }
+
+        return result
     }
 
     /// For all argument items that contain a redirection, fetch the item that should be redirected from the network
@@ -201,6 +199,7 @@ enum DataAccess {
 
         let fetchedRedirectionResult = try await fetchCategoriesFromAPI(
             wikidataIDs: redirections.map(\.to),
+            commonsCategories: [],
             shouldCache: shouldCache,
             appDatabase: appDatabase
         )

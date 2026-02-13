@@ -19,6 +19,8 @@ public struct WikidataClaim: Codable, Hashable, Equatable, Sendable {
     public let id: String?
     public let rank: Rank
     public let qualifiers: [WikidataProp: [Snak]]?
+    // TODO:
+    // public let qualifiersOrder
     
     public init(mainsnak: Snak, rank: Rank = .normal, qualifiers: [WikidataProp: [Snak]]? = nil) {
         self.mainsnak = mainsnak

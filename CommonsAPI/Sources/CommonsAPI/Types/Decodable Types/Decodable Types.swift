@@ -521,6 +521,7 @@ internal struct SparqlGenericWikidataItem: Decodable, Sendable {
 /// alias Q-Item
 public struct GenericWikidataItem: Sendable, Hashable, Equatable, Identifiable, Decodable {
     public let commonsCategory: String?
+    /// the wikidataID (Q-id)
     public let id: String
     public let redirectsToId: String?
 
@@ -897,6 +898,61 @@ internal struct FileExistenceResponse: Decodable, Sendable {
     }
 }
 
+// query: prop=revisions
+internal struct PageRevisionsResponse: Decodable, Sendable {
+    let pages: [Page]
+
+    struct Page: Decodable, Sendable {
+        let pageid: Int?
+        let ns: MediawikiNamespace?
+        let title: String?
+        let missing: Bool?
+        let revisions: [Revision]?
+
+        struct Revision: Decodable, Sendable {
+            let slots: Slots?
+
+            struct Slots: Decodable, Sendable {
+                let main: Slot?
+            }
+
+            struct Slot: Decodable, Sendable {
+                let content: String?
+                let contentmodel: String?
+                let contentformat: String?
+            }
+        }
+    }
+}
+
+internal struct EditResponse: Decodable, Sendable {
+    let edit: EditResult?
+    let error: EditError?
+
+    struct EditResult: Decodable, Sendable {
+        let result: String?
+        let pageid: Int?
+        let title: String?
+        let newrevid: Int?
+        let nochange: Bool?
+    }
+
+    struct EditError: Decodable, Sendable {
+        let code: String
+        let info: String?
+    }
+}
+
+internal struct ClaimEditResponse: Decodable, Sendable {
+    let success: Int?
+    let error: EditError?
+
+    struct EditError: Decodable, Sendable {
+        let code: String
+        let info: String?
+    }
+}
+
 // query: list=search
 internal struct SearchListResponse: Decodable, Sendable {
     let search: [QueryListItem]
@@ -1264,4 +1320,3 @@ extension UsernamePasswordValidation {
         }
     }
 }
-

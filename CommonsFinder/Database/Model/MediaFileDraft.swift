@@ -48,7 +48,7 @@ nonisolated
     var localFileName: String
     var mimeType: String
 
-    var captionWithDesc: [DraftCaptionWithDescription]
+    var captionWithDesc: [CaptionWithDescription]
 
     /// falls back to the EXIF-data if no custom date set
     var inceptionDate: Date
@@ -79,12 +79,6 @@ nonisolated
     var width: Int?
     var height: Int?
 
-    struct DraftCaptionWithDescription: Codable, Equatable, Hashable {
-        var languageCode: LanguageCode
-        var caption: String
-        var fullDescription: String
-    }
-
     enum DraftAuthor: Codable, Equatable, Hashable {
         case appUser
         case custom(name: String, wikimediaUsername: String?, url: URL?)
@@ -112,20 +106,6 @@ nonisolated
         } else {
             nil
         }
-    }
-}
-
-nonisolated extension MediaFileDraft.DraftCaptionWithDescription {
-    init(languageCode: LanguageCode) {
-        self.languageCode = languageCode
-        caption = ""
-        fullDescription = ""
-    }
-
-    init(caption: String = "", fullDescription: String = "", languageCode: LanguageCode) {
-        self.caption = caption
-        self.fullDescription = fullDescription
-        self.languageCode = languageCode
     }
 }
 
@@ -199,7 +179,7 @@ nonisolated
         self.finalFilename = try container.decode(String.self, forKey: .finalFilename)
         self.localFileName = try container.decode(String.self, forKey: .localFileName)
         self.mimeType = try container.decode(String.self, forKey: .mimeType)
-        self.captionWithDesc = try container.decode([MediaFileDraft.DraftCaptionWithDescription].self, forKey: .captionWithDesc)
+        self.captionWithDesc = try container.decode([CaptionWithDescription].self, forKey: .captionWithDesc)
         self.inceptionDate = try container.decode(Date.self, forKey: .inceptionDate)
         self.timezone = try container.decodeIfPresent(String.self, forKey: .timezone)
         self.locationHandling = try container.decodeIfPresent(MediaFileDraft.LocationHandling.self, forKey: .locationHandling)
