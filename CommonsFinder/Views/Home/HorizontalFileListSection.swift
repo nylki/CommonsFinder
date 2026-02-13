@@ -45,7 +45,9 @@ struct HorizontalFileListSection: View {
                         mediaFileInfo, namespace: namespace
                     )
                     NavigationLink(value: navItem) {
-                        imageView(mediaFileInfo)
+                        MediaFileThumbImage(mediaFileImage: mediaFileInfo)
+                            .frame(width: 150, height: 150)
+                            .clipped()
                     }
                     .clipShape(.rect(cornerRadius: 16))
                     .contentShape([.contextMenuPreview, .interaction], .rect(cornerRadius: 16))
@@ -63,19 +65,6 @@ struct HorizontalFileListSection: View {
         }
         .scrollTargetBehavior(.viewAligned)
         .animation(.default, value: mediaFileInfos)
-    }
-
-    private func imageView(_ mediaFile: MediaFileInfo) -> some View {
-        LazyImage(request: mediaFile.thumbRequest) { phase in
-            if let image = phase.image {
-                image
-                    .resizable()
-                    .aspectRatio(contentMode: .fill)
-            } else {
-                Color.clear.background(.thinMaterial)
-            }
-        }
-        .frame(width: 150, height: 150)
     }
 }
 

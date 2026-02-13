@@ -120,13 +120,16 @@ struct CommonsFinderApp: App {
 
 private func configureNukeAndPulse() {
     // NUKE setup
-    ImageCache.shared.costLimit = 1024 * 1024 * 1000  // 1000 MB
-    //                    ImageCache.shared.countLimit = 100
+    var pipelineConfig = ImagePipeline.Configuration.withDataCache(
+        name: "app.CommonsFinder.DataCache",
+        sizeLimit: 1024 * 1024 * 256
+    )
+    ImageCache.shared.costLimit = 1024 * 1024 * 512  // 512 MB
     ImageCache.shared.ttl = 60 * 10  // Invalidate images in memory cache after 10 minutes
-    DataLoader.sharedUrlCache.diskCapacity = 1024 * 1024 * 500  // 500 MB
-    DataLoader.sharedUrlCache.memoryCapacity = 0
 
-    var pipelineConfig = ImagePipeline.Configuration()
+    // configures a rate limiter that complies with the strict server-site rate limiting
+    // for non-authenticated clients, which is max 10 requests in a 10s sliding window.
+    pipelineConfig.rateLimiterConfig = .init(interval: 10, maxRequestCount: 10)
     let dataLoader = DataLoader(configuration: Networking.shared.config)
 
     /// TESTING NOTE: If tests fail in Pulse package, comment out the following block and try again.

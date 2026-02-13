@@ -1,5 +1,5 @@
 {
-  "originHash" : "5bf51e86999a151cb6a5009e691ea4779b5cd7d40a5b9d14e7cc2f10def27a9a",
+  "originHash" : "de91f812c10252472ac20faf3e7993d6931d39e1ba001da7f0c2fedde80c5219",
   "pins" : [
     {
       "identity" : "frameup",
@@ -85,10 +85,10 @@
     {
       "identity" : "nuke",
       "kind" : "remoteSourceControl",
-      "location" : "https://github.com/kean/Nuke",
+      "location" : "https://github.com/nylki/Nuke",
       "state" : {
-        "revision" : "0ead44350d2737db384908569c012fe67c421e4d",
-        "version" : "12.8.0"
+        "branch" : "alternative-sliding-time-window-rate-limiter",
+        "revision" : "629fc6354bc6fecc3f2827b3c1ea7fe066091d2d"
       }
     },
     {

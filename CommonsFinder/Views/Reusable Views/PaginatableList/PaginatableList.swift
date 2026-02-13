@@ -12,33 +12,45 @@ struct PaginatableList<Item: Equatable & Identifiable, ItemView: View>: View {
     let status: PaginationStatus
     var toolOverlayPadding = false
     let paginationRequest: () -> Void
+
+    let canPrewarmItem: (_ item: Item) -> Void
     let itemView: (_ item: Item) -> ItemView
 
     var body: some View {
-        ScrollView(.vertical) {
-            LazyVStack(spacing: 20) {
-                ForEach(items) { item in
-                    itemView(item)
-                        .onScrollVisibilityChange { visible in
-                            guard visible else { return }
-                            let threshold = min(items.count - 1, max(0, items.count - 5))
-                            guard threshold > 0 else { return }
-                            let thresholdItem = items[threshold]
-
-                            if item == thresholdItem {
-                                paginationRequest()
+        let enumeratedItems = Array(items.enumerated())
+        LazyVStack(spacing: 20) {
+            ForEach(enumeratedItems, id: \.element.id) { (idx, item) in
+                itemView(item)
+                    .task {
+                        do {
+                            try await Task.sleep(for: .seconds(1))
+                            let nextIdx = idx + 1
+                            if (enumeratedItems.count - 1) >= nextIdx {
+                                canPrewarmItem(enumeratedItems[nextIdx].element)
                             }
-                        }
-                }
+                        } catch {
 
-                paginatingIndicator
+                        }
+                    }
+                    .onScrollVisibilityChange { visible in
+                        guard visible else { return }
+                        let threshold = min(items.count - 1, max(0, items.count - 5))
+                        guard threshold > 0 else { return }
+                        let thresholdItem = items[threshold]
+
+                        if item == thresholdItem {
+                            paginationRequest()
+                        }
+                    }
             }
-            .compositingGroup()
-            .scenePadding()
-            .padding(.top, toolOverlayPadding ? 40 : 0)
-            .shadow(color: .black.opacity(0.15), radius: 10)
+
+            paginatingIndicator
         }
-        .scrollIndicators(.visible, axes: .vertical)
+        .compositingGroup()
+        .scenePadding()
+        .padding(.top, toolOverlayPadding ? 40 : 0)
+        .shadow(color: .black.opacity(0.15), radius: 10)
+
         .onChange(of: status, initial: true) {
             if status == .idle(reachedEnd: false), items.isEmpty {
                 paginationRequest()
@@ -76,7 +88,8 @@ struct PaginatableList<Item: Equatable & Identifiable, ItemView: View>: View {
         status: .unknown,
         paginationRequest: {
             print("paginate")
-        }
+        },
+        canPrewarmItem: { item in }
     ) {
         CategoryTeaser(categoryInfo: .init($0))
             .frame(height: 185)

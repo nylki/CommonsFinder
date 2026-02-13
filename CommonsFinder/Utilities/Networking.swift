@@ -7,6 +7,7 @@
 
 import CommonsAPI
 import Foundation
+import Nuke
 
 final class Networking {
     static var shared: Networking = .init()

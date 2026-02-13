@@ -44,7 +44,9 @@ struct WikiAnnotationView: View {
                     }
                 }
             } else {
-                Color.accent.opacity(isVisible ? 1 : 0)
+                shape
+                    .fill(.accent)
+                    .opacity(isVisible ? 1 : 0)
                     .frame(width: diameter, height: diameter)
                     .clipShape(shape)
             }

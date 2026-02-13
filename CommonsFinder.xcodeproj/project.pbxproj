@@ -27,12 +27,12 @@
 		E29112B62DF34733007A3998 /* WhatToTest.de-DE.txt in Resources */ = {isa = PBXBuildFile; fileRef = E29112B52DF3463E007A3998 /* WhatToTest.de-DE.txt */; };
 		E29112B72DF34733007A3998 /* WhatToTest.en-US.txt in Resources */ = {isa = PBXBuildFile; fileRef = E29112B42DF344F0007A3998 /* WhatToTest.en-US.txt */; };
 		E2C92DD32ED60D4000EAA248 /* ObservableLRUCache in Frameworks */ = {isa = PBXBuildFile; productRef = E2C92DD22ED60D4000EAA248 /* ObservableLRUCache */; };
+		E2D76FAB2F3E2CB8009CC4CB /* Nuke in Frameworks */ = {isa = PBXBuildFile; productRef = E2D76FAA2F3E2CB8009CC4CB /* Nuke */; };
+		E2D76FAD2F3E2CB8009CC4CB /* NukeUI in Frameworks */ = {isa = PBXBuildFile; productRef = E2D76FAC2F3E2CB8009CC4CB /* NukeUI */; };
 		E2D8C66A2ECF5B8200CEBB37 /* GEOSwiftMapKit in Frameworks */ = {isa = PBXBuildFile; productRef = E2D8C6692ECF5B8200CEBB37 /* GEOSwiftMapKit */; };
 		E2E2BFD52D8718AE00751949 /* Algorithms in Frameworks */ = {isa = PBXBuildFile; productRef = E2E2BFD42D8718AE00751949 /* Algorithms */; };
 		E2F19BC62CA43C6400E19DCD /* SwiftSecurity in Frameworks */ = {isa = PBXBuildFile; productRef = E2F19BC52CA43C6400E19DCD /* SwiftSecurity */; };
 		E2F1B9D52CD006C700410991 /* GRDB in Frameworks */ = {isa = PBXBuildFile; productRef = E2F1B9D42CD006C700410991 /* GRDB */; };
-		E2F400592F3A46CE00792DEE /* Nuke in Frameworks */ = {isa = PBXBuildFile; productRef = E2F400582F3A46CE00792DEE /* Nuke */; };
-		E2F4005B2F3A46CE00792DEE /* NukeUI in Frameworks */ = {isa = PBXBuildFile; productRef = E2F4005A2F3A46CE00792DEE /* NukeUI */; };
 		E2FF0A2E2D9EAA29008F915C /* GRDB in Frameworks */ = {isa = PBXBuildFile; productRef = E25278722CB03FAF00D00640 /* GRDB */; };
 		E2FF0A2F2D9EAA29008F915C /* GRDBQuery in Frameworks */ = {isa = PBXBuildFile; productRef = E25278752CB03FBB00D00640 /* GRDBQuery */; };
 /* End PBXBuildFile section */
@@ -134,7 +134,6 @@
 				"Database/Model/Extensions/MediaFileDraft+DebugDraft.swift",
 				"Database/Model/Extensions/MediaFileInfo+ImageRequest.swift",
 				"Database/Model/Extensions/MediaFileInfo+sortedByLastViewed.swift",
-				"Database/Model/Extensions/MediaFileInfo+Tags.swift",
 				"Database/Model/Extensions/WikidataItem+InitFromAPI.swift",
 				"Database/Model/Extensions/WikidataItem+Thumbnail.swift",
 				Database/Model/ItemInteraction.swift,
@@ -289,6 +288,7 @@
 				"Views/Reusable Views/InlineMap.swift",
 				"Views/Reusable Views/MediaDowloadSheet.swift",
 				"Views/Reusable Views/MediaFileListItem.swift",
+				"Views/Reusable Views/MediaFileThumbImage.swift",
 				"Views/Reusable Views/PaginatableList/PaginatableCategoryList.swift",
 				"Views/Reusable Views/PaginatableList/PaginatableList.swift",
 				"Views/Reusable Views/PaginatableList/PaginatableMediaList.swift",
@@ -381,9 +381,9 @@
 				E290323F2D9EA84700A0CD8F /* GRDBQuery in Frameworks */,
 				E206777A2EBE52FF00981A79 /* H3kit in Frameworks */,
 				E2F19BC62CA43C6400E19DCD /* SwiftSecurity in Frameworks */,
-				E2F4005B2F3A46CE00792DEE /* NukeUI in Frameworks */,
+				E2D76FAD2F3E2CB8009CC4CB /* NukeUI in Frameworks */,
 				E257E6BF2D2038F90049FFE8 /* Lock in Frameworks */,
-				E2F400592F3A46CE00792DEE /* Nuke in Frameworks */,
+				E2D76FAB2F3E2CB8009CC4CB /* Nuke in Frameworks */,
 				E2C92DD32ED60D4000EAA248 /* ObservableLRUCache in Frameworks */,
 				E28B17662CB03CBB00D6FEA0 /* GRDBQuery in Frameworks */,
 				E24D3BFD2CF3ACDC003484CC /* FrameUp in Frameworks */,
@@ -509,8 +509,8 @@
 				E20677792EBE52FF00981A79 /* H3kit */,
 				E2D8C6692ECF5B8200CEBB37 /* GEOSwiftMapKit */,
 				E2C92DD22ED60D4000EAA248 /* ObservableLRUCache */,
-				E2F400582F3A46CE00792DEE /* Nuke */,
-				E2F4005A2F3A46CE00792DEE /* NukeUI */,
+				E2D76FAA2F3E2CB8009CC4CB /* Nuke */,
+				E2D76FAC2F3E2CB8009CC4CB /* NukeUI */,
 			);
 			productName = CommonsFinder;
 			productReference = E2839FE72CA2DD900053C312 /* CommonsFinder.app */;
@@ -585,7 +585,7 @@
 				E20677782EBE52FF00981A79 /* XCRemoteSwiftPackageReference "h3kit-ios" */,
 				E2D8C6682ECF5B8200CEBB37 /* XCRemoteSwiftPackageReference "GEOSwiftMapKit" */,
 				E2C92DD12ED60D4000EAA248 /* XCRemoteSwiftPackageReference "ObservableLRUCache" */,
-				E2F400572F3A46CE00792DEE /* XCRemoteSwiftPackageReference "Nuke" */,
+				E2D76FA92F3E2CB8009CC4CB /* XCRemoteSwiftPackageReference "Nuke" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = E2839FE82CA2DD900053C312 /* Products */;
@@ -1153,6 +1153,14 @@
 				kind = branch;
 			};
 		};
+		E2D76FA92F3E2CB8009CC4CB /* XCRemoteSwiftPackageReference "Nuke" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/nylki/Nuke";
+			requirement = {
+				branch = "alternative-sliding-time-window-rate-limiter";
+				kind = branch;
+			};
+		};
 		E2D8C6682ECF5B8200CEBB37 /* XCRemoteSwiftPackageReference "GEOSwiftMapKit" */ = {
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/GEOSwift/GEOSwiftMapKit.git";
@@ -1175,14 +1183,6 @@
 			requirement = {
 				kind = exactVersion;
 				version = 7.9.0;
-			};
-		};
-		E2F400572F3A46CE00792DEE /* XCRemoteSwiftPackageReference "Nuke" */ = {
-			isa = XCRemoteSwiftPackageReference;
-			repositoryURL = "https://github.com/kean/Nuke";
-			requirement = {
-				kind = upToNextMajorVersion;
-				minimumVersion = 12.8.0;
 			};
 		};
 /* End XCRemoteSwiftPackageReference section */
@@ -1275,6 +1275,16 @@
 			package = E2C92DD12ED60D4000EAA248 /* XCRemoteSwiftPackageReference "ObservableLRUCache" */;
 			productName = ObservableLRUCache;
 		};
+		E2D76FAA2F3E2CB8009CC4CB /* Nuke */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = E2D76FA92F3E2CB8009CC4CB /* XCRemoteSwiftPackageReference "Nuke" */;
+			productName = Nuke;
+		};
+		E2D76FAC2F3E2CB8009CC4CB /* NukeUI */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = E2D76FA92F3E2CB8009CC4CB /* XCRemoteSwiftPackageReference "Nuke" */;
+			productName = NukeUI;
+		};
 		E2D8C6692ECF5B8200CEBB37 /* GEOSwiftMapKit */ = {
 			isa = XCSwiftPackageProductDependency;
 			package = E2D8C6682ECF5B8200CEBB37 /* XCRemoteSwiftPackageReference "GEOSwiftMapKit" */;
@@ -1294,16 +1304,6 @@
 			isa = XCSwiftPackageProductDependency;
 			package = E2F1B9D32CD006C700410991 /* XCRemoteSwiftPackageReference "GRDB.swift" */;
 			productName = GRDB;
-		};
-		E2F400582F3A46CE00792DEE /* Nuke */ = {
-			isa = XCSwiftPackageProductDependency;
-			package = E2F400572F3A46CE00792DEE /* XCRemoteSwiftPackageReference "Nuke" */;
-			productName = Nuke;
-		};
-		E2F4005A2F3A46CE00792DEE /* NukeUI */ = {
-			isa = XCSwiftPackageProductDependency;
-			package = E2F400572F3A46CE00792DEE /* XCRemoteSwiftPackageReference "Nuke" */;
-			productName = NukeUI;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};

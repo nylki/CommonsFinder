@@ -38,37 +38,25 @@ struct MapPopupMediaFileTeaser: View {
     }
 
     private var imageView: some View {
-        LazyImage(request: mediaFileInfo.thumbRequest, transaction: .init(animation: .linear)) { imageState in
-            if let image = imageState.image {
-                image
-                    .resizable()
-                    .aspectRatio(contentMode: .fill)
-                    .clipShape(shape)
-
-            } else {
+        MediaFileThumbImage(mediaFileImage: mediaFileInfo)
+            //        .frame(width: isSelected && (mediaFileInfo.mediaFile.aspectRatio ?? 1) > 1 ? 220 : 160, height: 160)
+            .frame(width: size == .wide ? 250 : 160, height: 160)
+            .clipShape(shape)
+            .contentShape([.contextMenuPreview, .interaction], shape)
+            .geometryGroup()
+            .scrollTransition(
+                .interactive, axis: .horizontal,
+                transition: { view, phase in
+                    view.scaleEffect(y: phase == .identity ? 1 : 0.9)
+                }
+            )
+            .matchedTransitionSource(id: mediaFileInfo.id, in: namespace)
+            .padding(3)
+            .overlay {
                 shape
-                    .fill(Material.thick)
-                    .aspectRatio(contentMode: .fill)
+                    .stroke(isSelected ? Color.accent : .clear, lineWidth: 2)
             }
-        }
-        //        .frame(width: isSelected && (mediaFileInfo.mediaFile.aspectRatio ?? 1) > 1 ? 220 : 160, height: 160)
-        .frame(width: size == .wide ? 250 : 160, height: 160)
-        .clipShape(shape)
-        .contentShape([.contextMenuPreview, .interaction], shape)
-        .geometryGroup()
-        .scrollTransition(
-            .interactive, axis: .horizontal,
-            transition: { view, phase in
-                view.scaleEffect(y: phase == .identity ? 1 : 0.9)
-            }
-        )
-        .matchedTransitionSource(id: mediaFileInfo.id, in: namespace)
-        .padding(3)
-        .overlay {
-            shape
-                .stroke(isSelected ? Color.accent : .clear, lineWidth: 2)
-        }
-        .padding(3)
+            .padding(3)
     }
 }
 

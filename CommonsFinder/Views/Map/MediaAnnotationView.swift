@@ -24,22 +24,11 @@ struct MediaAnnotationView: View {
         let diameter: Double = isSelected ? 45 : 35
         let shape = RoundedRectangle(cornerRadius: 7, style: .continuous)
         ZStack {
-            if let item {
-                LazyImage(request: item.thumbRequest) { imageLoadingState in
-                    if isVisible, let image = imageLoadingState.image {
-                        image
-                            .resizable()
-                            .aspectRatio(contentMode: .fill)
-                            .frame(width: diameter, height: diameter)
-                            .transition(.opacity)
-                            .clipShape(shape)
-                            .matchedTransitionSource(id: item.id, in: namespace)
-
-
-                    } else {
-                        shape.fill(.clear).frame(width: diameter, height: diameter)
-                    }
-                }
+            if let item, isVisible {
+                MediaFileThumbImage(mediaFileImage: item)
+                    .frame(width: diameter, height: diameter)
+                    .clipShape(shape)
+                    .matchedTransitionSource(id: item.id, in: namespace)
             } else {
                 shape.fill(.clear).frame(width: diameter, height: diameter)
             }
@@ -61,7 +50,6 @@ struct MediaAnnotationView: View {
         .animation(.bouncy, value: isVisible)
         .onTapGesture(perform: onTap)
         .task {
-            isVisible = false
             try? await Task.sleep(for: .milliseconds(25))
             isVisible = true
         }

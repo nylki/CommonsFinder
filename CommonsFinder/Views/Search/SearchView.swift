@@ -107,20 +107,25 @@ struct SearchView: View {
             .simultaneousGesture(dragGesture)
             .id("all")
         case .categories:
-            PaginatableCategoryList(
-                items: searchModel.categoryItems,
-                status: searchModel.categoryPaginationStatus,
-                paginationRequest: searchModel.categoryPagination
-            )
-            .id("categories")
+            ScrollView(.vertical) {
+                PaginatableCategoryList(
+                    items: searchModel.categoryItems,
+                    status: searchModel.categoryPaginationStatus,
+                    paginationRequest: searchModel.categoryPagination
+                )
+                .id("categories")
+            }
+
         case .images:
-            PaginatableMediaList(
-                items: searchModel.mediaItems,
-                status: searchModel.mediaPaginationStatus,
-                toolOverlayPadding: false,
-                paginationRequest: searchModel.mediaPagination
-            )
-            .id("images")
+            ScrollView(.vertical) {
+                PaginatableMediaList(
+                    items: searchModel.mediaItems,
+                    status: searchModel.mediaPaginationStatus,
+                    toolOverlayPadding: false,
+                    paginationRequest: searchModel.mediaPagination
+                )
+                .id("images")
+            }
         }
     }
 

@@ -55,7 +55,7 @@ struct UploadsView: View {
     }
 
     var body: some View {
-        ZStack {
+        ScrollView(.vertical) {
             if let paginationModel {
                 PaginatableMediaList(
                     items: paginationModel.mediaFileInfos,
