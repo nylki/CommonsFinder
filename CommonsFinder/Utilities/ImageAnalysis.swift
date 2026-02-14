@@ -1,5 +1,5 @@
 //
-//  DraftAnalysis.swift
+//  ImageAnalysis.swift
 //  CommonsFinder
 //
 //  Created by Tom Brewe on 11.07.25.
@@ -16,8 +16,26 @@ import RegexBuilder
 import Vision
 import os.log
 
-nonisolated enum DraftAnalysis {
-    @concurrent static func analyze(draft: MediaFileDraft) async -> DraftAnalysisResult? {
+nonisolated enum ImageAnalysis {
+    @concurrent static func analyze(mediaFile: MediaFile, appDatabase: AppDatabase) async -> ImageAnalysisResult? {
+        let coordinate: CLLocationCoordinate2D? = mediaFile.coordinate
+        if coordinate == nil {
+            // TODO: download and read from exif?
+        }
+
+        guard let coordinate else { return nil }
+
+        let categories = await fetchNearbyCategories(
+            coordinate: coordinate,
+            horizontalError: nil,
+            bearing: nil,
+            appDatabase: appDatabase
+        )
+
+        return .init(nearbyCategories: categories)
+    }
+
+    @concurrent static func analyze(draft: MediaFileDraft, appDatabase: AppDatabase) async -> ImageAnalysisResult? {
 
         guard let fileURL = draft.localFileURL() else { return nil }
         let handler = ImageRequestHandler(fileURL)
@@ -35,19 +53,20 @@ nonisolated enum DraftAnalysis {
             let categories = await fetchNearbyCategories(
                 coordinate: coordinate,
                 horizontalError: exifData?.hPositioningError,
-                bearing: exifData?.normalizedBearing
+                bearing: exifData?.normalizedBearing,
+                appDatabase: appDatabase
             )
             return categories
         }
 
-        async let detectSmudgeOperation = detectSmudgesAndLowQuality(imageRequestHandler: handler)
-        async let detectFacesOperation = detectFaces(imageRequestHandler: handler)
+        //        async let detectSmudgeOperation = detectSmudgesAndLowQuality(imageRequestHandler: handler)
+        //        async let detectFacesOperation = detectFaces(imageRequestHandler: handler)
         //        async let cvcClassifyOperation = fetchComputerVisionCategories(imageRequestHandler: handler)
         async let nearbyCategoriesOperation = nearbyCategoryTask.value
 
-        let (isLowQuality, faceCount, nearbyCategories) = await (detectSmudgeOperation, detectFacesOperation, nearbyCategoriesOperation)
+        let (nearbyCategories) = await (nearbyCategoriesOperation)
 
-        return .init(isLowQuality: isLowQuality, nearbyCategories: nearbyCategories, faceCount: faceCount)
+        return .init(isLowQuality: nil, nearbyCategories: nearbyCategories, faceCount: nil)
     }
 
 
@@ -237,7 +256,7 @@ nonisolated enum DraftAnalysis {
         }
     }
 
-    private static func fetchCategoriesByReverseMapKitGeocoding(coordinate: CLLocationCoordinate2D) async throws -> [Category] {
+    private static func fetchCategoriesByReverseMapKitGeocoding(coordinate: CLLocationCoordinate2D, appDatabase: AppDatabase) async throws -> [Category] {
         let referenceCLLocation = CLLocation(latitude: coordinate.latitude, longitude: coordinate.longitude)
 
         let placemark = try await coordinate.reverseGeocodingRequest()
@@ -252,12 +271,12 @@ nonisolated enum DraftAnalysis {
                 let shortAddress = "\(thoroughfare), \(city)"
 
                 var streetCategories: [Category] = []
-                streetCategories += try await APIUtils.searchCategories(for: shortAddress)
+                streetCategories += try await APIUtils.searchCategories(for: shortAddress, appDatabase: appDatabase)
 
                 if streetCategories.isEmpty,
                     let street = shortAddress.components(separatedBy: .decimalDigits).first
                 {
-                    streetCategories += try await APIUtils.searchCategories(for: street)
+                    streetCategories += try await APIUtils.searchCategories(for: street, appDatabase: appDatabase)
                 }
 
                 streetCategories =
@@ -276,7 +295,7 @@ nonisolated enum DraftAnalysis {
 
                 result.insert(contentsOf: streetCategories.prefix(1), at: 0)
             } else if let water = placemark.ocean ?? placemark.inlandWater {
-                let waterCategories = try await APIUtils.searchCategories(for: water)
+                let waterCategories = try await APIUtils.searchCategories(for: water, appDatabase: appDatabase)
                     .filter { category in
                         // canal, river, lake, better to do it in the query with broader water filter
                         Set(["Q12284", "Q4022", "Q23397"]).intersection(category.instances).isEmpty == false
@@ -329,7 +348,7 @@ nonisolated enum DraftAnalysis {
         return result
     }
 
-    private static func fetchNearbyCategories(coordinate: CLLocationCoordinate2D, horizontalError: CLLocationDistance?, bearing: CLLocationDegrees?) async -> [Category] {
+    private static func fetchNearbyCategories(coordinate: CLLocationCoordinate2D, horizontalError: CLLocationDistance?, bearing: CLLocationDegrees?, appDatabase: AppDatabase) async -> [Category] {
         let refLoc = CLLocation(latitude: coordinate.latitude, longitude: coordinate.longitude)
 
         var searchResult: [Category]
@@ -381,7 +400,7 @@ nonisolated enum DraftAnalysis {
                 // and then querying the landmark/street/ocean/etc. via wikimedia APIs and apply some specialized filters
                 // to get categories that may have been missed in the search before.
                 // and
-                let mapKitCategorySuggestions = try await fetchCategoriesByReverseMapKitGeocoding(coordinate: coordinate)
+                let mapKitCategorySuggestions = try await fetchCategoriesByReverseMapKitGeocoding(coordinate: coordinate, appDatabase: appDatabase)
                 finalResult.insert(contentsOf: mapKitCategorySuggestions, at: 0)
             } catch {
                 logger.error("Error fetching mapkit category suggestions \(error)")

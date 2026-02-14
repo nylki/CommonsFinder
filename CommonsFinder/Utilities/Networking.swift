@@ -14,6 +14,7 @@ final class Networking {
 
     private(set) var referer: String
     let userAgent: String
+    let editAndUploadCommentSuffix: String
     let uploadComment: String
     let config: URLSessionConfiguration
     let api: API
@@ -30,7 +31,9 @@ final class Networking {
         let contactInfo = "https://github.com/nylki/CommonsFinder"
 
         userAgent = "\(executable)/\(appBuild) (\(contactInfo)) \(osNameVersion)"
-        uploadComment = "uploaded from \(executable)/\(appBuild) \(osNameVersion)"
+        editAndUploadCommentSuffix = "\(executable)/\(appBuild) \(osNameVersion)"
+        uploadComment = "uploaded from \(editAndUploadCommentSuffix)"
+
         let urlSessionConfig = URLSessionConfiguration.default
         urlSessionConfig.httpShouldSetCookies = true
         urlSessionConfig.httpCookieAcceptPolicy = .always

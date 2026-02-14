@@ -21,7 +21,7 @@ nonisolated
 {
     typealias LanguageCode = String
 
-    ///  pageID
+    /// pageID
     var id: String
 
     /// username of uploader
@@ -160,8 +160,19 @@ nonisolated extension MediaFile: Codable, FetchableRecord, MutablePersistableRec
 
 nonisolated extension MediaFile {
 
+    var pageID: String { id }
+
     /// The unique name *with* "File:"-prefix as used in the action-API
     var apiName: String { "File:\(name)" }
+
+    /// The Wikibase entity id for this file (M-prefixed page id).
+    var entityId: String {
+        if id.hasPrefix("M") {
+            assertionFailure("the id (which directly maps to the pageid) is not expected to have the M-prefix.")
+            return id
+        }
+        return "M\(id)"
+    }
 
     var displayName: String {
         name.fileName()
@@ -268,4 +279,27 @@ nonisolated extension MediaFile {
         }
         return resizedURL
     }
+}
+
+nonisolated extension WikidataItemID {
+    static let preferredLicenses: [WikidataItemID] = [
+        .CC0, .CC_BY_4_0, .CC_BY_SA_4_0, PDM_1_0,
+    ]
+
+    static let acceptableLicenses: [WikidataItemID] = [
+        CC0,
+        PDM_1_0,
+        CC_BY_4_0,
+        CC_BY_3_0,
+        CC_BY_IGO_3_0,
+        CC_BY_2_5,
+        CC_BY_1_0,
+        CC_BY_2_0,
+        CC_BY_SA_4_0,
+        CC_BY_SA_3_0,
+        CC_BY_SA_IGO_3_0,
+        CC_BY_SA_2_5,
+        CC_BY_SA_2_0,
+        CC_BY_SA_1_0,
+    ]
 }

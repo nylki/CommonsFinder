@@ -90,7 +90,26 @@ struct HomeView: View {
                 }
             }
             ToolbarItem(placement: .topBarTrailing) {
-                Button("Add Image", systemImage: "plus", action: navigation.openNewDraft)
+                Menu("Add Image", systemImage: "plus") {
+
+                    Button {
+                        navigation.openNewDraft(options: .init(source: .mediaLibrary))
+                    } label: {
+                        Label("Add from Photos", systemImage: "photo.badge.plus")
+                    }
+
+                    Button {
+                        navigation.openNewDraft(options: .init(source: .camera))
+                    } label: {
+                        Label("Take new Photo", systemImage: "camera")
+                    }
+
+                    Button {
+                        navigation.openNewDraft(options: .init(source: .files))
+                    } label: {
+                        Label("Add from Files", systemImage: "folder")
+                    }
+                }
             }
         }
         .navigationTitle("Home")
