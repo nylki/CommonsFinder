@@ -148,18 +148,19 @@ import os.log
                 }
 
 
-                let fetchedResult = try await DataAccess.fetchCombinedCategoriesFromDatabaseOrAPI(
+                let fetchedCategories: [CategoryInfo] = try await DataAccess.fetchCombinedCategoriesFromDatabaseOrAPI(
                     wikidataIDs: wikidataIDsToFetchs,
                     commonsCategories: commonsCategoriesToFetch,
                     appDatabase: appDatabase
                 )
+                .fetchedCategories
+                .map { .init($0) }
+            
+                
 
+                // TODO: zip order?
 
-                // TODO: sort by original order?
-                // and zip order?
-
-
-                categoryInfos = fetchedResult.fetchedCategories.map { .init($0) }
+                categoryInfos += fetchedCategories
                 observeDatabase()
 
                 status = .idle(
