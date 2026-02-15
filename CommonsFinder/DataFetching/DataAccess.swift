@@ -37,8 +37,12 @@ enum DataAccess {
         return results.fetchedCategories.first
     }
 
-    /// resolves Tags based on commons categories and depict items (eg. from a MediaFile)
+    /// resolves categories based on commons categories and depict items (eg. from a MediaFile)
+    /// Commons categories that are not linked with a wikidata item will still be returned as Categories.
     /// will return redirected (merged) items instead of original ones!
+    /// Order of returned results:
+    /// 1. sorted by original wikidataIDs
+    /// 2. appending common categories from input, that are not linked with a wikidata item
     static func fetchCombinedCategoriesFromDatabaseOrAPI(
         wikidataIDs: [Category.WikidataID],
         commonsCategories: [String],
@@ -56,24 +60,32 @@ enum DataAccess {
         let cachedIDs = cachedCategoryInfos.compactMap(\.base.wikidataId)
         let missingIDs = Set(wikidataIDs).subtracting(cachedIDs)
 
-        let fetchResult = try await fetchCategoriesFromAPI(
+        let fetchResult = try await fetchWikidataBackedCategoriesFromAPI(
             wikidataIDs: Array(missingIDs),
             commonsCategories: commonsCategories,
             // if we refresh from network, we want to cache the results
             shouldCache: forceNetworkRefresh,
             appDatabase: appDatabase
         )
+        let fetchedGroupedByWikidataID = fetchResult.fetchedCategories.grouped(by: \.wikidataId)
+        let fetchedGroupedByCommonsCategory = fetchResult.fetchedCategories.grouped(by: \.commonsCategory)
 
-        let fetchedCategoryInfos: [CategoryInfo] = fetchResult.fetchedCategories.map { .init($0) }
+        let sortedFetched: [Category] = wikidataIDs.compactMap { id in
+            let redirectID = fetchResult.redirectedIDs[id]
+            return if let category = fetchedGroupedByWikidataID[id]?.first ?? fetchedGroupedByWikidataID[redirectID]?.first {
+                category
+            } else {
+                nil
+            }
+        }
 
-        let commonsCategoriesWithoutWikidataItem = Set(fetchedCategoryInfos.compactMap(\.base.commonsCategory))
+        // Commons categories without a linked wikidata item
+        let sortedPureCommonsCategories: [Category] =
+            commonsCategories
+            .filter { fetchedGroupedByCommonsCategory[$0] == nil }
+            .map { Category(commonsCategory: $0) }
 
-        let pureCommonsCategories: [CategoryInfo] = Set(commonsCategories)
-            .subtracting(commonsCategoriesWithoutWikidataItem)
-            .map { .init(Category(commonsCategory: $0)) }
-
-
-        let resultCategories = (fetchedCategoryInfos + pureCommonsCategories).map(\.base)
+        let resultCategories = (sortedFetched + sortedPureCommonsCategories)
 
         return .init(
             fetchedCategories: resultCategories,
@@ -87,7 +99,8 @@ enum DataAccess {
         let redirectedIDs: [Category.WikidataID: Category.WikidataID]
     }
 
-    static func fetchCategoriesFromAPI(
+    // Only returns Categories that have a WikidataID
+    private static func fetchWikidataBackedCategoriesFromAPI(
         wikidataIDs: [String],
         commonsCategories: [String],
         shouldCache: Bool,
@@ -197,7 +210,7 @@ enum DataAccess {
             return .init(fetchedCategories: items, redirectedIDs: [:])
         }
 
-        let fetchedRedirectionResult = try await fetchCategoriesFromAPI(
+        let fetchedRedirectionResult = try await fetchWikidataBackedCategoriesFromAPI(
             wikidataIDs: redirections.map(\.to),
             commonsCategories: [],
             shouldCache: shouldCache,

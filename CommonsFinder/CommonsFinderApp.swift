@@ -138,11 +138,11 @@ private func configureNukeAndPulse() {
     let dataLoader = DataLoader(configuration: Networking.shared.config)
 
     /// TESTING NOTE: If tests fail in Pulse package, comment out the following block and try again.
-    //    #if DEBUG
-    //        RemoteLogger.shared.isAutomaticConnectionEnabled = true
-    //        ImagePipeline.Configuration.isSignpostLoggingEnabled = true
-    //        dataLoader.delegate = URLSessionProxyDelegate()
-    //    #endif
+    #if DEBUG
+        RemoteLogger.shared.isAutomaticConnectionEnabled = true
+        ImagePipeline.Configuration.isSignpostLoggingEnabled = true
+        dataLoader.delegate = URLSessionProxyDelegate()
+    #endif
 
     pipelineConfig.dataLoader = dataLoader
     let pipeline = ImagePipeline(configuration: pipelineConfig)

@@ -422,12 +422,12 @@ struct CategoryView: View {
             do {
                 if let wikidataID = item.base.wikidataId {
 
-                    let result = try await DataAccess.fetchCategoriesFromAPI(
+                    let result = try await DataAccess.fetchCombinedCategoriesFromDatabaseOrAPI(
                         wikidataIDs: [wikidataID],
                         // When our item has a wikidata ID we prefer this over a commons category as the source of truth of this category.
                         // so we won't need to provide the category here.
                         commonsCategories: [],
-                        shouldCache: true,
+                        forceNetworkRefresh: true,
                         appDatabase: appDatabase
                     )
 

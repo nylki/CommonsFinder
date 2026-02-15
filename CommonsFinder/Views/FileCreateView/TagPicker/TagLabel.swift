@@ -26,6 +26,12 @@ struct TagLabel: View {
                 Text(tag.label)
                     .bold()
                     .lineLimit(2)
+                if let commonsCategory = tag.baseItem.commonsCategory, commonsCategory != tag.label {
+                    Text(commonsCategory)
+                        .font(.caption)
+                        .lineLimit(2)
+                        .foregroundStyle(.secondary)
+                }
                 if let description = tag.description {
                     Text(description)
                         .font(.caption)
