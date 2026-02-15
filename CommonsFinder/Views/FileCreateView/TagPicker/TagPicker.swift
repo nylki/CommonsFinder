@@ -90,20 +90,12 @@ struct TagPicker: View {
                             suggestionsSection
                         }
 
-                        if isSearching {
-                            ZStack {
-                                Color.clear.frame(minWidth: 0, maxWidth: .infinity)
-                                ProgressView()
-                                    .progressViewStyle(.circular)
-                            }
-                            .padding(.vertical, 50)
-                        }
-
                         Color.clear.frame(minWidth: 0, maxWidth: .infinity)
 
                         Spacer()
                     }
                     .animation(.default, value: tags)
+                    .animation(.default, value: isSearching)
                     .padding([.top, .trailing], 5)
                     .padding(.leading, 10)
                     .animation(.default, value: searchedTags)
@@ -188,9 +180,16 @@ struct TagPicker: View {
 
     @ViewBuilder
     private var searchedSection: some View {
-        let pickedIDs = Set(tags.map(\.id))
-
-        if !searchedTags.isEmpty {
+        if searchText.isEmpty {
+            Color.clear
+        } else if isSearching {
+            ZStack {
+                Color.clear.frame(minWidth: 0, maxWidth: .infinity)
+                ProgressView()
+                    .progressViewStyle(.circular)
+            }
+            .padding(.vertical, 50)
+        } else if !searchedTags.isEmpty {
             VStack(alignment: .leading) {
 
                 Text("Search Results for \"\(searchText)\"")
@@ -210,6 +209,8 @@ struct TagPicker: View {
                 Divider()
             }
             .padding(.top)
+        } else {
+            ContentUnavailableView.search(text: searchText)
         }
     }
 
@@ -304,10 +305,10 @@ struct TagPicker: View {
 
         guard !searchText.isEmpty else { return }
 
-        isSearching = true
-        defer { isSearching = false }
-
         searchTask?.cancel()
+
+        isSearching = true
+
         searchTask = Task<Void, Never> {
             do {
                 try await Task.sleep(for: .milliseconds(300))
@@ -325,12 +326,14 @@ struct TagPicker: View {
                     }
 
                 searchedTags.append(contentsOf: filteredSearchedTags)
-
+                isSearching = false
             } catch is CancellationError {
-                // retry XCode 16.2: Apparently preview crashes when using Logger()?
-                //                logger.debug("category search cancelled (debounced)")
+                // ignore cancel-errors
+            } catch URLError.cancelled {
+                // ignore cancel-errors
             } catch {
                 logger.error("wikidata item (tags) search error \(error)")
+                isSearching = false
             }
         }
     }
