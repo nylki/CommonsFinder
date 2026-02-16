@@ -84,11 +84,7 @@ import os.log
                 if captionsChanged || depictsChanged {
                     let entityId = mediaFile.entityId
                     let labelChanges = PublishHelpers.labelDiff(current: trimmedReferenceCaptions, target: trimmedCaptions)
-                    let summaryParts = [
-                        captionsChanged ? "captions" : nil,
-                        depictsChanged ? "depicted items" : nil,
-                    ]
-                    .compactMap { $0 }
+
                     let summary = "edited with \(Networking.shared.editAndUploadCommentSuffix)"
 
                     for label in labelChanges.set {

@@ -191,8 +191,8 @@ enum PublishHelpers {
         let joined = parts.joined(separator: "; ")
         let summary =
             joined.isEmpty
-            ? "Updated categories with \(toolName)"
-            : "\(joined) (edited with \(toolName))"
+            ? ",edited with \(toolName)"
+            : "\(joined), edited with \(toolName))"
 
         if summary.count <= maxLength {
             return summary
