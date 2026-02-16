@@ -20,4 +20,5 @@ enum CommonAPIError: Error {
     case failedToEncodeJSONData
     case missingLanguageCodes
     case missingResponseValues
+    case apiError(code: String, info: String?)
 }

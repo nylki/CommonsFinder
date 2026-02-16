@@ -141,44 +141,26 @@ import os.log
                     return
                 }
 
-                // returns unsorted
-                let wikidataIDsForCategories = try await Networking.shared.api
-                    .findWikidataItemsForCategories(commonsCategoriesToFetch, languageCode: Locale.current.wikiLanguageCodeIdentifier)
-                    .map(\.id)
-
-                // Here we fetch from both wikidataIDs and commons categories
-                let allWikidataIDsToFetch = Array((wikidataIDsToFetchs + wikidataIDsForCategories).uniqued())
-
                 // Only continue if there is anything to fetch at all
-                guard !allWikidataIDsToFetch.isEmpty || !commonsCategoriesToFetch.isEmpty else {
+                guard !wikidataIDsToFetchs.isEmpty || !commonsCategoriesToFetch.isEmpty else {
                     status = .idle(reachedEnd: true)
                     return
                 }
 
-                var wikidataCategories: [Category] = []
-                if !allWikidataIDsToFetch.isEmpty {
-                    let result = try await DataAccess.fetchCategoriesFromAPI(
-                        wikidataIDs: allWikidataIDsToFetch,
-                        shouldCache: false,
+
+                let fetchedCategories: [CategoryInfo] =
+                    try await DataAccess.fetchCombinedCategoriesFromDatabaseOrAPI(
+                        wikidataIDs: wikidataIDsToFetchs,
+                        commonsCategories: commonsCategoriesToFetch,
                         appDatabase: appDatabase
                     )
-                    wikidataCategories += result.fetchedCategories
-                }
-
-                let alreadyHandledCommonsCategories = Set(wikidataCategories.compactMap(\.commonsCategory))
-
-                let pureCommonCategories =
-                    commonsCategoriesToFetch
-                    .filter { !alreadyHandledCommonsCategories.contains($0) }
-                    .map { Category(commonsCategory: $0) }
+                    .fetchedCategories
+                    .map { .init($0) }
 
 
-                let combinedResult: [CategoryInfo] =
-                    zippedFlatMap(wikidataCategories, pureCommonCategories)
-                    .uniqued { ($0.wikidataId ?? $0.commonsCategory) }
-                    .map { CategoryInfo($0) }
+                // TODO: zip order?
 
-                categoryInfos = (categoryInfos + combinedResult).uniqued { ($0.base.wikidataId ?? $0.base.commonsCategory) }
+                categoryInfos += fetchedCategories
                 observeDatabase()
 
                 status = .idle(

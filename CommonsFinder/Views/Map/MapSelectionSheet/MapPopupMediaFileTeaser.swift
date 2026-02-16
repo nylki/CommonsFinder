@@ -38,7 +38,7 @@ struct MapPopupMediaFileTeaser: View {
     }
 
     private var imageView: some View {
-        MediaFileThumbImage(mediaFileImage: mediaFileInfo)
+        MediaFileThumbImage(mediaFileInfo)
             //        .frame(width: isSelected && (mediaFileInfo.mediaFile.aspectRatio ?? 1) > 1 ? 220 : 160, height: 160)
             .frame(width: size == .wide ? 250 : 160, height: 160)
             .clipShape(shape)

@@ -62,9 +62,17 @@ struct CategoryContextMenu: ViewModifier {
                     Divider()
 
                     if shownEntries.contains(.newImage) {
-                        Button("Add Image", systemImage: "plus") {
-                            let newDraftOptions = NewDraftOptions(tag: TagItem(item.base, pickedUsages: [.category, .depict]))
-                            navigation.openNewDraft(options: newDraftOptions)
+                        Menu("New Image", systemImage: "plus") {
+                            let tag = TagItem(item.base, pickedUsages: [.category, .depict])
+                            Button("from Photos", systemImage: "photo.badge.plus") {
+                                navigation.openNewDraft(options: NewDraftOptions(source: .mediaLibrary, tag: tag))
+                            }
+                            Button("take new Photo", systemImage: "camera") {
+                                navigation.openNewDraft(options: NewDraftOptions(source: .camera, tag: tag))
+                            }
+                            Button("from Files", systemImage: "folder") {
+                                navigation.openNewDraft(options: NewDraftOptions(source: .files, tag: tag))
+                            }
                         }
                     }
 

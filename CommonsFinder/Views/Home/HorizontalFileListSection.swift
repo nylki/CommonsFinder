@@ -45,7 +45,7 @@ struct HorizontalFileListSection: View {
                         mediaFileInfo, namespace: namespace
                     )
                     NavigationLink(value: navItem) {
-                        MediaFileThumbImage(mediaFileImage: mediaFileInfo)
+                        MediaFileThumbImage(mediaFileInfo)
                             .frame(width: 150, height: 150)
                             .clipped()
                     }

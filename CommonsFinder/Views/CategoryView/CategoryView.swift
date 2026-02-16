@@ -320,9 +320,17 @@ struct CategoryView: View {
                             navigation.showOnMap(category: item.base, mapModel: mapModel)
                         }
                     }
-                    Button("Add Image", systemImage: "plus") {
-                        let newDraftOptions = NewDraftOptions(tag: TagItem(item.base, pickedUsages: [.category, .depict]))
-                        navigation.openNewDraft(options: newDraftOptions)
+                    Menu("New Image", systemImage: "plus") {
+                        let tag = TagItem(item.base, pickedUsages: [.category, .depict])
+                        Button("from Photos", systemImage: "photo.badge.plus") {
+                            navigation.openNewDraft(options: NewDraftOptions(source: .mediaLibrary, tag: tag))
+                        }
+                        Button("take new Photo", systemImage: "camera") {
+                            navigation.openNewDraft(options: NewDraftOptions(source: .camera, tag: tag))
+                        }
+                        Button("from Files", systemImage: "folder") {
+                            navigation.openNewDraft(options: NewDraftOptions(source: .files, tag: tag))
+                        }
                     }
 
                     CategoryLinkSection(item: item)
@@ -414,9 +422,12 @@ struct CategoryView: View {
             do {
                 if let wikidataID = item.base.wikidataId {
 
-                    let result = try await DataAccess.fetchCategoriesFromAPI(
+                    let result = try await DataAccess.fetchCombinedCategoriesFromDatabaseOrAPI(
                         wikidataIDs: [wikidataID],
-                        shouldCache: true,
+                        // When our item has a wikidata ID we prefer this over a commons category as the source of truth of this category.
+                        // so we won't need to provide the category here.
+                        commonsCategories: [],
+                        forceNetworkRefresh: true,
                         appDatabase: appDatabase
                     )
 
@@ -473,28 +484,28 @@ struct CategoryView: View {
 
 
             if let refreshedItem {
-                if refreshedItem.base.id != item.base.id {
-                    logger.debug("CategoryView: item has a one DB-ID! this edge-case can caused due to redirects.")
+                if refreshedItem.id != item.base.id {
+                    logger.debug("CategoryView: original item has a different DB-ID (possibly nil)! this edge-case can caused due to redirects.")
                 }
-                if refreshedItem.base.wikidataId != item.base.wikidataId {
+                if refreshedItem.wikidataId != item.base.wikidataId {
                     logger.debug("CategoryView: Refresh got a redirected item!")
                 }
                 // TODO: inform the user somehow that the item was merged into another if one if those above ^ happened?
 
                 databaseTask?.cancel()
 
-                if self.item?.base.commonsCategory != refreshedItem.base.commonsCategory || self.item?.base.wikidataId != refreshedItem.base.wikidataId {
+                if self.item?.base.commonsCategory != refreshedItem.commonsCategory || self.item?.base.wikidataId != refreshedItem.wikidataId {
                     paginationModelNeedsReloadDate = .now
                 }
-                if self.item != refreshedItem {
-                    self.item = refreshedItem
+                if self.item?.base != refreshedItem {
+                    self.item?.base = refreshedItem
                 }
 
 
                 startDatabaseTask(incrementViewCount: false)
             }
 
-            print("refreshed item \(refreshedItem.debugDescription)")
+            logger.debug("refreshed item \(refreshedItem.debugDescription)")
         } catch {
             logger.error("Failed to fetch category freshly from network")
         }

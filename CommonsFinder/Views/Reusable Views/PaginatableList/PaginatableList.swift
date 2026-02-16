@@ -16,31 +16,47 @@ struct PaginatableList<Item: Equatable & Identifiable, ItemView: View>: View {
     let canPrewarmItem: (_ item: Item) -> Void
     let itemView: (_ item: Item) -> ItemView
 
+    @State private var prewarmTasks: [Int: Task<Void, Never>] = [:]
+
+    private func checkPagination(visibleItem: Item) {
+        let threshold = min(items.count - 1, max(0, items.count - 5))
+        guard threshold > 0 else { return }
+        let thresholdItem = items[threshold]
+
+        if visibleItem == thresholdItem {
+            paginationRequest()
+        }
+    }
+
+    private func schedulePrewarmTask(itemIdx: Int, isVisible: Bool) {
+        if isVisible, prewarmTasks[itemIdx] == nil {
+            prewarmTasks[itemIdx] = Task<Void, Never> {
+                do {
+                    let nextIdx = itemIdx + 1
+                    if (items.count - 1) >= nextIdx {
+                        try await Task.sleep(for: .milliseconds(650))
+                        canPrewarmItem(items[nextIdx])
+                    }
+                } catch {}
+                prewarmTasks[itemIdx] = nil
+            }
+        } else {
+            prewarmTasks[itemIdx]?.cancel()
+            prewarmTasks[itemIdx] = nil
+        }
+    }
+
     var body: some View {
         let enumeratedItems = Array(items.enumerated())
+
         LazyVStack(spacing: 20) {
             ForEach(enumeratedItems, id: \.element.id) { (idx, item) in
                 itemView(item)
-                    .task {
-                        do {
-                            try await Task.sleep(for: .seconds(1))
-                            let nextIdx = idx + 1
-                            if (enumeratedItems.count - 1) >= nextIdx {
-                                canPrewarmItem(enumeratedItems[nextIdx].element)
-                            }
-                        } catch {
-
+                    .onScrollVisibilityChange(threshold: 0.1) { isVisible in
+                        if isVisible {
+                            checkPagination(visibleItem: item)
                         }
-                    }
-                    .onScrollVisibilityChange { visible in
-                        guard visible else { return }
-                        let threshold = min(items.count - 1, max(0, items.count - 5))
-                        guard threshold > 0 else { return }
-                        let thresholdItem = items[threshold]
-
-                        if item == thresholdItem {
-                            paginationRequest()
-                        }
+                        schedulePrewarmTask(itemIdx: idx, isVisible: isVisible)
                     }
             }
 

@@ -104,6 +104,7 @@ struct SearchView: View {
                     paginationRequest: searchModel.mediaPagination
                 )
             }
+            .scrollDismissesKeyboard(.interactively)
             .simultaneousGesture(dragGesture)
             .id("all")
         case .categories:
