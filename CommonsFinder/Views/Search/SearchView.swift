@@ -88,21 +88,28 @@ struct SearchView: View {
                 HorizontalCategoryList
                     .padding(.bottom)
 
-                if !searchModel.isSearching, !searchModel.bindableSearchText.isEmpty, searchModel.mediaResults != nil {
-                    optionsBar
-                        .opacity(isOptionsBarSticky ? 0 : 1)
-                        .allowsHitTesting(!isOptionsBarSticky)
-                        .onScrollVisibilityChange(threshold: 0.1) { visible in
-                            isOptionsBarSticky = !visible
-                        }
-                }
+                if !searchModel.isSearching, !searchModel.bindableSearchText.isEmpty {
 
-                PaginatableMediaList(
-                    items: searchModel.mediaItems,
-                    status: searchModel.mediaPaginationStatus,
-                    toolOverlayPadding: false,
-                    paginationRequest: searchModel.mediaPagination
-                )
+                    if searchModel.mediaResults?.isEmpty == false {
+                        optionsBar
+                            .opacity(isOptionsBarSticky ? 0 : 1)
+                            .allowsHitTesting(!isOptionsBarSticky)
+                            .onScrollVisibilityChange(threshold: 0.1) { visible in
+                                isOptionsBarSticky = !visible
+                            }
+
+                        PaginatableMediaList(
+                            items: searchModel.mediaItems,
+                            status: searchModel.mediaPaginationStatus,
+                            toolOverlayPadding: false,
+                            paginationRequest: searchModel.mediaPagination
+                        )
+                    } else if searchModel.mediaResults?.isEmpty == true {
+                        ContentUnavailableView.search(text: searchModel.bindableSearchText)
+                    } else {
+                        Color.clear
+                    }
+                }
             }
             .scrollDismissesKeyboard(.interactively)
             .simultaneousGesture(dragGesture)
