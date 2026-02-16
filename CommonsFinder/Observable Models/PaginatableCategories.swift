@@ -148,15 +148,15 @@ import os.log
                 }
 
 
-                let fetchedCategories: [CategoryInfo] = try await DataAccess.fetchCombinedCategoriesFromDatabaseOrAPI(
-                    wikidataIDs: wikidataIDsToFetchs,
-                    commonsCategories: commonsCategoriesToFetch,
-                    appDatabase: appDatabase
-                )
-                .fetchedCategories
-                .map { .init($0) }
-            
-                
+                let fetchedCategories: [CategoryInfo] =
+                    try await DataAccess.fetchCombinedCategoriesFromDatabaseOrAPI(
+                        wikidataIDs: wikidataIDsToFetchs,
+                        commonsCategories: commonsCategoriesToFetch,
+                        appDatabase: appDatabase
+                    )
+                    .fetchedCategories
+                    .map { .init($0) }
+
 
                 // TODO: zip order?
 

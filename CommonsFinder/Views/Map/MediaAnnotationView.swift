@@ -25,7 +25,7 @@ struct MediaAnnotationView: View {
         let shape = RoundedRectangle(cornerRadius: 7, style: .continuous)
         ZStack {
             if let item, isVisible {
-                MediaFileThumbImage(mediaFileImage: item)
+                MediaFileThumbImage(item)
                     .frame(width: diameter, height: diameter)
                     .clipShape(shape)
                     .matchedTransitionSource(id: item.id, in: namespace)

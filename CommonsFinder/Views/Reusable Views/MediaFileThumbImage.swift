@@ -12,11 +12,25 @@ import os.log
 
 struct MediaFileThumbImage: View {
     private let request: ImageRequest?
-
+    private let name: String
     @State private var wasInViewLongEnough: Bool = false
+    @State private var visibilityTask: Task<Void, Never>?
 
-    init(mediaFileImage: MediaFileInfo) {
-        self.request = mediaFileImage.thumbRequest
+    init(_ mediaFileInfo: MediaFileInfo) {
+        self.name = mediaFileInfo.mediaFile.name
+        self.request = mediaFileInfo.thumbRequest
+    }
+
+    private func startVisibilityTaskIfNeeded() {
+        guard request != nil, !wasInViewLongEnough, visibilityTask == nil else { return }
+        visibilityTask = Task<Void, Never> {
+            // This prevents excessive image loads when scrolling rapidly
+            do {
+                try await Task.sleep(for: .milliseconds(350))
+                wasInViewLongEnough = true
+            } catch {}
+            visibilityTask = nil
+        }
     }
 
     var shouldRenderImage: Bool {
@@ -43,14 +57,22 @@ struct MediaFileThumbImage: View {
             }
         }
         .animation(.linear, value: shouldRenderImage)
-        .task {
-            do {
-                // This prevents excessive image loads when scrolling rapidly
-                try await Task.sleep(for: .milliseconds(250))
-                wasInViewLongEnough = true
-            } catch {
-                //                logger.debug("Cancelled wasInViewLongEnough")
+        .onScrollVisibilityChange(threshold: 0.1) { isVisible in
+
+            // IMPORTANT: this callback alone is not sufficient for initial scheduling, because visible=true
+            // may not fire the closure here, when the view starts slightly in view at the screen edge.
+            // We still use it to re-start after visibility-based cancellations.
+
+            if isVisible {
+                // Re-arm after a previous cancellation when the same cell re-enters view.
+                startVisibilityTaskIfNeeded()
+            } else {
+                visibilityTask?.cancel()
+                visibilityTask = nil
             }
+        }
+        .task {
+            startVisibilityTaskIfNeeded()
         }
     }
 
@@ -77,7 +99,7 @@ struct MediaFileThumbImage: View {
 }
 
 #Preview {
-    MediaFileThumbImage(mediaFileImage: MediaFileInfo.makeRandomUploaded(id: "1", .horizontalImage))
+    MediaFileThumbImage(.makeRandomUploaded(id: "1", .horizontalImage))
         .frame(width: 200, height: 200)
         .clipped()
 

@@ -63,7 +63,7 @@ struct MediaFileListItem: View {
     @ViewBuilder
     private var imageView: some View {
         WidthReader { width in
-            MediaFileThumbImage(mediaFileImage: mediaFileInfo)
+            MediaFileThumbImage(mediaFileInfo)
                 .frame(
                     width: width,
                     height: imageHeight(containerWidth: width)

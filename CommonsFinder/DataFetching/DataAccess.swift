@@ -49,15 +49,15 @@ enum DataAccess {
         forceNetworkRefresh: Bool = false,
         appDatabase: AppDatabase
     ) async throws -> CategoryFetchResult {
-        let cachedCategoryInfos: [CategoryInfo]
+        let cachedCategories: [Category]
 
         if forceNetworkRefresh {
-            cachedCategoryInfos = []
+            cachedCategories = []
         } else {
-            cachedCategoryInfos = (try? appDatabase.fetchCategoryInfos(wikidataIDs: wikidataIDs, resolveRedirections: true)) ?? []
+            cachedCategories = (try? appDatabase.fetchCategoryInfos(wikidataIDs: wikidataIDs, resolveRedirections: true))?.compactMap(\.base) ?? []
         }
 
-        let cachedIDs = cachedCategoryInfos.compactMap(\.base.wikidataId)
+        let cachedIDs = cachedCategories.compactMap(\.wikidataId)
         let missingIDs = Set(wikidataIDs).subtracting(cachedIDs)
 
         let fetchResult = try await fetchWikidataBackedCategoriesFromAPI(
@@ -67,12 +67,22 @@ enum DataAccess {
             shouldCache: forceNetworkRefresh,
             appDatabase: appDatabase
         )
-        let fetchedGroupedByWikidataID = fetchResult.fetchedCategories.grouped(by: \.wikidataId)
-        let fetchedGroupedByCommonsCategory = fetchResult.fetchedCategories.grouped(by: \.commonsCategory)
 
-        let sortedFetched: [Category] = wikidataIDs.compactMap { id in
+        let fetchedAndCachedCombined = cachedCategories + fetchResult.fetchedCategories
+        let groupedByWikidataID = fetchedAndCachedCombined.grouped(by: \.wikidataId)
+        let groupedByCommonsCategory = fetchedAndCachedCombined.grouped(by: \.commonsCategory)
+
+        let sortedByWikidataID: [Category] = wikidataIDs.compactMap { id in
             let redirectID = fetchResult.redirectedIDs[id]
-            return if let category = fetchedGroupedByWikidataID[id]?.first ?? fetchedGroupedByWikidataID[redirectID]?.first {
+            return if let category = groupedByWikidataID[id]?.first ?? groupedByWikidataID[redirectID]?.first {
+                category
+            } else {
+                nil
+            }
+        }
+
+        let sortedByCommonsCategory: [Category] = commonsCategories.compactMap { commonsCategory in
+            return if let category = groupedByCommonsCategory[commonsCategory]?.first {
                 category
             } else {
                 nil
@@ -82,10 +92,11 @@ enum DataAccess {
         // Commons categories without a linked wikidata item
         let sortedPureCommonsCategories: [Category] =
             commonsCategories
-            .filter { fetchedGroupedByCommonsCategory[$0] == nil }
+            .filter { groupedByCommonsCategory[$0] == nil }
             .map { Category(commonsCategory: $0) }
 
-        let resultCategories = (sortedFetched + sortedPureCommonsCategories)
+        let resultCategories = (sortedByWikidataID + sortedByCommonsCategory + sortedPureCommonsCategories)
+            .uniqued(on: { $0.wikidataId ?? $0.commonsCategory })
 
         return .init(
             fetchedCategories: resultCategories,
