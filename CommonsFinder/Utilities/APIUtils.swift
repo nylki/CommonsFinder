@@ -24,9 +24,6 @@ nonisolated enum APIUtils {
             categorySearchTask.items.compactMap { String($0.title.split(separator: "Category:")[0]) }
         )
 
-        print("wikidata: \(searchItems.map{ $0.label })")
-        print("categoris: \(searchCategories)")
-
         return
             try await DataAccess.fetchCombinedCategoriesFromDatabaseOrAPI(
                 wikidataIDs: searchItems.map(\.id),
