@@ -207,7 +207,7 @@ final class AccountModel {
         }
     }
 
-    /// Start paginating from most recent entry in DB up to Date.now
+    /// fetches the most recent 50 user images and upserts them into DB
     private func fetchMostRecentUploads(end: Date? = nil) async throws {
         guard let username = activeUser?.username else {
             logger.warning("Tried to fetchMostRecentUploads, but no user logged in.")
@@ -216,7 +216,7 @@ final class AccountModel {
 
         let response = try await Networking.shared.api.listUserImages(
             of: username,
-            limit: .max,
+            limit: .count(50),
             start: nil,
             end: end,
             direction: .older,
