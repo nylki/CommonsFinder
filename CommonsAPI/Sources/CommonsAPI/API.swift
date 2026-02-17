@@ -531,13 +531,13 @@ public actor API {
         
         switch identifiers {
         case .titles(var titles):
-            if titles.count >= 50 {
+            if titles.count > 50 {
                 logger.warning("Trying to fetch metadata for \(titles.count) titles. However only 50 are supported at one time. Will be limited to 10.")
                 titles = Array(titles.prefix(50))
             }
             query["titles"] = titles.joined(separator: "|")
         case .pageids(var pageIDs):
-            if pageIDs.count >= 50 {
+            if pageIDs.count > 50 {
                 logger.warning("Trying to fetch metadata for \(pageIDs.count) titles. However only 50 are supported at one time. Will be limited to 10.")
                 pageIDs = Array(pageIDs.prefix(50))
             }

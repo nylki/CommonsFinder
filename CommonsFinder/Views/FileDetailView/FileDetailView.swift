@@ -41,6 +41,7 @@ struct FileDetailView: View {
 
     @State private var isShowingFullscreenImage = false
 
+    @State private var isResolvingTags = true
     @State private var resolvedTags: [TagItem] = []
     @State private var isShowingEditingError = false
 
@@ -152,7 +153,7 @@ struct FileDetailView: View {
                         Button("Edit", systemImage: "pencil") {
                             isShowingEditSheet = true
                         }
-                        .disabled(editingStatus != nil)
+                        .disabled(editingStatus != nil || isResolvingTags)
 
                         Divider()
 
@@ -208,6 +209,8 @@ struct FileDetailView: View {
                 }
             }
             .task(id: tagsHashID, priority: .userInitiated) {
+                isResolvingTags = true
+
                 do {
                     logger.info("Resolving Tags...")
                     let start = Date.now
@@ -217,10 +220,12 @@ struct FileDetailView: View {
                         self.resolvedTags = tags
                         logger.info("Resolving Tags finished.")
                     }
+                    isResolvingTags = false
                 } catch is CancellationError {
                     logger.error("tags resolve cancelled.")
                 } catch {
                     logger.error("Failed to resolve MediaFile tags: \(error)")
+                    isResolvingTags = false
                 }
             }
             .onDisappear {
@@ -243,6 +248,16 @@ struct FileDetailView: View {
                 detailsView
                     .padding(.horizontal)
             }
+        }
+        .animation(.default) { view in
+            view
+                .disabled(editingStatus == .editing)
+                .opacity(editingStatus == .editing ? 0.5 : 1)
+                .overlay {
+                    if editingStatus == .editing {
+                        ProgressView()
+                    }
+                }
         }
     }
 
@@ -438,16 +453,21 @@ struct FileDetailView: View {
 
     @ViewBuilder
     private var tagSection: some View {
-        let itemCount = mediaFileInfo.mediaFile.categories.count + mediaFileInfo.mediaFile.statements.map(\.isDepicts).count
-        if !resolvedTags.isEmpty {
-            TagsContainerView(tags: resolvedTags)
-        } else if itemCount > 0 {
-            // TODO: better placeholder
-            Color.clear.frame(height: Double(itemCount * 30))
-                .overlay(alignment: .top) {
-                    ProgressView().progressViewStyle(.circular)
-                }
+
+        ZStack {
+            if isResolvingTags {
+                let itemCount = mediaFileInfo.mediaFile.categories.count + mediaFileInfo.mediaFile.statements.map(\.isDepicts).count
+                // TODO: better placeholder
+                Color.clear.frame(height: Double(itemCount * 20))
+                    .overlay(alignment: .top) {
+                        ProgressView().progressViewStyle(.circular)
+                    }
+            } else {
+                TagsContainerView(tags: resolvedTags)
+            }
         }
+        .animation(.default, value: isResolvingTags)
+
     }
 }
 
