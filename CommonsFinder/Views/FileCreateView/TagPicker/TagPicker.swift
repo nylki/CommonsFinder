@@ -14,12 +14,11 @@ import os.log
 /// For now this one only is intended to be used for P180 depict statements
 struct TagPicker: View {
     let initialTags: [TagItem]
-    let suggestedCategories: [Category]
-
-    let isLoadingSuggestedTags: Bool
     let onEditedTags: ([TagItem]) -> Void
 
-    @Environment(\.locale) private var locale
+    private let analysisInput: FileAnalysis.Input?
+
+    @Environment(FileAnalysis.self) private var fileAnalysis
     @Environment(\.appDatabase) private var appDatabase
     @Environment(\.dismiss) private var dismiss
     @Namespace private var namespace
@@ -62,7 +61,6 @@ struct TagPicker: View {
     var unPickedTags: [TagModel] {
         tags.filter { $0.pickedUsages.isEmpty }
     }
-
 
     private var hasUserMadeChanges: Bool {
         let initial: Set<TagItem> = Set(initialTags)
@@ -110,8 +108,6 @@ struct TagPicker: View {
                 .onChange(of: focusedTag) { oldValue, newValue in
                     copySuggestedTags()
                 }
-
-
             }
             .navigationTitle("Categories & Depicted")
             .toolbarTitleDisplayMode(.inline)
@@ -167,9 +163,17 @@ struct TagPicker: View {
             if initialTags.isEmpty {
                 isSuggestedNearbyTagsExpanded = true
             }
-
             tags = .init(initialTags.map { TagModel.init(tagItem: $0) })
-            suggestedTags = .init(suggestedCategories.map { TagModel.init(tagItem: .init($0)) })
+        }
+        .task(id: analysisInput) {
+            guard let analysisInput else { return }
+            fileAnalysis.startAnalyzingIfNeeded(analysisInput)
+        }
+        .onChange(of: fileAnalysis.status(for: analysisInput), initial: true) {
+            guard suggestedTags.isEmpty else { return }
+            if let result = fileAnalysis.status(for: analysisInput)?.result {
+                initSuggestedTags(fromCategories: result.nearbyCategories)
+            }
         }
         .onChange(of: isSuggestedNearbyTagsExpanded) {
             if isSuggestedNearbyTagsExpanded == false {
@@ -247,7 +251,7 @@ struct TagPicker: View {
                     .glassButtonStyle()
                 }
             }
-            if isLoadingSuggestedTags {
+            if fileAnalysis.status(for: analysisInput) == .analyzing {
                 ProgressView().progressViewStyle(.circular)
             } else if suggestedTags.isEmpty {
                 ContentUnavailableView("No nearby locations found", systemImage: "tag.slash")
@@ -338,7 +342,7 @@ struct TagPicker: View {
         }
     }
 
-    func copySuggestedTags() {
+    private func copySuggestedTags() {
         let pickedTags = (suggestedTags.union(searchedTags))
             .filter {
                 $0.pickedUsages.isEmpty == false
@@ -347,6 +351,35 @@ struct TagPicker: View {
         if !pickedTags.isEmpty {
             tags.append(contentsOf: pickedTags)
         }
+    }
+
+    private func initSuggestedTags(fromCategories suggestedCategories: [Category]) {
+        guard suggestedTags.isEmpty else { return }
+        let suggestedTagArray: [TagModel] = suggestedCategories.map { category in
+            .init(tagItem: .init(category))
+        }
+        suggestedTags = .init(suggestedTagArray)
+    }
+
+}
+
+extension TagPicker {
+    init(initialTags: [TagItem], draft: MediaFileDraft, onEditedTags: @escaping ([TagItem]) -> Void) {
+        self.initialTags = initialTags
+        self.analysisInput = .draft(draft)
+        self.onEditedTags = onEditedTags
+    }
+
+    init(initialTags: [TagItem], mediaFile: MediaFile, onEditedTags: @escaping ([TagItem]) -> Void) {
+        self.initialTags = initialTags
+        self.analysisInput = .mediaFile(mediaFile)
+        self.onEditedTags = onEditedTags
+    }
+
+    init(initialTags: [TagItem], onEditedTags: @escaping ([TagItem]) -> Void) {
+        self.initialTags = initialTags
+        self.analysisInput = .none
+        self.onEditedTags = onEditedTags
     }
 }
 
@@ -445,7 +478,7 @@ private struct NavHeader: View {
 
 
 #Preview(traits: .previewEnvironment) {
-    TagPicker(initialTags: [.init(.randomItem(id: "test"), pickedUsages: [.category, .depict])], suggestedCategories: [.earth], isLoadingSuggestedTags: false) { pickedTags in
+    TagPicker(initialTags: [.init(.randomItem(id: "test"), pickedUsages: [.category, .depict])]) { pickedTags in
         print(pickedTags)
     }
 }

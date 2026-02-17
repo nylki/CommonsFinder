@@ -24,6 +24,7 @@ struct SingleImageDraftView: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(\.openURL) private var openURL
     @Environment(\.locale) private var locale
+    @Environment(FileAnalysis.self) private var fileAnalysis
     @FocusState private var focus: FocusElement?
 
     @State private var filenameSelection: TextSelection?
@@ -76,8 +77,7 @@ struct SingleImageDraftView: View {
         .fullScreenCover(isPresented: $model.isShowingTagsPicker) {
             TagPicker(
                 initialTags: model.draft.tags,
-                suggestedCategories: model.analysisResult.result?.nearbyCategories ?? [],
-                isLoadingSuggestedTags: model.analysisResult == .analyzing,
+                draft: model.draft,
                 onEditedTags: {
                     model.draft.tags = $0
                 }
@@ -117,8 +117,8 @@ struct SingleImageDraftView: View {
                 logger.error("Failed to validate name \(error)")
             }
         }
-        .task {
-            await model.analyzeImage(appDatabase: appDatabase)
+        .task(id: model.draft.id) {
+            fileAnalysis.startAnalyzingIfNeeded(model.draft)
         }
         .task(id: model.choosenCoordinate) {
             locationLabel = nil

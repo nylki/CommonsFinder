@@ -58,8 +58,6 @@ struct FileEditView: View {
     @State private var isShowingFullscreenImage = false
     @State private var isShowingTagsPicker = false
     @State private var isShowingSaveConfirmationDialog = false
-    @State private var nearbyCategories: [Category]? = nil
-    @State private var isLoadingSuggestedTags = false
 
     @Environment(\.dismiss) private var dismiss
     @Environment(\.appDatabase) private var appDatabase
@@ -85,17 +83,6 @@ struct FileEditView: View {
                 // TODO: show an error!
                 logger.error("failed to init edit model \(error)")
             }
-
-        }
-        .task(id: "AnalyzingImage", priority: .medium) {
-            isLoadingSuggestedTags = true
-            let result = await ImageAnalysis.analyze(mediaFile: mediaFileInfo.mediaFile, appDatabase: appDatabase)
-            if let result {
-                nearbyCategories = result.nearbyCategories
-            } else {
-                nearbyCategories = []
-            }
-            isLoadingSuggestedTags = false
         }
     }
 
@@ -147,8 +134,7 @@ struct FileEditView: View {
         .fullScreenCover(isPresented: $isShowingTagsPicker) {
             TagPicker(
                 initialTags: model?.tags ?? resolvedTags,
-                suggestedCategories: nearbyCategories ?? [],
-                isLoadingSuggestedTags: isLoadingSuggestedTags,
+                mediaFile: mediaFileInfo.mediaFile,
                 onEditedTags: {
                     model?.tags = $0
                 }
@@ -279,6 +265,6 @@ struct FileEditView: View {
 }
 
 
-#Preview {
+#Preview(traits: .previewEnvironment) {
     FileEditView(mediaFileInfo: .makeRandomUploaded(id: "12", .squareImage), resolvedTags: [.init(.earth)])
 }

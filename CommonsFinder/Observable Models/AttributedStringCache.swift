@@ -43,6 +43,7 @@ import os.log
             try await Task.sleep(for: .milliseconds(5))
             try Task.checkCancellation()
 
+
             for (string, attributedString) in await generateAttributedStrings(from: unresolvedStrings) {
                 cache.setValue(attributedString, forKey: string)
             }

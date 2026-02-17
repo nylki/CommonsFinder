@@ -27,6 +27,7 @@ struct CommonsFinderApp: App {
     private let account: AccountModel
     private let mediaFileCache: MediaFileReactiveCache
     private let mapModel: MapModel
+    private let fileAnalysis: FileAnalysis
 
     init() {
         postInstallMaintenance()
@@ -55,6 +56,9 @@ struct CommonsFinderApp: App {
 
         let mapModel = MapModel(appDatabase: appDatabase, navigation: navigation, mediaFileCache: mediaFileCache)
         self.mapModel = mapModel
+
+        let fileAnalysis = FileAnalysis(appDatabase: appDatabase)
+        self.fileAnalysis = fileAnalysis
 
         /** _Comment from Apple's AppIntentsSampleApp_:
         
@@ -89,6 +93,7 @@ struct CommonsFinderApp: App {
                 .environment(editingManager)
                 .environment(mediaFileCache)
                 .environment(mapModel)
+                .environment(fileAnalysis)
                 .task {
 
                     // Configure and load your TipKit tips at app launch.

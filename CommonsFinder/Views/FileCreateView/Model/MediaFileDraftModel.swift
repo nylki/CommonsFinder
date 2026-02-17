@@ -10,7 +10,6 @@ import CoreLocation
 import Foundation
 import Nuke
 import UniformTypeIdentifiers
-import Vision
 import os.log
 
 /// Represents the data to allow editing either a DB-backed MediaFile or a newly created one.
@@ -22,18 +21,6 @@ import os.log
 
     var isShowingTagsPicker = false
     var isShowingCategoryPicker = false
-
-    enum ImageAnalysisStatus: Equatable {
-        case none
-        case analyzing
-        case finished(ImageAnalysisResult?)
-
-        var result: ImageAnalysisResult? {
-            if case .finished(let res) = self { res } else { nil }
-        }
-    }
-
-    var analysisResult: ImageAnalysisStatus = .none
 
     var suggestedFilenames: [FileNameTypeTuple] = []
     var nameValidationResult: NameValidationResult?
@@ -63,24 +50,6 @@ import os.log
         addedDate = .now
         id = existingDraft.id
         draft = existingDraft
-    }
-
-    // TODO: always copy to disk. Because re-opening drafts will also read from Disk.
-    private var imageLoadTask: Task<Void, Never>?
-
-    // TODO: move to parent, to handle potentially multiple drafts at once
-    func analyzeImage(appDatabase: AppDatabase) async {
-        switch analysisResult {
-        case .none: break
-        case .analyzing, .finished(_): return
-        }
-
-        analysisResult = .analyzing
-
-        logger.debug("analyzing draft image...")
-        let result = await ImageAnalysis.analyze(draft: draft, appDatabase: appDatabase)
-        logger.debug("analyzing draft image finished! \(result?.debugDescription ?? "")")
-        self.analysisResult = .finished(result)
     }
 
     var choosenCoordinate: CLLocationCoordinate2D? {
