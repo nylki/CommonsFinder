@@ -77,7 +77,8 @@ struct SearchView: View {
         switch searchModel.scope {
         case .all:
             ScrollView(.vertical) {
-
+                Color.clear.frame(minWidth: 0, maxWidth: .infinity)
+                
                 HorizontalCategoryList
                     .padding(.bottom)
 
@@ -91,8 +92,6 @@ struct SearchView: View {
                         )
                     } else if searchModel.mediaResults?.isEmpty == true {
                         ContentUnavailableView.search(text: searchModel.bindableSearchText)
-                    } else {
-                        Color.clear
                     }
                 }
             }
