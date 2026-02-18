@@ -10,7 +10,7 @@ import Foundation
 enum SearchOrder: Hashable, Equatable, CaseIterable, CustomLocalizedStringResourceConvertible {
     var localizedStringResource: LocalizedStringResource {
         switch self {
-        case .relevance: LocalizedStringResource(stringLiteral: "Relevance")
+        case .relevance: LocalizedStringResource(stringLiteral: "Relevant")
         case .newest: LocalizedStringResource(stringLiteral: "Newest")
         case .oldest: LocalizedStringResource(stringLiteral: "Oldest")
         }

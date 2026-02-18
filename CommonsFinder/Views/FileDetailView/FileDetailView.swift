@@ -70,10 +70,9 @@ struct FileDetailView: View {
     private var editingStatus: EditingStatus? {
         editingManager.status[mediaFileInfo.mediaFile.id]
     }
-    
+
     private var isEditing: Bool {
-        editingManager.status[mediaFileInfo.mediaFile.id] == .editing ||
-        editingManager.status[mediaFileInfo.mediaFile.id] == .finishedAndPerformingRefresh
+        editingManager.status[mediaFileInfo.mediaFile.id] == .editing || editingManager.status[mediaFileInfo.mediaFile.id] == .finishedAndPerformingRefresh
     }
 
     private var editingError: Error? {
@@ -154,11 +153,7 @@ struct FileDetailView: View {
                         Button("Show on Map", systemImage: "map") {
                             navigation.showOnMap(mediaFile: mediaFileInfo.mediaFile, mapModel: mapModel)
                         }
-
-                        Button("Edit", systemImage: "pencil") {
-                            isShowingEditSheet = true
-                        }
-                        .disabled(isEditing || isResolvingTags)
+                        .disabled(mediaFileInfo.mediaFile.coordinate == nil)
 
                         Divider()
 
@@ -175,6 +170,13 @@ struct FileDetailView: View {
                             Text("Copy Filename")
                             Text(mediaFileInfo.mediaFile.name)
                         }
+
+                        Divider()
+
+                        Button("Edit", systemImage: "pencil") {
+                            isShowingEditSheet = true
+                        }
+                        .disabled(isEditing || isResolvingTags)
 
                     } label: {
                         Image(systemName: "ellipsis")

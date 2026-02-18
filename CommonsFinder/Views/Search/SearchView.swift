@@ -15,7 +15,6 @@ struct SearchView: View {
 
     @FocusState private var isSearchFieldFocused: Bool
 
-    @State private var isOptionsBarSticky = false
     @State private var scrollState: ScrollState = .init()
 
     var body: some View {
@@ -29,16 +28,6 @@ struct SearchView: View {
             }
         }
         .scrollDismissesKeyboard(.immediately)
-        .overlay(alignment: .top) {
-            if !searchModel.isSearching, !searchModel.bindableSearchText.isEmpty {
-                let stickyOptionsBarVisible =
-                    isOptionsBarSticky && searchModel.mediaResults != nil && searchModel.mediaResults?.isEmpty != nil && scrollState.lastDirection == .up && scrollState.phase == .idle
-
-                if stickyOptionsBarVisible {
-                    optionsBar
-                }
-            }
-        }
         .onChange(of: searchModel.searchFieldFocusTrigger) {
             isSearchFieldFocused = true
         }
@@ -59,9 +48,13 @@ struct SearchView: View {
                 Text($0).searchCompletion($0)
             }
         }
+        .searchPresentationToolbarBehavior(.avoidHidingContent)
         .onSubmit(of: .search, searchModel.search)
         .navigationTitle("Search")
         .toolbarTitleDisplayMode(.inline)
+        .toolbar {
+            SearchOrderButton(searchOrder: searchModel.orderBinding)
+        }
     }
 
     @ViewBuilder
@@ -89,15 +82,7 @@ struct SearchView: View {
                     .padding(.bottom)
 
                 if !searchModel.isSearching, !searchModel.bindableSearchText.isEmpty {
-
                     if searchModel.mediaResults?.isEmpty == false {
-                        optionsBar
-                            .opacity(isOptionsBarSticky ? 0 : 1)
-                            .allowsHitTesting(!isOptionsBarSticky)
-                            .onScrollVisibilityChange(threshold: 0.1) { visible in
-                                isOptionsBarSticky = !visible
-                            }
-
                         PaginatableMediaList(
                             items: searchModel.mediaItems,
                             status: searchModel.mediaPaginationStatus,
@@ -135,15 +120,6 @@ struct SearchView: View {
                 .id("images")
             }
         }
-    }
-
-    @ViewBuilder
-    private var optionsBar: some View {
-        HStack {
-            SearchOrderButton(searchOrder: searchModel.orderBinding)
-            Spacer(minLength: 0)
-        }
-        .padding(.horizontal)
     }
 
     @ViewBuilder

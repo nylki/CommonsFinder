@@ -320,6 +320,8 @@ struct CategoryView: View {
                             navigation.showOnMap(category: item.base, mapModel: mapModel)
                         }
                     }
+                    Divider()
+
                     Menu("New Image", systemImage: "plus") {
                         let tag = TagItem(item.base, pickedUsages: [.category, .depict])
                         Button("from Photos", systemImage: "photo.badge.plus") {
