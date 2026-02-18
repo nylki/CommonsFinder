@@ -70,6 +70,11 @@ struct FileDetailView: View {
     private var editingStatus: EditingStatus? {
         editingManager.status[mediaFileInfo.mediaFile.id]
     }
+    
+    private var isEditing: Bool {
+        editingManager.status[mediaFileInfo.mediaFile.id] == .editing ||
+        editingManager.status[mediaFileInfo.mediaFile.id] == .finishedAndPerformingRefresh
+    }
 
     private var editingError: Error? {
         editingStatus?.error
@@ -153,7 +158,7 @@ struct FileDetailView: View {
                         Button("Edit", systemImage: "pencil") {
                             isShowingEditSheet = true
                         }
-                        .disabled(editingStatus != nil || isResolvingTags)
+                        .disabled(isEditing || isResolvingTags)
 
                         Divider()
 
@@ -251,10 +256,10 @@ struct FileDetailView: View {
         }
         .animation(.default) { view in
             view
-                .disabled(editingStatus == .editing)
-                .opacity(editingStatus == .editing ? 0.5 : 1)
+                .disabled(isEditing)
+                .opacity(isEditing ? 0.5 : 1)
                 .overlay {
-                    if editingStatus == .editing {
+                    if isEditing {
                         ProgressView()
                     }
                 }
@@ -455,7 +460,7 @@ struct FileDetailView: View {
     private var tagSection: some View {
 
         ZStack {
-            if isResolvingTags {
+            if isResolvingTags, resolvedTags.isEmpty {
                 let itemCount = mediaFileInfo.mediaFile.categories.count + mediaFileInfo.mediaFile.statements.map(\.isDepicts).count
                 // TODO: better placeholder
                 Color.clear.frame(height: Double(itemCount * 20))
