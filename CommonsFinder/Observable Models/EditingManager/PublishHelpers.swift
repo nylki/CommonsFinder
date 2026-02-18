@@ -133,7 +133,6 @@ enum PublishHelpers {
         var appendedLines = Set<String>()
         for category in selectedCategories {
             let normalized = normalizedCategoryName(category)
-            guard appendedLines.insert(normalized).inserted else { continue }
             guard !existingNormalized.contains(normalized) else { continue }
             appendedLines.insert("[[Category:\(category)]]")
         }

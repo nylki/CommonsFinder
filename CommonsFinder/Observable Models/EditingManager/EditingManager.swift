@@ -12,7 +12,9 @@ import os.log
 @Observable final class EditingManager {
     var status: [MediaFile.ID: EditingStatus] = [:]
 
-    @ObservationIgnored private var tasks: [MediaFile.ID: Task<Void, Error>] = [:]
+    @ObservationIgnored
+    private var tasks: [MediaFile.ID: Task<Void, Error>] = [:]
+
     private let appDatabase: AppDatabase
 
     init(appDatabase: AppDatabase) {
@@ -142,6 +144,7 @@ import os.log
 
                 if categoriesChanged {
                     let wikitext = try await Networking.shared.api.fetchPageWikitext(pageID: mediaFile.id)
+
                     let updatedText = PublishHelpers.updateCategories(
                         in: wikitext,
                         selectedCategories: selectedCategories,

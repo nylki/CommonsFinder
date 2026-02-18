@@ -78,7 +78,7 @@ struct SearchView: View {
         case .all:
             ScrollView(.vertical) {
                 Color.clear.frame(minWidth: 0, maxWidth: .infinity)
-                
+
                 HorizontalCategoryList
                     .padding(.bottom)
 
