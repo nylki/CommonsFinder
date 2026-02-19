@@ -1,9 +1,10 @@
 # <img width="32" height="32" alt="App icon of CommonsFinder" src="https://github.com/user-attachments/assets/958f1355-0cc6-4dbb-8dc9-080d339c04a6"/>  CommonsFinder 
 
 CommonsFinder is an iOS app to explore and upload media to [Wikimedia Commons](https://commons.wikimedia.org).
+It is currently in beta and can be installed via TestFlight: https://testflight.apple.com/join/15KtE2Mn (or scan the QR-Code)
 
-CommonsFinder is currently in beta and can be installed via TestFlight: https://testflight.apple.com/join/15KtE2Mn
-Or scan the QR-Code with your iPhone: [[Testflight QR Code](Testflight-QR-Code.png)](https://testflight.apple.com/join/15KtE2Mn)!
+[<img width="128" height="128" alt="Testflight QR-Code" src=Testflight-QR-Code.png/>](https://testflight.apple.com/join/15KtE2Mn)
+
 
 ## Features
 
