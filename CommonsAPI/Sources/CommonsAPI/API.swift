@@ -1283,7 +1283,7 @@ LIMIT \(limit)
     }
     
     
-    public enum PublishingStep: Equatable {
+    public enum PublishingStep: Equatable, Sendable {
         // NOTE: uploadDataAndUnstash is one stage combined, because the unstash depends on knowing the filekey
         case uploadData
         case unstash(filekey: String)

@@ -577,6 +577,7 @@
 
     },
     "Console" : {
+      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
