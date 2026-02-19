@@ -15,25 +15,42 @@ private final class
 {
     let username: String
 
+    private let order: SearchOrder
+
     @ObservationIgnored
     private var continueString: String?
 
-    init(appDatabase: AppDatabase, username: String, fileCachingStrategy: FileCachingStrategy) async throws {
+    init(appDatabase: AppDatabase, username: String, order: SearchOrder, fileCachingStrategy: FileCachingStrategy) async throws {
         self.username = username
+        self.order = order
         try await super.init(appDatabase: appDatabase, initialTitles: [], fileCachingStrategy: fileCachingStrategy)
     }
 
     override internal func
         fetchRawContinuePaginationItems() async throws -> (fileIdentifiers: CommonsAPI.FileIdentifierList, canContinue: Bool)
     {
-        let result = try await Networking.shared.api.listUserImages(
-            of: username,
-            limit: .count(500),
-            start: .now,
-            end: nil,
-            direction: .older,
-            continueString: continueString,
-        )
+        let result =
+            switch order {
+
+            case .newest, .relevance:
+                try await Networking.shared.api.listUserImages(
+                    of: username,
+                    limit: .count(500),
+                    start: .now,
+                    end: nil,
+                    direction: .older,
+                    continueString: continueString,
+                )
+            case .oldest:
+                try await Networking.shared.api.listUserImages(
+                    of: username,
+                    limit: .count(500),
+                    start: nil,
+                    end: .now,
+                    direction: .newer,
+                    continueString: continueString,
+                )
+            }
 
         let canContinue = result.continueString != nil
         continueString = result.continueString
@@ -47,6 +64,8 @@ struct UploadsView: View {
     let username: String
 
     @State private var paginationModel: PaginatableUserUploadedFiles? = nil
+    @State private var searchOrder: SearchOrder = .newest
+
     @Environment(\.appDatabase) private var appDatabase
     @Environment(AccountModel.self) private var account
 
@@ -55,7 +74,7 @@ struct UploadsView: View {
     }
 
     var body: some View {
-        ZStack {
+        ScrollView(.vertical) {
             if let paginationModel {
                 PaginatableMediaList(
                     items: paginationModel.mediaFileInfos,
@@ -66,22 +85,25 @@ struct UploadsView: View {
         }
         .navigationTitle("Uploads by \(username)")
         .toolbarTitleDisplayMode(.inline)
-        .task {
-            if paginationModel == nil {
+        .toolbar {
+            SearchOrderButton(searchOrder: $searchOrder, possibleCases: [.newest, .oldest])
+        }
+        .onChange(of: searchOrder, initial: true) { oldValue, newValue in
+            guard paginationModel == nil || (newValue != oldValue) else { return }
+            Task<Void, Never> {
                 do {
-                    let paginationModel = try await PaginatableUserUploadedFiles(
+                    paginationModel = try await PaginatableUserUploadedFiles(
                         appDatabase: appDatabase,
                         username: username,
+                        order: searchOrder,
                         fileCachingStrategy: isAccountUser ? .saveAll : .replaceExisting
                     )
-                    self.paginationModel = paginationModel
                 } catch {
-                    logger.error("Error loading category images: \(error)")
+                    logger.error("Error loading user uploads: \(error)")
                 }
             }
         }
     }
-
 }
 
 #Preview {

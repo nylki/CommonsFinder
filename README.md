@@ -1,14 +1,17 @@
 # <img width="32" height="32" alt="App icon of CommonsFinder" src="https://github.com/user-attachments/assets/958f1355-0cc6-4dbb-8dc9-080d339c04a6"/>  CommonsFinder 
 
 CommonsFinder is an iOS app to explore and upload media to [Wikimedia Commons](https://commons.wikimedia.org).
+It is currently in beta and can be installed via TestFlight: https://testflight.apple.com/join/15KtE2Mn (or scan the QR-Code)
 
-The test version can be installed via TestFlight: https://testflight.apple.com/join/15KtE2Mn
+[<img width="128" height="128" alt="Testflight QR-Code" src=Testflight-QR-Code.png/>](https://testflight.apple.com/join/15KtE2Mn)
+
 
 ## Features
 
 The project is **currently work-in-progress**, but several core features already work. You can:
 
 - upload single images
+- editing captions, categories and depictions
 - save image-drafts for later uploading
 - search images and categories (including wikidata items that are depicted in images)
 - view images and their metadata, including categories and depicted wikidata items
@@ -47,8 +50,8 @@ I plan an implement more functionality in the next months and improve on the cur
 - [ ] improve map: better live-location experience, direct opening of single items on the map
 - [x] improve search: search for categories, currently only images can be searched
 - [x] when uploading, suggest nearby location categories/items to add
-- [ ] make upload more robust in some areas (eg. check if filename already exists)
-- [ ] editing of uploaded files (eg. changing the caption or adding categories)
+- [x] make upload more robust in some areas (eg. check if filename already exists)
+- [x] editing of uploaded files (eg. changing the caption or adding categories)
 - [ ] improve author and attribution editing and viewing
 
 Those above have priority, but there are many more things planned. Here is a rough overview of what I would like the app to be able to do at some point:
@@ -69,18 +72,11 @@ At some point I'd also love to see an iPadOS and MacOS adaptation. This should n
 
 The idea for "CommonsFinder" came from combining the [view*finder*](https://en.wikipedia.org/wiki/Viewfinder) in cameras with the word "commons". Since the aspect of taking photos mobile and on-the-go and contributing them to wiki commons is one goal of this app, using a camera's viewfinder as part of the app name seemed fitting. The word "finder" is also used in combination like path*finder* and Mac users may be familiar  with the file manager "Finder", so the name hopefully evokes a theme of both photo-taking ("viewfinder"), exploring ("pathfinder"), finding ("find") and also managing and organizing files (file manager "Finder"); and all that in relation to "commons", both regarding the project Wikimedia Commons, but also in a more general and broader meaning of the word.
 
-Another app name idea was "CommonExplorer" (or alternatively "CommonsExplorer"), but unfortunately the word is a bit too long to fit on the homescreen without being truncated, so the current "CommonsFinder" was chosen instead.
-
-Although I am happy with the current name, I am open to other suggestins if they fit the use-case well and are short enough to not be truncated when the app(-icon) is placed on the home screen, so unfortunately not more than 11-13 characters, it seems.
-
-
 ## Contributing and Testing
 
 The best way to curently help, is by using the TestFlight releases and especially reporting crashes (should they occur) as well as other experience breaking issues: https://testflight.apple.com/join/15KtE2Mn
 
-
-Regarding MRs and Issues: Although a lot of stuff already works well, the project and code base is still work-in-progress and several parts are actively being worked on. I value your and my time and therefore do not consider MR's to avoid duplicate over conflicting work.
-Once the development becomes slower-paced and the code base settles a bit more I'll be happy to consider contributions.
+MRs authored by LLM agent tools may be closed without further comment if they are non-trivial or implementing features or bugs that have not been discussed and reported before.
 
 ## Funding and Donations
 
@@ -90,5 +86,4 @@ Donations are currently possible via Github-sponsors.
 
 ## License
 
-I have **not yet finally decided** on the open-source license. I would like to use GPL-3 or AGPL-3, but as far as I know there are some complications in regards to publishing to the iOS AppStore, especially when accepting contributions (MRs/PRs) from others. I will need some more time to decide on that and gather input from other open source iOS-apps projects who use GPL.
-
+[GPLv3](LICENSE) with [Apple app store exception](COPYING.ios)

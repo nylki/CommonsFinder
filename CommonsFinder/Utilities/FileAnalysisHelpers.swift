@@ -1,8 +1,8 @@
 //
-//  DraftAnalysis.swift
+//  FileAnalysisHelpers.swift
 //  CommonsFinder
 //
-//  Created by Tom Brewe on 11.07.25.
+//  Created by Tom Brewe on 17.02.26.
 //
 
 import Accelerate
@@ -16,8 +16,28 @@ import RegexBuilder
 import Vision
 import os.log
 
-nonisolated enum DraftAnalysis {
-    @concurrent static func analyze(draft: MediaFileDraft) async -> DraftAnalysisResult? {
+nonisolated enum FileAnalysisHelpers {
+    typealias RadiusFetchOperation = (_ coordinate: CLLocationCoordinate2D, _ kilometerRadius: CLLocationDistance, _ limit: Int) async throws -> [Category]
+
+    @concurrent static func analyze(mediaFile: MediaFile, appDatabase: AppDatabase) async -> ImageAnalysisResult? {
+        let coordinate: CLLocationCoordinate2D? = mediaFile.coordinate
+        if coordinate == nil {
+            // TODO: download and read from exif?
+        }
+
+        guard let coordinate else { return nil }
+
+        let categories = await fetchNearbyCategories(
+            coordinate: coordinate,
+            horizontalError: nil,
+            bearing: nil,
+            appDatabase: appDatabase
+        )
+
+        return .init(nearbyCategories: categories)
+    }
+
+    @concurrent static func analyze(draft: MediaFileDraft, appDatabase: AppDatabase) async -> ImageAnalysisResult? {
 
         guard let fileURL = draft.localFileURL() else { return nil }
         let handler = ImageRequestHandler(fileURL)
@@ -35,19 +55,21 @@ nonisolated enum DraftAnalysis {
             let categories = await fetchNearbyCategories(
                 coordinate: coordinate,
                 horizontalError: exifData?.hPositioningError,
-                bearing: exifData?.normalizedBearing
+                bearing: exifData?.normalizedBearing,
+                appDatabase: appDatabase
             )
             return categories
         }
 
-        async let detectSmudgeOperation = detectSmudgesAndLowQuality(imageRequestHandler: handler)
-        async let detectFacesOperation = detectFaces(imageRequestHandler: handler)
+        //        async let detectSmudgeOperation = detectSmudgesAndLowQuality(imageRequestHandler: handler)
+        //        async let detectFacesOperation = detectFaces(imageRequestHandler: handler)
         //        async let cvcClassifyOperation = fetchComputerVisionCategories(imageRequestHandler: handler)
         async let nearbyCategoriesOperation = nearbyCategoryTask.value
 
-        let (isLowQuality, faceCount, nearbyCategories) = await (detectSmudgeOperation, detectFacesOperation, nearbyCategoriesOperation)
+        let (nearbyCategories) = await (nearbyCategoriesOperation)
+        _ = handler
 
-        return .init(isLowQuality: isLowQuality, nearbyCategories: nearbyCategories, faceCount: faceCount)
+        return .init(isLowQuality: nil, nearbyCategories: nearbyCategories, faceCount: nil)
     }
 
 
@@ -96,7 +118,7 @@ nonisolated enum DraftAnalysis {
 
 
         do {
-            let results: () = try await imageRequestHandler.perform(request)
+            _ = try await imageRequestHandler.perform(request)
                 .filter { $0.hasMinimumRecall(0.01, forPrecision: 0.9) }
                 .forEach { observation in
                     logger.info("image classification: \(observation.identifier) (\(observation.confidence))")
@@ -108,7 +130,7 @@ nonisolated enum DraftAnalysis {
         return []
     }
 
-    struct SearchCircle {
+    private struct SearchCircle {
         let coordinate: CLLocationCoordinate2D
         let radius: CLLocationDistance
     }
@@ -198,27 +220,17 @@ nonisolated enum DraftAnalysis {
         }
     }
 
-    private static func fetchExpandingCircleCategories(around coordinate: CLLocationCoordinate2D) async -> [Category] {
-        /// circle with increasing diameter are fetched at the coordinate
-
+    @concurrent static func fetchExpandingCircleCategories(
+        around coordinate: CLLocationCoordinate2D,
+        kilometerRadii: [CLLocationDistance] = [0.1, 0.33, 0.66, 1, 3],
+        limit: Int = 50,
+        fetchOperation: RadiusFetchOperation
+    ) async -> [Category] {
         do {
-            // TODO: if possible take depth and "outside" classification into account? eg. if outside
-            // or wide image depth, adjust radius? otherwise if classified as indoors, prefer lower radius?
-
             var result: [Category] = []
-            let kmDiameters = [0.1, 0.33, 0.66, 1, 3]
 
-
-            for kmDiameter in kmDiameters {
-                let limit = 50
-                let categories = try await Networking.shared.api
-                    .getWikidataItemsAroundCoordinate(
-                        coordinate,
-                        kilometerRadius: kmDiameter,
-                        limit: limit,
-                        languageCode: Locale.current.wikiLanguageCodeIdentifier
-                    )
-                    .map(Category.init)
+            for kilometerRadius in kilometerRadii {
+                let categories = try await fetchOperation(coordinate, kilometerRadius, limit)
 
                 result.append(contentsOf: categories)
 
@@ -237,7 +249,23 @@ nonisolated enum DraftAnalysis {
         }
     }
 
-    private static func fetchCategoriesByReverseMapKitGeocoding(coordinate: CLLocationCoordinate2D) async throws -> [Category] {
+    private static func fetchExpandingCircleCategories(around coordinate: CLLocationCoordinate2D) async -> [Category] {
+        // TODO: if possible take depth and "outside" classification into account? eg. if outside
+        // or wide image depth, adjust radius? otherwise if classified as indoors, prefer lower radius?
+
+        return await fetchExpandingCircleCategories(around: coordinate) { coordinate, kilometerRadius, limit in
+            try await Networking.shared.api
+                .getWikidataItemsAroundCoordinate(
+                    coordinate,
+                    kilometerRadius: kilometerRadius,
+                    limit: limit,
+                    languageCode: Locale.current.wikiLanguageCodeIdentifier
+                )
+                .map(Category.init)
+        }
+    }
+
+    private static func fetchCategoriesByReverseMapKitGeocoding(coordinate: CLLocationCoordinate2D, appDatabase: AppDatabase) async throws -> [Category] {
         let referenceCLLocation = CLLocation(latitude: coordinate.latitude, longitude: coordinate.longitude)
 
         let placemark = try await coordinate.reverseGeocodingRequest()
@@ -252,12 +280,12 @@ nonisolated enum DraftAnalysis {
                 let shortAddress = "\(thoroughfare), \(city)"
 
                 var streetCategories: [Category] = []
-                streetCategories += try await APIUtils.searchCategories(for: shortAddress)
+                streetCategories += try await APIUtils.searchCategories(for: shortAddress, appDatabase: appDatabase)
 
                 if streetCategories.isEmpty,
                     let street = shortAddress.components(separatedBy: .decimalDigits).first
                 {
-                    streetCategories += try await APIUtils.searchCategories(for: street)
+                    streetCategories += try await APIUtils.searchCategories(for: street, appDatabase: appDatabase)
                 }
 
                 streetCategories =
@@ -276,7 +304,7 @@ nonisolated enum DraftAnalysis {
 
                 result.insert(contentsOf: streetCategories.prefix(1), at: 0)
             } else if let water = placemark.ocean ?? placemark.inlandWater {
-                let waterCategories = try await APIUtils.searchCategories(for: water)
+                let waterCategories = try await APIUtils.searchCategories(for: water, appDatabase: appDatabase)
                     .filter { category in
                         // canal, river, lake, better to do it in the query with broader water filter
                         Set(["Q12284", "Q4022", "Q23397"]).intersection(category.instances).isEmpty == false
@@ -288,48 +316,11 @@ nonisolated enum DraftAnalysis {
                 result.insert(contentsOf: waterCategories.prefix(1), at: 0)
 
             }
-
-            //            let relevantLargeAreaPOIs: [MKPointOfInterestCategory] = [
-            //                .airport, .amusementPark, .aquarium, .beach, .campground, .castle, .conventionCenter, .fairground, .foodMarket, .fortress, .golf, .goKart, .hiking, .kayaking, .landmark, .marina,
-            //                .museum, .musicVenue, .nationalMonument, .nationalPark, .park, .publicTransport, .rvPark, .skating, .skatePark, .spa, .soccer, .skiing, .stadium, .swimming, .surfing, .tennis,
-            //                .theater, .university, .volleyball, .zoo,
-            //            ]
-
-            // TODO: use this with iOS 26 mapItem via MKReverseGeocodingRequest
-            // Parks, Landmarks, beach, zoo etc.
-            //            if let mkPOICategory = item.pointOfInterestCategory,
-            //                var name = item.name,
-            //                relevantLargeAreaPOIs.contains(mkPOICategory)
-            //            {
-            //
-            //                if let dashSplit = name.split(separator: " - ").first {
-            //                    name = String(dashSplit)
-            //                }
-            //                let areaOfInterestCategories = try await APIUtils.searchCategories(for: name)
-            //                    .filterByMaxDistance(maxDistance: 3000, to: referenceCLLocation)
-            //                    //                    .filter(\.isSpecialOrLandmarkPlace)
-            //                    .sorted(by: { a, b in
-            //                        sortCategoriesByDistance(to: referenceCLLocation, a: a, b: b)
-            //                    })
-            //
-            //                if let areaOfInterest = areaOfInterestCategories.first,
-            //                    let coord = areaOfInterest.coordinate
-            //                {
-            //                    //Also include the best match as well as items that are (also) very close to the found item (eg. 100 meters)
-            //                    // This helps with landmarks that have multiple entries but are not quite the same (eg. older building vs. newer).
-            //                    let closeAreas = areaOfInterestCategories.filterByMaxDistance(
-            //                        maxDistance: 200,
-            //                        to: CLLocation(latitude: coord.latitude, longitude: coord.longitude)
-            //                    )
-            //                    result.insert(contentsOf: [areaOfInterest] + closeAreas, at: 0)
-            //                }
-            //
-            //            }
         }
         return result
     }
 
-    private static func fetchNearbyCategories(coordinate: CLLocationCoordinate2D, horizontalError: CLLocationDistance?, bearing: CLLocationDegrees?) async -> [Category] {
+    private static func fetchNearbyCategories(coordinate: CLLocationCoordinate2D, horizontalError: CLLocationDistance?, bearing: CLLocationDegrees?, appDatabase: AppDatabase) async -> [Category] {
         let refLoc = CLLocation(latitude: coordinate.latitude, longitude: coordinate.longitude)
 
         var searchResult: [Category]
@@ -381,7 +372,7 @@ nonisolated enum DraftAnalysis {
                 // and then querying the landmark/street/ocean/etc. via wikimedia APIs and apply some specialized filters
                 // to get categories that may have been missed in the search before.
                 // and
-                let mapKitCategorySuggestions = try await fetchCategoriesByReverseMapKitGeocoding(coordinate: coordinate)
+                let mapKitCategorySuggestions = try await fetchCategoriesByReverseMapKitGeocoding(coordinate: coordinate, appDatabase: appDatabase)
                 finalResult.insert(contentsOf: mapKitCategorySuggestions, at: 0)
             } catch {
                 logger.error("Error fetching mapkit category suggestions \(error)")
@@ -397,7 +388,7 @@ nonisolated enum DraftAnalysis {
         case lowDistanceHighArea
     }
 
-    static private func calculateSuggestionScores(
+    private static func calculateSuggestionScores(
         of categories: [Category],
         referenceLocation: CLLocation,
         referenceBearing: CLLocationDegrees?,
@@ -477,7 +468,6 @@ nonisolated enum DraftAnalysis {
 
         return scoredCategories.sorted(by: \.score, .orderedDescending)
     }
-
 }
 
 enum CategoryGeoSuggestionStrategy {
@@ -498,36 +488,4 @@ nonisolated extension [Category] {
         }
 
     }
-}
-
-
-extension Category {
-
-    /// determines if the item encompasses likely a large area or has a long length, eg. lakes, seas, parks, cities and rivers, streets, roads
-    fileprivate var isAreaOrLongItem: Bool {
-        // FIXME: NOTE! these are just a selection of relevant wikidata items
-        let areaIDs: Set<String> = ["Q23397", "Q22698", "Q4421"]
-        let lengthIDs: Set<String> = ["Q4022", "Q79007", "Q34442", "Q174782"]
-        let relevantIDs = areaIDs.union(lengthIDs)
-        let instances = Set(instances)
-
-        return instances.intersection(relevantIDs).isEmpty == false
-    }
-
-
-    /// non-street and non-lake, non-river, non-ocean
-    fileprivate var isSpecialOrLandmarkPlace: Bool {
-        // parks, harbour, train station, desert, island, landmark etc.
-        let matchingsIDs: Set<String> = [
-            "Q213205", "Q174782", "Q23442", "Q22698", "Q2319498", "Q1440300", "Q570116", "Q194195", "Q338112", "Q8514", "Q107425", "Q4421", "Q82794", "Q2578218", "Q1107656", "Q55488", "Q1248784",
-            "Q44782",
-        ]
-        let instances = Set(instances)
-        return instances.intersection(matchingsIDs).isEmpty == false
-    }
-}
-
-extension FloatingPoint {
-    fileprivate var degreesToRadians: Self { self * .pi / 180 }
-    fileprivate var radiansToDegrees: Self { self * 180 / .pi }
 }

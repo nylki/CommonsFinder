@@ -9,6 +9,7 @@ import CommonsAPI
 import FrameUp
 @preconcurrency import MapKit
 import NukeUI
+import OrderedCollections
 import SwiftUI
 import TipKit
 import UniformTypeIdentifiers
@@ -23,6 +24,7 @@ struct SingleImageDraftView: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(\.openURL) private var openURL
     @Environment(\.locale) private var locale
+    @Environment(FileAnalysis.self) private var fileAnalysis
     @FocusState private var focus: FocusElement?
 
     @State private var filenameSelection: TextSelection?
@@ -68,15 +70,14 @@ struct SingleImageDraftView: View {
         }
         .toolbar { toolbarContent }
         .scrollDismissesKeyboard(.interactively)
+        .interactiveDismissDisabled(!draftExistsInDB)
         // NOTE: Not using a regular sheet here: .sheet + ScrollView + ForEach Buttons causes accidental button taps when scrolling (SwiftUI bug?)
         // so for now until this behaviour is fixed by Apple
         // this is a fullScreenCover (but TODO: consider using a push navigation here)
-        .fullScreenCover(isPresented: $model.isShowingStatementPicker) {
-            let suggestedNearbyTags = model.analysisResult?.nearbyCategories.map { TagItem($0) } ?? []
-
+        .fullScreenCover(isPresented: $model.isShowingTagsPicker) {
             TagPicker(
                 initialTags: model.draft.tags,
-                suggestedNearbyTags: suggestedNearbyTags,
+                draft: model.draft,
                 onEditedTags: {
                     model.draft.tags = $0
                 }
@@ -104,6 +105,11 @@ struct SingleImageDraftView: View {
                 generateFilename()
             }
         }
+        .onDisappear {
+            if draftExistsInDB, model.draft.publishingState == nil {
+                saveChanges()
+            }
+        }
         .task(id: model.draft.name) {
             do {
                 try await model.validateFilenameImpl()
@@ -111,8 +117,8 @@ struct SingleImageDraftView: View {
                 logger.error("Failed to validate name \(error)")
             }
         }
-        .task {
-            await model.analyzeImage()
+        .task(id: model.draft.id) {
+            fileAnalysis.startAnalyzingIfNeeded(model.draft)
         }
         .task(id: model.choosenCoordinate) {
             locationLabel = nil
@@ -148,7 +154,6 @@ struct SingleImageDraftView: View {
                 model.draft.localFileName = fileItem.localFileName
             }
             try appDatabase.upsert(model.draft)
-            dismiss()
         } catch {
             logger.error("Failed to save all drafts \(error)")
         }
@@ -401,7 +406,7 @@ struct SingleImageDraftView: View {
                 HFlowLayout(alignment: .leading) {
                     ForEach(tags) { tag in
                         Button {
-                            model.isShowingStatementPicker = true
+                            model.isShowingTagsPicker = true
                         } label: {
                             TagLabel(tag: tag)
                         }
@@ -418,7 +423,7 @@ struct SingleImageDraftView: View {
                 model.draft.tags.isEmpty ? "Add" : "Edit",
                 systemImage: model.draft.tags.isEmpty ? "plus" : "pencil"
             ) {
-                model.isShowingStatementPicker = true
+                model.isShowingTagsPicker = true
             }
             .focused($focus, equals: .tags)
         } header: {
@@ -719,50 +724,6 @@ struct FileLocationMapView: View {
     }
 }
 
-struct LanguageButtons: View {
-    let disabledLanguages: [LanguageCode]
-    let onSelect: (WikimediaLanguage) -> Void
-
-    var body: some View {
-        ForEach(WikimediaLanguage.all) { language in
-            Button(language.localizedDescription) {
-                onSelect(language)
-            }
-            .disabled(disabledLanguages.contains(language.code))
-        }
-    }
-}
-
-/// Allows the set the text for caption and description per languageCode via direct binding
-extension [MediaFileDraft.DraftCaptionWithDescription] {
-    fileprivate enum FieldType {
-        case caption
-        case description
-    }
-
-    fileprivate subscript(code: LanguageCode, field: FieldType) -> String {
-        get {
-            switch field {
-            case .caption:
-                first(where: { $0.languageCode == code })?.caption ?? ""
-            case .description:
-                first(where: { $0.languageCode == code })?.fullDescription ?? ""
-            }
-        }
-
-        set {
-            if let idx = firstIndex(where: { $0.languageCode == code }) {
-                switch field {
-                case .caption: self[idx].caption = newValue
-                case .description: self[idx].fullDescription = newValue
-                }
-            } else {
-                logger.warning("unusually setting a description or caption via Binding that didn't exist yet. \(nil)")
-                append(.init(caption: newValue, languageCode: code))
-            }
-        }
-    }
-}
 
 #Preview("New Draft", traits: .previewEnvironment) {
     @Previewable @State var draft = MediaFileDraftModel(existingDraft: .makeRandomEmptyDraft(id: "1"))

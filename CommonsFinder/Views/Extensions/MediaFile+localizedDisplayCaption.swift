@@ -9,6 +9,7 @@ import CommonsAPI
 import SwiftUI
 
 extension MediaFile {
+    /// the preferred caption depending on user locales, otherwise any caption.
     var localizedDisplayCaption: String? {
         if let preferredCaption {
             return preferredCaption.string
@@ -19,7 +20,8 @@ extension MediaFile {
         }
     }
 
-    /// either returns the localized caption, the localized description as String (converted as plaintext from its AttributedString version) and if neither exists, the displayName wis returned
+
+    /// either returns the localized caption, the localized description as String (converted as plaintext from its AttributedString version) and if neither exists, the displayName is returned
     var bestShortTitle: String {
         return if let preferredCaption {
             preferredCaption.string

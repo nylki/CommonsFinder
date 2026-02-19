@@ -9,9 +9,10 @@ import SwiftUI
 
 struct SearchOrderButton: View {
     @Binding var searchOrder: SearchOrder
+    var possibleCases: [SearchOrder] = SearchOrder.allCases
     var body: some View {
         Menu {
-            ForEach(SearchOrder.allCases, id: \.self) { order in
+            ForEach(possibleCases, id: \.self) { order in
                 Button(action: { searchOrder = order }) {
                     Label {
                         Text(order.localizedStringResource)

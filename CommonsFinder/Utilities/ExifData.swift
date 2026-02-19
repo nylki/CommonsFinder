@@ -189,8 +189,6 @@ nonisolated struct ExifData: Codable, Equatable, Hashable {
 
         let metadata = rawMetadata as NSDictionary
 
-        print(metadata)
-
         self.colorModel = metadata[kCGImagePropertyColorModel] as? String
         self.pixelWidth = metadata[kCGImagePropertyPixelWidth] as? Int
         self.pixelHeight = metadata[kCGImagePropertyPixelHeight] as? Int

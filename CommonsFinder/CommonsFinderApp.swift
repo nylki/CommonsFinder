@@ -23,9 +23,11 @@ struct CommonsFinderApp: App {
     private let appDatabase: AppDatabase
     private let searchModel: SearchModel
     private let uploadManager: UploadManager
+    private let editingManager: EditingManager
     private let account: AccountModel
     private let mediaFileCache: MediaFileReactiveCache
     private let mapModel: MapModel
+    private let fileAnalysis: FileAnalysis
 
     init() {
         postInstallMaintenance()
@@ -46,11 +48,17 @@ struct CommonsFinderApp: App {
         let uploadManager = UploadManager(appDatabase: appDatabase, accountModel: account)
         self.uploadManager = uploadManager
 
+        let editingManager = EditingManager(appDatabase: appDatabase)
+        self.editingManager = editingManager
+
         let mediaFileCache = MediaFileReactiveCache(appDatabase: appDatabase)
         self.mediaFileCache = mediaFileCache
 
         let mapModel = MapModel(appDatabase: appDatabase, navigation: navigation, mediaFileCache: mediaFileCache)
         self.mapModel = mapModel
+
+        let fileAnalysis = FileAnalysis(appDatabase: appDatabase)
+        self.fileAnalysis = fileAnalysis
 
         /** _Comment from Apple's AppIntentsSampleApp_:
         
@@ -82,8 +90,10 @@ struct CommonsFinderApp: App {
                 .environment(searchModel)
                 .environment(mapModel)
                 .environment(uploadManager)
+                .environment(editingManager)
                 .environment(mediaFileCache)
                 .environment(mapModel)
+                .environment(fileAnalysis)
                 .task {
 
                     // Configure and load your TipKit tips at app launch.
@@ -120,21 +130,17 @@ struct CommonsFinderApp: App {
 
 private func configureNukeAndPulse() {
     // NUKE setup
-    ImageCache.shared.costLimit = 1024 * 1024 * 1000  // 1000 MB
-    //                    ImageCache.shared.countLimit = 100
+    var pipelineConfig = ImagePipeline.Configuration.withDataCache(
+        name: "app.CommonsFinder.DataCache",
+        sizeLimit: 1024 * 1024 * 256
+    )
+    ImageCache.shared.costLimit = 1024 * 1024 * 512  // 512 MB
     ImageCache.shared.ttl = 60 * 10  // Invalidate images in memory cache after 10 minutes
-    DataLoader.sharedUrlCache.diskCapacity = 1024 * 1024 * 500  // 500 MB
-    DataLoader.sharedUrlCache.memoryCapacity = 0
 
-    var pipelineConfig = ImagePipeline.Configuration()
-    let urlSessionConfig = URLSessionConfiguration.default
-
-    urlSessionConfig.httpAdditionalHeaders = [
-        "User-Agent": Networking.shared.userAgent,
-        "Referer": Networking.shared.referer,
-    ]
-
-    let dataLoader = DataLoader(configuration: urlSessionConfig)
+    // configures a rate limiter that complies with the strict server-site rate limiting
+    // for non-authenticated clients, which is max 10 requests in a 10s sliding window.
+    pipelineConfig.rateLimiterConfig = .init(interval: 10, maxRequestCount: 10)
+    let dataLoader = DataLoader(configuration: Networking.shared.config)
 
     /// TESTING NOTE: If tests fail in Pulse package, comment out the following block and try again.
     #if DEBUG

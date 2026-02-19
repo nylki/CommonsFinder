@@ -15,7 +15,6 @@ struct SearchView: View {
 
     @FocusState private var isSearchFieldFocused: Bool
 
-    @State private var isOptionsBarSticky = false
     @State private var scrollState: ScrollState = .init()
 
     var body: some View {
@@ -29,16 +28,6 @@ struct SearchView: View {
             }
         }
         .scrollDismissesKeyboard(.immediately)
-        .overlay(alignment: .top) {
-            if !searchModel.isSearching, !searchModel.bindableSearchText.isEmpty {
-                let stickyOptionsBarVisible =
-                    isOptionsBarSticky && searchModel.mediaResults != nil && searchModel.mediaResults?.isEmpty != nil && scrollState.lastDirection == .up && scrollState.phase == .idle
-
-                if stickyOptionsBarVisible {
-                    optionsBar
-                }
-            }
-        }
         .onChange(of: searchModel.searchFieldFocusTrigger) {
             isSearchFieldFocused = true
         }
@@ -59,9 +48,13 @@ struct SearchView: View {
                 Text($0).searchCompletion($0)
             }
         }
+        .searchPresentationToolbarBehavior(.avoidHidingContent)
         .onSubmit(of: .search, searchModel.search)
         .navigationTitle("Search")
         .toolbarTitleDisplayMode(.inline)
+        .toolbar {
+            SearchOrderButton(searchOrder: searchModel.orderBinding)
+        }
     }
 
     @ViewBuilder
@@ -84,53 +77,48 @@ struct SearchView: View {
         switch searchModel.scope {
         case .all:
             ScrollView(.vertical) {
+                Color.clear.frame(minWidth: 0, maxWidth: .infinity)
 
                 HorizontalCategoryList
                     .padding(.bottom)
 
-                if !searchModel.isSearching, !searchModel.bindableSearchText.isEmpty, searchModel.mediaResults != nil {
-                    optionsBar
-                        .opacity(isOptionsBarSticky ? 0 : 1)
-                        .allowsHitTesting(!isOptionsBarSticky)
-                        .onScrollVisibilityChange(threshold: 0.1) { visible in
-                            isOptionsBarSticky = !visible
-                        }
+                if !searchModel.isSearching, !searchModel.bindableSearchText.isEmpty {
+                    if searchModel.mediaResults?.isEmpty == false {
+                        PaginatableMediaList(
+                            items: searchModel.mediaItems,
+                            status: searchModel.mediaPaginationStatus,
+                            toolOverlayPadding: false,
+                            paginationRequest: searchModel.mediaPagination
+                        )
+                    } else if searchModel.mediaResults?.isEmpty == true {
+                        ContentUnavailableView.search(text: searchModel.bindableSearchText)
+                    }
                 }
+            }
+            .scrollDismissesKeyboard(.interactively)
+            .simultaneousGesture(dragGesture)
+            .id("all")
+        case .categories:
+            ScrollView(.vertical) {
+                PaginatableCategoryList(
+                    items: searchModel.categoryItems,
+                    status: searchModel.categoryPaginationStatus,
+                    paginationRequest: searchModel.categoryPagination
+                )
+                .id("categories")
+            }
 
+        case .images:
+            ScrollView(.vertical) {
                 PaginatableMediaList(
                     items: searchModel.mediaItems,
                     status: searchModel.mediaPaginationStatus,
                     toolOverlayPadding: false,
                     paginationRequest: searchModel.mediaPagination
                 )
+                .id("images")
             }
-            .simultaneousGesture(dragGesture)
-            .id("all")
-        case .categories:
-            PaginatableCategoryList(
-                items: searchModel.categoryItems,
-                status: searchModel.categoryPaginationStatus,
-                paginationRequest: searchModel.categoryPagination
-            )
-            .id("categories")
-        case .images:
-            PaginatableMediaList(
-                items: searchModel.mediaItems,
-                status: searchModel.mediaPaginationStatus,
-                toolOverlayPadding: false,
-                paginationRequest: searchModel.mediaPagination
-            )
-            .id("images")
         }
-    }
-
-    @ViewBuilder
-    private var optionsBar: some View {
-        HStack {
-            SearchOrderButton(searchOrder: searchModel.orderBinding)
-            Spacer(minLength: 0)
-        }
-        .padding(.horizontal)
     }
 
     @ViewBuilder

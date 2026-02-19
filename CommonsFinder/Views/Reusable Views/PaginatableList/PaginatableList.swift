@@ -12,33 +12,61 @@ struct PaginatableList<Item: Equatable & Identifiable, ItemView: View>: View {
     let status: PaginationStatus
     var toolOverlayPadding = false
     let paginationRequest: () -> Void
+
+    let canPrewarmItem: (_ item: Item) -> Void
     let itemView: (_ item: Item) -> ItemView
 
-    var body: some View {
-        ScrollView(.vertical) {
-            LazyVStack(spacing: 20) {
-                ForEach(items) { item in
-                    itemView(item)
-                        .onScrollVisibilityChange { visible in
-                            guard visible else { return }
-                            let threshold = min(items.count - 1, max(0, items.count - 5))
-                            guard threshold > 0 else { return }
-                            let thresholdItem = items[threshold]
+    @State private var prewarmTasks: [Int: Task<Void, Never>] = [:]
 
-                            if item == thresholdItem {
-                                paginationRequest()
-                            }
-                        }
-                }
+    private func checkPagination(visibleItem: Item) {
+        let threshold = min(items.count - 1, max(0, items.count - 5))
+        guard threshold > 0 else { return }
+        let thresholdItem = items[threshold]
 
-                paginatingIndicator
-            }
-            .compositingGroup()
-            .scenePadding()
-            .padding(.top, toolOverlayPadding ? 40 : 0)
-            .shadow(color: .black.opacity(0.15), radius: 10)
+        if visibleItem == thresholdItem {
+            paginationRequest()
         }
-        .scrollIndicators(.visible, axes: .vertical)
+    }
+
+    private func schedulePrewarmTask(itemIdx: Int, isVisible: Bool) {
+        if isVisible, prewarmTasks[itemIdx] == nil {
+            prewarmTasks[itemIdx] = Task<Void, Never> {
+                do {
+                    let nextIdx = itemIdx + 1
+                    if (items.count - 1) >= nextIdx {
+                        try await Task.sleep(for: .milliseconds(650))
+                        canPrewarmItem(items[nextIdx])
+                    }
+                } catch {}
+                prewarmTasks[itemIdx] = nil
+            }
+        } else {
+            prewarmTasks[itemIdx]?.cancel()
+            prewarmTasks[itemIdx] = nil
+        }
+    }
+
+    var body: some View {
+        let enumeratedItems = Array(items.enumerated())
+
+        LazyVStack(spacing: 20) {
+            ForEach(enumeratedItems, id: \.element.id) { (idx, item) in
+                itemView(item)
+                    .onScrollVisibilityChange(threshold: 0.1) { isVisible in
+                        if isVisible {
+                            checkPagination(visibleItem: item)
+                        }
+                        schedulePrewarmTask(itemIdx: idx, isVisible: isVisible)
+                    }
+            }
+
+            paginatingIndicator
+        }
+        .compositingGroup()
+        .scenePadding()
+        .padding(.top, toolOverlayPadding ? 40 : 0)
+        .shadow(color: .black.opacity(0.15), radius: 10)
+
         .onChange(of: status, initial: true) {
             if status == .idle(reachedEnd: false), items.isEmpty {
                 paginationRequest()
@@ -76,7 +104,8 @@ struct PaginatableList<Item: Equatable & Identifiable, ItemView: View>: View {
         status: .unknown,
         paginationRequest: {
             print("paginate")
-        }
+        },
+        canPrewarmItem: { item in }
     ) {
         CategoryTeaser(categoryInfo: .init($0))
             .frame(height: 185)

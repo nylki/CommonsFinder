@@ -20,22 +20,6 @@ struct MediaFileListItem: View {
     @Namespace private var navigationNamespace
     @Environment(\.locale) private var locale
 
-    private var captionOrName: String {
-        let captions = mediaFileInfo.mediaFile.captions
-
-        return
-            if let preferredCaption = captions.first(where: { $0.languageCode == locale.wikiLanguageCodeIdentifier })
-        {
-            preferredCaption.string
-        } else if let description = mediaFileInfo.mediaFile.attributedStringDescription?.characters {
-            String(description)
-        } else if let anyCaption = captions.first {
-            anyCaption.string
-        } else {
-            mediaFileInfo.mediaFile.displayName
-        }
-    }
-
 
     var body: some View {
         Button {
@@ -67,47 +51,25 @@ struct MediaFileListItem: View {
             Spacer()
 
             VStack {
-                Text(captionOrName)
+                Text(mediaFileInfo.mediaFile.bestShortTitle)
             }
             .lineLimit(3)
             .multilineTextAlignment(.leading)
             .padding(11)
-            .animation(.default, value: captionOrName)
+            .animation(.default, value: mediaFileInfo.mediaFile.bestShortTitle)
         }
     }
 
     @ViewBuilder
     private var imageView: some View {
         WidthReader { width in
-            let transaction = Transaction(animation: .linear)
-            LazyImage(
-                request: mediaFileInfo.thumbRequest,
-                transaction: transaction
-            ) { phase in
-                ZStack {
-                    if let image = phase.image {
-                        image
-                            .resizable()
-                            .aspectRatio(contentMode: .fill)
-
-                    } else {
-                        ProgressView()
-                            .progressViewStyle(.circular)
-                    }
-                }
+            MediaFileThumbImage(mediaFileInfo)
                 .frame(
                     width: width,
                     height: imageHeight(containerWidth: width)
                 )
                 .clipped()
-
-            }
-            .frame(
-                width: width,
-                height: imageHeight(containerWidth: width)
-            )
         }
-        .clipped()
     }
 }
 

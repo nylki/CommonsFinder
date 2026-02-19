@@ -28,14 +28,13 @@ public actor API {
     let createAccountRedirectURL = URL(string: "https://commons.m.wikimedia.beta.wmflabs.org/w/index.php?title=Main_Page&welcome=yes")!
     
     private(set) var userAgent: String
-    var referer: String
-    
+    private(set) var referer: String
 #if DEBUG
-    let urlSession = URLSessionProxy(configuration: URLSessionConfiguration.default)
+    let urlSession: URLSessionProxy
 #else
-    let urlSession = URLSession(configuration: URLSessionConfiguration.default)
+    let urlSession: URLSession
 #endif
-    
+
     private lazy var jsonDecoder: JSONDecoder = {
         let decoder = JSONDecoder()
         decoder.dateDecodingStrategy = .iso8601
@@ -43,9 +42,15 @@ public actor API {
     }()
 
 
-    public init(userAgent: String, referer: String) {
+    public init(config: URLSessionConfiguration, userAgent: String, referer: String) {
         self.userAgent = userAgent
         self.referer = referer
+#if DEBUG
+    urlSession = URLSessionProxy(configuration: config)
+#else
+    urlSession = URLSession(configuration: config)
+#endif
+        
 
  // Un-Comment the following code block to test EmailAuth via email-code (https://www.mediawiki.org/wiki/Help:Extension:EmailAuth)
 //#if DEBUG
@@ -76,7 +81,11 @@ public actor API {
         
 //        var eventMonitors: [any EventMonitor] = [AlamofireNotifications()]
         
-}
+    }
+    
+    public func setReferer(_ newReferer: String) {
+        referer = newReferer
+    }
     
     private func parse<T: Decodable>(_ type: T.Type, from data: Data, response: URLResponse) throws -> T {
         guard let http = response as? HTTPURLResponse else {
@@ -175,9 +184,7 @@ public actor API {
             "password": password,
             "rememberMe": "1"
         ]
-        var request = try POST(url: commonsEndpoint, form: form)
-        // Optional: Referer can help in some CSRF contexts; generally not required for clientlogin.
-        request.setValue("https://commons.wikimedia.org/wiki/Special:UserLogin", forHTTPHeaderField: "Referer")
+        let request = try POST(url: commonsEndpoint, form: form)
 
         let (data, response) = try await urlSession.data(for: request)
         let wrapped = try parse(LoginResponseWrapped.self, from: data, response: response)
@@ -205,8 +212,7 @@ public actor API {
             "captchaId": captchaID,
             "email": email
         ]
-        var request = try POST(url: commonsEndpoint, form: form)
-        request.setValue("https://commons.wikimedia.org/wiki/Special:CreateAccount", forHTTPHeaderField: "Referer")
+        let request = try POST(url: commonsEndpoint, form: form)
 
         let (data, response) = try await urlSession.data(for: request)
         let wrapped = try parse(CreateAccountResponseWrapped.self, from: data, response: response)
@@ -237,8 +243,7 @@ public actor API {
             "token": emailCode,
             "logincontinue": "1"
         ]
-        var request = try POST(url: commonsEndpoint, form: form)
-        request.setValue("https://commons.wikimedia.org/wiki/Special:UserLogin", forHTTPHeaderField: "Referer")
+        let request = try POST(url: commonsEndpoint, form: form)
 
         let (data, response) = try await urlSession.data(for: request)
         let wrapped = try parse(LoginResponseWrapped.self, from: data, response: response)
@@ -258,8 +263,7 @@ public actor API {
             "OATHToken": twoFactorCode,
             "logincontinue": "1"
         ]
-        var request = try POST(url: commonsEndpoint, form: form)
-        request.setValue("https://commons.wikimedia.org/wiki/Special:UserLogin", forHTTPHeaderField: "Referer")
+        let request = try POST(url: commonsEndpoint, form: form)
 
         let (data, response) = try await urlSession.data(for: request)
         let wrapped = try parse(LoginResponseWrapped.self, from: data, response: response)
@@ -527,13 +531,13 @@ public actor API {
         
         switch identifiers {
         case .titles(var titles):
-            if titles.count >= 50 {
+            if titles.count > 50 {
                 logger.warning("Trying to fetch metadata for \(titles.count) titles. However only 50 are supported at one time. Will be limited to 10.")
                 titles = Array(titles.prefix(50))
             }
             query["titles"] = titles.joined(separator: "|")
         case .pageids(var pageIDs):
-            if pageIDs.count >= 50 {
+            if pageIDs.count > 50 {
                 logger.warning("Trying to fetch metadata for \(pageIDs.count) titles. However only 50 are supported at one time. Will be limited to 10.")
                 pageIDs = Array(pageIDs.prefix(50))
             }
@@ -798,6 +802,8 @@ GROUP BY ?item ?commonsCategory ?area ?location ?label ?image ?description
     /// and P373 (http://www.wikidata.org/entity/Property:P373)
     // eg: https://query.wikidata.org/sparql?query=%20%20SELECT%20%3Fitem%20%3FitemLabel%20%3FcommonsCategory%20%3FcommonsCategoryLabel%20WHERE%20%7B%0A%20%20%20%20VALUES%20%3Fitem%20%7Bwd%3AQ2%20wd%3AQ5%20wd%3AQ42%20%20%7D%20%20%23%20Replace%20these%20with%20your%20Q-items%0A%20%20%20%20%3Fitem%20wdt%3AP910%20%3FcommonsCategory%20.%20%20%20%20%23%20P910%20links%20to%20the%20main%20category%0A%20%20%20%20%3FcommonsCategory%20wdt%3AP373%20%3FcommonsName%20.%20%23%20Filter%20to%20ensure%20it%20has%20a%20Commons%20category%0A%20%20%7D%0A%0A&format=json
     public func findCategoriesForWikidataItems(_ itemIDs: [String], languageCode: String) async throws -> [GenericWikidataItem] {
+        guard !itemIDs.isEmpty else { return [] }
+        
         let preferredLanguages = ([languageCode] + getPreferredSystemLanguages()).uniqued().joined(separator: ",")
         let ids = itemIDs.reduce("") { partialResult, qItem in
             partialResult + " wd:\(qItem)"
@@ -850,6 +856,7 @@ GROUP BY ?item ?commonsCategory ?area ?location ?label ?image ?description
     
     
     public func findWikidataItemsForCategories(_ categories: [String], languageCode: String) async throws -> [GenericWikidataItem] {
+        guard !categories.isEmpty else { return [] }
         let preferredLanguages = ([languageCode] + getPreferredSystemLanguages()).uniqued().joined(separator: ",")
         let categoriesString = categories
             .map {
@@ -1353,7 +1360,6 @@ LIMIT \(limit)
                             continuation.finish()
                             return
                         }
-                        print("filekey: \(filekey)")
                         
                         // All uploads done un-stash the file now
                         parameters.removeValue(forKey: "stash")
@@ -1373,7 +1379,7 @@ LIMIT \(limit)
                         title: "File:\(file.filename)",
                         labels: file.captions,
                         statements: file.claims,
-                        comment: nil
+                        comment: "Created initial structured data after upload"
                     )
                     
                     continuation.yield(.published)
@@ -1392,8 +1398,193 @@ LIMIT \(limit)
     }
 
 
+    public func fetchPageWikitext(pageID: String) async throws -> String {
+        let query: Parameters = [
+            "action": "query",
+            "curtimestamp": "1",
+            "prop": "revisions",
+            "rvprop": "content",
+            "rvslots": "main",
+            "rvlimit": "1",
+            "format": "json",
+            "formatversion": "2",
+            "pageids": pageID
+        ]
+
+        let request = try GET(url: commonsEndpoint, query: query)
+        let (data, response) = try await urlSession.data(for: request)
+        let value = try parse(QueryResponse<PageRevisionsResponse>.self, from: data, response: response)
+        guard
+            let page = value.query?.pages.first,
+            page.missing != true,
+            let revision = page.revisions?.first,
+            let content = revision.slots?.main?.content
+        else {
+            throw CommonAPIError.missingResponseValues
+        }
+        return content
+    }
+
+    public func editPageText(pageID: String, text: String, summary: String? = nil, csrfToken: String? = nil) async throws {
+        let token = if let csrfToken {
+            csrfToken
+        } else {
+            try await fetchCSRFToken()
+        }
+
+        var form: Parameters = [
+            "action": "edit",
+            "pageid": pageID,
+            "text": text,
+            "token": token,
+            "nocreate": "1",
+            "format": "json",
+            "formatversion": "2",
+            "curtimestamp": "1"
+        ]
+
+        if let summary, !summary.isEmpty {
+            form["summary"] = summary
+        }
+
+        let request = try POST(url: commonsEndpoint, form: form)
+        let (dataOut, response) = try await urlSession.data(for: request)
+        let editResponse = try parse(EditResponse.self, from: dataOut, response: response)
+
+        if let error = editResponse.error {
+            throw CommonAPIError.apiError(code: error.code, info: error.info)
+        }
+
+        guard let result = editResponse.edit?.result?.lowercased(),
+              result == "success" || result == "nochange"
+        else {
+            throw CommonAPIError.missingResponseValues
+        }
+    }
+
+    public func setLabel(
+        entityId: String,
+        language: String,
+        value: String?,
+        summary: String? = nil,
+        csrfToken: String? = nil
+    ) async throws {
+        let token = if let csrfToken {
+            csrfToken
+        } else {
+            try await fetchCSRFToken()
+        }
+
+        var form: Parameters = [
+            "action": "wbsetlabel",
+            "id": entityId,
+            "language": language,
+            "token": token,
+            "format": "json",
+            "formatversion": "2",
+            "curtimestamp": "1"
+        ]
+
+        if let summary, !summary.isEmpty {
+            form["summary"] = summary
+        }
+
+        if let value, !value.isEmpty {
+            form["value"] = value
+        }
+
+        let request = try POST(url: commonsEndpoint, form: form)
+        let (dataOut, response) = try await urlSession.data(for: request)
+        let writeResponse = try parse(ClaimEditResponse.self, from: dataOut, response: response)
+
+        if let error = writeResponse.error {
+            throw CommonAPIError.apiError(code: error.code, info: error.info)
+        }
+    }
+
+    public func createClaim(
+        entityId: String,
+        property: WikidataProp,
+        value: WikidataItemID,
+        summary: String? = nil,
+        csrfToken: String? = nil
+    ) async throws {
+        let token = if let csrfToken {
+            csrfToken
+        } else {
+            try await fetchCSRFToken()
+        }
+
+        let valueData = try JSONEncoder().encode(value)
+        guard let valueString = String(data: valueData, encoding: .utf8) else {
+            throw CommonAPIError.failedToEncodeJSONData
+        }
+
+        var form: Parameters = [
+            "action": "wbcreateclaim",
+            "entity": entityId,
+            "property": property.rawValue,
+            "snaktype": "value",
+            "value": valueString,
+            "token": token,
+            "format": "json",
+            "formatversion": "2",
+            "curtimestamp": "1"
+        ]
+
+        if let summary, !summary.isEmpty {
+            form["summary"] = summary
+        }
+
+        let request = try POST(url: commonsEndpoint, form: form)
+        let (dataOut, response) = try await urlSession.data(for: request)
+        let writeResponse = try parse(ClaimEditResponse.self, from: dataOut, response: response)
+
+        if let error = writeResponse.error {
+            throw CommonAPIError.apiError(code: error.code, info: error.info)
+        }
+    }
+
+    public func removeClaim(
+        claimId: String,
+        summary: String? = nil,
+        csrfToken: String? = nil
+    ) async throws {
+        let token = if let csrfToken {
+            csrfToken
+        } else {
+            try await fetchCSRFToken()
+        }
+
+        var form: Parameters = [
+            "action": "wbremoveclaims",
+            "claim": claimId,
+            "token": token,
+            "format": "json",
+            "formatversion": "2",
+            "curtimestamp": "1"
+        ]
+
+        if let summary, !summary.isEmpty {
+            form["summary"] = summary
+        }
+
+        let request = try POST(url: commonsEndpoint, form: form)
+        let (dataOut, response) = try await urlSession.data(for: request)
+        let writeResponse = try parse(ClaimEditResponse.self, from: dataOut, response: response)
+
+        if let error = writeResponse.error {
+            throw CommonAPIError.apiError(code: error.code, info: error.info)
+        }
+    }
+
     /// action: wbeditentity
-    func editStructuredDataEntity(title: String, labels: [LanguageString], statements: [WikidataClaim], comment: String?) async throws {
+    func editStructuredDataEntity(
+        title: String,
+        labels: [LanguageString],
+        statements: [WikidataClaim],
+        comment: String?
+    ) async throws {
         let token = try await fetchCSRFToken()
         
         struct EditStructuredDataRequestBody: Encodable {
@@ -1458,6 +1649,15 @@ LIMIT \(limit)
 }
 
 internal extension [MediawikiNamespace] {
+    /// returns the pipe-joined string: [.file, .main] -> "file|main"
+    var apiString: String {
+        self
+            .map { String($0.rawValue) }
+            .joined(separator: "|")
+    }
+}
+
+internal extension [RevisionTag] {
     /// returns the pipe-joined string: [.file, .main] -> "file|main"
     var apiString: String {
         self

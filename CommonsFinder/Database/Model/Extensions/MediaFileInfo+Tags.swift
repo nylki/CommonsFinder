@@ -5,6 +5,7 @@
 //  Created by Tom Brewe on 20.04.25.
 //
 
+import Algorithms
 import Foundation
 
 extension MediaFile {
@@ -17,6 +18,29 @@ extension MediaFile {
             .filter(\.isDepicts)
             .compactMap(\.mainItem?.id)
 
-        return try await DataAccess.fetchCombinedTagsFromDatabaseOrAPI(wikidataIDs: depictWikdataIDs, commonsCategories: categories, appDatabase: appDatabase)
+
+        let result = try await DataAccess.fetchCombinedCategoriesFromDatabaseOrAPI(
+            wikidataIDs: depictWikdataIDs,
+            commonsCategories: categories,
+            appDatabase: appDatabase
+        )
+
+        let depictIDsWithResolvedRedirects: [String] = depictWikdataIDs.map { depictID in
+            result.redirectedIDs[depictID] ?? depictID
+        }
+
+        let categoriesSet = Set(categories)
+        let depictIDSet = Set(depictIDsWithResolvedRedirects)
+
+        return result.fetchedCategories.map {
+            var picked: Set<TagType> = []
+            if let wikidataID = $0.wikidataId, depictIDSet.contains(wikidataID) {
+                picked.insert(.depict)
+            }
+            if let commonsCategory = $0.commonsCategory, categoriesSet.contains(commonsCategory) {
+                picked.insert(.category)
+            }
+            return .init($0, pickedUsages: picked)
+        }
     }
 }

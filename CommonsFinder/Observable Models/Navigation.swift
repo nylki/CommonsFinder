@@ -65,18 +65,18 @@ import os.log
 
     private func updateReferer() {
         if let currentPath = currentPath.last {
-            Networking.shared.referer = "CommonsFinder://\(currentPath.refererPath)"
+            Networking.shared.setReferer("CommonsFinder://\(currentPath.refererPath)")
         } else {
-            Networking.shared.referer = "CommonsFinder://\(selectedTab.refererPath)"
+            Networking.shared.setReferer("CommonsFinder://\(selectedTab.refererPath)")
         }
         logger.debug("Referer: \(Networking.shared.referer)")
     }
 
     //    var isViewingFileSheetOpen: MediaFile.ID?
-    var isEditingDraft: DraftSheetNavItem?
+    var isEditingDraft: FileCreateViewModel?
     var isAuthSheetOpen: AuthNavigationDestination?
 
-    enum DraftSheetNavItem: Identifiable {
+    enum DraftSheetNavItem: Identifiable, Equatable {
         case newDraft(NewDraftOptions?)
         case existing([MediaFileDraft])
 
@@ -168,15 +168,15 @@ extension Navigation {
     }
 
     func editDrafts(drafts: [MediaFileDraft]) {
-        isEditingDraft = .existing(drafts)
+        isEditingDraft = .init(existingDrafts: drafts)
     }
 
     func openNewDraft(options: NewDraftOptions) {
-        isEditingDraft = .newDraft(options)
+        isEditingDraft = .init(newDraftOptions: options)
     }
 
     func openNewDraft() {
-        isEditingDraft = .newDraft(nil)
+        isEditingDraft = .init(newDraftOptions: nil)
     }
 
     func viewFile(mediaFile: MediaFileInfo, namespace: Namespace.ID) {

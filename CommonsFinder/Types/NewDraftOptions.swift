@@ -7,6 +7,13 @@
 
 import Foundation
 
-struct NewDraftOptions: Sendable, Hashable {
+struct NewDraftOptions: Sendable, Hashable, Equatable {
+    var source: ImportSource? = nil
     var tag: TagItem? = nil
+
+    enum ImportSource {
+        case mediaLibrary
+        case camera
+        case files
+    }
 }

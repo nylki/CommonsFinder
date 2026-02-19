@@ -10,7 +10,6 @@ import CoreLocation
 import Foundation
 import Nuke
 import UniformTypeIdentifiers
-import Vision
 import os.log
 
 /// Represents the data to allow editing either a DB-backed MediaFile or a newly created one.
@@ -20,9 +19,8 @@ import os.log
     var draft: MediaFileDraft
     let addedDate: Date
 
-    var isShowingStatementPicker = false
+    var isShowingTagsPicker = false
     var isShowingCategoryPicker = false
-    var analysisResult: DraftAnalysisResult?
 
     var suggestedFilenames: [FileNameTypeTuple] = []
     var nameValidationResult: NameValidationResult?
@@ -52,19 +50,6 @@ import os.log
         addedDate = .now
         id = existingDraft.id
         draft = existingDraft
-    }
-
-    // TODO: always copy to disk. Because re-opening drafts will also read from Disk.
-    private var imageLoadTask: Task<Void, Never>?
-
-    // TODO: move to parent, to handle potentially multiple drafts at once
-    func analyzeImage() async {
-        guard analysisResult == nil else { return }
-
-        logger.debug("analyzing draft image...")
-        let result = await DraftAnalysis.analyze(draft: draft)
-        logger.debug("analyzing draft image finished! \(result?.debugDescription ?? "")")
-        self.analysisResult = result
     }
 
     var choosenCoordinate: CLLocationCoordinate2D? {

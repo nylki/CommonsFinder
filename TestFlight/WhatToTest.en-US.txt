@@ -1,1 +1,17 @@
-This version fixes a bug that occurs when loading images whose filenames contain a "+".
+NEW FEATURES
+
+- Files can now be edited (captions, categories, depiction)!
+- Search results in the search tab are now sortable by newest/oldest results
+
+PERFORMANCE AND BUG FIXES
+
+- Images are now cached for longer and loaded more efficiently when many images are displayed in a short time.
+
+OTHER
+
+Images are now client-side rate-limited to 10 images per 10 seconds, as Commons recently implemented stricter rate limiting on the backend.
+Unfortunately, there are still a few issues, which are causing an increased number of image loading errors because the app is classified as a bot in the backend and is only allocated limited request resources. I am currently working with the responsible parties to resolve this issue.
+
+LICENSE
+
+CommonsFinder is now licensed under the GPLv3.0!
