@@ -208,27 +208,31 @@ struct FileDetailView: View {
                     logger.error("CAT: Failed to observe MediaFileInfo changes \(error)")
                 }
             }
-            .task(priority: .high) {
+            .task(id: isResolvingTags, priority: .high) {
+                guard isResolvingTags == false else { return }
                 let timeIntervalSinceLastFetchDate = Date.now.timeIntervalSince(mediaFileInfo.mediaFile.fetchDate)
-                //            logger.info("Time since last fetch: \(timeIntervalSinceLastFetchDate)")
                 if timeIntervalSinceLastFetchDate > 20 {
-                    await refreshFromNetwork()
+                    do {
+                        try await Task.sleep(for: .milliseconds(250))
+                        await refreshFromNetwork()
+                    } catch {}
                 }
             }
             .task(id: tagsHashID, priority: .userInitiated) {
+                guard resolvedTags.isEmpty else { return }
                 isResolvingTags = true
 
                 do {
                     logger.info("Resolving Tags...")
-                    let start = Date.now
                     let tags = try await mediaFileInfo.mediaFile.resolveTags(appDatabase: appDatabase)
-                    let tagsWhereFetchedAsync = Date.now.timeIntervalSince(start) > 0.1
-                    withAnimation(tagsWhereFetchedAsync ? .default : nil) {
+                    withAnimation(.interactiveSpring) {
                         self.resolvedTags = tags
                         logger.info("Resolving Tags finished.")
                     }
                     isResolvingTags = false
                 } catch is CancellationError {
+                    logger.error("tags resolve cancelled.")
+                } catch URLError.cancelled {
                     logger.error("tags resolve cancelled.")
                 } catch {
                     logger.error("Failed to resolve MediaFile tags: \(error)")
@@ -474,6 +478,7 @@ struct FileDetailView: View {
             }
         }
         .animation(.default, value: isResolvingTags)
+        .animation(.default, value: resolvedTags)
 
     }
 }
