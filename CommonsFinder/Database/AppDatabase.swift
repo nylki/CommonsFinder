@@ -814,18 +814,15 @@ nonisolated extension AppDatabase {
         case desc
     }
 
-    func fetchRecentlyViewedMediaFileInfos(order: BasicOrdering) throws -> [MediaFileInfo] {
+    func fetchRecentlyViewedMediaFileInfos(order: BasicOrdering, searchText: String) throws -> [MediaFileInfo] {
         try dbWriter.read { db in
-            let request =
-                switch order {
-                case .asc: MediaFile.including(required: MediaFile.itemInteraction.order(\.lastViewed.asc))
-                case .desc: MediaFile.including(required: MediaFile.itemInteraction.order(\.lastViewed.desc))
-                }
+            try AllRecentlyViewedMediaFileRequest(order: order, searchText: searchText).fetch(db)
+        }
+    }
 
-            return
-                try request
-                .asRequest(of: MediaFileInfo.self)
-                .fetchAll(db)
+    func fetchBookmardMediaFileInfos(order: BasicOrdering, searchText: String) throws -> [MediaFileInfo] {
+        try dbWriter.read { db in
+            try AllBookmarksFileRequest(order: order, searchText: searchText).fetch(db)
         }
     }
 

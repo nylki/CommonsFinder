@@ -59,45 +59,42 @@ struct RecentlyViewedMediaView: View {
             guard observationTask == nil || (newValue != oldValue) else {
                 return
             }
-            logger.debug("observation change: \(newValue) !=? \(oldValue)")
 
+            let originalIDs: [String]
+
+            do {
+                let initialFetchedResults = try appDatabase.fetchRecentlyViewedMediaFileInfos(
+                    order: order == .newest ? .desc : .asc,
+                    searchText: searchText
+                )
+
+                originalIDs = initialFetchedResults.map(\.id)
+                mediaFileInfos = initialFetchedResults
+            } catch {
+                logger.error("Failed to fetch reciently viewed media \(error)")
+                return
+
+            }
+
+            // NOTE: The observation is mainly to observe for bookmark toggling.
+            // IMPORTANT: we want retain the orginal order, and not cause layout shifts if the original order would changes.
+            // thats why we fetch by IDs in the observation, not the original request itself!
             observationTask?.cancel()
             observationTask = Task<Void, Never> {
-                let observation = ValueObservation.tracking { [order, searchText] db in
-                    try AllRecentlyViewedMediaFileRequest(
-                        order: order == .newest ? .desc : .asc,
-                        searchText: searchText
-                    )
-                    .fetch(db)
+                let observation = ValueObservation.tracking { [originalIDs] db in
+                    try MediaFilesByIDRequest(ids: originalIDs).fetch(db)
                 }
-
-                var orginalOrderedIDs: [MediaFileInfo.ID] = []
 
                 do {
                     for try await refreshedMediaFileInfos in observation.values(in: appDatabase.reader) {
                         try Task.checkCancellation()
-                        // IMPORTANT: we want retain the orginal order, to not cause annoying
-                        // layout changes when the user taps on an item and returns here.
-                        if orginalOrderedIDs.isEmpty {
-                            orginalOrderedIDs = refreshedMediaFileInfos.map(\.id)
+                        let grouped = refreshedMediaFileInfos.grouped(by: \.id)
+                        mediaFileInfos = originalIDs.compactMap { id in
+                            grouped[id]?.first
                         }
-
-                        var refreshedGrouped = refreshedMediaFileInfos.grouped(by: \.id)
-
-                        mediaFileInfos = orginalOrderedIDs.compactMap { id in
-                            if let match = refreshedGrouped[id]?.first {
-                                refreshedGrouped.removeValue(forKey: id)
-                                return match
-                            } else {
-                                return nil
-                            }
-                        }
-
-                        let umatchedRefreshed = refreshedGrouped.values
-                        assert(umatchedRefreshed.isEmpty)
                     }
                 } catch {
-
+                    logger.error("Failed to fetch reciently viewed media \(error)")
                 }
             }
         }

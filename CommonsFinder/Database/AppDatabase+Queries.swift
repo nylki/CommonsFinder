@@ -54,6 +54,20 @@ struct AllUploadsRequest: ValueObservationQueryable {
     }
 }
 
+
+struct MediaFilesByIDRequest: ValueObservationQueryable {
+    let ids: [MediaFile.ID]
+    static var defaultValue: [MediaFileInfo] { [] }
+
+    func fetch(_ db: Database) throws -> [MediaFileInfo] {
+        try MediaFile
+            .filter(ids: ids)
+            .including(optional: MediaFile.itemInteraction)
+            .asRequest(of: MediaFileInfo.self)
+            .fetchAll(db)
+    }
+}
+
 /// A @Query request that observes all media items in the database
 struct AllRecentlyViewedMediaFileRequest: ValueObservationQueryable {
     let order: AppDatabase.BasicOrdering
@@ -98,15 +112,31 @@ struct AllRecentlyViewedWikiItemsRequest: ValueObservationQueryable {
 /// A @Query request that observes all bookmarked media items in the database
 struct AllBookmarksFileRequest: ValueObservationQueryable {
     static var defaultValue: [MediaFileInfo] { [] }
+    let order: AppDatabase.BasicOrdering
+    let searchText: String
+
 
     func fetch(_ db: Database) throws -> [MediaFileInfo] {
-        try MediaFile
-            .including(
-                required: MediaFile
-                    .itemInteraction
-                    .filter { $0.bookmarked != nil }
-                    .order(\.bookmarked.desc)
+        var request =
+            switch order {
+            case .asc:
+                MediaFile.including(
+                    required: MediaFile.itemInteraction.filter { $0.bookmarked != nil }.order(\.bookmarked.asc)
+                )
+            case .desc:
+                MediaFile.including(
+                    required: MediaFile.itemInteraction.filter { $0.bookmarked != nil }.order(\.bookmarked.desc))
+            }
+
+        if !searchText.isEmpty {
+            request = request.filter(
+                sql: "mediaFile.rowid IN (SELECT mediaFile_ft.rowid FROM mediaFile_ft WHERE mediaFile_ft MATCH ?)",
+                arguments: [FTS5Pattern(matchingAllPrefixesIn: searchText)]
             )
+        }
+
+        return
+            try request
             .asRequest(of: MediaFileInfo.self)
             .fetchAll(db)
     }
