@@ -79,36 +79,6 @@ struct FileDetailView: View {
         editingStatus?.error
     }
 
-    @concurrent
-    private func refreshFromNetwork() async {
-        do {
-            guard
-                let result = try await Networking.shared.api
-                    .fetchFullFileMetadata(.pageids([mediaFileInfo.mediaFile.id])).first
-            else {
-                return
-            }
-
-            let refreshedMediaFile = MediaFile(apiFileMetadata: result)
-            try await appDatabase.upsert([refreshedMediaFile])
-
-            guard let refreshedMediaFileInfo = try await appDatabase.fetchMediaFileInfo(id: refreshedMediaFile.id) else {
-                assertionFailure("MediaFileInfo nil although we just saved the underlying mediaFile.")
-                return
-            }
-
-            let refreshedTags = try await refreshedMediaFile.resolveTags(appDatabase: appDatabase)
-
-            await MainActor.run {
-                self.updatedMediaFileInfo = refreshedMediaFileInfo
-                self.resolvedTags = refreshedTags
-            }
-
-        } catch {
-            logger.error("Failed to refresh media file \(error)")
-        }
-    }
-
     var body: some View {
         lazy var languageIdentifier = locale.wikiLanguageCodeIdentifier
         let navTitle = mediaFileInfo.mediaFile.localizedDisplayCaption ?? mediaFileInfo.mediaFile.displayName
@@ -201,25 +171,13 @@ struct FileDetailView: View {
 
                     for try await updatedMediaFileInfo in observation.values(in: appDatabase.reader) {
                         try Task.checkCancellation()
-
                         self.updatedMediaFileInfo = updatedMediaFileInfo
                     }
                 } catch {
                     logger.error("CAT: Failed to observe MediaFileInfo changes \(error)")
                 }
             }
-            .task(id: isResolvingTags, priority: .high) {
-                guard isResolvingTags == false else { return }
-                let timeIntervalSinceLastFetchDate = Date.now.timeIntervalSince(mediaFileInfo.mediaFile.fetchDate)
-                if timeIntervalSinceLastFetchDate > 20 {
-                    do {
-                        try await Task.sleep(for: .milliseconds(250))
-                        await refreshFromNetwork()
-                    } catch {}
-                }
-            }
-            .task(id: tagsHashID, priority: .userInitiated) {
-                guard resolvedTags.isEmpty else { return }
+            .task(id: mediaFileInfo.mediaFile.fetchDate, priority: .userInitiated) {
                 isResolvingTags = true
 
                 do {
@@ -237,6 +195,18 @@ struct FileDetailView: View {
                 } catch {
                     logger.error("Failed to resolve MediaFile tags: \(error)")
                     isResolvingTags = false
+                }
+
+                // After resolving tags, if the file hasn't been refreshed from network in a while
+                // do it now
+
+                let timeIntervalSinceLastFetchDate = Date.now.timeIntervalSince(mediaFileInfo.mediaFile.fetchDate)
+                if timeIntervalSinceLastFetchDate > 20 {
+                    do {
+                        try await Task.sleep(for: .milliseconds(250))
+                        // NOTE: changes from refresh will propagate into the DB observation further above.
+                        await DataAccess.refreshMediaFileFromNetwork(id: mediaFileInfo.id, appDatabase: appDatabase)
+                    } catch {}
                 }
             }
             .onDisappear {
@@ -479,7 +449,6 @@ struct FileDetailView: View {
         }
         .animation(.default, value: isResolvingTags)
         .animation(.default, value: resolvedTags)
-
     }
 }
 
