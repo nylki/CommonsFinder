@@ -15,6 +15,23 @@ import os.log
 //  To be refined with more DB-first searches and fetchDate comparisons. (like `fetchCombinedTagsFromDatabaseOrAPI`)
 enum DataAccess {
 
+    static func refreshMediaFileFromNetwork(id: MediaFile.ID, appDatabase: AppDatabase) async {
+        do {
+            guard
+                let result = try await Networking.shared.api
+                    .fetchFullFileMetadata(.pageids([id])).first
+            else {
+                return
+            }
+
+            let refreshedMediaFile = MediaFile(apiFileMetadata: result)
+            // NOTE: upserting here, will propagate the change in the DB observation further down.
+            try appDatabase.upsert([refreshedMediaFile])
+        } catch {
+            logger.error("Failed to refresh media file \(error)")
+        }
+    }
+
     /// Will cache the result and return an up-to-date CategoryInfo. (edge case: It may have a different ID as a result of a redirect)
     static func refreshCategoryInfoFromAPI(categoryInfo: CategoryInfo, appDatabase: AppDatabase) async throws -> Category? {
         var wikidataIDs: [String] = []

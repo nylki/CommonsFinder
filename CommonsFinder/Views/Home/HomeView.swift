@@ -15,8 +15,8 @@ struct HomeView: View {
     @Environment(AccountModel.self) private var account
 
     @Query(AllDraftsRequest()) private var drafts
-    @Query(AllRecentlyViewedMediaFileRequest()) private var recentlyViewedFiles
-    @Query(AllBookmarksFileRequest()) private var bookmarkedFiles
+    @Query(AllRecentlyViewedMediaFileRequest(order: .desc, searchText: "")) private var recentlyViewedFiles
+    @Query(AllBookmarksFileRequest(order: .desc, searchText: "")) private var bookmarkedFiles
     @Query(AllRecentlyViewedWikiItemsRequest()) private var recentlyViewedWikiItems
     @Query(AllBookmarksWikiItemRequest()) private var bookmarkedCategories
 

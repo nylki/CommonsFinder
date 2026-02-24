@@ -7,7 +7,7 @@
 
 import Foundation
 
-enum SearchOrder: Hashable, Equatable, CaseIterable, CustomLocalizedStringResourceConvertible {
+nonisolated enum SearchOrder: String, Hashable, Equatable, CaseIterable, CustomLocalizedStringResourceConvertible, Sendable {
     var localizedStringResource: LocalizedStringResource {
         switch self {
         case .relevance: LocalizedStringResource(stringLiteral: "Relevant")
