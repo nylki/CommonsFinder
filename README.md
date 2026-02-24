@@ -76,7 +76,7 @@ The idea for "CommonsFinder" came from combining the [view*finder*](https://en.w
 
 The best way to curently help, is by using the TestFlight releases and especially reporting crashes (should they occur) as well as other experience breaking issues: https://testflight.apple.com/join/15KtE2Mn
 
-MRs authored by LLM agent tools may be closed without further comment if they are non-trivial, especially if they implementing features or bugs that have not been discussed and reported before.
+MRs authored by LLM agent tools may be closed without further comment if they are non-trivial, especially if they are implementing features or bugs that have not been discussed and reported before.
 
 ## Funding and Donations
 
