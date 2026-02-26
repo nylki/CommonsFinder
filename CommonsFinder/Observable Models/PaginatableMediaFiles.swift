@@ -211,6 +211,9 @@ private enum PaginationFileIdentifierType {
                 // observe the DB and augment `mediaFileInfos`.
                 observeDatabase()
 
+                // after the essential fetches, do an optional resolving of tags
+                // this effectively caches the tags and they don't have to be network-fetched individually when opening a file.
+                _ = try? await DataAccess.resolveTags(of: fetchedMediaFiles, appDatabase: appDatabase)
             } catch {
                 logger.error("Failed to paginate \(error)")
                 status = .error

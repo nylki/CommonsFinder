@@ -182,7 +182,8 @@ struct FileDetailView: View {
 
                 do {
                     logger.info("Resolving Tags...")
-                    let tags = try await mediaFileInfo.mediaFile.resolveTags(appDatabase: appDatabase)
+                    let tags = try await DataAccess.resolveTags(of: [mediaFileInfo.mediaFile], appDatabase: appDatabase)
+
                     withAnimation(.interactiveSpring) {
                         self.resolvedTags = tags
                         logger.info("Resolving Tags finished.")
@@ -197,11 +198,11 @@ struct FileDetailView: View {
                     isResolvingTags = false
                 }
 
-                // After resolving tags, if the file hasn't been refreshed from network in a while
+                // After resolving tags, if the file hasn't been refreshed from network in a while (2 minutes)
                 // do it now
 
                 let timeIntervalSinceLastFetchDate = Date.now.timeIntervalSince(mediaFileInfo.mediaFile.fetchDate)
-                if timeIntervalSinceLastFetchDate > 20 {
+                if timeIntervalSinceLastFetchDate > (2 * 60) {
                     do {
                         try await Task.sleep(for: .milliseconds(250))
                         // NOTE: changes from refresh will propagate into the DB observation further above.

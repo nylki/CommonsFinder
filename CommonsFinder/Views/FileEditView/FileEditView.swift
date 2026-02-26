@@ -43,7 +43,12 @@ import os.log
         self.referenceMediaFileInfo = mediaFileInfo
         self.captions = mediaFileInfo.mediaFile.captions
 
-        let resolvedTags = try await mediaFileInfo.mediaFile.resolveTags(appDatabase: appDatabase, forceNetworkRefresh: true)
+        let resolvedTags = try await DataAccess.resolveTags(
+            of: [mediaFileInfo.mediaFile],
+            appDatabase: appDatabase,
+            forceNetworkRefresh: true
+        )
+
         self.referenceTags = resolvedTags
         self.tags = resolvedTags
     }
