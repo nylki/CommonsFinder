@@ -134,7 +134,6 @@
 				"Database/Model/Extensions/MediaFileDraft+DebugDraft.swift",
 				"Database/Model/Extensions/MediaFileInfo+ImageRequest.swift",
 				"Database/Model/Extensions/MediaFileInfo+sortedByLastViewed.swift",
-				"Database/Model/Extensions/MediaFileInfo+Tags.swift",
 				"Database/Model/Extensions/WikidataItem+InitFromAPI.swift",
 				"Database/Model/Extensions/WikidataItem+Thumbnail.swift",
 				Database/Model/ItemInteraction.swift,

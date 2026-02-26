@@ -14,7 +14,6 @@ import os.log
 /// Provides data access functions to the API or DB
 //  To be refined with more DB-first searches and fetchDate comparisons. (like `fetchCombinedTagsFromDatabaseOrAPI`)
 enum DataAccess {
-
     static func refreshMediaFileFromNetwork(id: MediaFile.ID, appDatabase: AppDatabase) async {
         do {
             guard
@@ -54,7 +53,7 @@ enum DataAccess {
         return results.fetchedCategories.first
     }
 
-    /// resolves categories based on commons categories and depict items (eg. from a MediaFile)
+    /// resolves categories based on commons categories and depict items (eg. from a MediaFile), always caches API results
     /// Commons categories that are not linked with a wikidata item will still be returned as Categories.
     /// will return redirected (merged) items instead of original ones!
     /// Order of returned results:
@@ -71,26 +70,35 @@ enum DataAccess {
         if forceNetworkRefresh {
             cachedCategories = []
         } else {
-            cachedCategories = (try? appDatabase.fetchCategoryInfos(wikidataIDs: wikidataIDs, resolveRedirections: true))?.compactMap(\.base) ?? []
+            let cachedByWikidataID = (try? appDatabase.fetchCategoryInfos(wikidataIDs: wikidataIDs, resolveRedirections: true))?.compactMap(\.base) ?? []
+            let cachedByCommonsCategory = (try? appDatabase.fetchCategoryInfos(commonsCategories: commonsCategories))?.compactMap(\.base) ?? []
+            cachedCategories = (cachedByWikidataID + cachedByCommonsCategory).uniqued(on: { $0.wikidataId ?? $0.commonsCategory })
         }
 
         let cachedIDs = cachedCategories.compactMap(\.wikidataId)
+        let cachedCommonsCategories = cachedCategories.compactMap(\.commonsCategory)
         let missingIDs = Set(wikidataIDs).subtracting(cachedIDs)
+        let missingCommonsCategories = Set(commonsCategories).subtracting(cachedCommonsCategories)
+        var fetchResult: CategoryFetchResult?
 
-        let fetchResult = try await fetchWikidataBackedCategoriesFromAPI(
-            wikidataIDs: Array(missingIDs),
-            commonsCategories: commonsCategories,
-            // if we refresh from network, we want to cache the results
-            shouldCache: forceNetworkRefresh,
-            appDatabase: appDatabase
-        )
 
-        let fetchedAndCachedCombined = cachedCategories + fetchResult.fetchedCategories
+        if !missingIDs.isEmpty || !missingCommonsCategories.isEmpty {
+            fetchResult = try await fetchWikidataBackedCategoriesFromAPI(
+                wikidataIDs: Array(missingIDs),
+                commonsCategories: commonsCategories,
+                shouldCache: true,
+                appDatabase: appDatabase
+            )
+        }
+
+        let fetchedCategories = fetchResult?.fetchedCategories ?? []
+
+        let fetchedAndCachedCombined = cachedCategories + fetchedCategories
         let groupedByWikidataID = fetchedAndCachedCombined.grouped(by: \.wikidataId)
         let groupedByCommonsCategory = fetchedAndCachedCombined.grouped(by: \.commonsCategory)
 
         let sortedByWikidataID: [Category] = wikidataIDs.compactMap { id in
-            let redirectID = fetchResult.redirectedIDs[id]
+            let redirectID = fetchResult?.redirectedIDs[id]
             return if let category = groupedByWikidataID[id]?.first ?? groupedByWikidataID[redirectID]?.first {
                 category
             } else {
@@ -115,9 +123,13 @@ enum DataAccess {
         let resultCategories = (sortedByWikidataID + sortedByCommonsCategory + sortedPureCommonsCategories)
             .uniqued(on: { $0.wikidataId ?? $0.commonsCategory })
 
+        // NOTE: Some categories are already cached when calling fetchWikidataBackedCategoriesFromAPI
+        // but pure commons categories are, not. So to be complete, we upsert all final results here.
+        try appDatabase.upsert(resultCategories)
+
         return .init(
             fetchedCategories: resultCategories,
-            redirectedIDs: fetchResult.redirectedIDs
+            redirectedIDs: fetchResult?.redirectedIDs ?? [:]
         )
     }
 
@@ -264,5 +276,45 @@ enum DataAccess {
         }
 
         return .init(fetchedCategories: resultItems, redirectedIDs: resultRedirections)
+    }
+
+    /// resolves Tags based on commons categories and depict items in MediaFile
+    /// will return redirected (merged) items instead of original ones!
+    @discardableResult
+    static func resolveTags(of mediaFiles: [MediaFile], appDatabase: AppDatabase, forceNetworkRefresh: Bool = false) async throws -> [TagItem] {
+
+        let depictWikdataIDs: [String] =
+            mediaFiles
+            .flatMap(\.statements)
+            .filter(\.isDepicts)
+            .compactMap(\.mainItem?.id)
+
+        let commonsCategories = mediaFiles.flatMap(\.categories)
+
+
+        let result = try await DataAccess.fetchCombinedCategoriesFromDatabaseOrAPI(
+            wikidataIDs: depictWikdataIDs,
+            commonsCategories: commonsCategories,
+            forceNetworkRefresh: forceNetworkRefresh,
+            appDatabase: appDatabase
+        )
+
+        let depictIDsWithResolvedRedirects: [String] = depictWikdataIDs.map { depictID in
+            result.redirectedIDs[depictID] ?? depictID
+        }
+
+        let categoriesSet = Set(commonsCategories)
+        let depictIDSet = Set(depictIDsWithResolvedRedirects)
+
+        return result.fetchedCategories.map {
+            var picked: Set<TagType> = []
+            if let wikidataID = $0.wikidataId, depictIDSet.contains(wikidataID) {
+                picked.insert(.depict)
+            }
+            if let commonsCategory = $0.commonsCategory, categoriesSet.contains(commonsCategory) {
+                picked.insert(.category)
+            }
+            return .init($0, pickedUsages: picked)
+        }
     }
 }
