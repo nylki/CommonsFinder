@@ -17,7 +17,6 @@ enum DraftError: Error {
     case filenameExistsAlready(name: String)
 }
 
-
 /// DraftModel models a drafting session where the user can add & remove files and also edit their metadata
 @Observable class FileImportModel: Identifiable {
     private var photoImportTask: Task<Void, Error>?
@@ -44,24 +43,12 @@ enum DraftError: Error {
         }
     }
 
-    var editedDrafts: OrderedDictionary<MediaFileDraftModel.ID, MediaFileDraftModel>
-    var selectedDraft: MediaFileDraftModel? {
-        if let selectedID {
-            editedDrafts[selectedID]
-        } else {
-            nil
-        }
-    }
-
-    var fileCount: Int {
-        photosPickerSelection.count + editedDrafts.count
-    }
-
+    var importedDrafts: OrderedDictionary<MediaFileDraft.ID, MediaFileDraft>
     //    var draftsExistInDB: Bool = false
 
 
     init(newDraftOptions: NewDraftOptions?) {
-        self.id = .init()
+        id = .init()
 
         switch newDraftOptions?.source {
         case .mediaLibrary: isPhotosPickerPresented = true
@@ -71,33 +58,8 @@ enum DraftError: Error {
         }
 
         self.newDraftOptions = newDraftOptions
-        self.importStatus = nil
-
-        editedDrafts = .init()
-    }
-
-    convenience init(existingDrafts: [MediaFileDraft], newDraftOptions: NewDraftOptions? = nil) {
-        self.init(newDraftOptions: newDraftOptions)
-        importStatus = .finished
-
-        for existingDraft in existingDrafts {
-            let model = MediaFileDraftModel(existingDraft: existingDraft)
-            editedDrafts[model.id] = model
-        }
-        if !existingDrafts.isEmpty {
-            // Check if drafts are known to the DB
-            // TODO: maybe init from ID in the first place?
-            //            do {
-            //                draftsExistInDB = try appDatabase.reader.read {
-            //                    try existingDrafts.count
-            //                        == MediaFileDraft
-            //                        .filter(ids: existingDrafts.map(\.id))
-            //                        .fetchCount($0)
-            //                }
-            //            } catch {
-            //                logger.error("Failed to check if drafts exist in DB \(error)")
-            //            }
-        }
+        importStatus = nil
+        importedDrafts = .init()
     }
 
     func handleNewPhotoItemSelection(oldValue: [PhotosPickerItem], currentValue: [PhotosPickerItem]) {
@@ -111,7 +73,7 @@ enum DraftError: Error {
         // remove all previously imported items that are not in the selection anymore
 
         removedItemIDs.forEach { id in
-            editedDrafts.removeValue(forKey: id)
+            importedDrafts.removeValue(forKey: id)
         }
 
         photoImportTask = Task<Void, Error> {
@@ -128,8 +90,8 @@ enum DraftError: Error {
                 do {
                     let fileItem = try await FileItem.init(photoPickerItem: photoItem)
                     try Task.checkCancellation()
-                    let draft = try MediaFileDraftModel(fileItem: fileItem, newDraftOptions: newDraftOptions)
-                    editedDrafts[draft.id] = draft
+                    let draft = try MediaFileDraft(fileItem, newDraftOptions: newDraftOptions)
+                    importedDrafts[draft.id] = draft
                 } catch {
                     logger.error("Failed to create fileItem of photo \(photoItem.itemIdentifier ?? ""): \(error)")
                 }
@@ -147,8 +109,8 @@ enum DraftError: Error {
                 for url in fileURLs {
                     do {
                         let fileItem = try await loadFileItem(url: url)
-                        let newDraft = try MediaFileDraftModel(fileItem: fileItem, newDraftOptions: newDraftOptions)
-                        editedDrafts[newDraft.id] = newDraft
+                        let draft = try MediaFileDraft(fileItem, newDraftOptions: newDraftOptions)
+                        importedDrafts[draft.id] = draft
                     } catch {
                         logger.error("Failed to import file. \(error)")
                     }
@@ -183,9 +145,8 @@ enum DraftError: Error {
 
 
             let fileItem = try FileItem.init(uiImage: uiImage, metadata: metadata, location: cameraLocation)
-            let newDraft = try MediaFileDraftModel(fileItem: fileItem, newDraftOptions: newDraftOptions)
-
-            editedDrafts[newDraft.id] = newDraft
+            let draft = try MediaFileDraft(fileItem, newDraftOptions: newDraftOptions)
+            importedDrafts[draft.id] = draft
             importStatus = .finished
         }
 
