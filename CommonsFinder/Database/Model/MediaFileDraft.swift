@@ -232,7 +232,7 @@ extension MediaFileDraft {
 extension MediaFileDraft {
 
     /// creates a new draft from an FileItem by reading its EXIF-Data filling the fields as complete as possible at this stage
-    init(_ fileItem: FileItem) throws {
+    init(_ fileItem: FileItem, newDraftOptions: NewDraftOptions?) throws {
         id = UUID().uuidString
         addedDate = .now
         localFileName = fileItem.localFileName
@@ -241,10 +241,15 @@ extension MediaFileDraft {
         uploadPossibleStatus = nil
         selectedFilenameType = .captionAndDate
 
+        if let initialTag = newDraftOptions?.tag {
+            tags = [initialTag]
+        } else {
+            tags = []
+        }
+
         let languageCode = Locale.current.wikiLanguageCodeIdentifier
         captionWithDesc = [.init(languageCode: languageCode)]
 
-        tags = []
         license = UserDefaults.standard.defaultPublishingLicense
         author = .appUser
         source = .own
