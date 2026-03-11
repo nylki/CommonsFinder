@@ -27,7 +27,7 @@ struct DraftFileListItem: View {
     @State private var isShowingErrorSheet = false
 
     private func editDraft() {
-        navigationModel.editDrafts(drafts: [draft])
+        navigationModel.editDraft(draft: draft)
     }
 
     private func showDeleteDialog() {
