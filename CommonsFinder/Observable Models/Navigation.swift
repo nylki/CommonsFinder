@@ -73,7 +73,7 @@ import os.log
     }
 
     //    var isViewingFileSheetOpen: MediaFile.ID?
-    var isEditingDraft: FileCreateViewModel?
+    var isEditingDraft: FileImportModel?
     var isAuthSheetOpen: AuthNavigationDestination?
 
     enum DraftSheetNavItem: Identifiable, Equatable {
