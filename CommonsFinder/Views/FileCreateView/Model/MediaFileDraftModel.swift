@@ -34,17 +34,6 @@ import os.log
         draft.loadExifData()
     }()
 
-    init(fileItem: FileItem, newDraftOptions: NewDraftOptions?) throws {
-        addedDate = .now
-        var draft = try MediaFileDraft(fileItem)
-        if let initialTag = newDraftOptions?.tag {
-            draft.tags = [initialTag]
-        }
-        self.id = fileItem.id
-        self.draft = draft
-        self.fileItem = fileItem
-    }
-
     /// Use an already fully initialized draft
     init(existingDraft: MediaFileDraft) {
         addedDate = .now

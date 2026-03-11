@@ -46,31 +46,17 @@ struct ContentView: View {
                 }
             }
 
-            //            Tab("Events", systemImage: "figure.socialdance", value: Navigation.TabItem.events) {
-            //                NavigationStack(path: $navigation.eventsPath) {
-            //                    Text("Current and nearby events")
-            //                        .modifier(CommonNavigationDestination())
-            //                }
-            //            }
-
             Tab(value: Navigation.TabItem.search, role: .search) {
                 NavigationStack(path: $navigation.searchPath) {
                     SearchView()
                         .modifier(CommonNavigationDestination())
                 }
-
             }
         }
         .sheet(item: $navigation.isAuthSheetOpen, content: AuthView.init)
-        //        .sheet(item: $navigation.isEditingDraft) { destination in
-        //            switch destination {
-        //            case .existing(let files):
-        //                FileCreateView(appDatabase: appDatabase, files: files)
-        //            case .newDraft(let options):
-        //                FileCreateView(appDatabase: appDatabase, newDraftOptions: options)
-        //            }
-        //        }
-        .modifier(DraftSheetModifer(importModel: $navigation.isEditingDraft))
+        .modifier(ImportFilesModifer(importModel: $navigation.isImportingFiles))
+        .modifier(SingleDraftSheetModifier(draftedFileModel: $navigation.isEditingDraft))
+        .modifier(MultiDraftSheetModifier(draftedFileModels: $navigation.isEditingMultipleDrafts))
         .onOpenURL(perform: handleURL)
         .onContinueUserActivity(NSUserActivityTypeLiveActivity) { userActivity in
             guard let url = userActivity.webpageURL else { return }
@@ -130,7 +116,7 @@ struct ContentView: View {
             let drafts: [MediaFileDraft] = urls.compactMap { temporaryPath in
                 do {
                     let fileItem = try FileItem(movingLocalFileFromPath: temporaryPath)
-                    let draft = try MediaFileDraft(fileItem)
+                    let draft = try MediaFileDraft(fileItem, newDraftOptions: nil)
                     return try appDatabase.upsertAndFetch(draft)
                 } catch {
                     logger.error("Failed to move draft file from ShareExtension. \(error)")
@@ -142,11 +128,14 @@ struct ContentView: View {
             Task {
                 // A short visually delay to allow the opening app animations to settle a moment
                 try? await Task.sleep(for: .milliseconds(200))
+
+                navigation.selectedTab = .home
+
                 if drafts.count > 1 {
                     // TODO: needs batch image implementation
-                    navigation.selectedTab = .home
+
                 } else {
-                    navigation.editDrafts(drafts: drafts)
+                    navigation.editMultipleDrafts(drafts: drafts)
                 }
             }
 
