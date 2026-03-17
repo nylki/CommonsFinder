@@ -8,6 +8,7 @@
 import SwiftUI
 
 struct ViewConstants {
+    static let draftImageCarouselContainerShape: RoundedRectangle = .rect(cornerRadius: 15)
     static let mapSheetContainerShape: RoundedRectangle = .rect(cornerRadius: 33)
 
     /// the maximum width or height of a zoomable image

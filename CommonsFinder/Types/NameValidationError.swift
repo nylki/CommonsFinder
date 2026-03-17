@@ -1,92 +1,12 @@
 //
-//  MediaFileDraftModel.swift
+//  NameValidationError.swift
 //  CommonsFinder
 //
-//  Created by Tom Brewe on 13.10.24.
+//  Created by Tom Brewe on 11.03.26.
 //
 
-import CommonsAPI
-import CoreLocation
 import Foundation
-import Nuke
-import UniformTypeIdentifiers
-import os.log
-
-/// Represents the data to allow editing either a DB-backed MediaFile or a newly created one.
-@Observable final class MediaFileDraftModel: @preconcurrency Identifiable {
-    typealias ID = String
-    var id: ID
-    var draft: MediaFileDraft
-    let addedDate: Date
-
-    var isShowingTagsPicker = false
-    var isShowingCategoryPicker = false
-
-    var suggestedFilenames: [FileNameTypeTuple] = []
-    var nameValidationResult: NameValidationResult?
-
-    /// If a draft has just been created and does not have its media file backed on disk in the apps directory
-    /// this holds the information about filename, filetype and Data.
-    var fileItem: FileItem?
-
-    @ObservationIgnored
-    lazy var exifData: ExifData? = {
-        draft.loadExifData()
-    }()
-
-    /// Use an already fully initialized draft
-    init(existingDraft: MediaFileDraft) {
-        addedDate = .now
-        id = existingDraft.id
-        draft = existingDraft
-    }
-
-    var choosenCoordinate: CLLocationCoordinate2D? {
-        return switch draft.locationHandling {
-        case .userDefinedLocation(latitude: let lat, longitude: let lon, _):
-            .init(latitude: lat, longitude: lon)
-        case .exifLocation:
-            exifData?.coordinate
-        case .noLocation:
-            nil
-        case .none:
-            nil
-        }
-
-    }
-
-    func validateFilenameImpl() async throws {
-        nameValidationResult = nil
-        draft.uploadPossibleStatus = nil
-        try await Task.sleep(for: .milliseconds(500))
-        nameValidationResult = await validateFilename()
-        draft.uploadPossibleStatus = canUploadDraft()
-    }
-}
-
-typealias NameValidationResult = Result<Void, NameValidationError>
-
-extension NameValidationResult {
-    var error: NameValidationError? {
-        switch self {
-        case .success: return nil
-        case .failure(let error): return error
-        }
-    }
-
-    var alertTitle: String? {
-        if let error {
-            switch error {
-            case .invalid(_):
-                error.failureReason
-            default:
-                error.errorDescription
-            }
-        } else {
-            nil
-        }
-    }
-}
+import SwiftUI
 
 enum NameValidationError: LocalizedError, Codable, Hashable, Equatable {
     case alreadyExists

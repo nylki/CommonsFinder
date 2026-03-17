@@ -9,12 +9,14 @@ import GRDBQuery
 import Nuke
 import SwiftUI
 import TipKit
+import NukeUI
 
 struct HomeView: View {
     @Environment(Navigation.self) private var navigation
     @Environment(AccountModel.self) private var account
 
-    @Query(AllDraftsRequest()) private var drafts
+    @Query(AllSingleDraftsRequest()) private var drafts
+    @Query(AllMultiDraftsRequest()) private var multiDrafts
     @Query(AllRecentlyViewedMediaFileRequest(order: .desc, searchText: "")) private var recentlyViewedFiles
     @Query(AllBookmarksFileRequest(order: .desc, searchText: "")) private var bookmarkedFiles
     @Query(AllRecentlyViewedWikiItemsRequest()) private var recentlyViewedWikiItems
@@ -27,6 +29,8 @@ struct HomeView: View {
                 TipView(HomeTip())
                     .padding()
 
+                multiDraftsDebug
+                
                 if !drafts.isEmpty {
                     DraftsSection(drafts: drafts)
                         .transition(.blurReplace)
@@ -115,6 +119,53 @@ struct HomeView: View {
         .navigationTitle("Home")
         .navigationBarTitleDisplayMode(.inline)
         //        .toolbar(removing: .title)
+    }
+    
+    @ViewBuilder
+    private var multiDraftsDebug: some View {
+        if !multiDrafts.isEmpty {
+            ScrollView(.horizontal) {
+                HStack {
+                    ForEach(multiDrafts) { multiDraftInfo in
+                        Button {
+                            navigation.editMultipleDrafts(multiDraftInfo: multiDraftInfo)
+                        } label: {
+
+
+                            LazyHGrid(rows: [.init(), .init()]) {
+                                ForEach(multiDraftInfo.drafts) { draft in
+
+                                    LazyImage(request: draft.localFileRequestResizedGridThumb, transaction: .init(animation: .linear(duration: 0.3))) { state in
+                                        Color.clear
+                                            .frame(width: 100, height: 100)
+                                            .overlay {
+                                                if let image = state.image {
+                                                    image
+                                                        .resizable()
+                                                        .scaledToFill()
+
+
+                                                }
+                                            }
+                                            .clipped()
+                                        
+                                    }
+
+
+                                        
+                                }
+                            }
+                            .clipShape(.rect(cornerRadius: 16))
+                            .padding()
+                            .background(Color.cardBackground)
+                            .clipShape(.rect(cornerRadius: 23))
+                            
+                        }
+                    }
+                }
+            }
+
+        }
     }
 }
 

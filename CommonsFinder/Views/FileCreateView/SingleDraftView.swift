@@ -15,8 +15,8 @@ import TipKit
 import UniformTypeIdentifiers
 import os.log
 
-struct SingleImageDraftView: View {
-    @Bindable var model: MediaFileDraftModel
+struct SingleDraftView: View {
+    @Bindable var model: SingleDraftModel
 
     @Environment(UploadManager.self) private var uploadManager
     @Environment(AccountModel.self) private var account
@@ -37,6 +37,8 @@ struct SingleImageDraftView: View {
     @State private var isShowingUploadDialog = false
     @State private var isShowingCloseConfirmationDialog = false
     @State private var isShowingUploadDisabledAlert = false
+    @State private var isShowingTagsPicker = false
+    @State private var isShowingCategoryPicker = false
 
     private var draftExistsInDB: Bool {
         do {
@@ -74,7 +76,7 @@ struct SingleImageDraftView: View {
         // NOTE: Not using a regular sheet here: .sheet + ScrollView + ForEach Buttons causes accidental button taps when scrolling (SwiftUI bug?)
         // so for now until this behaviour is fixed by Apple
         // this is a fullScreenCover (but TODO: consider using a push navigation here)
-        .fullScreenCover(isPresented: $model.isShowingTagsPicker) {
+        .fullScreenCover(isPresented: $isShowingTagsPicker) {
             TagPicker(
                 initialTags: model.draft.tags,
                 draft: model.draft,
@@ -97,7 +99,11 @@ struct SingleImageDraftView: View {
             if focus != .filename {
                 generateFilename()
             }
-            model.draft.uploadPossibleStatus = model.canUploadDraft()
+            
+            model.draft.uploadPossibleStatus = DraftValidation.canUploadDraft(
+                model.draft,
+                nameValidationResult: model.nameValidationResult
+            )
         }
         .onChange(of: model.draft.selectedFilenameType) { oldValue, newValue in
             filenameSelection = .none
@@ -150,9 +156,6 @@ struct SingleImageDraftView: View {
 
     private func saveChanges() {
         do {
-            if let fileItem = model.fileItem {
-                model.draft.localFileName = fileItem.localFileName
-            }
             try appDatabase.upsert(model.draft)
         } catch {
             logger.error("Failed to save all drafts \(error)")
@@ -174,7 +177,7 @@ struct SingleImageDraftView: View {
     }
     @ViewBuilder
     private var captionAndDescriptionSection: some View {
-        Section("Caption and Description") {
+        Section("Descriptions") {
             let enumeratedDescs = Array(model.draft.captionWithDesc.enumerated())
             let disabledLanguages = model.draft.captionWithDesc.map(\.languageCode)
 
@@ -406,7 +409,7 @@ struct SingleImageDraftView: View {
                 HFlowLayout(alignment: .leading) {
                     ForEach(tags) { tag in
                         Button {
-                            model.isShowingTagsPicker = true
+                            isShowingTagsPicker = true
                         } label: {
                             TagLabel(tag: tag)
                         }
@@ -423,7 +426,7 @@ struct SingleImageDraftView: View {
                 model.draft.tags.isEmpty ? "Add" : "Edit",
                 systemImage: model.draft.tags.isEmpty ? "plus" : "pencil"
             ) {
-                model.isShowingTagsPicker = true
+                isShowingTagsPicker = true
             }
             .focused($focus, equals: .tags)
         } header: {
@@ -457,7 +460,7 @@ struct SingleImageDraftView: View {
                         Text("Location will be erased from the file metadata before uploading.")
                             .font(.caption)
                     } else if let coordinate = model.choosenCoordinate {
-                        FileLocationMapView(coordinate: coordinate, label: locationLabel)
+                        FileLocationMapView(coordinates: [coordinate], label: locationLabel)
                     }
                 }
             }
@@ -699,41 +702,16 @@ struct SingleImageDraftView: View {
     }
 }
 
-struct FileLocationMapView: View {
-    let coordinate: CLLocationCoordinate2D
-    var label: String?
-
-    @State private var markerLabel: String?
-
-    var body: some View {
-        let halfKmRadius = MKCoordinateRegion(
-            center: coordinate,
-            latitudinalMeters: 500,
-            longitudinalMeters: 500
-        )
-
-        Map(initialPosition: .region(halfKmRadius)) {
-            Marker(label ?? "", coordinate: coordinate)
-        }
-        .mapControlVisibility(.automatic)
-        .allowsHitTesting(false)
-        .frame(height: 150)
-        .clipShape(.rect(cornerRadius: 15))
-
-
-    }
-}
-
 
 #Preview("New Draft", traits: .previewEnvironment) {
-    @Previewable @State var draft = MediaFileDraftModel(existingDraft: .makeRandomEmptyDraft(id: "1"))
+    @Previewable @State var draft = SingleDraftModel(existingDraft: .makeRandomEmptyDraft(id: "1"))
 
-    SingleImageDraftView(model: draft)
+    SingleDraftView(model: draft)
 }
 
 #Preview("With Metadata", traits: .previewEnvironment) {
-    @Previewable @State var draft = MediaFileDraftModel(existingDraft: .makeRandomDraft(id: "2"))
+    @Previewable @State var draft = SingleDraftModel(existingDraft: .makeRandomDraft(id: "2"))
 
-    SingleImageDraftView(model: draft)
+    SingleDraftView(model: draft)
 
 }
