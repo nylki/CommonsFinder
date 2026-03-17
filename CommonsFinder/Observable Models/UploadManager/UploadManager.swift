@@ -432,9 +432,9 @@ class UploadManager {
                     if #available(iOS 26.0, *) {
                         bgTask?.setTaskCompleted(success: false)
                     }
-                    _ = try? setPublishingError(for: id, error: .urlError(urlErrorCode: urlError.errorCode, errorDescription: urlError.localizedDescription))
+                    _ = try? setPublishingError(for: id, error: .urlError(urlErrorCode: urlError.errorCode, errorDescription: String(describing: urlError)))
                 case .unspecifiedError(let error):
-                    _ = try? setPublishingError(for: id, error: .error(errorDescription: error.localizedDescription, recoverySuggestion: nil))
+                    _ = try? setPublishingError(for: id, error: .error(errorDescription: String(describing: error), recoverySuggestion: nil))
                     if #available(iOS 26.0, *) {
                         bgTask?.setTaskCompleted(success: false)
                     }
