@@ -8,7 +8,7 @@
 import Foundation
 import GRDB
 
-/// `ItemInteraction` stores interaction metada for MediaFile and Category
+/// `ItemInteraction` stores interaction metadata for MediaFile and Category
 ///  eg. `lastViewed` or `viewCount`, `isBookmarked`
 nonisolated struct ItemInteraction: Equatable, Hashable, Sendable, Identifiable {
     var id: Int64?

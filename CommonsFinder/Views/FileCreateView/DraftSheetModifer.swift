@@ -103,14 +103,18 @@ struct ImportFilesModifer: ViewModifier {
                 if fileCount == 1, let newDraft = importModel.importedDrafts.values.first {
                     navigation.editDraft(draft: newDraft)
                 } else if fileCount > 1 {
-                    navigation.editMultipleDrafts(drafts: Array(importModel.importedDrafts.values))
+                    let info = MultiDraftInfo(
+                        multiDraft: .init(newDraftOptions: importModel.newDraftOptions),
+                        drafts: importModel.importedDrafts.values.elements
+                    )
+                    navigation.editMultipleDrafts(multiDraftInfo: info)
                 }
 
             }
     }
 }
 
-extension [MediaFileDraftModel]: @retroactive Identifiable {
+extension [SingleDraftModel]: @retroactive Identifiable {
     public var id: String {
         self.reduce("") { partialResult, next in
             partialResult + next.id

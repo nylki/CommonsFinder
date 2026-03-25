@@ -119,4 +119,12 @@ extension MediaFileDraft {
         }
         return nil
     }
+    
+    var localFileRequestResizedGridThumb: ImageRequest? {
+        if let fileURL = localFileURL() {
+            let imageResize = ImageProcessors.Resize(size: .init(width: 128, height: 128))
+            return .init(url: fileURL, processors: [imageResize])
+        }
+        return nil
+    }
 }

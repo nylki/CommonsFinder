@@ -5,7 +5,7 @@
 //  Created by Tom Brewe on 21.01.25.
 //
 
-import CommonsAPI
+
 import CoreGraphics
 import CoreLocation
 import Foundation
@@ -21,7 +21,7 @@ import os.log
 // avoiding duplicates with wikidata structured data (eg. for location, date etc.)
 
 nonisolated
-    struct MediaFileDraft: Identifiable, Equatable, Hashable
+    struct MediaFileDraft: Draftable, Identifiable, Equatable, Hashable
 {
     // UUID-string
     let id: String
@@ -61,15 +61,6 @@ nonisolated
         set { locationHandling = newValue ? .exifLocation : .noLocation }
     }
 
-    enum LocationHandling: Codable, Equatable, Hashable {
-        /// location data will be removed from EXIF if it exists inside the binary and won't be added to wikitext or structured data
-        case noLocation
-        /// location data from EXIF will be used for wikitext and structured data
-        case exifLocation
-        /// user defined location data will be used for wikitext and structured data, EXIF-location will be overwritten by user defined location
-        case userDefinedLocation(latitude: CLLocationDegrees, longitude: CLLocationDegrees, precision: CLLocationDegrees)
-    }
-
     var tags: [TagItem]
 
     var license: DraftMediaLicense?
@@ -78,22 +69,8 @@ nonisolated
 
     var width: Int?
     var height: Int?
-
-    enum DraftAuthor: Codable, Equatable, Hashable {
-        case appUser
-        case custom(name: String, wikimediaUsername: String?, url: URL?)
-        case wikidataId(wikidataItem: WikidataItemID)
-    }
-
-    enum DraftSource: Codable, Equatable, Hashable {
-        // see: https://commons.wikimedia.org/wiki/Commons:Structured_data/Modeling/Source
-        // "Wikidata: *\(id)*"P7482
-
-        case own
-        case fileFromTheWeb(URL)
-        // TODO: check correct modelling
-        case book(WikidataItemID, page: Int)
-    }
+        
+    var multiDraftId: Int64?
 }
 
 nonisolated
@@ -143,6 +120,7 @@ nonisolated
         case source
         case width
         case height
+        case multiDraftId
     }
 
     // Define database columns from CodingKeys
@@ -166,6 +144,7 @@ nonisolated
         static let license = Column(CodingKeys.license)
         static let author = Column(CodingKeys.author)
         static let source = Column(CodingKeys.source)
+        static let multiDraftId = Column(CodingKeys.multiDraftId)
     }
 
 
@@ -182,15 +161,16 @@ nonisolated
         self.captionWithDesc = try container.decode([CaptionWithDescription].self, forKey: .captionWithDesc)
         self.inceptionDate = try container.decode(Date.self, forKey: .inceptionDate)
         self.timezone = try container.decodeIfPresent(String.self, forKey: .timezone)
-        self.locationHandling = try container.decodeIfPresent(MediaFileDraft.LocationHandling.self, forKey: .locationHandling)
+        self.locationHandling = try container.decodeIfPresent(LocationHandling.self, forKey: .locationHandling)
         self.license = try container.decodeIfPresent(DraftMediaLicense.self, forKey: .license)
-        self.author = try container.decodeIfPresent(MediaFileDraft.DraftAuthor.self, forKey: .author)
-        self.source = try container.decodeIfPresent(MediaFileDraft.DraftSource.self, forKey: .source)
+        self.author = try container.decodeIfPresent(DraftAuthor.self, forKey: .author)
+        self.source = try container.decodeIfPresent(DraftSource.self, forKey: .source)
         self.width = try container.decodeIfPresent(Int.self, forKey: .width)
         self.height = try container.decodeIfPresent(Int.self, forKey: .height)
         self.publishingState = try container.decodeIfPresent(PublishingState.self, forKey: .publishingState)
         self.publishingError = try container.decodeIfPresent(PublishingError.self, forKey: .publishingError)
         self.publishingStateVerificationRequired = try container.decodeIfPresent(Bool.self, forKey: .publishingStateVerificationRequired) ?? false
+        self.multiDraftId = try container.decodeIfPresent(Int64.self, forKey: .multiDraftId)
         if let tags = try? container.decode([TagItem].self, forKey: .tags) {
             self.tags = tags
         } else {
@@ -237,7 +217,7 @@ extension MediaFileDraft {
         addedDate = .now
         localFileName = fileItem.localFileName
         finalFilename = ""
-        name = localFileName
+        name = ""
         uploadPossibleStatus = nil
         selectedFilenameType = .captionAndDate
 

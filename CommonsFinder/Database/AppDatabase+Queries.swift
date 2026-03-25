@@ -12,17 +12,35 @@ import os.log
 
 // MARK: - Queries
 
+/// A @Query request that observes all drafts in the database
+struct AllMultiDraftsRequest: ValueObservationQueryable {
+    static var defaultValue: [MultiDraftInfo] { [] }
+
+    func fetch(_ db: Database) throws -> [MultiDraftInfo] {
+        do {
+            return try MultiDraft
+                .all()
+                .order(MultiDraft.Columns.addedDate.desc)
+                .including(all: MultiDraft.drafts)
+                .asRequest(of: MultiDraftInfo.self)
+                .fetchAll(db)
+        } catch {
+            logger.error("Failed to fetch all multiDrafts from db \(error)!")
+            return []
+        }
+    }
+}
 
 /// A @Query request that observes all drafts in the database
-struct AllDraftsRequest: ValueObservationQueryable {
+struct AllSingleDraftsRequest: ValueObservationQueryable {
     static var defaultValue: [MediaFileDraft] { [] }
 
     func fetch(_ db: Database) throws -> [MediaFileDraft] {
         do {
             return
                 try MediaFileDraft
+                .filter { $0.multiDraftId == nil }
                 .order(MediaFileDraft.Columns.addedDate.desc)
-                //                .order(\.addedDate.desc)
                 .fetchAll(db)
         } catch {
             logger.error("Failed to fetch all draft files from db \(error)!")

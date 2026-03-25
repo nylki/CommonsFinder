@@ -9,7 +9,7 @@
 import Foundation
 import Nuke
 
-extension MediaFileDraftModel {
+extension SingleDraftModel {
     var zoomableImageReference: ZoomableImageReference? {
         if let imageRequest {
             .localImage(.init(image: imageRequest, fullWidth: draft.width, fullHeight: draft.height, fullByte: nil))
@@ -21,18 +21,6 @@ extension MediaFileDraftModel {
     }
 
     var imageRequest: ImageRequest? {
-        temporaryFileImageRequest ?? draft.localFileRequestFull
-    }
-
-    private var temporaryFilePath: URL? {
-        fileItem?.fileURL
-    }
-
-    private var temporaryFileImageRequest: ImageRequest? {
-        if let temporaryFilePath {
-            ImageRequest(url: temporaryFilePath)
-        } else {
-            nil
-        }
+        draft.localFileRequestFull
     }
 }

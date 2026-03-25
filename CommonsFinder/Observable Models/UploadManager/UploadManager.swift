@@ -176,6 +176,8 @@ class UploadManager {
                             try setPublishingState(for: draft.id, to: .unstashingFile(filekey: filekey), verificationRequired: false)
                         case .invalidFilename:
                             try setPublishingState(for: draft.id, to: .unstashingFile(filekey: filekey), verificationRequired: false)
+                        case .none:
+                            assertionFailure()
                         }
                     case .creatingWikidataClaims:
                         // The file is expected to be un-stashed and therefore public, we have to check if the wikidata items have already been created.

@@ -134,6 +134,9 @@
         }
       }
     },
+    "%lld/250 characters" : {
+
+    },
     "%lld×%lld pixel" : {
       "localizations" : {
         "de" : {
@@ -429,6 +432,7 @@
       }
     },
     "Caption and Description" : {
+      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -768,6 +772,12 @@
         }
       }
     },
+    "Description" : {
+
+    },
+    "Descriptions" : {
+
+    },
     "detailed description (optional)" : {
       "localizations" : {
         "de" : {
@@ -787,6 +797,9 @@
           }
         }
       }
+    },
+    "Draft (%lld files)" : {
+
     },
     "E-Mail Address" : {
       "localizations" : {
@@ -1208,6 +1221,9 @@
         }
       }
     },
+    "Location metadata will be erased from all %lld files before uploading." : {
+
+    },
     "Location will be erased from the file metadata before uploading." : {
       "localizations" : {
         "de" : {
@@ -1367,9 +1383,6 @@
           }
         }
       }
-    },
-    "Multiple files %lld" : {
-
     },
     "Nearby Locations" : {
 
@@ -2304,6 +2317,12 @@
           }
         }
       }
+    },
+    "The file must be converted to a supported format before uploading." : {
+
+    },
+    "The file type is not supported." : {
+
     },
     "the filename already exists" : {
       "localizations" : {

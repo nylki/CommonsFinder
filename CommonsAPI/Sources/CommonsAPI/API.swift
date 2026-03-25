@@ -1156,12 +1156,18 @@ LIMIT \(limit)
         return entitiesDict
     }
     
-    /// Check if a media file already exists by filename
-    public func checkIfFileExists(filename: String) async throws -> FilenameExistsResult {
+    public func checkIfFileExists(filename: String) async throws -> FilenameExistsResult? {
+        let result = try await checkIfFilesExists(filenames: [filename])
+        return result[filename]
+    }
+    
+    /// Check if a media file already exists by filename, returns [filename: FilenameExistsResult]
+    public func checkIfFilesExists(filenames: [String]) async throws -> [String: FilenameExistsResult] {
+        let titles = filenames.map { "File:" + $0 }
         let query: Parameters = [
             "action": "query",
             "format": "json",
-            "titles": "File:" + filename,
+            "titles": titles.joined(separator: "|"),
             "formatversion": "2",
             "curtimestamp": "1"
         ]
@@ -1169,17 +1175,34 @@ LIMIT \(limit)
         let request = try GET(url: commonsEndpoint, query: query)
         let (data, response) = try await urlSession.data(for: request)
         let parsedResponse = try parse(QueryResponse<FileExistenceResponse>.self, from: data, response: response)
-        guard let fileInfo = parsedResponse.query?.pages?.first else {
+        
+        guard let pages = parsedResponse.query?.pages else {
             throw CommonAPIError.missingResponseValues
         }
         
-        if fileInfo.invalid == true {
-            return .invalidFilename
-        } else if fileInfo.missing == true {
-            return .doesNotExist
-        } else {
-            return .exists
+        var result: [String: FilenameExistsResult] = [:]
+        
+        for page in pages {
+            guard let title = page.title else {
+                continue
+            }
+            
+            var fromTitle = parsedResponse.query?.normalized?.first { normalizedResult in
+                normalizedResult.to == title
+            }?.from ?? title
+            
+            fromTitle = String(fromTitle.split(separator: "File:")[0])
+            
+            if page.invalid == true {
+                result[fromTitle] = .invalidFilename
+            } else if page.missing == true {
+                result[fromTitle] =  .doesNotExist
+            } else {
+                result[fromTitle] =  .exists
+            }
         }
+        
+        return result
     }
     
     // action=titleblacklist

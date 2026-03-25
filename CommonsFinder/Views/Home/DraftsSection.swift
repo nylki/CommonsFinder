@@ -26,7 +26,7 @@ struct DraftsSection: View {
 
 #Preview("Regular Upload", traits: .previewEnvironment(uploadSimulation: .regular)) {
     @Previewable @Environment(\.appDatabase) var appDatabase
-    @Previewable @Query(AllDraftsRequest()) var drafts
+    @Previewable @Query(AllSingleDraftsRequest()) var drafts
 
     ScrollView(.vertical) {
         DraftsSection(drafts: drafts)
@@ -42,7 +42,7 @@ struct DraftsSection: View {
 
 #Preview("Error Upload", traits: .previewEnvironment(uploadSimulation: .withErrors)) {
     @Previewable @Environment(\.appDatabase) var appDatabase
-    @Previewable @Query(AllDraftsRequest()) var drafts
+    @Previewable @Query(AllSingleDraftsRequest()) var drafts
 
     ScrollView(.vertical) {
         DraftsSection(drafts: drafts)
@@ -58,7 +58,7 @@ struct DraftsSection: View {
 
 #Preview("Previous Error Upload", traits: .previewEnvironment(uploadSimulation: .withErrors)) {
     @Previewable @Environment(\.appDatabase) var appDatabase
-    @Previewable @Query(AllDraftsRequest()) var drafts
+    @Previewable @Query(AllSingleDraftsRequest()) var drafts
 
     ScrollView(.vertical) {
         DraftsSection(drafts: drafts)

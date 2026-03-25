@@ -56,7 +56,7 @@ struct ContentView: View {
         .sheet(item: $navigation.isAuthSheetOpen, content: AuthView.init)
         .modifier(ImportFilesModifer(importModel: $navigation.isImportingFiles))
         .modifier(SingleDraftSheetModifier(draftedFileModel: $navigation.isEditingDraft))
-        .modifier(MultiDraftSheetModifier(draftedFileModels: $navigation.isEditingMultipleDrafts))
+        .modifier(MultiDraftSheetModifier(multiDraftModel: $navigation.isEditingMultipleDrafts))
         .onOpenURL(perform: handleURL)
         .onContinueUserActivity(NSUserActivityTypeLiveActivity) { userActivity in
             guard let url = userActivity.webpageURL else { return }
@@ -132,10 +132,9 @@ struct ContentView: View {
                 navigation.selectedTab = .home
 
                 if drafts.count > 1 {
-                    // TODO: needs batch image implementation
-
-                } else {
-                    navigation.editMultipleDrafts(drafts: drafts)
+                    navigation.editMultipleDrafts(multiDraftInfo: .init(multiDraft: .init(newDraftOptions: nil), drafts: drafts))
+                } else if let draft = drafts.first {
+                    navigation.editDraft(draft: draft)
                 }
             }
 

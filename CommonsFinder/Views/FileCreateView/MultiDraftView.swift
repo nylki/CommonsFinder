@@ -1,8 +1,8 @@
 //
-//  MetadataEditForm.swift
+//  MultiDraftView.swift
 //  CommonsFinder
 //
-//  Created by Tom Brewe on 13.10.24.
+//  Created by Tom Brewe on 11.03.26.
 //
 
 import CommonsAPI
@@ -15,8 +15,8 @@ import TipKit
 import UniformTypeIdentifiers
 import os.log
 
-struct SingleImageDraftView: View {
-    @Bindable var model: MediaFileDraftModel
+struct MultiDraftView: View {
+    @Bindable var model: MultiDraftModel
 
     @Environment(UploadManager.self) private var uploadManager
     @Environment(AccountModel.self) private var account
@@ -32,18 +32,15 @@ struct SingleImageDraftView: View {
     @State private var isTimezonePickerShowing = false
     @State private var locationLabel: String?
     @State private var isZoomableImageViewerPresented = false
-    @State private var isFilenameErrorSheetPresented = false
     @State private var isShowingDeleteDialog = false
     @State private var isShowingUploadDialog = false
     @State private var isShowingCloseConfirmationDialog = false
     @State private var isShowingUploadDisabledAlert = false
+    @State private var isShowingTagsPicker = false
+    @State private var isShowingCategoryPicker = false
 
     private var draftExistsInDB: Bool {
-        do {
-            return try appDatabase.draftExists(id: model.draft.id)
-        } catch {
-            return false
-        }
+        model.info.multiDraft.id != nil
     }
 
     private enum FocusElement: Hashable {
@@ -56,79 +53,85 @@ struct SingleImageDraftView: View {
 
     var body: some View {
         Form {
-            imageView
+            imageCarouselView
             captionAndDescriptionSection
             tagsSection
             locationSection
             attributionSection
-            dateTimeSection
+//            dateTimeSection
             filenameSection
 
             Color.clear
                 .frame(height: 50)
                 .listRowBackground(Color.clear)
         }
+        .navigationTitle("Draft (\(model.info.drafts.count) files)")
+        .navigationBarTitleDisplayMode(.inline)
         .toolbar { toolbarContent }
         .scrollDismissesKeyboard(.interactively)
         .interactiveDismissDisabled(!draftExistsInDB)
         // NOTE: Not using a regular sheet here: .sheet + ScrollView + ForEach Buttons causes accidental button taps when scrolling (SwiftUI bug?)
         // so for now until this behaviour is fixed by Apple
         // this is a fullScreenCover (but TODO: consider using a push navigation here)
-        .fullScreenCover(isPresented: $model.isShowingTagsPicker) {
+        .fullScreenCover(isPresented: $isShowingTagsPicker) {
+            // FIXME: support multi-draft centroid
             TagPicker(
-                initialTags: model.draft.tags,
-                draft: model.draft,
+                initialTags: model.info.multiDraft.tags,
                 onEditedTags: {
-                    model.draft.tags = $0
+                    model.info.multiDraft.tags = $0
                 }
             )
         }
-        .sheet(isPresented: $isTimezonePickerShowing) {
-            TimezonePicker(selectedTimezone: $model.draft.timezone)
-                .presentationDetents([.medium, .large])
-        }
+//        .sheet(isPresented: $isTimezonePickerShowing) {
+//            TimezonePicker(selectedTimezone: $model.multiDraft.timezone)
+//                .presentationDetents([.medium, .large])
+//        }
 
         .onAppear {
-            if model.draft.captionWithDesc.isEmpty {
+            if model.info.multiDraft.captionWithDesc.isEmpty {
                 focus = .caption
             }
         }
-        .onChange(of: model.draft) {
+        .onChange(of: model.info) {
             if focus != .filename {
                 generateFilename()
             }
-            model.draft.uploadPossibleStatus = model.canUploadDraft()
+            
+            model.info.multiDraft.uploadPossibleStatus = DraftValidation.canUploadDraft(
+                model.info.multiDraft,
+                nameValidationResult: model.nameValidationResult
+            )
         }
-        .onChange(of: model.draft.selectedFilenameType) { oldValue, newValue in
+        .onChange(of: model.info.multiDraft.selectedFilenameType) { oldValue, newValue in
             filenameSelection = .none
             if newValue != .custom {
                 generateFilename()
             }
         }
-        .onDisappear {
-            if draftExistsInDB, model.draft.publishingState == nil {
-                saveChanges()
-            }
-        }
-        .task(id: model.draft.name) {
+//        .onDisappear {
+//            if draftExistsInDB, model.multiDraft.publishingState == nil {
+//                saveChanges()
+//            }
+//        }
+        .task(id: model.info.multiDraft.name) {
             do {
                 try await model.validateFilenameImpl()
             } catch {
                 logger.error("Failed to validate name \(error)")
             }
         }
-        .task(id: model.draft.id) {
-            fileAnalysis.startAnalyzingIfNeeded(model.draft)
-        }
-        .task(id: model.choosenCoordinate) {
-            locationLabel = nil
-            guard let coordinate = model.choosenCoordinate else { return }
-            do {
-                locationLabel = try await coordinate.generateHumanReadableString()
-            } catch {
-                logger.error("failed generateHumanReadableString \(error)")
-            }
-        }
+//        .task(id: model.multiDraft.id) {
+//            fileAnalysis.startAnalyzingIfNeeded(model.multiDraft)
+//        }
+//        .task(id: model.choosenCoordinate) {
+//            locationLabel = nil
+//            guard let coordinate = model.choosenCoordinate else { return }
+//            do {
+//                locationLabel = try await coordinate.generateHumanReadableString()
+//            } catch {
+//                logger.error("failed generateHumanReadableString \(error)")
+//            }
+//        }
     }
 
 
@@ -136,24 +139,22 @@ struct SingleImageDraftView: View {
         // TODO: move to model
         Task<Void, Never> {
             let generatedFilename =
-                await model.draft.selectedFilenameType.generateFilename(
-                    coordinate: model.exifData?.coordinate,
-                    date: model.draft.inceptionDate,
-                    desc: model.draft.captionWithDesc,
+                await model.info.multiDraft.selectedFilenameType.generateFilename(
+                    // FIXME: coordinate?
+                    coordinate: nil,
+                    date: model.info.drafts.first?.inceptionDate,
+                    desc: model.info.multiDraft.captionWithDesc,
                     locale: locale,
-                    tags: model.draft.tags
-                ) ?? model.draft.name
+                    tags: model.info.multiDraft.tags
+                ) ?? model.info.multiDraft.name
 
-            model.draft.name = generatedFilename
+            model.info.multiDraft.name = generatedFilename
         }
     }
 
     private func saveChanges() {
         do {
-            if let fileItem = model.fileItem {
-                model.draft.localFileName = fileItem.localFileName
-            }
-            try appDatabase.upsert(model.draft)
+            try appDatabase.upsert(model.info)
         } catch {
             logger.error("Failed to save all drafts \(error)")
         }
@@ -166,7 +167,7 @@ struct SingleImageDraftView: View {
 
     private func deleteDraftAndDismiss() {
         do {
-            try appDatabase.delete(model.draft)
+            try appDatabase.delete(model.info)
             dismiss()
         } catch {
             logger.error("Failed to delete drafts \(error)")
@@ -174,9 +175,9 @@ struct SingleImageDraftView: View {
     }
     @ViewBuilder
     private var captionAndDescriptionSection: some View {
-        Section("Caption and Description") {
-            let enumeratedDescs = Array(model.draft.captionWithDesc.enumerated())
-            let disabledLanguages = model.draft.captionWithDesc.map(\.languageCode)
+        Section("Description") {
+            let enumeratedDescs = Array(model.info.multiDraft.captionWithDesc.enumerated())
+            let disabledLanguages = model.info.multiDraft.captionWithDesc.map(\.languageCode)
 
             List {
                 ForEach(enumeratedDescs, id: \.element.languageCode) { (idx, desc) in
@@ -191,26 +192,43 @@ struct SingleImageDraftView: View {
                             }
                             Divider()
                             Button("Delete", role: .destructive) {
-                                model.draft.captionWithDesc.remove(at: idx)
+                                model.info.multiDraft.captionWithDesc.remove(at: idx)
                             }
 
                         }
 
                         TextField(
                             "caption",
-                            text: $model.draft.captionWithDesc[languageCode, .caption],
+                            text: $model.info.multiDraft.captionWithDesc[languageCode, .caption],
                             axis: .vertical
                         )
                         .bold()
                         .focused($focus, equals: .caption)
                         .submitLabel(.next)
+                        .onChange(of: model.info.multiDraft.captionWithDesc[languageCode, .caption]) { oldValue, newValue in
+                            if newValue.count > 250 {
+                                model.info.multiDraft.captionWithDesc[languageCode, .caption] = String(model.info.multiDraft.captionWithDesc[languageCode, .caption].prefix(250))
+                            }
+                        }
+                        .safeAreaInset(edge: .bottom) {
+                            let captionLength = model.info.multiDraft.captionWithDesc[languageCode, .caption].count
+                            if captionLength > 225 {
+                                HStack {
+                                    Text("\(captionLength)/250 characters")
+                                        .font(.caption)
+                                        .foregroundStyle(captionLength == 250 ? Color.red : .secondary)
+                                    Spacer(minLength: 0)
+                                }
+                            }
+                        }
+
                         .onSubmit {
                             focus = .description
                         }
 
                         TextField(
                             "detailed description (optional)",
-                            text: $model.draft.captionWithDesc[languageCode, .description],
+                            text: $model.info.multiDraft.captionWithDesc[languageCode, .description],
                             axis: .vertical
                         )
                         .focused($focus, equals: .description)
@@ -222,7 +240,7 @@ struct SingleImageDraftView: View {
 
                 }
                 .onDelete { set in
-                    model.draft.captionWithDesc.remove(atOffsets: set)
+                    model.info.multiDraft.captionWithDesc.remove(atOffsets: set)
                 }
 
                 Menu("Add", systemImage: "plus") {
@@ -236,13 +254,13 @@ struct SingleImageDraftView: View {
     }
 
     private func addLanguage(code: LanguageCode) {
-        guard !model.draft.captionWithDesc.contains(where: { $0.languageCode == code }) else {
+        guard !model.info.multiDraft.captionWithDesc.contains(where: { $0.languageCode == code }) else {
             assertionFailure("We expect the language code to not exist yet")
             return
         }
 
         withAnimation {
-            model.draft.captionWithDesc.append(.init(languageCode: code))
+            model.info.multiDraft.captionWithDesc.append(.init(languageCode: code))
         }
     }
 
@@ -250,91 +268,52 @@ struct SingleImageDraftView: View {
         // dont change language if same, or if the new language already exists
         // this is an assertion failure, as these actions should be disabled in the UI above.
         guard old != new,
-            model.draft.captionWithDesc.first(where: { $0.languageCode == new }) == nil
+            model.info.multiDraft.captionWithDesc.first(where: { $0.languageCode == new }) == nil
         else {
             assertionFailure()
             return
         }
 
-        guard let idx = model.draft.captionWithDesc.firstIndex(where: { $0.languageCode == old }) else {
+        guard let idx = model.info.multiDraft.captionWithDesc.firstIndex(where: { $0.languageCode == old }) else {
             assertionFailure("We expect the given old language code to both have an existing caption and desc in the draft")
             return
         }
 
-        model.draft.captionWithDesc[idx].languageCode = new
+        model.info.multiDraft.captionWithDesc[idx].languageCode = new
     }
 
 
     private var filenameSection: some View {
         Section {
             HStack {
-                TextField("Filename", text: $model.draft.name, selection: $filenameSelection, axis: .vertical)
+                TextField("Filename", text: $model.info.multiDraft.name, selection: $filenameSelection, axis: .vertical)
                     .textInputAutocapitalization(.sentences)
                     .focused($focus, equals: .filename)
                     .tint(.primary)
                     .padding(.trailing)
                 Spacer(minLength: 0)
-                if model.nameValidationResult == nil {
-                    ProgressView()
-                } else {
-                    Button {
-                        switch model.nameValidationResult {
-                        case .success(_), .none:
-                            // do nothing, alternatively, tell user, the full filename including name ending and
-                            // that it was checked with the backend?
-                            break
-                        case .failure(_):
-                            isFilenameErrorSheetPresented = true
-                        }
-
-                    } label: {
-                        switch model.nameValidationResult {
-                        case .failure(_), .none:
-                            Image(systemName: "exclamationmark.circle")
-                                .foregroundStyle(.red)
-                        case .success(_):
-                            Image(systemName: "checkmark.circle")
-                                .foregroundStyle(.green)
-                        }
-                    }
-                    .alert(
-                        model.nameValidationResult?.alertTitle ?? "", isPresented: $isFilenameErrorSheetPresented, presenting: model.nameValidationResult?.error,
-                        actions: { error in
-                            if case .invalid(let localInvalidationError) = error,
-                                localInvalidationError?.canBeAutoFixed == true,
-                                model.draft.selectedFilenameType == .custom
-                            {
-                                Button("sanitize") {
-                                    filenameSelection = .none
-                                    model.draft.name = LocalFileNameValidation.sanitizeFileName(model.draft.name)
-                                }
-                            }
-                            Button("Ok") {
-                                let endIdx = model.draft.name.endIndex
-                                focus = .filename
-                                filenameSelection = .init(range: endIdx..<endIdx)
-                            }
-                        },
-                        message: { error in
-                            let failureReason = model.nameValidationResult?.error?.failureReason
-                            let recoverySuggestion = model.nameValidationResult?.error?.recoverySuggestion
-
-                            let isFailureReasonIdenticalToTitle = failureReason == model.nameValidationResult?.alertTitle
-                            if let failureReason, let recoverySuggestion, !isFailureReasonIdenticalToTitle {
-                                Text(failureReason + "\n\n\(recoverySuggestion)")
-                            } else if let recoverySuggestion {
-                                Text(recoverySuggestion)
-                            }
-
+                
+                if let nameValidationResult = model.nameValidationResult {
+                    FilenameErrorButton(
+                        nameValidationResult: nameValidationResult,
+                        fileNameType: model.info.multiDraft.selectedFilenameType,
+                        onDismiss: {
+                            let endIdx = model.info.multiDraft.name.endIndex
+                            focus = .filename
+                            filenameSelection = .init(range: endIdx..<endIdx)
+                        }, onSanitize: {
+                            filenameSelection = .none
+                            model.info.multiDraft.name = LocalFileNameValidation.sanitizeFileName(model.info.multiDraft.name)
                         }
                     )
-
-                    .imageScale(.large)
-                    .frame(width: 10)
+                } else {
+                    ProgressView()
                 }
             }
             .frame(minWidth: 0, maxWidth: .infinity)
-            .animation(.default, value: model.nameValidationResult?.error)
+
+            Text("\(model.info.multiDraft.filenamePreviewWithCounter)")
+                .foregroundStyle(.secondary)
 
         } header: {
             Text("file name")
@@ -342,8 +321,8 @@ struct SingleImageDraftView: View {
             Menu {
                 ForEach(model.suggestedFilenames, id: \.type) { suggested in
                     Button {
-                        model.draft.selectedFilenameType = suggested.type
-                        model.draft.name = suggested.name
+                        model.info.multiDraft.selectedFilenameType = suggested.type
+                        model.info.multiDraft.name = suggested.name
                     } label: {
                         Text(suggested.name)
                         Text(suggested.type.description)
@@ -352,45 +331,45 @@ struct SingleImageDraftView: View {
                 }
             } label: {
                 Label(
-                    model.draft.selectedFilenameType.description,
-                    systemImage: model.draft.selectedFilenameType.systemIconName
+                    model.info.multiDraft.selectedFilenameType.description,
+                    systemImage: model.info.multiDraft.selectedFilenameType.systemIconName
                 )
             }
         }
-        .task(id: model.draft.name) {
+        .task(id: model.info.multiDraft.name) {
             // TODO: generate in model of name change
             var generatedSuggestions: [FileNameTypeTuple] = []
             for type in FileNameType.automaticTypes {
                 let generatedFilename =
                     await type.generateFilename(
-                        coordinate: model.exifData?.coordinate,
-                        date: model.draft.inceptionDate,
-                        desc: model.draft.captionWithDesc,
+                        coordinate: model.centroidCoordinate,
+                        // FIXME: check if date is identical everywhere, find other solution (eg. <date> token placeholder)
+                        // for UI
+                        // so the date is filled automatically?
+                        date: model.info.drafts.first?.inceptionDate,
+                        desc: model.info.multiDraft.captionWithDesc,
                         locale: Locale.current,
-                        tags: model.draft.tags
+                        tags: model.info.multiDraft.tags
                     )
 
                 if let generatedFilename {
-                    generatedSuggestions.append(
-                        .init(
-                            name: generatedFilename, type: type)
-                    )
+                    generatedSuggestions.append(.init(name: generatedFilename, type: type))
                 }
 
             }
 
             model.suggestedFilenames = generatedSuggestions
 
-            guard !model.draft.name.isEmpty else { return }
+            guard !model.info.multiDraft.name.isEmpty else { return }
 
             let matchingAutomatic = generatedSuggestions.first(where: { suggestion in
-                model.draft.name == suggestion.name
+                model.info.multiDraft.name == suggestion.name
             })
 
             if let matchingAutomatic {
-                model.draft.selectedFilenameType = matchingAutomatic.type
+                model.info.multiDraft.selectedFilenameType = matchingAutomatic.type
             } else {
-                model.draft.selectedFilenameType = .custom
+                model.info.multiDraft.selectedFilenameType = .custom
             }
         }
 
@@ -399,14 +378,14 @@ struct SingleImageDraftView: View {
 
     private var tagsSection: some View {
         Section {
-            let tags: [TagItem] = model.draft.tags
+            let tags: [TagItem] = model.info.multiDraft.tags
 
             if !tags.isEmpty {
 
                 HFlowLayout(alignment: .leading) {
                     ForEach(tags) { tag in
                         Button {
-                            model.isShowingTagsPicker = true
+                            isShowingTagsPicker = true
                         } label: {
                             TagLabel(tag: tag)
                         }
@@ -414,16 +393,16 @@ struct SingleImageDraftView: View {
                     }
                     .buttonStyle(.plain)
                 }
-                .animation(.default, value: model.draft.tags)
+                .animation(.default, value: model.info.multiDraft.tags)
 
 
             }
 
             Button(
-                model.draft.tags.isEmpty ? "Add" : "Edit",
-                systemImage: model.draft.tags.isEmpty ? "plus" : "pencil"
+                model.info.multiDraft.tags.isEmpty ? "Add" : "Edit",
+                systemImage: model.info.multiDraft.tags.isEmpty ? "plus" : "pencil"
             ) {
-                model.isShowingTagsPicker = true
+                isShowingTagsPicker = true
             }
             .focused($focus, equals: .tags)
         } header: {
@@ -437,28 +416,15 @@ struct SingleImageDraftView: View {
     private var locationSection: some View {
         Section {
             VStack(alignment: .leading) {
-                if model.exifData?.coordinate == nil {
-                    // TODO: allow user to add own location
-                    Label {
-                        VStack(alignment: .leading) {
-                            Text("No location")
-                            Text("File metadata does not contain location info")
-                                .font(.caption)
-                        }
-                    } icon: {
-                        Image(systemName: "location.slash.fill")
+                Toggle("Locations", systemImage: model.info.multiDraft.locationEnabled ? "location" : "location.slash", isOn: $model.info.multiDraft.locationEnabled)
+                    .animation(.default) {
+                        $0.contentTransition(.symbolEffect)
                     }
-                } else {
-                    Toggle("Location", systemImage: model.draft.locationEnabled ? "location" : "location.slash", isOn: $model.draft.locationEnabled)
-                        .animation(.default) {
-                            $0.contentTransition(.symbolEffect)
-                        }
-                    if model.draft.locationEnabled == false {
-                        Text("Location will be erased from the file metadata before uploading.")
-                            .font(.caption)
-                    } else if let coordinate = model.choosenCoordinate {
-                        FileLocationMapView(coordinate: coordinate, label: locationLabel)
-                    }
+                if model.info.multiDraft.locationEnabled == false {
+                    Text("Location metadata will be erased from all \(model.info.drafts.count) files before uploading.")
+                        .font(.caption)
+                } else if !model.choosenCoordinates.isEmpty {
+                    FileLocationMapView(coordinates: model.choosenCoordinates, label: locationLabel)
                 }
             }
         }
@@ -475,7 +441,7 @@ struct SingleImageDraftView: View {
                 Button {
                     isLicensePickerShowing = true
                 } label: {
-                    if let license = model.draft.license {
+                    if let license = model.info.multiDraft.license {
                         Text(license.abbreviation)
                     } else {
                         Text("choose")
@@ -485,7 +451,7 @@ struct SingleImageDraftView: View {
 
             }
             .sheet(isPresented: $isLicensePickerShowing) {
-                LicensePicker(selectedLicense: $model.draft.license, allowsEmptySelection: false)
+                LicensePicker(selectedLicense: $model.info.multiDraft.license, allowsEmptySelection: false)
             }
 
 
@@ -501,78 +467,64 @@ struct SingleImageDraftView: View {
     }
 
     @ViewBuilder
-    var imageView: some View {
-        // we only expect the model.fileItem?.fileURL, but thumburl is useful for previews
-        Button {
-            isZoomableImageViewerPresented = true
-        } label: {
-            LazyImage(request: model.imageRequest) { phase in
-                if let image = phase.image {
-                    image
-                        .resizable()
-                        .aspectRatio(contentMode: .fill)
-                        .transition(.blurReplace)
-                        .clipShape(.containerRelative)
-                } else {
-                    Color.clear.background(.regularMaterial)
+    var imageCarouselView: some View {
+        ScrollView(.horizontal) {
+            LazyHGrid(rows: [.init(), .init(), .init()]) {
+                ForEach(model.info.drafts) { draft in
+                            Button {
+                                isZoomableImageViewerPresented = true
+                            } label: {
+                                LazyImage(request: draft.localFileRequestResized) { phase in
+                                    if let image = phase.image {
+                                        image
+                                            .resizable()
+                                            .aspectRatio(contentMode: .fit)
+                                            .transition(.blurReplace)
+                                            .clipShape(.containerRelative)
+                                    } else {
+                                        Color.clear.background(.regularMaterial)
+                                    }
+                                }
+                            }
+                            .buttonStyle(ImageButtonStyle())
+                    
+                    
+
                 }
             }
+            .containerShape(ViewConstants.draftImageCarouselContainerShape)
         }
-        .buttonStyle(ImageButtonStyle())
-        .containerRelativeFrame(.horizontal)
+        .frame(maxHeight: 300)
         .listRowInsets(.init())
         .listRowBackground(Color.clear)
-        .zoomableImageFullscreenCover(
-            imageReference: model.zoomableImageReference,
-            isPresented: $isZoomableImageViewerPresented
-        )
+
+        
+//        // we only expect the model.fileItem?.fileURL, but thumburl is useful for previews
+//        Button {
+//            isZoomableImageViewerPresented = true
+//        } label: {
+//            LazyImage(request: model.imageRequest) { phase in
+//                if let image = phase.image {
+//                    image
+//                        .resizable()
+//                        .aspectRatio(contentMode: .fill)
+//                        .transition(.blurReplace)
+//                        .clipShape(.containerRelative)
+//                } else {
+//                    Color.clear.background(.regularMaterial)
+//                }
+//            }
+//        }
+        .buttonStyle(ImageButtonStyle())
+//        .containerRelativeFrame(.horizontal)
+//        .listRowInsets(.init())
+//        .listRowBackground(Color.clear)
+//        .zoomableImageFullscreenCover(
+//            imageReference: model.zoomableImageReference,
+//            isPresented: $isZoomableImageViewerPresented
+//        )
     }
 
-    private var dateTimeSection: some View {
-        Section("Creation Date and Time") {
-            DatePicker(
-                "Creation Date",
-                selection: $model.draft.inceptionDate,
-                displayedComponents: [.date, .hourAndMinute]
-            )
-            .datePickerStyle(.compact)
-
-            //            HStack {
-            //                // TODO: extend this, atleast with a helper text
-            //                // about what is ok to upload and what not.
-            //
-            //                Text("Timezone")
-            //                Spacer()
-            //
-            //                Button {
-            //                    isTimezonePickerShowning = true
-            //                } label: {
-            //                    if let timezoneId = model.draft.timezone,
-            //                        let timezone = TimeZone(identifier: timezoneId)
-            //                    {
-            //                        VStack {
-            //                            Text(timezone.identifier)
-            //
-            //                            if let tzName = timezone.localizedName(for: .standard, locale: .autoupdatingCurrent) {
-            //                                Text(tzName)
-            //                                    .font(.footnote)
-            //                            }
-            //                        }
-            //                    } else {
-            //                        Label("empty", systemImage: "pencil")
-            //                    }
-            //                }
-            //
-            //            }
-
-            if let exifDate = model.exifData?.dateOriginal, model.draft.inceptionDate != exifDate {
-                Button("Restore EXIF-Date") {
-                    model.draft.inceptionDate = exifDate
-                }
-            }
-
-        }
-    }
 
     @ToolbarContentBuilder
     private var toolbarContent: some ToolbarContent {
@@ -619,7 +571,7 @@ struct SingleImageDraftView: View {
 
 
         ToolbarItem(placement: .confirmationAction) {
-            if model.draft.uploadPossibleStatus == .uploadPossible {
+            if model.info.multiDraft.uploadPossibleStatus == .uploadPossible {
                 Button {
                     isShowingUploadDialog = true
                 } label: {
@@ -632,7 +584,8 @@ struct SingleImageDraftView: View {
                             return
                         }
                         saveChanges()
-                        uploadManager.upload(model.draft, username: username)
+                        // FIXME: actual upload
+//                        uploadManager.upload(model.info.multiDraft, username: username)
                         dismiss()
                     }
 
@@ -651,7 +604,7 @@ struct SingleImageDraftView: View {
                     "Upload not possible", isPresented: $isShowingUploadDisabledAlert,
                     actions: {
                         Button("Ok") {
-                            switch model.draft.uploadPossibleStatus {
+                            switch model.info.multiDraft.uploadPossibleStatus {
                             case .uploadPossible: break
                             case .notLoggedIn: break
                             case .missingCaptionOrDescription:
@@ -668,7 +621,7 @@ struct SingleImageDraftView: View {
                         }
                     },
                     message: {
-                        switch model.draft.uploadPossibleStatus {
+                        switch model.info.multiDraft.uploadPossibleStatus {
                         case .uploadPossible:
                             Text("Unknown error, please make a screenshot and report this issue if you see this.")
                         case .notLoggedIn:
@@ -699,41 +652,25 @@ struct SingleImageDraftView: View {
     }
 }
 
-struct FileLocationMapView: View {
-    let coordinate: CLLocationCoordinate2D
-    var label: String?
-
-    @State private var markerLabel: String?
-
-    var body: some View {
-        let halfKmRadius = MKCoordinateRegion(
-            center: coordinate,
-            latitudinalMeters: 500,
-            longitudinalMeters: 500
-        )
-
-        Map(initialPosition: .region(halfKmRadius)) {
-            Marker(label ?? "", coordinate: coordinate)
-        }
-        .mapControlVisibility(.automatic)
-        .allowsHitTesting(false)
-        .frame(height: 150)
-        .clipShape(.rect(cornerRadius: 15))
-
-
+extension MultiDraft {
+    var filenamePreviewWithCounter: AttributedString {
+        let attributedString = AttributedString(name)
+        var ending = AttributedString(", 01...99")
+        ending.foregroundColor = .accent
+        let finalString = attributedString + ending + AttributedString(".jpg")
+        return finalString
     }
 }
 
 
 #Preview("New Draft", traits: .previewEnvironment) {
-    @Previewable @State var draft = MediaFileDraftModel(existingDraft: .makeRandomEmptyDraft(id: "1"))
+    @Previewable @State var draft = MultiDraftModel(.makeRandom(id: 1))
 
-    SingleImageDraftView(model: draft)
+    MultiDraftView(model: draft)
 }
 
 #Preview("With Metadata", traits: .previewEnvironment) {
-    @Previewable @State var draft = MediaFileDraftModel(existingDraft: .makeRandomDraft(id: "2"))
+    @Previewable @State var draft = MultiDraftModel(.makeRandom(id: 1))
 
-    SingleImageDraftView(model: draft)
-
+    MultiDraftView(model: draft)
 }

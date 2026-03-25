@@ -250,7 +250,31 @@ nonisolated final class AppDatabase: Sendable {
                 t.add(column: "publishingState", .jsonText)
                 t.add(column: "publishingStateVerificationRequired", .boolean)
                 t.add(column: "publishingError", .jsonText)
+
             }
+        }
+        
+        migrator.registerMigration("add MultiDraft, add relation to MediaFileDraft") { db in
+            try db.create(table: "multiDraft") { t in
+                t.autoIncrementedPrimaryKey("id")
+                t.column("addedDate", .date)
+                t.column("name", .text)
+                t.column("nameSuffix", .jsonText)
+                t.column("nameAdditionalFallbackSuffix", .jsonText)
+                t.column("captionWithDesc", .jsonText)
+                t.column("tags", .jsonText)
+                t.column("license", .text)
+                t.column("author", .jsonText)
+                t.column("source", .jsonText)
+                t.column("locationHandling", .jsonText)
+                t.column("selectedFilenameType")
+                t.column("uploadPossibleStatus")
+            }
+            
+            try db.alter(table: "mediaFileDraft") { t in
+                t.add(column: "multiDraftId", .integer)
+                    .references("multiDraft", onDelete: .cascade)
+            }  
         }
 
         return migrator
@@ -697,6 +721,38 @@ extension AppDatabase {
     }
 }
 
+// MARK: - MultiDraftInfo Writes
+extension AppDatabase {
+    func upsert(_ multiDraftInfo: MultiDraftInfo) throws {
+        try dbWriter.write { db in
+            var multiDraftInfo = multiDraftInfo
+            let multiDraft = try multiDraftInfo.multiDraft.upsertAndFetch(db)
+            
+            for var draft in multiDraftInfo.drafts {
+                draft.multiDraftId = multiDraft.id
+                try draft.upsert(db)
+            }
+        }
+    }
+    func delete(_ multiDraftInfo: MultiDraftInfo) throws {
+        let id = multiDraftInfo.multiDraft.id
+        try dbWriter.write { db in
+            // NOTE: sub-drafts *should* be deleted via cascade rule, so no need to delete them here separately.
+            _ = try multiDraftInfo.multiDraft.delete(db)
+        }
+        
+        #if DEBUG
+        let subDraftCountAfterDelete = try dbWriter.write { db in
+            try MediaFileDraft.filter{ $0.multiDraftId == id }.fetchCount(db)
+        }
+        
+        assert(
+            subDraftCountAfterDelete == 0,
+            "We expect sub-drafts of a MultiDraft to be deleted via the cascade rule together with its parent."
+        )
+        #endif
+    }
+}
 
 // MARK: - MediaFileDraft Writes
 extension AppDatabase {
@@ -875,6 +931,15 @@ nonisolated extension AppDatabase {
         try dbWriter.read { db in
             try MediaFileDraft
                 .filter { $0.publishingState != nil && $0.publishingError == nil }
+                .fetchAll(db)
+        }
+    }
+    
+    func fetchAllMultiDraftInfos() throws -> [MultiDraftInfo] {
+        try dbWriter.read { db in
+            try MultiDraft
+                .including(all: MultiDraft.drafts)
+                .asRequest(of: MultiDraftInfo.self)
                 .fetchAll(db)
         }
     }
