@@ -82,7 +82,7 @@ struct DraftSheetModifer: ViewModifier {
                 selection: photosPickerSelection,
                 // NOTE: For now only allow 1 image until
                 // multi-upload is refined.
-                //                maxSelectionCount: 1,
+                maxSelectionCount: 1,
                 matching: .any(of: [.images]),
                 preferredItemEncoding: .compatible,
                 photoLibrary: .shared()
