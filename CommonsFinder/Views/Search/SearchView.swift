@@ -15,8 +15,6 @@ struct SearchView: View {
 
     @FocusState private var isSearchFieldFocused: Bool
 
-    @State private var scrollState: ScrollState = .init()
-
     var body: some View {
         @Bindable var searchModel = searchModel
 
@@ -59,21 +57,6 @@ struct SearchView: View {
 
     @ViewBuilder
     private var searchResultView: some View {
-        let dragGesture = DragGesture(minimumDistance: 25, coordinateSpace: .local)
-            .onChanged { v in
-                let newDirection: ScrollState.Direction =
-                    if v.predictedEndLocation.y > v.startLocation.y {
-                        .up
-                    } else if v.predictedEndLocation.y < v.startLocation.y {
-                        .down
-                    } else {
-                        .none
-                    }
-
-                guard newDirection != scrollState.lastDirection else { return }
-                scrollState.lastDirection = newDirection
-            }
-
         switch searchModel.scope {
         case .all:
             ScrollView(.vertical) {
@@ -96,7 +79,6 @@ struct SearchView: View {
                 }
             }
             .scrollDismissesKeyboard(.interactively)
-            .simultaneousGesture(dragGesture)
             .id("all")
         case .categories:
             ScrollView(.vertical) {
