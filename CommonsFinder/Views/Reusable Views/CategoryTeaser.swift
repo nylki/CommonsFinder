@@ -10,78 +10,84 @@ import SwiftUI
 
 struct CategoryTeaser: View {
     let categoryInfo: CategoryInfo
-
     /// withContextMenu=false should only be used, when a context menu is already applied
     /// it is false for the `preview` of `CategoryContextMenu` to avoid recursion.
     var withContextMenu: Bool = true
 
     var body: some View {
-        let categoryTeaser = CategoryTeaserBase(categoryInfo: categoryInfo)
+        let categoryTeaser = CategoryTeaserContent(categoryInfo: categoryInfo)
 
-        if withContextMenu {
-            categoryTeaser
-                .contentShape(.contextMenuPreview, .rect(cornerRadius: 16))
-                .modifier(CategoryContextMenu(item: categoryInfo))
-        } else {
-            categoryTeaser
+        NavigationLink(value: NavigationStackItem.wikidataItem(categoryInfo)) {
+            if withContextMenu {
+                categoryTeaser
+                    .contentShape(.contextMenuPreview, .rect(cornerRadius: 16))
+                    .modifier(CategoryContextMenu(item: categoryInfo))
+            } else {
+                categoryTeaser
+            }
         }
+        .frame(idealWidth: 260, idealHeight: 170)
+        .clipShape(.containerRelative)
     }
 
 
 }
 
-private struct CategoryTeaserBase: View {
+struct CategoryTeaserContent: View {
     let categoryInfo: CategoryInfo
+    @Environment(\.colorScheme) private var colorScheme
 
     var body: some View {
         let backgroundImage = categoryInfo.base.thumbnailImage
         let hasBackgroundImage = backgroundImage != nil
         let label = categoryInfo.base.label ?? categoryInfo.base.commonsCategory
 
-        NavigationLink(value: NavigationStackItem.wikidataItem(categoryInfo)) {
-            HStack {
-                VStack {
-                    Spacer()
+        HStack {
+            VStack {
+                Spacer()
 
-                    VStack(alignment: .leading) {
-                        if let label {
-                            Text(label)
-                        }
-                        if let description = categoryInfo.base.description {
-                            Text(description)
-                                .font(.caption)
-                                .allowsTightening(true)
-                        }
+                VStack(alignment: .leading) {
+                    if let label {
+                        Text(label)
                     }
-                    .shadow(color: hasBackgroundImage ? .black : .clear, radius: 2)
-                    .shadow(color: .black.opacity(0.7), radius: 7)
-
+                    if let description = categoryInfo.base.description {
+                        Text(description)
+                            .font(.caption)
+                            .allowsTightening(true)
+                    }
                 }
-                .multilineTextAlignment(.leading)
                 .foregroundStyle(Color.white)
+                .shadow(color: hasBackgroundImage ? .black : .clear, radius: 2)
+                .shadow(color: hasBackgroundImage ? .black.opacity(0.7) : .clear, radius: 7)
 
-                Spacer(minLength: 0)
             }
-            .padding()
-            .background {
-                CategoryTeaserBackground(category: categoryInfo.base).scaledToFill()
-            }
-            .clipShape(.rect(cornerRadius: 16))
+            .multilineTextAlignment(.leading)
+
+            Spacer(minLength: 0)
         }
-        .frame(idealWidth: 260, idealHeight: 170)
+        .padding()
+        .background {
+            CategoryTeaserBackground(category: categoryInfo.base)
+
+        }
+        .geometryGroup()
+        .compositingGroup()
+        .clipShape(.containerRelative)
+        .contentShape([.contextMenuPreview, .interaction], .containerRelative)
     }
 }
 
-#Preview {
+#Preview(traits: .previewEnvironment) {
     ScrollView(.vertical) {
         LazyVStack {
             CategoryTeaser(categoryInfo: .init(.earth))
             CategoryTeaser(categoryInfo: .init(.earthNoImage))
             CategoryTeaser(categoryInfo: .init(.earthExtraLongLabel))
             CategoryTeaser(categoryInfo: .init(.testItemNoDesc))
-            CategoryTeaser(categoryInfo: .init(.testItemNoLabel))
+            //            CategoryTeaser(categoryInfo: .init(.testItemNoLabel))
             CategoryTeaser(categoryInfo: .init(.randomItem(id: "random")))
         }
+        .padding()
     }
     .scenePadding()
 }

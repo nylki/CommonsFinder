@@ -10,13 +10,16 @@ import SwiftUI
 struct PaginatableList<Item: Equatable & Identifiable, ItemView: View>: View {
     let items: [Item]
     let status: PaginationStatus
-    var toolOverlayPadding = false
     let paginationRequest: () -> Void
 
     let canPrewarmItem: (_ item: Item) -> Void
-    let itemView: (_ item: Item) -> ItemView
 
-    @State private var prewarmTasks: [Int: Task<Void, Never>] = [:]
+    /// return the item to render and if the item or one of its neighbors (prev, next) was visible long enough (based on scroll visibility)
+    @ViewBuilder
+    let itemView: (_ item: Item, _ itemOrNeighorVisible: Bool) -> ItemView
+
+    @State private var visibilityTask: [Item.ID: Task<Void, Never>] = [:]
+    @State private var longViewedItems: Set<Item.ID> = .init()
 
     private func checkPagination(visibleItem: Item) {
         let threshold = min(items.count - 1, max(0, items.count - 5))
@@ -28,21 +31,39 @@ struct PaginatableList<Item: Equatable & Identifiable, ItemView: View>: View {
         }
     }
 
-    private func schedulePrewarmTask(itemIdx: Int, isVisible: Bool) {
-        if isVisible, prewarmTasks[itemIdx] == nil {
-            prewarmTasks[itemIdx] = Task<Void, Never> {
+    private func itemOrNeighborVisible(item: Item) -> Bool {
+        if longViewedItems.contains(item.id) {
+            return true
+        }
+        guard let idx = items.lastIndex(of: item) else {
+            return false
+        }
+
+        if let prevID = items[safeIndex: idx - 1]?.id, longViewedItems.contains(prevID) {
+            return true
+        }
+        if let nextID = items[safeIndex: idx + 1]?.id, longViewedItems.contains(nextID) {
+            return true
+        }
+
+        return false
+    }
+
+    private func scheduleVisibilityTask(id: Item.ID, prewarmItem: Item, isVisible: Bool) {
+        if isVisible, visibilityTask[id] == nil {
+            visibilityTask[id] = Task<Void, Never> {
                 do {
-                    let nextIdx = itemIdx + 1
-                    if (items.count - 1) >= nextIdx {
-                        try await Task.sleep(for: .milliseconds(650))
-                        canPrewarmItem(items[nextIdx])
-                    }
-                } catch {}
-                prewarmTasks[itemIdx] = nil
+                    try await Task.sleep(for: .milliseconds(650))
+                    longViewedItems.insert(id)
+                    canPrewarmItem(prewarmItem)
+                } catch {
+
+                }
+                visibilityTask[id] = nil
             }
         } else {
-            prewarmTasks[itemIdx]?.cancel()
-            prewarmTasks[itemIdx] = nil
+            visibilityTask[id]?.cancel()
+            visibilityTask[id] = nil
         }
     }
 
@@ -51,22 +72,22 @@ struct PaginatableList<Item: Equatable & Identifiable, ItemView: View>: View {
 
         LazyVStack(spacing: 20) {
             ForEach(enumeratedItems, id: \.element.id) { (idx, item) in
-                itemView(item)
+                itemView(item, itemOrNeighborVisible(item: item))
                     .onScrollVisibilityChange(threshold: 0.1) { isVisible in
                         if isVisible {
                             checkPagination(visibleItem: item)
                         }
-                        schedulePrewarmTask(itemIdx: idx, isVisible: isVisible)
+                        if let nextItem = enumeratedItems[safeIndex: idx + 1]?.element {
+                            scheduleVisibilityTask(id: item.id, prewarmItem: nextItem, isVisible: isVisible)
+                        }
                     }
             }
 
             paginatingIndicator
         }
         .compositingGroup()
-        .scenePadding()
-        .padding(.top, toolOverlayPadding ? 40 : 0)
+        .padding()
         .shadow(color: .black.opacity(0.15), radius: 10)
-
         .onChange(of: status, initial: true) {
             if status == .idle(reachedEnd: false), items.isEmpty {
                 paginationRequest()
@@ -96,18 +117,20 @@ struct PaginatableList<Item: Equatable & Identifiable, ItemView: View>: View {
     }
 }
 
-#Preview {
-    PaginatableList(
-        items: [
-            Category.earth, Category.testItemNoDesc,
-        ],
-        status: .unknown,
-        paginationRequest: {
-            print("paginate")
-        },
-        canPrewarmItem: { item in }
-    ) {
-        CategoryTeaser(categoryInfo: .init($0))
-            .frame(height: 185)
+#Preview(traits: .previewEnvironment) {
+    ScrollView(.vertical) {
+        PaginatableList(
+            items: [
+                Category.earth, Category.testItemNoDesc, Category.earthExtraLongLabel, Category.testItemNoDesc,
+            ],
+            status: .unknown,
+            paginationRequest: {
+                print("paginate")
+            },
+            canPrewarmItem: { item in }
+        ) { item, _ in
+            CategoryTeaser(categoryInfo: .init(item))
+                .frame(height: 185)
+        }
     }
 }

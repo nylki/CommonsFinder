@@ -51,7 +51,7 @@ struct SearchView: View {
         .navigationTitle("Search")
         .toolbarTitleDisplayMode(.inline)
         .toolbar {
-            SearchOrderButton(searchOrder: searchModel.orderBinding)
+            SearchOrderButton(searchOrder: searchModel.orderBinding, possibleCases: [.relevance, .newest, .oldest])
         }
     }
 
@@ -62,15 +62,15 @@ struct SearchView: View {
             ScrollView(.vertical) {
                 Color.clear.frame(minWidth: 0, maxWidth: .infinity)
 
-                HorizontalCategoryList
-                    .padding(.bottom)
+                if let model = searchModel.categoryResults {
+                    HorizontalCategoryList(model: model)
+                }
 
                 if !searchModel.isSearching, !searchModel.bindableSearchText.isEmpty {
                     if searchModel.mediaResults?.isEmpty == false {
                         PaginatableMediaList(
                             items: searchModel.mediaItems,
                             status: searchModel.mediaPaginationStatus,
-                            toolOverlayPadding: false,
                             paginationRequest: searchModel.mediaPagination
                         )
                     } else if searchModel.mediaResults?.isEmpty == true {
@@ -95,63 +95,11 @@ struct SearchView: View {
                 PaginatableMediaList(
                     items: searchModel.mediaItems,
                     status: searchModel.mediaPaginationStatus,
-                    toolOverlayPadding: false,
                     paginationRequest: searchModel.mediaPagination
                 )
                 .id("images")
             }
         }
-    }
-
-    @ViewBuilder
-    private var HorizontalCategoryList: some View {
-        let items = searchModel.categoryResults?.categoryInfos ?? []
-        let hasCategoriesLoaded = !items.isEmpty
-        let isLoadingCategories = searchModel.categoryPaginationStatus == .isPaginating
-        ZStack {
-            if hasCategoriesLoaded {
-                ScrollView(.horizontal) {
-                    let fallbackToSingleRowGrid = items.count <= 2
-                    LazyHGrid(rows: fallbackToSingleRowGrid ? [.init()] : [.init(), .init()]) {
-
-                        ForEach(items) { categoryInfo in
-                            CategoryTeaser(categoryInfo: categoryInfo)
-                                .frame(width: 260, height: 200)
-                                .onScrollVisibilityChange { visible in
-                                    guard visible else { return }
-                                    let threshold = min(items.count - 1, max(0, items.count - 5))
-                                    guard threshold > 0 else { return }
-                                    let thresholdItem = items[threshold]
-
-                                    if categoryInfo == thresholdItem {
-                                        searchModel.categoryResults?.paginate()
-                                    }
-                                }
-                        }
-
-                        if searchModel.categoryResults?.status == .isPaginating {
-                            ProgressView()
-                                .progressViewStyle(.circular)
-                                .frame(width: 260, height: 300)
-                        }
-                    }
-                    .scrollTargetLayout()
-                    .scenePadding(.horizontal)
-                    .animation(.default, value: items)
-
-                }
-                .scrollTargetBehavior(.viewAligned)
-            } else if isLoadingCategories {
-                let height: Double = (searchModel.categoryResults?.rawCount ?? 0) <= 2 ? 200 : 400
-                ProgressView()
-                    .frame(height: height)
-                    .containerRelativeFrame(.horizontal)
-            }
-        }
-        .padding(.top, 50)
-        .animation(.default, value: hasCategoriesLoaded)
-        .animation(.default, value: searchModel.categoryPaginationStatus)
-        .animation(.default, value: searchModel.categoryResults?.rawCount)
     }
 }
 

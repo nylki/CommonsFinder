@@ -22,7 +22,7 @@ struct HorizontalWikiItemListSection: View {
                 HStack {
                     NavigationLink(value: destination) {
                         Label(label, systemImage: "chevron.right")
-                            .labelStyle(IconTrailingLabelStyle())
+                            .labelStyle(SecondaryIconTrailingLabelStyle())
                             .font(.title3)
                             .bold()
                     }
@@ -46,9 +46,12 @@ struct HorizontalWikiItemListSection: View {
             .padding([.vertical, .trailing], 5)
             .padding(.leading, 0)
             .scenePadding(.bottom)
+            .containerShape(.rect(cornerRadius: 16))
         }
         .scrollTargetBehavior(.viewAligned)
         .animation(.default, value: items)
+        .compositingGroup()
+        .shadow(color: .black.opacity(0.15), radius: 10)
     }
 }
 

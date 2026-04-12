@@ -1,19 +1,18 @@
 //
-//  IconTrailingLabelStyle.swift
+//  TitleAndTrailingIcon.swift
 //  CommonsFinder
 //
-//  Created by Tom Brewe on 23.12.24.
+//  Created by Tom Brewe on 02.04.26.
 //
 
+import Foundation
 import SwiftUI
 
-struct IconTrailingLabelStyle: LabelStyle {
+struct TitleAndTrailingIcon: LabelStyle {
     func makeBody(configuration: Configuration) -> some View {
         HStack {
             configuration.title
-
             configuration.icon
-
             Spacer()
         }
     }
@@ -25,5 +24,5 @@ struct IconTrailingLabelStyle: LabelStyle {
         Label("Title 2", systemImage: "square")
         Label("Title 3", systemImage: "circle")
     }
-    .labelStyle(IconTrailingLabelStyle())
+    .labelStyle(TitleAndTrailingIcon())
 }

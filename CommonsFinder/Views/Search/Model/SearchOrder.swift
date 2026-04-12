@@ -13,10 +13,14 @@ nonisolated enum SearchOrder: String, Hashable, Equatable, CaseIterable, CustomL
         case .relevance: LocalizedStringResource(stringLiteral: "Relevant")
         case .newest: LocalizedStringResource(stringLiteral: "Newest")
         case .oldest: LocalizedStringResource(stringLiteral: "Oldest")
+        case .nameAscending: LocalizedStringResource(stringLiteral: "Ascending")
+        case .nameDescending: LocalizedStringResource(stringLiteral: "Descending")
         }
     }
 
     case relevance
     case newest
     case oldest
+    case nameAscending
+    case nameDescending
 }

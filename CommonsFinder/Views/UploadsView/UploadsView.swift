@@ -9,18 +9,30 @@ import CommonsAPI
 import SwiftUI
 import os.log
 
+enum UserUploadsOrder: Equatable, CustomLocalizedStringResourceConvertible, Hashable {
+    var localizedStringResource: LocalizedStringResource {
+        switch self {
+        case .newer: "Newer"
+        case .older: "Older"
+        }
+    }
+
+    case newer
+    case older
+}
+
 @Observable
 private final class
     PaginatableUserUploadedFiles: PaginatableMediaFiles
 {
     let username: String
 
-    private let order: SearchOrder
+    private let order: UserUploadsOrder
 
     @ObservationIgnored
     private var continueString: String?
 
-    init(appDatabase: AppDatabase, username: String, order: SearchOrder, fileCachingStrategy: FileCachingStrategy) async throws {
+    init(appDatabase: AppDatabase, username: String, order: UserUploadsOrder, fileCachingStrategy: FileCachingStrategy) async throws {
         self.username = username
         self.order = order
         try await super.init(appDatabase: appDatabase, initialTitles: [], fileCachingStrategy: fileCachingStrategy)
@@ -31,8 +43,7 @@ private final class
     {
         let result =
             switch order {
-
-            case .newest, .relevance:
+            case .newer:
                 try await Networking.shared.api.listUserImages(
                     of: username,
                     limit: .count(500),
@@ -41,7 +52,7 @@ private final class
                     direction: .older,
                     continueString: continueString,
                 )
-            case .oldest:
+            case .older:
                 try await Networking.shared.api.listUserImages(
                     of: username,
                     limit: .count(500),
@@ -64,7 +75,7 @@ struct UploadsView: View {
     let username: String
 
     @State private var paginationModel: PaginatableUserUploadedFiles? = nil
-    @State private var searchOrder: SearchOrder = .newest
+    @State private var searchOrder: UserUploadsOrder = .newer
 
     @Environment(\.appDatabase) private var appDatabase
     @Environment(AccountModel.self) private var account
@@ -86,7 +97,7 @@ struct UploadsView: View {
         .navigationTitle("Uploads by \(username)")
         .toolbarTitleDisplayMode(.inline)
         .toolbar {
-            SearchOrderButton(searchOrder: $searchOrder, possibleCases: [.newest, .oldest])
+            SearchOrderButton(searchOrder: $searchOrder, possibleCases: [.newer, .older])
         }
         .onChange(of: searchOrder, initial: true) { oldValue, newValue in
             guard paginationModel == nil || (newValue != oldValue) else { return }

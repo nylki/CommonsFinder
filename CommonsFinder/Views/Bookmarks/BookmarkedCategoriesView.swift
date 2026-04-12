@@ -23,14 +23,12 @@ struct BookmarkedCategoriesView: View {
                 LazyVStack(spacing: 20) {
                     ForEach(categoryInfos) { categoryInfo in
                         CategoryTeaser(categoryInfo: categoryInfo)
-                            .frame(height: 185)
                     }
                 }
+                .containerShape(.rect(cornerRadius: 16))
                 .compositingGroup()
                 .scenePadding()
-                .safeAreaPadding(.trailing)
                 .shadow(color: .black.opacity(0.15), radius: 10)
-
             }
             .navigationTitle("Bookmarks")
             .navigationBarTitleDisplayMode(.inline)
@@ -39,6 +37,6 @@ struct BookmarkedCategoriesView: View {
     }
 }
 
-#Preview {
+#Preview(traits: .previewEnvironment) {
     BookmarkedCategoriesView()
 }

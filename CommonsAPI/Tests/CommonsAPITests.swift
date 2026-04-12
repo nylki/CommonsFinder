@@ -24,7 +24,7 @@ struct CommonsEndToEndTests {
         let contactInfo = "https://github.com/nylki/CommonsFinder"
 
         let userAgent = "\(executable)/\(appBuild) (\(contactInfo)) \(osNameVersion)"
-        return CommonsAPI.API(userAgent: userAgent, referer: "CommonsFinder://UnitTests")
+        return CommonsAPI.API(config: .default, userAgent: userAgent, referer: "CommonsFinder://UnitTests")
     }()
 
     @Test("login and fetching CSRF-token",
@@ -202,7 +202,7 @@ struct CommonsEndToEndTests {
     
     @Test("list sub-categories", arguments: ["Physics"])
     func fetchCategoryInfo(category: String) async throws {
-        let info = try await api.fetchCategoryInfo(of: category)
+        let info = try await api.fetchCategoryMembers(of: category)
         
         #expect(info != nil)
         guard let info else { return }
