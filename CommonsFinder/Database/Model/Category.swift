@@ -156,7 +156,8 @@ nonisolated extension Category {
 
     static var earthNoImage: Self {
         .init(
-            wikidataId: "Q2", commonsCategory: "Earth", preferredLanguageAtFetchDate: "en", fetchDate: .distantPast, label: "Earth", description: "third planet from the Sun in the Solar System",
+            wikidataId: "Q2_noimage", commonsCategory: "Earth_noimg", preferredLanguageAtFetchDate: "en", fetchDate: .distantPast, label: "Earth",
+            description: "third planet from the Sun in the Solar System",
             aliases: ["Gaia", "🌍", "The Blue Planet"], instances: ["Q3504248"], latitude: nil, longitude: nil,
             image: nil)
     }

@@ -435,7 +435,6 @@ struct FileDetailView: View {
 
     @ViewBuilder
     private var tagSection: some View {
-
         ZStack {
             if isResolvingTags, resolvedTags.isEmpty {
                 let itemCount = mediaFileInfo.mediaFile.categories.count + mediaFileInfo.mediaFile.statements.map(\.isDepicts).count
@@ -448,7 +447,6 @@ struct FileDetailView: View {
                 TagsContainerView(tags: resolvedTags)
             }
         }
-        .animation(.default, value: isResolvingTags)
         .animation(.default, value: resolvedTags)
     }
 }

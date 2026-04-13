@@ -13,6 +13,7 @@ import os.log
 
 struct MediaFileListItem: View {
     let mediaFileInfo: MediaFileInfo
+    var isImageLoadingAllowed = true
 
     @Environment(Navigation.self) private var navigationModel
     @Environment(AccountModel.self) private var account
@@ -63,7 +64,7 @@ struct MediaFileListItem: View {
     @ViewBuilder
     private var imageView: some View {
         WidthReader { width in
-            MediaFileThumbImage(mediaFileInfo)
+            MediaFileThumbImage(mediaFileInfo, isImageLoadingAllowed: isImageLoadingAllowed)
                 .frame(
                     width: width,
                     height: imageHeight(containerWidth: width)

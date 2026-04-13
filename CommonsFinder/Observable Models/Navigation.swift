@@ -121,6 +121,7 @@ enum NavigationStackItem: Hashable, CustomStringConvertible {
     case bookmarkedMedia
     case recentlyViewedCategories
     case bookmarkedCategories
+    case relatedCategories(_ item: CategoryInfo, _ type: RelatedCategoriesType)
 
     var description: String {
         switch self {
@@ -142,6 +143,8 @@ enum NavigationStackItem: Hashable, CustomStringConvertible {
             "recentlyViewedCategories"
         case .bookmarkedCategories:
             "bookmarkedCategories"
+        case .relatedCategories(let item, let type):
+            "relatedCategories-\(item.id)-\(type.description)"
         }
     }
 
@@ -158,6 +161,12 @@ enum NavigationStackItem: Hashable, CustomStringConvertible {
             "User:\(username)"
         case .recentlyViewedMedia, .bookmarkedMedia, .recentlyViewedCategories, .bookmarkedCategories:
             ""
+        case .relatedCategories(let item, let type):
+            if let commonsCategory = item.base.commonsCategory {
+                "Category:\(commonsCategory)"
+            } else {
+                "Wikidata:\(item.id)"
+            }
         }
     }
 }
@@ -189,6 +198,10 @@ extension Navigation {
 
     func viewCategory(_ categoryInfo: CategoryInfo) {
         path[selectedTab]?.append(.wikidataItem(categoryInfo))
+    }
+
+    func viewRelatedCategories(of categoryInfo: CategoryInfo, type: RelatedCategoriesType) {
+        path[selectedTab]?.append(.relatedCategories(categoryInfo, type))
     }
 
     func openOnboarding() {

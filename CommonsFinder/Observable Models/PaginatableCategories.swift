@@ -2,28 +2,30 @@
 //  PaginatableCategories.swift
 //  CommonsFinder
 //
-//  Created by Tom Brewe on 25.08.25.
+//  Created by Tom Brewe on 27.03.26.
 //
 
-import Algorithms
-import CommonsAPI
-import Foundation
 import GRDB
+import SwiftUI
 import os.log
 
-/// Since This is a specialized pagination model for Category searches
-/// where commons category searches and wikidata searches are combines into an interleaving pagination
-@Observable class PaginatableCategorySearch {
-    let searchString: String
-    var status: PaginationStatus = .unknown
-    let sort: SearchOrder
+struct CategorySearchTargets: OptionSet {
+    let rawValue: Int
+    static let wikidata = Self(rawValue: 1 << 0)
+    static let commons = Self(rawValue: 1 << 1)
 
-    private var commonsOffset: Int?
-    private var wikidataOffset: Int?
+    static var all: Self {
+        [.wikidata, .commons]
+    }
+}
+
+@Observable class PaginatableCategories {
+    var status: PaginationStatus = .unknown
+    let searchTargets: CategorySearchTargets
 
     // the raw ids/categories are FIFO and will be removed when fetching the full Category.
-    private var rawWikidataIDs: [String] = []
-    private var rawCommonsCategories: [String] = []
+    var rawWikidataIDs: [String] = []
+    var rawCommonsCategories: [String] = []
     var rawCount: Int { rawWikidataIDs.count + rawCommonsCategories.count }
 
     /// the combined commons categories + wikidata items
@@ -31,13 +33,10 @@ import os.log
 
     private let paginateFetchLimit = 10
 
-
     @ObservationIgnored
     private var canContinueWikidataPagination = false
     @ObservationIgnored
     private var canContinueCommonsPagination = false
-
-    var isEmpty: Bool { rawWikidataIDs.isEmpty && rawCommonsCategories.isEmpty }
 
     @ObservationIgnored
     private var paginationTask: Task<Void, Never>?
@@ -47,21 +46,22 @@ import os.log
     private let appDatabase: AppDatabase
 
     @ObservationIgnored
-    var wikidataIdSet: Set<Category.WikidataID> = []
+    var allWikidataIdSet: Set<Category.WikidataID> = []
     @ObservationIgnored
-    var commonsCategoriesSet: Set<String> = []
+    var allCommonsCategoriesSet: Set<String> = []
 
-    init(appDatabase: AppDatabase, searchString: String, sort: SearchOrder) async throws {
-        self.appDatabase = appDatabase
-        self.searchString = searchString
-        self.sort = sort
-        try await initialFetch()
+    var isEmpty: Bool {
+        allCommonsCategoriesSet.isEmpty && allWikidataIdSet.isEmpty
     }
 
-    init(previewAppDatabase: AppDatabase, searchString: String, prefilledCategories: [CategoryInfo]) {
+    init(appDatabase: AppDatabase, searchTargets: CategorySearchTargets) {
+        self.searchTargets = searchTargets
+        self.appDatabase = appDatabase
+    }
+
+    init(previewAppDatabase: AppDatabase, searchTargets: CategorySearchTargets, prefilledCategories: [CategoryInfo]) {
+        self.searchTargets = searchTargets
         self.appDatabase = previewAppDatabase
-        self.sort = .relevance
-        self.searchString = searchString
         self.categoryInfos = prefilledCategories
     }
 
@@ -113,18 +113,18 @@ import os.log
                 async let rawWikidataTask = Task<Void, Never> {
                     do {
                         if needsRawWikidataPagination {
-                            try await rawWikidataPagination()
+                            try await performRawWikidataPagination()
                         }
                     } catch {
                         logger.error("Failed to fetch raw wikidata items for pagination \(error)")
                     }
                 }
 
-                let needsRawCommonsPagination = rawCommonsCategories.count < paginateFetchLimit && canContinueWikidataPagination
+                let needsRawCommonsPagination = rawCommonsCategories.count < paginateFetchLimit && canContinueCommonsPagination
                 async let rawCommonsTask = Task<Void, Never> {
                     do {
                         if needsRawCommonsPagination {
-                            try await rawCommonsCategoryPagination()
+                            try await performRawCommonsCategoryPagination()
                         }
                     } catch {
                         logger.error("Failed to fetch raw commons categories for pagination \(error)")
@@ -176,55 +176,46 @@ import os.log
         }
     }
 
-    private func rawWikidataPagination() async throws {
-        let result = try await Networking.shared.api.searchWikidataItems(
-            term: searchString,
-            languageCode: Locale.current.wikiLanguageCodeIdentifier,
-            offset: wikidataOffset
-        )
-
-        let fetchedWikidataIDs = result.search
-            .map(\.id)
-            .filter { !wikidataIdSet.contains($0) }
-
-        wikidataOffset = result.searchContinue
-        rawWikidataIDs.append(contentsOf: fetchedWikidataIDs)
-        wikidataIdSet.formUnion(fetchedWikidataIDs)
-        canContinueWikidataPagination = wikidataOffset != nil
+    func rawWikidataPagination() async throws -> (ids: [String], canContinue: Bool) {
+        // NOTE: if sub-classed: this function should be overriden to provide the continue item
+        return (ids: [], canContinue: false)
     }
 
 
-    private func rawCommonsCategoryPagination() async throws {
-        let result = try await Networking.shared.api.searchCategories(
-            for: searchString,
-            sort: sort.apiType,
-            limit: .max,
-            offset: commonsOffset
-        )
-        let categoriesWithoutPrefix = result.items
-            .map {
-                String($0.title.split(separator: "Category:")[0])
-            }
-            .filter { !commonsCategoriesSet.contains($0) }
-
-        rawCommonsCategories.append(contentsOf: categoriesWithoutPrefix)
-        commonsCategoriesSet.formUnion(categoriesWithoutPrefix)
-        commonsOffset = result.offset
-        canContinueCommonsPagination = commonsOffset != nil
+    func rawCommonsCategoryPagination() async throws -> (categories: [String], canContinue: Bool) {
+        // NOTE: if sub-classed: this function should be overriden to provide the continue items
+        return (categories: [], canContinue: false)
     }
 
+    func performRawCommonsCategoryPagination() async throws {
+        guard searchTargets.contains(.commons) else { return }
+        let result = try await rawCommonsCategoryPagination()
+        let categories = result.categories.filter { !allCommonsCategoriesSet.contains($0) }
 
-    private func initialFetch() async throws {
+        rawCommonsCategories.append(contentsOf: categories)
+        allCommonsCategoriesSet.formUnion(categories)
+        canContinueCommonsPagination = result.canContinue
+    }
+
+    func performRawWikidataPagination() async throws {
+        guard searchTargets.contains(.wikidata) else { return }
+        let result = try await rawWikidataPagination()
+        let wikidataIDs = result.ids.filter { !allWikidataIdSet.contains($0) }
+
+        rawWikidataIDs.append(contentsOf: wikidataIDs)
+        allWikidataIdSet.formUnion(wikidataIDs)
+        canContinueWikidataPagination = result.canContinue
+    }
+
+    func initialFetch() async throws {
         status = .isPaginating
-        async let rawWikidataTask: () = rawWikidataPagination()
-        async let rawCommonsTask: () = rawCommonsCategoryPagination()
-        do {
-            let (_, _) = try await (rawWikidataTask, rawCommonsTask)
-            logger.info("raw wikidata ids: \(self.rawWikidataIDs)")
-            logger.info("raw commons categories: \(self.rawCommonsCategories)")
-        } catch {
-            logger.error("Failed to perform initial raw fetch search categories for \(self.searchString): \(error)")
-        }
+        async let rawWikidataTask: () = performRawWikidataPagination()
+        async let rawCommonsTask: () = performRawCommonsCategoryPagination()
+        let (_, _) = try await (rawWikidataTask, rawCommonsTask)
+
+        logger.info("raw wikidata ids: \(self.rawWikidataIDs)")
+        logger.info("raw commons categories: \(self.rawCommonsCategories)")
+
         paginate()
     }
 }

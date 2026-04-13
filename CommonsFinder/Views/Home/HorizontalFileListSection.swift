@@ -23,7 +23,7 @@ struct HorizontalFileListSection: View {
                 HStack {
                     NavigationLink(value: destination) {
                         Label(label, systemImage: "chevron.right")
-                            .labelStyle(IconTrailingLabelStyle())
+                            .labelStyle(SecondaryIconTrailingLabelStyle())
                             .font(.title3)
                             .bold()
                     }

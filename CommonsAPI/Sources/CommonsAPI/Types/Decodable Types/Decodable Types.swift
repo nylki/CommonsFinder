@@ -37,7 +37,7 @@ public extension LanguageString {
     }
 }
 
-public enum ListDirection: String {
+public enum ListUserImageOrder: String {
     case older
     case newer
 }
@@ -965,11 +965,6 @@ internal struct SearchListResponse: Decodable, Sendable {
 
 // query: list=categorymembers
 internal struct CategoryMembersListResponse: Decodable, Sendable {
-    let categorymembers: [QueryListItem]
-}
-
-// query: list=categorymembers
-internal struct CategoryResponse: Decodable, Sendable {
     let categorymembers: [QueryListItem]
     let pages: [ParentCategoryPage]?
     

@@ -31,6 +31,13 @@ struct CategoryView: View {
     @State private var item: CategoryInfo?
 
     @State private var paginationModel: PaginatableCategoryMediaFiles? = nil
+    @State private var subCategoryModel: PaginatableCategorySearch? = nil
+
+    /// NOTE: irregardless of current search parameters we remember if the category initially has images and sub-cats
+    /// for better UX when hiding section.
+    @State private var hasImages = false
+    @State private var hasSubcategories = false
+
     @State private var paginationedLoadedDate: Date?
     @State private var paginationModelNeedsReloadDate: Date?
     @State private var searchOrder: SearchOrder = .relevance
@@ -41,20 +48,15 @@ struct CategoryView: View {
     @Namespace private var namespace
 
     @State private var isOptionsBarSticky = false
-    @State private var scrollState: ScrollState = .init()
 
-    @State private var subCategories: [CategoryInfo] = []
-    @State private var parentCategories: [CategoryInfo] = []
-    @State private var selectedMediaTab: MediaTab = .category
-
-    @State private var isSubCategoriesExpanded = false
-    @State private var isParentCategoriesExpanded = false
-    @State private var hasBeenInitialized = false
+    @State private var hasInitializedInfo = false
+    @State private var hasFinishedRefreshingInfo = false
 
     @Environment(\.appDatabase) private var appDatabase
     @Environment(\.locale) private var locale
     @Environment(Navigation.self) private var navigation
     @Environment(MapModel.self) private var mapModel
+
     private var resolvedCategoryName: String? {
         item?.base.commonsCategory ?? initialItem.base.commonsCategory
     }
@@ -69,7 +71,7 @@ struct CategoryView: View {
 
     private func loadPaginationModel() async {
         do {
-            paginationModel = try await .init(
+            let newModel = try await PaginatableCategoryMediaFiles(
                 appDatabase: appDatabase,
                 categoryName: resolvedCategoryName,
                 depictItemID: item?.base.wikidataId,
@@ -77,62 +79,46 @@ struct CategoryView: View {
                 deepCategorySearch: deepCategoryEnabled,
                 searchString: searchString
             )
+
+            if paginationModel == nil {
+                hasImages = newModel.isEmpty == false
+            }
+            paginationModel = newModel
         } catch {
             logger.error("failed to set pagination model for new search order \(error)")
         }
     }
 
     var body: some View {
-        let dragGesture = DragGesture(minimumDistance: 25, coordinateSpace: .local)
-            .onChanged { v in
-                let newDirection: ScrollState.Direction =
-                    if v.predictedEndLocation.y > v.startLocation.y {
-                        .up
-                    } else if v.predictedEndLocation.y < v.startLocation.y {
-                        .down
-                    } else {
-                        .none
-                    }
-
-                guard newDirection != scrollState.lastDirection else { return }
-                scrollState.lastDirection = newDirection
-            }
-
         ScrollView(.vertical) {
             VStack(alignment: .leading) {
                 header
-
-                optionsBar
-                    .opacity(isOptionsBarSticky ? 0 : 1)
-                    .allowsHitTesting(!isOptionsBarSticky)
-                    .onScrollVisibilityChange(threshold: 0.1) { visible in
-                        isOptionsBarSticky = !visible
+                if hasInitializedInfo {
+                    subCategoryList
+                    mediaList
+                } else {
+                    HStack {
+                        Spacer(minLength: 0)
+                        ProgressView().progressViewStyle(.circular)
+                        Spacer(minLength: 0)
                     }
+                }
 
-                mediaList
+                Color.clear
+                    .frame(height: 1)
+                    .frame(minWidth: 0, maxWidth: .infinity)
+
 
                 Spacer()
             }
             .animation(.default, value: isSearchPresented)
+            .animation(.default, value: hasInitializedInfo)
         }
-        .onScrollPhaseChange { oldPhase, newPhase, context in
-            guard oldPhase != newPhase else { return }
-            scrollState.phase = newPhase
-        }
-        .overlay(alignment: .top) {
-            let stickyOptionsBarVisible =
-                isOptionsBarSticky && paginationModel != nil && paginationModel?.isEmpty != true && scrollState.lastDirection == .up && scrollState.phase == .idle
-
-            if stickyOptionsBarVisible {
-                optionsBar
-            }
-        }
-        .animation(.linear(duration: 0.25), value: scrollState)
         .containerRelativeFrame(.horizontal)
-        .simultaneousGesture(dragGesture, isEnabled: isOptionsBarSticky)
         .navigationTitle(title)
         .navigationBarTitleDisplayMode(.inline)
         .toolbar { toolbar }
+        .animation(.default, value: isOptionsBarSticky)
         .toolbar(removing: .title)
         .searchable(
             text: $searchString,
@@ -150,7 +136,7 @@ struct CategoryView: View {
         }
         .onChange(of: item) { oldValue, newValue in
             guard oldValue != newValue else { return }
-            guard !hasBeenInitialized, networkInitTask == nil else {
+            guard !hasFinishedRefreshingInfo, networkInitTask == nil else {
                 return
             }
 
@@ -175,6 +161,7 @@ struct CategoryView: View {
             paginationModel = nil
             try? await Task.sleep(for: .milliseconds(500))
             paginationedLoadedDate = paginationModelNeedsReloadDate
+
             await loadPaginationModel()
         }
     }
@@ -182,9 +169,9 @@ struct CategoryView: View {
     @ViewBuilder
     private var optionsBar: some View {
         HStack {
-            SearchOrderButton(searchOrder: $searchOrder)
+            SearchOrderButton(searchOrder: $searchOrder, possibleCases: SearchOrder.allCases, showSelectedInLabel: true)
             DeepCategoryToggle(enabled: $deepCategoryEnabled)
-                .disabled(subCategories.isEmpty)
+                .disabled(subCategoryModel?.isEmpty == true)
             if !isSearchPresented {
                 Button {
                     isSearchPresented.toggle()
@@ -194,34 +181,87 @@ struct CategoryView: View {
                 .labelStyle(.iconOnly)
                 .glassButtonStyle()
             }
-
-
             Spacer(minLength: 0)
         }
-        .padding(.horizontal)
+
+
+    }
+
+    @ViewBuilder
+    private var subCategoryList: some View {
+        VStack {
+            if hasSubcategories {
+                Section {
+                    if let subCategoryModel {
+                        HorizontalCategoryList(model: subCategoryModel)
+                    } else {
+                        ProgressView().progressViewStyle(.circular)
+                    }
+                } header: {
+                    HStack {
+                        NavigationLink(value: NavigationStackItem.relatedCategories(item ?? initialItem, .sub)) {
+                            Label("Subcategories", systemImage: "chevron.right")
+                                .labelStyle(SecondaryIconTrailingLabelStyle())
+                                .font(.title3)
+                        }
+                        .tint(.primary)
+                        Spacer()
+                    }
+                    .padding(.leading)
+                }
+                .transition(.opacity)
+                .frame(minWidth: 0, maxWidth: .infinity)
+            }
+        }
+        .animation(.snappy, value: subCategoryModel == nil)
     }
 
     @ViewBuilder
     private var mediaList: some View {
-        VStack {
-            if let paginationModel, !paginationModel.isEmpty {
+        let isSubCategorySectionVisible = subCategoryModel?.isEmpty == false
+
+        if hasImages {
+            // NOTE: only show the image section if the sub-cat section is visible
+            // otherwise no need to explicitly label this section.
+            if isSubCategorySectionVisible {
+                HStack {
+                    Text("Images")
+                        .labelStyle(SecondaryIconTrailingLabelStyle())
+                        .font(.title3)
+
+                    Spacer()
+                }
+                .padding([.leading, .top])
+            }
+
+            optionsBar
+                .padding(.leading)
+                .onScrollVisibilityChange { visible in
+                    isOptionsBarSticky = !visible
+                }
+            if let paginationModel {
                 PaginatableMediaList(
                     items: paginationModel.mediaFileInfos,
                     status: paginationModel.status,
                     paginationRequest: paginationModel.paginate
                 )
                 .transition(.opacity)
-            } else if paginationModel?.isEmpty == true {
-                mediaUnavailableView
-                    .padding()
+                .frame(minWidth: 0, maxWidth: .infinity)
             } else {
+                Spacer()
+            }
+        } else if paginationModel?.isEmpty == true {
+            mediaUnavailableView
+                .padding()
+        } else {
+            HStack {
+                Spacer(minLength: 0)
                 ProgressView()
                     .progressViewStyle(.circular)
                     .padding()
+                Spacer(minLength: 0)
             }
         }
-        .frame(minWidth: 0, maxWidth: .infinity)
-        .animation(.snappy, value: paginationModel == nil)
     }
 
     @ViewBuilder
@@ -266,13 +306,13 @@ struct CategoryView: View {
                     )
                     .padding(.vertical)
                 }
-                relatedCategoriesView
+
             }
 
         }
         .animation(.default, value: item)
         .animation(.default, value: item?.base.coordinate)
-        .scenePadding()
+        .padding()
     }
 
     @ViewBuilder
@@ -303,6 +343,27 @@ struct CategoryView: View {
 
     @ToolbarContentBuilder
     private var toolbar: some ToolbarContent {
+
+        if isOptionsBarSticky {
+            let didUserChangeFilter = deepCategoryEnabled || searchOrder != .relevance
+
+            ToolbarItem(placement: .topBarLeading) {
+                Menu("Filter", systemImage: "line.3.horizontal.decrease") {
+                    SearchOrderButton(searchOrder: $searchOrder, possibleCases: SearchOrder.allCases)
+                        .tint(nil)
+                    Button {
+                        deepCategoryEnabled.toggle()
+                    } label: {
+                        Label("Include Subcategories", systemImage: "list.bullet.indent")
+                    }
+                    .tint(nil)
+                    .disabled(subCategoryModel?.isEmpty == true)
+                }
+                .tint(didUserChangeFilter ? .accent : nil)
+            }
+        }
+
+
         ToolbarItem(placement: .automatic) {
             let isBookmarked = (item ?? initialItem).isBookmarked
             Button(
@@ -312,6 +373,8 @@ struct CategoryView: View {
                 updateBookmark(!isBookmarked)
             }
         }
+
+
         ToolbarItem(placement: .automatic) {
             Menu("More", systemImage: "ellipsis") {
                 if let item {
@@ -320,6 +383,7 @@ struct CategoryView: View {
                             navigation.showOnMap(category: item.base, mapModel: mapModel)
                         }
                     }
+
                     Divider()
 
                     Menu("New Image", systemImage: "plus") {
@@ -335,35 +399,22 @@ struct CategoryView: View {
                         }
                     }
 
+                    if item.base.commonsCategory != nil {
+                        Section("Related Categories") {
+                            NavigationLink(value: NavigationStackItem.relatedCategories(item, .parent)) {
+                                Label("Show parent Categories", systemImage: "arrow.up")
+                            }
+                            NavigationLink(value: NavigationStackItem.relatedCategories(item, .sub)) {
+                                Label("Show Subcategories", systemImage: "arrow.down")
+                            }
+                        }
+                    }
+
                     CategoryLinkSection(item: item)
                 }
             }
             .disabled(item == nil)
         }
-    }
-
-    @ViewBuilder private var relatedCategoriesView: some View {
-
-        VStack(alignment: .leading) {
-            DisclosureGroup(
-                "\(parentCategories.count) Parent Categories",
-                isExpanded: $isParentCategoriesExpanded
-            ) {
-                RelatedCategoryView(categories: parentCategories)
-            }
-            .disabled(parentCategories.isEmpty)
-
-
-            DisclosureGroup(
-                "\(subCategories.count) Subcategories",
-                isExpanded: $isSubCategoriesExpanded
-            ) {
-                RelatedCategoryView(categories: subCategories)
-            }
-            .disabled(subCategories.isEmpty)
-        }
-        .animation(.default, value: subCategories)
-        .animation(.default, value: parentCategories)
     }
 
     private func startDatabaseTask(incrementViewCount: Bool) {
@@ -404,11 +455,9 @@ struct CategoryView: View {
     }
     /// initializes pagination for `item` and resolves sub+parent categories as well as refreshes the wikidata base item.
     private func startInitialNetworkTask() {
-        // TODO: we can opimistically init the pagination from the given Category
-        // since we don't expect the basic info of wikidataID and commonsCategory
-        // to change often.
+        hasFinishedRefreshingInfo = false
+        hasInitializedInfo = false
 
-        hasBeenInitialized = false
         guard let item else { return }
 
         if item.base.wikidataId != nil && item.base.commonsCategory != nil {
@@ -422,6 +471,7 @@ struct CategoryView: View {
                 logger.info("CAT: start network task for Category \"\(debugLabel)\".")
             #endif
             do {
+
                 if let wikidataID = item.base.wikidataId {
 
                     let result = try await DataAccess.fetchCombinedCategoriesFromDatabaseOrAPI(
@@ -435,31 +485,37 @@ struct CategoryView: View {
 
                     if let fetchedCategory = result.fetchedCategories.first {
                         if let commonsCategory = fetchedCategory.commonsCategory {
-                            try await resolveCategoryDetails(category: commonsCategory)
+                            subCategoryModel = try await PaginatableCategorySearch(
+                                appDatabase: appDatabase,
+                                searchString: "",
+                                inParentCategory: commonsCategory,
+                                sort: .relevance,
+                                searchTargets: .commons
+                            )
                         }
                     }
                 } else if let commonsCategory = initialItem.base.commonsCategory {
 
-                    async let categoryTask: () = resolveCategoryDetails(category: commonsCategory)
+                    async let categoryTask = try await PaginatableCategorySearch(
+                        appDatabase: appDatabase,
+                        searchString: "",
+                        inParentCategory: commonsCategory,
+                        sort: .relevance,
+                        searchTargets: .commons
+                    )
                     async let itemsTask = Networking.shared.api.findWikidataItemsForCategories(
                         [commonsCategory],
                         languageCode: locale.wikiLanguageCodeIdentifier
                     )
-                    let (_, apiItems) = try await (categoryTask, itemsTask)
+                    let (loadedSubCategoryModel, apiItems) = try await (categoryTask, itemsTask)
 
                     if let apiItem = apiItems.first {
                         let fetchedCategory = Category(apiItem: apiItem)
                         try appDatabase.upsert(fetchedCategory)
                     }
+
+                    subCategoryModel = loadedSubCategoryModel
                 }
-
-                // Expand sub-categories if there are no images to show
-                if paginationModel?.isEmpty == true {
-                    isParentCategoriesExpanded = true
-                    isSubCategoriesExpanded = true
-
-                }
-
             } catch is CancellationError {
                 // NOTE: os.log crashes previews in XCode 16
                 // if string is not interpolated. sigh.
@@ -472,9 +528,10 @@ struct CategoryView: View {
                 logger.info("CAT: network task for Category \"\(debugLabel)\" finished!")
             #endif
 
+            hasSubcategories = subCategoryModel?.isEmpty == false
+            hasInitializedInfo = true
             await refreshFromNetwork()
-
-            hasBeenInitialized = true
+            hasFinishedRefreshingInfo = true
         }
     }
 
@@ -483,7 +540,6 @@ struct CategoryView: View {
 
         do {
             let refreshedItem = try await DataAccess.refreshCategoryInfoFromAPI(categoryInfo: item, appDatabase: appDatabase)
-
 
             if let refreshedItem {
                 if refreshedItem.id != item.base.id {
@@ -525,37 +581,27 @@ struct CategoryView: View {
             logger.error("Failed to update bookmark on wiki item \(item.id): \(error)")
         }
     }
-
-    struct RelatedCategoriesInfo {
-        let subCategories: [String]
-        let parentCategories: [String]
-    }
-
-
-    private func resolveCategoryDetails(category: String) async throws {
-        let relatedCategories = try await Networking.shared.api.fetchCategoryInfo(of: category)
-        // FIXME: cross-resolve against database / and or fetch wikidata items if possible
-        if let relatedCategories {
-            subCategories = relatedCategories.subCategories.map({ categoryName in
-                CategoryInfo(.init(commonsCategory: categoryName))
-            })
-            parentCategories = relatedCategories.parentCategories.map({ categoryName in
-                CategoryInfo(.init(commonsCategory: categoryName))
-            })
-        }
-    }
 }
 
 
-#Preview(traits: .previewEnvironment) {
+#Preview("location and sub-cats", traits: .previewEnvironment) {
+    NavigationView {
+        CategoryView(.init(.init(commonsCategory: "Berlin")))
+    }
+}
+#Preview("no location", traits: .previewEnvironment) {
     NavigationView {
         CategoryView(.init(.init(commonsCategory: "Earth")))
     }
 }
-#Preview("Different Category String", traits: .previewEnvironment) {
-    CategoryView(.init(.init(commonsCategory: "Lise-Meitner-Haus")))
+#Preview("no sub-cats", traits: .previewEnvironment) {
+    NavigationView {
+        CategoryView(.init(.init(commonsCategory: "Lise-Meitner-Haus")))
+    }
 }
 
 #Preview("No images", traits: .previewEnvironment) {
-    CategoryView(.init(.init(commonsCategory: "Squares in Berlin")))
+    NavigationView {
+        CategoryView(.init(.init(commonsCategory: "Squares in Berlin")))
+    }
 }

@@ -8,6 +8,7 @@
 import Algorithms
 import CommonsAPI
 import GRDB
+import Nuke
 import SwiftUI
 import os.log
 
@@ -29,7 +30,7 @@ private enum PaginationFileIdentifierType {
     @ObservationIgnored
     private var canContinueRawPagination = false
 
-    var isEmpty: Bool { status != .isPaginating && mediaFileInfos.isEmpty && !canContinueRawPagination }
+    var isEmpty: Bool { allIds.isEmpty }
 
     private let identifierType: PaginationFileIdentifierType
 
@@ -46,6 +47,8 @@ private enum PaginationFileIdentifierType {
     private var observationTask: Task<Void, Never>?
 
     private let appDatabase: AppDatabase
+
+    private let imagePrefetcher = ImagePrefetcher()
 
     var maxCount: Int {
         allIds.count
@@ -192,13 +195,13 @@ private enum PaginationFileIdentifierType {
                     try appDatabase.replaceExistingMediaFiles(fetchedMediaFiles)
                 }
 
+                let fetchedMediaFileInfos: [MediaFileInfo] = fetchedMediaFiles.map {
+                    .init(mediaFile: $0, itemInteraction: nil)
+                }
 
                 // Append the fetched files to our list (keeping the ItemInteraction empty as
                 // we are going to observe the DB after this block and itemInteraction will be augmented from DB there.
-                mediaFileInfos.append(
-                    contentsOf: fetchedMediaFiles.map {
-                        .init(mediaFile: $0, itemInteraction: nil)
-                    })
+                mediaFileInfos.append(contentsOf: fetchedMediaFileInfos)
 
                 let reachedEnd = idsToFetch.isEmpty && !canContinueRawPagination
                 status = .idle(reachedEnd: reachedEnd)

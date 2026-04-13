@@ -32,6 +32,7 @@ struct RecentlyViewedCategoriesView: View {
                                 .frame(height: 185)
                         }
                     }
+                    .containerShape(.rect(cornerRadius: 16))
                     .compositingGroup()
                     .scenePadding()
                     .safeAreaPadding(.trailing)
