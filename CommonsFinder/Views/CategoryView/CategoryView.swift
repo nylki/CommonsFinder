@@ -173,7 +173,7 @@ struct CategoryView: View {
     @ViewBuilder
     private var optionsBar: some View {
         HStack {
-            SearchOrderButton(searchOrder: $searchOrder, possibleCases: SearchOrder.allCases, showSelectedInLabel: true)
+            SearchOrderButton(searchOrder: $searchOrder, possibleCases: [.relevance, .newest, .oldest], showSelectedInLabel: true)
             DeepCategoryToggle(enabled: $deepCategoryEnabled)
                 .disabled(subCategoryModel?.isEmpty == true)
             if !isSearchPresented {
