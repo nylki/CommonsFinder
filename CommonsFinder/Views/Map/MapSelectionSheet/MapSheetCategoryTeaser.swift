@@ -45,6 +45,7 @@ struct MapSheetCategoryTeaser: View {
                 .padding(3)
         }
         .containerRelativeFrame(.horizontal, count: 5, span: size == .regular ? 3 : 4, spacing: 0)
+        .buttonStyle(CategoryTeaserButtonStyle())
         .animation(.default, value: isSelected)
     }
 

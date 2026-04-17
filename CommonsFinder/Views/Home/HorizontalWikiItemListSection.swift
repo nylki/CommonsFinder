@@ -42,11 +42,12 @@ struct HorizontalWikiItemListSection: View {
                         .frame(width: 260, height: 185)
                 }
             }
+            .containerShape(.rect(cornerRadius: 16))
             .scrollTargetLayout()
             .padding([.vertical, .trailing], 5)
             .padding(.leading, 0)
             .scenePadding(.bottom)
-            .containerShape(.rect(cornerRadius: 16))
+
         }
         .scrollTargetBehavior(.viewAligned)
         .animation(.default, value: items)

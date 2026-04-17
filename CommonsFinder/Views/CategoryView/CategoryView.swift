@@ -35,8 +35,8 @@ struct CategoryView: View {
 
     /// NOTE: irregardless of current search parameters we remember if the category initially has images and sub-cats
     /// for better UX when hiding section.
-    @State private var hasImages = false
-    @State private var hasSubcategories = false
+    @State private var hasImages: Bool?
+    @State private var hasSubcategories: Bool?
 
     @State private var paginationedLoadedDate: Date?
     @State private var paginationModelNeedsReloadDate: Date?
@@ -51,6 +51,7 @@ struct CategoryView: View {
 
     @State private var hasInitializedInfo = false
     @State private var hasFinishedRefreshingInfo = false
+    @State private var isLoadingPaginationModel = false
 
     @Environment(\.appDatabase) private var appDatabase
     @Environment(\.locale) private var locale
@@ -69,32 +70,14 @@ struct CategoryView: View {
         item?.base.coordinate ?? initialItem.base.coordinate
     }
 
-    private func loadPaginationModel() async {
-        do {
-            let newModel = try await PaginatableCategoryMediaFiles(
-                appDatabase: appDatabase,
-                categoryName: resolvedCategoryName,
-                depictItemID: item?.base.wikidataId,
-                order: searchOrder,
-                deepCategorySearch: deepCategoryEnabled,
-                searchString: searchString
-            )
-
-            if paginationModel == nil {
-                hasImages = newModel.isEmpty == false
-            }
-            paginationModel = newModel
-        } catch {
-            logger.error("failed to set pagination model for new search order \(error)")
-        }
-    }
-
     var body: some View {
         ScrollView(.vertical) {
             VStack(alignment: .leading) {
                 header
                 if hasInitializedInfo {
-                    subCategoryList
+                    if !isSearchPresented {
+                        subCategoryList
+                    }
                     mediaList
                 } else {
                     HStack {
@@ -113,6 +96,7 @@ struct CategoryView: View {
             }
             .animation(.default, value: isSearchPresented)
             .animation(.default, value: hasInitializedInfo)
+            .animation(.default, value: isLoadingPaginationModel)
         }
         .containerRelativeFrame(.horizontal)
         .navigationTitle(title)
@@ -155,14 +139,34 @@ struct CategoryView: View {
             paginationModelNeedsReloadDate = .now
         }
         .task(id: paginationModelNeedsReloadDate) {
+
             guard let paginationModelNeedsReloadDate else { return }
             let lastRefresh = (paginationedLoadedDate ?? Date.distantPast).distance(to: paginationModelNeedsReloadDate)
             guard lastRefresh > 0 else { return }
-            paginationModel = nil
+
+            isLoadingPaginationModel = true
+            defer { isLoadingPaginationModel = false }
+
             try? await Task.sleep(for: .milliseconds(500))
             paginationedLoadedDate = paginationModelNeedsReloadDate
 
-            await loadPaginationModel()
+            do {
+                let newModel = try await PaginatableCategoryMediaFiles(
+                    appDatabase: appDatabase,
+                    categoryName: resolvedCategoryName,
+                    depictItemID: item?.base.wikidataId,
+                    order: searchOrder,
+                    deepCategorySearch: deepCategoryEnabled,
+                    searchString: searchString
+                )
+
+                if paginationModel == nil, hasImages == nil {
+                    hasImages = newModel.isEmpty == false
+                }
+                paginationModel = newModel
+            } catch {
+                logger.error("failed to set pagination model for new search order \(error)")
+            }
         }
     }
 
@@ -190,7 +194,7 @@ struct CategoryView: View {
     @ViewBuilder
     private var subCategoryList: some View {
         VStack {
-            if hasSubcategories {
+            if hasSubcategories == true {
                 Section {
                     if let subCategoryModel {
                         HorizontalCategoryList(model: subCategoryModel)
@@ -220,7 +224,7 @@ struct CategoryView: View {
     private var mediaList: some View {
         let isSubCategorySectionVisible = subCategoryModel?.isEmpty == false
 
-        if hasImages {
+        if hasImages == true {
             // NOTE: only show the image section if the sub-cat section is visible
             // otherwise no need to explicitly label this section.
             if isSubCategorySectionVisible {
@@ -239,7 +243,15 @@ struct CategoryView: View {
                 .onScrollVisibilityChange { visible in
                     isOptionsBarSticky = !visible
                 }
-            if let paginationModel {
+
+            if isLoadingPaginationModel {
+                HStack {
+                    Spacer(minLength: 0)
+                    ProgressView().progressViewStyle(.circular)
+                    Spacer(minLength: 0)
+                }
+                .frame(height: 100)
+            } else if let paginationModel {
                 PaginatableMediaList(
                     items: paginationModel.mediaFileInfos,
                     status: paginationModel.status,
@@ -247,9 +259,10 @@ struct CategoryView: View {
                 )
                 .transition(.opacity)
                 .frame(minWidth: 0, maxWidth: .infinity)
-            } else {
-                Spacer()
             }
+
+            Spacer()
+
         } else if paginationModel?.isEmpty == true {
             mediaUnavailableView
                 .padding()

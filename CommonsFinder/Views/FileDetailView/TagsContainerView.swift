@@ -21,6 +21,7 @@ struct TagsContainerView: View {
                         TagLabel(tag: tag)
                     }
                     .foregroundStyle(.primary)
+                    .buttonStyle(.plain)
                 }
             }
         }

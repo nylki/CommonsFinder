@@ -16,22 +16,22 @@ struct CategoryTeaser: View {
 
     var body: some View {
         let categoryTeaser = CategoryTeaserContent(categoryInfo: categoryInfo)
-
-        NavigationLink(value: NavigationStackItem.wikidataItem(categoryInfo)) {
-            if withContextMenu {
-                categoryTeaser
-                    .contentShape(.contextMenuPreview, .rect(cornerRadius: 16))
-                    .modifier(CategoryContextMenu(item: categoryInfo))
-            } else {
-                categoryTeaser
+        let destination = NavigationStackItem.wikidataItem(categoryInfo)
+        let view =
+            NavigationLink(value: destination) {
+                categoryTeaser.frame(idealWidth: 260, idealHeight: 170)
             }
+            .buttonStyle(CategoryTeaserButtonStyle())
+
+
+        if withContextMenu {
+            view.modifier(CategoryContextMenu(item: categoryInfo))
+        } else {
+            view
         }
-        .frame(idealWidth: 260, idealHeight: 170)
-        .clipShape(.containerRelative)
     }
-
-
 }
+
 
 struct CategoryTeaserContent: View {
     let categoryInfo: CategoryInfo
@@ -72,8 +72,16 @@ struct CategoryTeaserContent: View {
         }
         .geometryGroup()
         .compositingGroup()
-        .clipShape(.containerRelative)
-        .contentShape([.contextMenuPreview, .interaction], .containerRelative)
+    }
+}
+
+struct CategoryTeaserButtonStyle: ButtonStyle {
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .contentShape([.contextMenuPreview, .interaction], .rect(cornerRadius: 16))
+            .clipShape(.containerRelative)
+            .opacity(configuration.isPressed ? 0.5 : 1)
+            .animation(.default, value: configuration.isPressed)
     }
 }
 

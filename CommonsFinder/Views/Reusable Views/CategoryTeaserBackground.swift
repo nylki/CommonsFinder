@@ -62,8 +62,6 @@ struct CategoryTeaserBackground: View {
 
                     ContainerRelativeShape()
                         .stroke(LinearGradient(stops: stops, startPoint: .top, endPoint: .bottom), lineWidth: 3)
-
-
                 }
                 .background(colorScheme == .light ? .white : .black)
                 .compositingGroup()

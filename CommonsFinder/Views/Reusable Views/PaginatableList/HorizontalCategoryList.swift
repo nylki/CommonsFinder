@@ -43,11 +43,12 @@ struct HorizontalCategoryList: View {
                                 .frame(width: 260, height: 300)
                         }
                     }
+                    .containerShape(.rect(cornerRadius: 16))
                     .scrollTargetLayout()
                     .scenePadding(.horizontal)
                     .padding(.bottom)
                     .animation(.default, value: items)
-                    .containerShape(.rect(cornerRadius: 16))
+
                 }
                 .scrollTargetBehavior(.viewAligned)
             } else if isLoadingCategories {
