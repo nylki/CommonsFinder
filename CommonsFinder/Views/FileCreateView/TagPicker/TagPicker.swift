@@ -135,8 +135,6 @@ struct TagPicker: View {
                         }
                     }
                 }
-
-
             }
             .animation(.default, value: isSuggestedNearbyTagsExpanded)
             .animation(.default, value: hasUserMadeChanges)
@@ -160,10 +158,16 @@ struct TagPicker: View {
         }
         .interactiveDismissDisabled(hasUserMadeChanges)
         .task {
-            if initialTags.isEmpty {
-                isSuggestedNearbyTagsExpanded = true
+            var transaction = Transaction(animation: nil)
+            transaction.disablesAnimations = true
+
+            withTransaction(transaction) {
+                if initialTags.isEmpty {
+                    isSuggestedNearbyTagsExpanded = true
+                }
+                tags = .init(initialTags.map { TagModel.init(tagItem: $0) })
             }
-            tags = .init(initialTags.map { TagModel.init(tagItem: $0) })
+
         }
         .task(id: analysisInput) {
             guard let analysisInput else { return }
@@ -446,6 +450,7 @@ private struct NavHeader: View {
                     }
                 }
             }
+            .animation(.bouncy(duration: 0.6, extraBounce: 0.15), value: categoryCount)
             .accentColor(.primary)
 
 
@@ -468,10 +473,8 @@ private struct NavHeader: View {
                 }
             }
             .accentColor(.primary)
+            .animation(.bouncy(duration: 0.6, extraBounce: 0.15), value: depictCount)
         }
-        .animation(.default, value: hasUserMadeChanges)
-        .animation(.bouncy(duration: 0.6, extraBounce: 0.15), value: categoryCount)
-        .animation(.bouncy(duration: 0.6, extraBounce: 0.15), value: depictCount)
 
     }
 }
