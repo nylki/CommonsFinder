@@ -24,6 +24,9 @@ The project is **currently work-in-progress**, but several core features already
 
 
 ## Demo videos and screenshots
+
+You can find more screenrecordings and screenshots [on the project page at Wikimedia Commons](https://commons.wikimedia.org/wiki/CommonsFinder_iOS_App).
+
 <img src="https://github.com/user-attachments/assets/c789461c-7b98-4a62-b5d5-6b96bdfc4815" height="500" />
 
 ____________________________________

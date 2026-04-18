@@ -336,7 +336,6 @@ nonisolated enum FileAnalysisHelpers {
                 async let lineOfSightSearch = fetchLineOfSightCategories(startCoordinate: coordinate, bearing: bearing, horizontalError: horizontalError)
                 searchResult = await (areaSearch + lineOfSightSearch)
             } else {
-
                 scoreMethod = .lowDistance
                 async let areaSearch = fetchCategoriesWithAreas(around: coordinate, radiusMeters: 2000, minAreaQm: 200, limit: 5)
                 async let expandingSearch = await fetchExpandingCircleCategories(around: coordinate)

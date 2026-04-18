@@ -11,7 +11,6 @@ import SwiftUI
 struct PaginatableMediaList: View {
     let items: [MediaFileInfo]
     let status: PaginationStatus
-    var toolOverlayPadding = false
     let paginationRequest: () -> Void
 
     private let imagePrefetcher = ImagePrefetcher()
@@ -28,8 +27,13 @@ struct PaginatableMediaList: View {
             status: status,
             paginationRequest: paginationRequest,
             canPrewarmItem: prewarmItem
-        ) { item in
-            MediaFileListItem(mediaFileInfo: item)
+        ) { item, itemOrNeighborVisible in
+            let isImageLoadingAllowed = itemOrNeighborVisible || items.first == item
+
+            MediaFileListItem(
+                mediaFileInfo: item,
+                isImageLoadingAllowed: isImageLoadingAllowed
+            )
         }
     }
 }

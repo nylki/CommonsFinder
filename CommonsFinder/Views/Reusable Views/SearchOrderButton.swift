@@ -7,25 +7,33 @@
 
 import SwiftUI
 
-struct SearchOrderButton: View {
-    @Binding var searchOrder: SearchOrder
-    var possibleCases: [SearchOrder] = SearchOrder.allCases
+struct SearchOrderButton<T: CustomLocalizedStringResourceConvertible & Equatable & Hashable>: View {
+    @Binding var searchOrder: T
+    let possibleCases: [T]
+    var showSelectedInLabel: Bool = false
+
     var body: some View {
+
         Menu {
-            ForEach(possibleCases, id: \.self) { order in
-                Button(action: { searchOrder = order }) {
-                    Label {
-                        Text(order.localizedStringResource)
-                    } icon: {
-                        if order == searchOrder {
-                            Image(systemName: "checkmark")
-                        }
-                    }
+            Picker(selection: $searchOrder) {
+                ForEach(possibleCases, id: \.self) { order in
+                    Text(order.localizedStringResource)
+                        .tag(order)
+                }
+            } label: {
+                Label {
+                    Text("Sort by")
+                } icon: {
+                    Image(systemName: "arrow.up.arrow.down")
                 }
             }
         } label: {
             Label {
-                Text(searchOrder.localizedStringResource)
+                if showSelectedInLabel {
+                    Text(searchOrder.localizedStringResource)
+                } else {
+                    Text("Sort by")
+                }
             } icon: {
                 Image(systemName: "arrow.up.arrow.down")
             }
@@ -39,5 +47,8 @@ struct SearchOrderButton: View {
 
 #Preview {
     @Previewable @State var searchOrder = SearchOrder.oldest
-    SearchOrderButton(searchOrder: $searchOrder)
+    VStack {
+        SearchOrderButton(searchOrder: $searchOrder, possibleCases: SearchOrder.allCases, showSelectedInLabel: false)
+        SearchOrderButton(searchOrder: $searchOrder, possibleCases: SearchOrder.allCases, showSelectedInLabel: true)
+    }
 }

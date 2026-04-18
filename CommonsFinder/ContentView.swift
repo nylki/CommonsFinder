@@ -70,7 +70,7 @@ struct ContentView: View {
         //                FileCreateView(appDatabase: appDatabase, newDraftOptions: options)
         //            }
         //        }
-        .modifier(DraftSheetModifer(model: $navigation.isEditingDraft))
+        .modifier(DraftSheetModifer(importModel: $navigation.isEditingDraft))
         .onOpenURL(perform: handleURL)
         .onContinueUserActivity(NSUserActivityTypeLiveActivity) { userActivity in
             guard let url = userActivity.webpageURL else { return }
@@ -183,6 +183,8 @@ struct CommonNavigationDestination: ViewModifier {
                     BookmarkedCategoriesView()
                 case .recentlyViewedCategories:
                     RecentlyViewedCategoriesView()
+                case .relatedCategories(let item, let type):
+                    RelatedCategoriesView(item: item, initialType: type)
                 }
             }
     }

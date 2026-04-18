@@ -252,7 +252,7 @@ nonisolated struct ExifData: Codable, Equatable, Hashable {
             }
 
             if let latitude = gpsData[kCGImagePropertyGPSLatitude] as? Double {
-                if let latitudeRef = gpsData[kCGImagePropertyGPSLongitudeRef] as? String,
+                if let latitudeRef = gpsData[kCGImagePropertyGPSLatitudeRef] as? String,
                     latitudeRef == "S",
                     latitude > 0
                 {

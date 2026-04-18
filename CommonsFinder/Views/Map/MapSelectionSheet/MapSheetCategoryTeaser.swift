@@ -25,53 +25,27 @@ struct MapSheetCategoryTeaser: View {
     @Environment(Navigation.self) private var navigation
 
     var body: some View {
-        let hasBackgroundImage = item.base.thumbnailImage != nil
-
         Button {
             navigation.viewCategory(item)
         } label: {
-            HStack {
-                VStack(alignment: .leading) {
-                    Spacer()
-                    if let label = item.base.label ?? item.base.commonsCategory {
-                        Text(label)
-                    }
-                    if let description = item.base.description {
-                        Text(description)
-                            .font(.caption)
-                            .allowsTightening(true)
-                    }
-                }
-                .multilineTextAlignment(.leading)
-                .foregroundStyle(Color.white)
+            CategoryTeaserContent(categoryInfo: item)
+                .modifier(CategoryContextMenu(item: item, hiddenEntries: [.showOnMap]))
+                .scrollTransition(
+                    .interactive, axis: .horizontal,
+                    transition: { view, phase in
+                        view.scaleEffect(y: (phase == .identity || !isInScrollView) ? 1 : 0.9)
 
-                Spacer(minLength: 0)
-            }
-            .shadow(color: hasBackgroundImage ? .black : .clear, radius: 2)
-            .shadow(color: .black.opacity(0.7), radius: 7)
-            .padding()
-            .containerRelativeFrame(.horizontal, count: 5, span: size == .regular ? 3 : 4, spacing: 0)
-            .frame(minHeight: 0, maxHeight: .infinity)
-            .background {
-                CategoryTeaserBackground(category: item.base)
-            }
-            .clipShape(.containerRelative)
-            .contentShape([.contextMenuPreview, .interaction], .containerRelative)
-            .modifier(CategoryContextMenu(item: item, hiddenEntries: [.showOnMap]))
-            .scrollTransition(
-                .interactive, axis: .horizontal,
-                transition: { view, phase in
-                    view.scaleEffect(y: (phase == .identity || !isInScrollView) ? 1 : 0.9)
-
+                    }
+                )
+                .padding(3)
+                .overlay {
+                    ContainerRelativeShape()
+                        .stroke(isSelected ? Color.accent : .clear, lineWidth: 2)
                 }
-            )
-            .padding(3)
-            .overlay {
-                ContainerRelativeShape()
-                    .stroke(isSelected ? Color.accent : .clear, lineWidth: 2)
-            }
-            .padding(3)
+                .padding(3)
         }
+        .containerRelativeFrame(.horizontal, count: 5, span: size == .regular ? 3 : 4, spacing: 0)
+        .buttonStyle(CategoryTeaserButtonStyle())
         .animation(.default, value: isSelected)
     }
 

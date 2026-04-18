@@ -59,7 +59,6 @@ struct DraftFileListItem: View {
                 .blur(radius: isPublishingCurrently ? 20 : 0)
         }
         .buttonStyle(MediaCardButtonStyle())
-        .matchedTransitionSource(id: draft.id, in: navigationNamespace)
         .contextMenu(
             menuItems: {
                 if !isPublishingCurrently {
@@ -79,7 +78,6 @@ struct DraftFileListItem: View {
             },
             preview: {
                 LazyImage(request: draft.localFileRequestResized) { phase in
-
                     if draft.isDebugDraft {
                         #if DEBUG
                             Image(.debugDraft)

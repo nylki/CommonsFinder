@@ -97,6 +97,10 @@ extension AppDatabase {
             let earthCatInfo = try repo.updateLastViewed(.init(earthCat), incrementViewCount: true)
             _ = try repo.updateBookmark(earthCatInfo, bookmark: true)
 
+            let noImgEarth = try repo.upsert(.earthNoImage)!
+            let noImgEarthInfo = try repo.updateLastViewed(.init(noImgEarth), incrementViewCount: true)
+            _ = try repo.updateBookmark(noImgEarthInfo, bookmark: true)
+
         } catch {
             logger.error("Failed to populate preview DB \(error)")
             assertionFailure()

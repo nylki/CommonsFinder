@@ -41,6 +41,8 @@ extension SearchOrder {
         case .relevance: .relevance
         case .newest: .createTimestampDesc
         case .oldest: .createTimestampAsc
+        case .nameAscending: .titleNaturalAsc
+        case .nameDescending: .titleNaturalDesc
         }
     }
 }

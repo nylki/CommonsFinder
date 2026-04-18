@@ -23,7 +23,7 @@ struct HorizontalFileListSection: View {
                 HStack {
                     NavigationLink(value: destination) {
                         Label(label, systemImage: "chevron.right")
-                            .labelStyle(IconTrailingLabelStyle())
+                            .labelStyle(SecondaryIconTrailingLabelStyle())
                             .font(.title3)
                             .bold()
                     }
@@ -47,10 +47,8 @@ struct HorizontalFileListSection: View {
                     NavigationLink(value: navItem) {
                         MediaFileThumbImage(mediaFileInfo)
                             .frame(width: 150, height: 150)
-                            .clipped()
                     }
-                    .clipShape(.rect(cornerRadius: 16))
-                    .contentShape([.contextMenuPreview, .interaction], .rect(cornerRadius: 16))
+                    .buttonStyle(MediaCardButtonStyle())
                     .matchedTransitionSource(id: mediaFileInfo.id, in: namespace) {
                         $0.clipShape(.rect(cornerRadius: 16))
                     }

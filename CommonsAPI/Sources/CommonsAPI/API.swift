@@ -313,7 +313,6 @@ public actor API {
         return responseValue.query?.usercontribs ?? []
     }
     
-    
     /// listUserImages
     /// - Parameters:
     ///   - username: list items for this user
@@ -322,7 +321,7 @@ public actor API {
         limit: ListLimit = .max,
         start: Date?,
         end: Date?,
-        direction: ListDirection,
+        direction: ListUserImageOrder,
         continueString: String?
     ) async throws -> UserImagesListResponse {
         var query: Parameters = [
@@ -359,26 +358,23 @@ public actor API {
     }
     
     
-    public struct CommonsCategoryInfo: Sendable {
-        public let title: String
+    public struct CategoryMembersResponse: Sendable {
         public let subCategories: [String]
         public let parentCategories: [String]
-        /// NOTE: This is not the main Wikidata item, but the one for the category!
-        /// eg. for "physics": https://www.wikidata.org/wiki/Q1457258
-        /// instead of:  https://www.wikidata.org/wiki/Q413
-        public let wikidataItem: WikidataItemID?
+        public let cmcontinue: String?
+        public let `continue`: String?
+        
     }
     
     /// returns parent and sub-categories and wikidata item if available
-    public func fetchCategoryInfo(of category: String) async throws -> CommonsCategoryInfo? {
-        let query: Parameters = [
+    public func fetchCategoryMembers(of category: String, sort: CategoryMembersSort?, continueString: String? = nil, cmContinueString: String? = nil) async throws -> CategoryMembersResponse? {
+        var query: Parameters = [
             "action": "query",
             "formatversion": "2",
             "list": "categorymembers",
-            "prop": "categories|pageprops",
+            "prop": "categories",
             "cmtitle": "Category:\(category)",
             "titles": "Category:\(category)",
-            "cmprop": "title",
             "cmtype": "subcat",
             "cmnamespace": String(MediawikiNamespace.category.rawValue),
             "cmlimit": "500",
@@ -391,17 +387,29 @@ public actor API {
             "curtimestamp": "1"
         ]
         
+        if let sort {
+            query["cldir"] = sort.rawValue
+            query["cmdir"] = sort.rawValue
+        }
+        
+        if let continueString {
+            query["continue"] = continueString
+        }
+        
+        if let cmContinueString {
+            query["cmcontinue"] = cmContinueString
+        }
+        
         let request = try GET(url: commonsEndpoint, query: query)
         let (data, response) = try await urlSession.data(for: request)
-        let result = try parse(QueryResponse<CategoryResponse>.self, from: data, response: response)
+        let result = try parse(QueryResponse<CategoryMembersListResponse>.self, from: data, response: response)
         
-        guard let result = result.query else {
+        guard let parsedResult = result.query else {
             return nil
         }
         
-        let rawSubCategories = result.categorymembers
-        let rawParentCategories = result.pages?.first?.categories ?? []
-        let wikidataItem = result.pages?.first?.pageprops?.wikidataItem
+        let rawSubCategories = parsedResult.categorymembers
+        let rawParentCategories = parsedResult.pages?.first?.categories ?? []
         
         assert(rawSubCategories.allSatisfy { $0.ns == .category }, "We expect all items to be (sub)-categories")
         
@@ -414,11 +422,11 @@ public actor API {
         
         assert(rawSubCategories.count == subCategories.count, "We expect all categories to have the \"Category:\" prefix")
         
-        return CommonsCategoryInfo(
-            title: category,
+        return CategoryMembersResponse(
             subCategories: subCategories,
             parentCategories: parentCategories,
-            wikidataItem: wikidataItem
+            cmcontinue: result.continue?.cmcontinue,
+            continue: result.continue?.continue
         )
     }
     
@@ -572,7 +580,14 @@ public actor API {
         case lastEditDesc = "last_edit_desc"
         case lastEditAsc = "last_edit_asc"
         case just_match = "just_match"
+        case titleNaturalAsc = "title_natural_asc"
+        case titleNaturalDesc = "title_natural_desc"
         case random
+    }
+    
+    public enum CategoryMembersSort: String, Sendable {
+        case ascending
+        case descending
     }
     
     private func search(

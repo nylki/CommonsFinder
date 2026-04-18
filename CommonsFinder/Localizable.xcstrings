@@ -8,6 +8,16 @@
       "comment" : "Title in Intent FileEntity",
       "shouldTranslate" : false
     },
+    "%@ (%@)" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@ (%2$@)"
+          }
+        }
+      }
+    },
     "%@ Upload Error" : {
       "localizations" : {
         "de" : {
@@ -55,6 +65,7 @@
       }
     },
     "%lld Parent Categories" : {
+      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "variations" : {
@@ -95,6 +106,7 @@
       }
     },
     "%lld Subcategories" : {
+      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "variations" : {
@@ -241,7 +253,14 @@
       }
     },
     "Add or edit **categories** and define what the image **depicts**. More specific categories are usually preferred." : {
-
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Füge **Kategorien** hinzu und definiere was auf dem Bild abgebildet ist (Motiv). Das macht dein Bild auffindbarer und nützlicher."
+          }
+        }
+      }
     },
     "Africa" : {
       "localizations" : {
@@ -289,6 +308,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Bist du dir sicher, dass du dich ausloggen möchtest?"
+          }
+        }
+      }
+    },
+    "Ascending" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aufsteigend"
           }
         }
       }
@@ -439,7 +468,14 @@
       }
     },
     "Captions" : {
-
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kurzbeschreibungen"
+          }
+        }
+      }
     },
     "Categories" : {
       "localizations" : {
@@ -551,7 +587,14 @@
       }
     },
     "Choose Language" : {
-
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sprache wählen"
+          }
+        }
+      }
     },
     "close" : {
       "localizations" : {
@@ -577,6 +620,7 @@
 
     },
     "Console" : {
+      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -768,6 +812,16 @@
         }
       }
     },
+    "Descending" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Absteigend"
+          }
+        }
+      }
+    },
     "detailed description (optional)" : {
       "localizations" : {
         "de" : {
@@ -829,7 +883,14 @@
       }
     },
     "Editing" : {
-
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bearbeite"
+          }
+        }
+      }
     },
     "Either you or somebody already uploaded this file in the past. You may remove the draft." : {
       "localizations" : {
@@ -851,6 +912,16 @@
         }
       }
     },
+    "Error Loading Categories" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fehler beim Laden der Kategorien"
+          }
+        }
+      }
+    },
     "Europe" : {
       "localizations" : {
         "de" : {
@@ -862,7 +933,14 @@
       }
     },
     "Failed to Publish" : {
-
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Veröffentlichen fehlgeschlagen"
+          }
+        }
+      }
     },
     "failed to validate file name due to an unknown error" : {
       "localizations" : {
@@ -944,6 +1022,9 @@
         }
       }
     },
+    "Filter" : {
+
+    },
     "Find Files" : {
       "localizations" : {
         "de" : {
@@ -965,10 +1046,24 @@
       }
     },
     "from Files" : {
-
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "von Dateien"
+          }
+        }
+      }
     },
     "from Photos" : {
-
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "von Fotos"
+          }
+        }
+      }
     },
     "General" : {
       "localizations" : {
@@ -1368,8 +1463,25 @@
         }
       }
     },
+    "Multiple files" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "mehrere Dateien"
+          }
+        }
+      }
+    },
     "Nearby Locations" : {
-
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Orte in der Nähe"
+          }
+        }
+      }
     },
     "Nearby Tags" : {
       "comment" : "A button that expands a list of nearby tags.",
@@ -1415,7 +1527,24 @@
       }
     },
     "New Image" : {
-
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Neues Bild"
+          }
+        }
+      }
+    },
+    "Newer" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Neuere"
+          }
+        }
+      }
     },
     "Newest" : {
       "localizations" : {
@@ -1433,6 +1562,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Keine Lesezeichen"
+          }
+        }
+      }
+    },
+    "No Categories found" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Keine Kategorien gefunden"
           }
         }
       }
@@ -1531,7 +1670,14 @@
       }
     },
     "No nearby locations found" : {
-
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Keine Orte in der Nähe gefunden"
+          }
+        }
+      }
     },
     "No recently viewed categories" : {
       "comment" : "A title displayed when no recently viewed categories are found.",
@@ -1591,6 +1737,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "OK"
+          }
+        }
+      }
+    },
+    "Older" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ältere"
           }
         }
       }
@@ -1896,7 +2052,14 @@
       }
     },
     "Publish changes?" : {
-
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Änderungen veröffentlichen?"
+          }
+        }
+      }
     },
     "Recently Viewed" : {
       "localizations" : {
@@ -1950,6 +2113,16 @@
         }
       }
     },
+    "Related Categories" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Verwandte Kategorien"
+          }
+        }
+      }
+    },
     "Relevance" : {
       "extractionState" : "stale",
       "localizations" : {
@@ -1995,7 +2168,14 @@
       }
     },
     "Retry and continue the upload when you have a stable internet connection." : {
-
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Upload erneut versuchen und fortsetzen sobald eine stabile Internetverbindung besteht"
+          }
+        }
+      }
     },
     "Retry Upload" : {
       "localizations" : {
@@ -2029,7 +2209,14 @@
       }
     },
     "Save Changes" : {
-
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Änderungen Speichern"
+          }
+        }
+      }
     },
     "Save Draft" : {
       "localizations" : {
@@ -2062,7 +2249,14 @@
       }
     },
     "Search all categories, locations and items" : {
-
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Suche alle Kategorien, Orte und Items"
+          }
+        }
+      }
     },
     "Search in this category" : {
       "localizations" : {
@@ -2176,6 +2370,26 @@
         }
       }
     },
+    "Show parent Categories" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zeige Überkategorien"
+          }
+        }
+      }
+    },
+    "Show Subcategories" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zeige Unterkategorien"
+          }
+        }
+      }
+    },
     "slow or expensive internet connection" : {
       "localizations" : {
         "de" : {
@@ -2216,6 +2430,16 @@
         }
       }
     },
+    "Sort by" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sortiere nach"
+          }
+        }
+      }
+    },
     "Source" : {
       "localizations" : {
         "de" : {
@@ -2247,6 +2471,16 @@
         }
       }
     },
+    "Subcategories" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Unterkategorien"
+          }
+        }
+      }
+    },
     "Suggested tags based on the camera location" : {
       "comment" : "A description displayed under \"Nearby Tags\" in the `TagPicker` view.",
       "isCommentAutoGenerated" : true,
@@ -2270,7 +2504,14 @@
       }
     },
     "take new Photo" : {
-
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "neues Foto aufnehmen"
+          }
+        }
+      }
     },
     "Take new Photo" : {
       "localizations" : {

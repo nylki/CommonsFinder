@@ -89,7 +89,6 @@ struct InlineMap: View {
     }
 
     private func showOnMap() {
-
         do {
             switch shownItem {
             case .mediaFile(let mediaFile):
@@ -145,6 +144,7 @@ struct InlineMap: View {
         }
         .background(.thinMaterial)
         .clipShape(.rect(cornerRadius: 8))
+        .buttonStyle(.plain)
 
         .lookAroundViewer(
             isPresented: $isLookAroundShowing,

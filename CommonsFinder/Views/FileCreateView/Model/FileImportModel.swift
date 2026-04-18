@@ -1,5 +1,5 @@
 //
-//  DraftModel.swift
+//  FileImportModel.swift
 //  CommonsFinder
 //
 //  Created by Tom Brewe on 13.10.24.
@@ -19,7 +19,7 @@ enum DraftError: Error {
 
 
 /// DraftModel models a drafting session where the user can add & remove files and also edit their metadata
-@Observable class FileCreateViewModel: Identifiable {
+@Observable class FileImportModel: Identifiable {
     private var photoImportTask: Task<Void, Error>?
     let newDraftOptions: NewDraftOptions?
 
