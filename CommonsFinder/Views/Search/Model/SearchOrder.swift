@@ -18,6 +18,8 @@ nonisolated enum SearchOrder: String, Hashable, Equatable, CaseIterable, CustomL
         }
     }
 
+    static let defaultCase = Self.relevance
+
     case relevance
     case newest
     case oldest

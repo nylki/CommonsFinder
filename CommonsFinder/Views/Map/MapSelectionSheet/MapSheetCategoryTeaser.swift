@@ -29,29 +29,34 @@ struct MapSheetCategoryTeaser: View {
             navigation.viewCategory(item)
         } label: {
             CategoryTeaserContent(categoryInfo: item)
-                .modifier(CategoryContextMenu(item: item, hiddenEntries: [.showOnMap]))
-                .scrollTransition(
-                    .interactive, axis: .horizontal,
-                    transition: { view, phase in
-                        view.scaleEffect(y: (phase == .identity || !isInScrollView) ? 1 : 0.9)
-
-                    }
-                )
-                .padding(3)
-                .overlay {
-                    ContainerRelativeShape()
-                        .stroke(isSelected ? Color.accent : .clear, lineWidth: 2)
-                }
-                .padding(3)
         }
-        .containerRelativeFrame(.horizontal, count: 5, span: size == .regular ? 3 : 4, spacing: 0)
+        .containerRelativeFrame(
+            .horizontal,
+            count: 5,
+            span: size == .regular ? 3 : 4,
+            spacing: 0
+        )
         .buttonStyle(CategoryTeaserButtonStyle())
+        .scrollTransition(
+            .interactive,
+            axis: .horizontal,
+            transition: { view, phase in
+                view.scaleEffect(y: (phase == .identity || !isInScrollView) ? 1 : 0.9)
+            }
+        )
+        .modifier(CategoryContextMenu(item: item, hiddenEntries: [.showOnMap]))
+        .padding(3)
+        .overlay {
+            ContainerRelativeShape()
+                .stroke(isSelected ? Color.accent : .clear, lineWidth: 2)
+        }
+        .padding(3)
         .animation(.default, value: isSelected)
     }
 
 }
 
-#Preview {
+#Preview(traits: .previewEnvironment) {
     @Previewable @Namespace var namespace
 
     VStack {
@@ -68,5 +73,6 @@ struct MapSheetCategoryTeaser: View {
     }
     .padding()
     .background(Material.regular)
+    .containerShape(.rect(cornerRadius: 16))
 
 }

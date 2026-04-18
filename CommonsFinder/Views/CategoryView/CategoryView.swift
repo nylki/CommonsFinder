@@ -70,6 +70,8 @@ struct CategoryView: View {
         item?.base.coordinate ?? initialItem.base.coordinate
     }
 
+    private let searchOrderCases: [SearchOrder] = [.relevance, .newest, .oldest]
+
     var body: some View {
         ScrollView(.vertical) {
             VStack(alignment: .leading) {
@@ -173,7 +175,7 @@ struct CategoryView: View {
     @ViewBuilder
     private var optionsBar: some View {
         HStack {
-            SearchOrderButton(searchOrder: $searchOrder, possibleCases: [.relevance, .newest, .oldest], showSelectedInLabel: true)
+            SearchOrderButton(searchOrder: $searchOrder, possibleCases: searchOrderCases, showSelectedInLabel: true)
             DeepCategoryToggle(enabled: $deepCategoryEnabled)
                 .disabled(subCategoryModel?.isEmpty == true)
             if !isSearchPresented {
@@ -358,11 +360,11 @@ struct CategoryView: View {
     private var toolbar: some ToolbarContent {
 
         if isOptionsBarSticky {
-            let didUserChangeFilter = deepCategoryEnabled || searchOrder != .relevance
+            let didUserChangeFilter = deepCategoryEnabled || searchOrder != .defaultCase
 
             ToolbarItem(placement: .topBarLeading) {
                 Menu("Filter", systemImage: "line.3.horizontal.decrease") {
-                    SearchOrderButton(searchOrder: $searchOrder, possibleCases: SearchOrder.allCases)
+                    SearchOrderButton(searchOrder: $searchOrder, possibleCases: searchOrderCases)
                         .tint(nil)
                     Button {
                         deepCategoryEnabled.toggle()
