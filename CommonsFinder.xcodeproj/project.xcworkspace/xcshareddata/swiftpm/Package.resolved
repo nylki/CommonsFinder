@@ -79,7 +79,7 @@
       "location" : "https://github.com/nylki/Nuke",
       "state" : {
         "branch" : "alternative-sliding-time-window-rate-limiter",
-        "revision" : "629251754d696115c275f802a0d2ef584954eafe"
+        "revision" : "b0584d4697efda6638042ea12560840843b3bc8b"
       }
     },
     {
