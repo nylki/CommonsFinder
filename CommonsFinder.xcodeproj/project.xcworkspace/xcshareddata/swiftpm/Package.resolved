@@ -1,5 +1,5 @@
 {
-  "originHash" : "8bc534d179e918940b073e95722ddd0054d4fc71c394a9471d1d1f2883855bae",
+  "originHash" : "8083ea7850dc0b2cf5f6a0e222c121e101aebf6ae0d0506380cec02c3e878683",
   "pins" : [
     {
       "identity" : "frameup",
@@ -42,8 +42,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/groue/GRDB.swift.git",
       "state" : {
-        "revision" : "aa0079aeb82a4bf00324561a40bffe68c6fe1c26",
-        "version" : "7.9.0"
+        "revision" : "36e30a6f1ef10e4194f6af0cff90888526f0c115",
+        "version" : "7.10.0"
       }
     },
     {
@@ -65,21 +65,12 @@
       }
     },
     {
-      "identity" : "lock",
-      "kind" : "remoteSourceControl",
-      "location" : "https://github.com/mattmassicotte/Lock",
-      "state" : {
-        "revision" : "d815a64ac333c42d58214e0bf091f586d2ebf3a4",
-        "version" : "0.1.1"
-      }
-    },
-    {
       "identity" : "nuke",
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/nylki/Nuke",
       "state" : {
         "branch" : "alternative-sliding-time-window-rate-limiter",
-        "revision" : "b0584d4697efda6638042ea12560840843b3bc8b"
+        "revision" : "7bc94d64f3089de653ecadedd8d6e7ffa21805a2"
       }
     },
     {
@@ -96,8 +87,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/kean/Pulse",
       "state" : {
-        "revision" : "6125ce7fb51b114ba71b761d18cfd5557923bd4d",
-        "version" : "5.1.4"
+        "revision" : "14383871aa232bc846d637db45e952adc03d2987",
+        "version" : "5.2.1"
       }
     },
     {
@@ -114,8 +105,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/apple/swift-async-algorithms.git",
       "state" : {
-        "branch" : "1.1.1",
-        "revision" : "6c050d5ef8e1aa6342528460db614e9770d7f804"
+        "branch" : "1.1.3",
+        "revision" : "9d349bcc328ac3c31ce40e746b5882742a0d1272"
       }
     },
     {
@@ -123,8 +114,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/apple/swift-collections.git",
       "state" : {
-        "revision" : "7b847a3b7008b2dc2f47ca3110d8c782fb2e5c7e",
-        "version" : "1.3.0"
+        "revision" : "6675bc0ff86e61436e615df6fc5174e043e57924",
+        "version" : "1.4.1"
       }
     },
     {
