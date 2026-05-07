@@ -73,7 +73,7 @@ private struct PublishingErrorDetailsSheet: View {
         case .twoFactorCodeRequired, .emailCodeRequired:
             true
         case .uploadWarnings(let warnings):
-            if warnings.contains(.duplicate) || warnings.contains(.duplicateArchive) {
+            if warnings.contains(.duplicate(name: nil)) || warnings.contains(.duplicateArchive) {
                 false
             } else {
                 true
@@ -233,7 +233,7 @@ private struct PublishingErrorDetailsSheet: View {
                     case .appQuitOrCrash:
                         Text("You may attempt to retry the upload.")
                     case .uploadWarnings(let warnings):
-                        if warnings.contains(.duplicate) || warnings.contains(.duplicateArchive) {
+                        if warnings.contains(.duplicate(name: nil)) || warnings.contains(.duplicateArchive) {
                             Text("Either you or somebody already uploaded this file in the past. You may remove the draft.")
                         }
                     case .urlError(let urlErrorCode, _):
@@ -324,7 +324,7 @@ private struct PublishingErrorDetailsSheet: View {
     .glassButtonStyle()
     .publishingErrorDetailsSheet(
         .uploaded(filekey: "abc"),
-        .uploadWarnings([.duplicate, .badfilename]),
+        .uploadWarnings([.duplicate(name: nil), .badfilename]),
         isPresented: $isPresented,
         onEditDraft: {},
         onDeleteDraft: {},
@@ -341,7 +341,7 @@ private struct PublishingErrorDetailsSheet: View {
     .glassButtonStyle()
     .publishingErrorDetailsSheet(
         .uploaded(filekey: "abc"),
-        .uploadWarnings([.duplicate]),
+        .uploadWarnings([.duplicate(name: nil)]),
         isPresented: $isPresented,
         onEditDraft: {},
         onDeleteDraft: {},

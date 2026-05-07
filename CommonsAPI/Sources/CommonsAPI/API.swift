@@ -21,7 +21,7 @@ public actor API {
     
     let commonsHomepage = URL(string: "https://commons.wikimedia.org")!
     let commonsEndpoint = URL(string: "https://commons.wikimedia.org/w/api.php")!
-    let wikidataEndpoint = URL(string: "http://www.wikidata.org/w/api.php")!
+    let wikidataEndpoint = URL(string: "https://www.wikidata.org/w/api.php")!
     
     // see: https://www.wikidata.org/wiki/Wikidata:SPARQL_query_service
     let wikidataSparqlEndpoint = URL(string: "https://query.wikidata.org/bigdata/namespace/wdq/sparql")!
