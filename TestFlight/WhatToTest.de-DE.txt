@@ -1,6 +1,1 @@
-- Kategorie-Ansicht: neue Darstellung der Über- und Unterkategorien
-- Kategorie-Teaser-Card: neue Darstellung für Kategorien ohne Wikidata-Bild (statt dem dunkelgrauen Hintergrund)
-- Fix: Button-Darstellung bei bestimmten Accessibility-Einstellungen
-- Fix: falsche Koordinaten bei Fotouploads aus der südlichen Hemisphere
-
-Das nächste größere Feature wird die Unterstützung für Multi-Uploads sein.
+- behebt Ladedehler der Bilder in Kategoriekacheln

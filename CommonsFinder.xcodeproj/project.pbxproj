@@ -18,7 +18,6 @@
 		E2549B232CBD6886005DFE14 /* AsyncAlgorithms in Frameworks */ = {isa = PBXBuildFile; productRef = E2549B222CBD6886005DFE14 /* AsyncAlgorithms */; };
 		E2549B262CBD68B9005DFE14 /* Algorithms in Frameworks */ = {isa = PBXBuildFile; productRef = E2549B252CBD68B9005DFE14 /* Algorithms */; };
 		E2549B2D2CBD69C7005DFE14 /* OrderedCollections in Frameworks */ = {isa = PBXBuildFile; productRef = E2549B2C2CBD69C7005DFE14 /* OrderedCollections */; };
-		E257E6BF2D2038F90049FFE8 /* Lock in Frameworks */ = {isa = PBXBuildFile; productRef = E257E6BE2D2038F90049FFE8 /* Lock */; };
 		E26D503C2DA5A75F00621D1C /* CommonsAPI in Frameworks */ = {isa = PBXBuildFile; productRef = E26D503B2DA5A75F00621D1C /* CommonsAPI */; };
 		E28B17662CB03CBB00D6FEA0 /* GRDBQuery in Frameworks */ = {isa = PBXBuildFile; productRef = E28B17652CB03CBB00D6FEA0 /* GRDBQuery */; };
 		E290323A2D9EA52000A0CD8F /* Pulse in Frameworks */ = {isa = PBXBuildFile; productRef = E29032392D9EA52000A0CD8F /* Pulse */; settings = {ATTRIBUTES = (Required, ); }; };
@@ -399,7 +398,6 @@
 				E206777A2EBE52FF00981A79 /* H3kit in Frameworks */,
 				E2F19BC62CA43C6400E19DCD /* SwiftSecurity in Frameworks */,
 				E2D76FAD2F3E2CB8009CC4CB /* NukeUI in Frameworks */,
-				E257E6BF2D2038F90049FFE8 /* Lock in Frameworks */,
 				E2D76FAB2F3E2CB8009CC4CB /* Nuke in Frameworks */,
 				E2C92DD32ED60D4000EAA248 /* ObservableLRUCache in Frameworks */,
 				E28B17662CB03CBB00D6FEA0 /* GRDBQuery in Frameworks */,
@@ -514,7 +512,6 @@
 				E2549B2C2CBD69C7005DFE14 /* OrderedCollections */,
 				E2F1B9D42CD006C700410991 /* GRDB */,
 				E24D3BFC2CF3ACDC003484CC /* FrameUp */,
-				E257E6BE2D2038F90049FFE8 /* Lock */,
 				E20A8A5D2D75F1D200EA79C5 /* H3kit */,
 				E29032392D9EA52000A0CD8F /* Pulse */,
 				E290323B2D9EA52000A0CD8F /* PulseUI */,
@@ -594,7 +591,6 @@
 				E2549B272CBD69C7005DFE14 /* XCRemoteSwiftPackageReference "swift-collections" */,
 				E2F1B9D32CD006C700410991 /* XCRemoteSwiftPackageReference "GRDB.swift" */,
 				E24D3BFB2CF3ACDC003484CC /* XCRemoteSwiftPackageReference "FrameUp" */,
-				E257E6BD2D2038F90049FFE8 /* XCRemoteSwiftPackageReference "Lock" */,
 				E29032382D9EA52000A0CD8F /* XCRemoteSwiftPackageReference "Pulse" */,
 				E290323D2D9EA84700A0CD8F /* XCRemoteSwiftPackageReference "GRDBQuery" */,
 				E26D503A2DA5A75F00621D1C /* XCLocalSwiftPackageReference "CommonsAPI" */,
@@ -1118,7 +1114,7 @@
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/apple/swift-async-algorithms.git";
 			requirement = {
-				branch = 1.1.1;
+				branch = 1.1.3;
 				kind = branch;
 			};
 		};
@@ -1135,15 +1131,7 @@
 			repositoryURL = "https://github.com/apple/swift-collections.git";
 			requirement = {
 				kind = exactVersion;
-				version = 1.3.0;
-			};
-		};
-		E257E6BD2D2038F90049FFE8 /* XCRemoteSwiftPackageReference "Lock" */ = {
-			isa = XCRemoteSwiftPackageReference;
-			repositoryURL = "https://github.com/mattmassicotte/Lock";
-			requirement = {
-				kind = exactVersion;
-				version = 0.1.1;
+				version = 1.4.1;
 			};
 		};
 		E29032382D9EA52000A0CD8F /* XCRemoteSwiftPackageReference "Pulse" */ = {
@@ -1151,7 +1139,7 @@
 			repositoryURL = "https://github.com/kean/Pulse";
 			requirement = {
 				kind = exactVersion;
-				version = 5.1.4;
+				version = 5.2.1;
 			};
 		};
 		E290323D2D9EA84700A0CD8F /* XCRemoteSwiftPackageReference "GRDBQuery" */ = {
@@ -1199,7 +1187,7 @@
 			repositoryURL = "https://github.com/groue/GRDB.swift.git";
 			requirement = {
 				kind = exactVersion;
-				version = 7.9.0;
+				version = 7.10.0;
 			};
 		};
 /* End XCRemoteSwiftPackageReference section */
@@ -1258,11 +1246,6 @@
 			isa = XCSwiftPackageProductDependency;
 			package = E2549B272CBD69C7005DFE14 /* XCRemoteSwiftPackageReference "swift-collections" */;
 			productName = OrderedCollections;
-		};
-		E257E6BE2D2038F90049FFE8 /* Lock */ = {
-			isa = XCSwiftPackageProductDependency;
-			package = E257E6BD2D2038F90049FFE8 /* XCRemoteSwiftPackageReference "Lock" */;
-			productName = Lock;
 		};
 		E26D503B2DA5A75F00621D1C /* CommonsAPI */ = {
 			isa = XCSwiftPackageProductDependency;

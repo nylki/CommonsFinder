@@ -21,7 +21,7 @@ public actor API {
     
     let commonsHomepage = URL(string: "https://commons.wikimedia.org")!
     let commonsEndpoint = URL(string: "https://commons.wikimedia.org/w/api.php")!
-    let wikidataEndpoint = URL(string: "http://www.wikidata.org/w/api.php")!
+    let wikidataEndpoint = URL(string: "https://www.wikidata.org/w/api.php")!
     
     // see: https://www.wikidata.org/wiki/Wikidata:SPARQL_query_service
     let wikidataSparqlEndpoint = URL(string: "https://query.wikidata.org/bigdata/namespace/wdq/sparql")!
@@ -515,7 +515,7 @@ public actor API {
         return identifiers.items.compactMap { result[$0] }
     }
     
-    // Example: https://commons.wikimedia.org/w/api.php?action=query&format=json&prop=imageinfo&titles=File%3The_Earth_seen_from_Apollo_17.jpg&formatversion=2&iiprop=url%7Cextmetadata&iiurlwidth=640&iiurlheight=640&iiextmetadatamultilang=1
+    // Example: https://commons.wikimedia.org/w/api.php?action=query&format=json&prop=imageinfo&titles=File%3The_Earth_seen_from_Apollo_17.jpg&formatversion=2&iiprop=url%7Cextmetadata&iiurlwidth=500&iiurlheight=500&iiextmetadatamultilang=1
     internal func fetchImageMetadata(_ identifiers: FileIdentifierList) async throws -> [FileMetadata] {
         var query: Parameters = [
             "action": "query",
@@ -529,8 +529,8 @@ public actor API {
             "inprop": "protection",
             "iiprop": "url|timestamp|user|dimensions|extmetadata|size",
             "iiextmetadatafilter": "ImageDescription|Attribution",
-            "iiurlwidth": "640",
-            "iiurlheight": "640",
+            "iiurlwidth": "500",
+            "iiurlheight": "500",
             "smaxage": "600",
             "maxage": "600",
             "uselang": "content",

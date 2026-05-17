@@ -1,6 +1,1 @@
-- Category-View: new design of parent and subcategories
-- Category-Teaser-Card: new design for categories without wikidata image (instead of the dark gray background)
-- Fix: button styles in combination with an accessibility setting
-- Fix: wrong coordinates for photo uploads from the southern hemisphere
-
-The next bigger upcoming feature will be multi-file upload support.
+- fixes thumbnail loading issues for category preview cards

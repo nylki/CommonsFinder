@@ -116,9 +116,9 @@ public struct FileUploadResponse: Decodable, Sendable {
         // see: https://github.com/wikimedia/mediawiki/blob/a8df7e081a4b231de43420f9e730a35d6aff0c27/includes/upload/UploadBase.php#L1349
         // and: https://www.mediawiki.org/wiki/API:Upload
         case exists
-        case existsNormalized(normalizedName: String)
+        case existsNormalized(normalizedName: String?)
         case wasDeleted
-        case duplicate
+        case duplicate(name: String?)
         case duplicateArchive
         case badfilename
         case thumb
@@ -155,10 +155,10 @@ public struct FileUploadResponse: Decodable, Sendable {
         public var localizedStringResource: LocalizedStringResource {
             switch self {
             case .exists: "A file with the given name already exists."
-            case .existsNormalized(let normalizedFilename): "A file with the same (normalized) filename already exists: \(normalizedFilename)"
+            case .existsNormalized(let normalizedFilename): "A file with the same (normalized) filename already exists: \(normalizedFilename ?? "-")"
             case .wasDeleted: "a file with the given name used to exist but has been deleted."
-            case .duplicate: "The uploaded file exists under a different (or the same) name."
-            case .duplicateArchive: 
+            case .duplicate(let name): "The uploaded file exists under a different (or the same) name: \(name ?? "-")"
+            case .duplicateArchive:
                 "The uploaded file used to exist under a different (or the same) name but has been deleted. This may indicate that the file is inappropriate and should not be uploaded."
             case .badfilename: "The file name is not acceptable, it may contain forbidden characters."
             case .thumb: "A file with the given name already exists as a thumbnail image."
@@ -170,13 +170,13 @@ public struct FileUploadResponse: Decodable, Sendable {
         internal init?(withRawMediaWikiKey key: String, description: String? = nil) {
             switch key {
                 case "exists-normalized":
-                self = .exists
+                    self = .existsNormalized(normalizedName: description)
                 case "exists":
                     self = .exists
                 case "was-deleted":
                     self = .wasDeleted
                 case "duplicate":
-                    self = .exists
+                self = .duplicate(name: description)
                 case "duplicate-archive":
                     self = .duplicateArchive
                 case "badfilename":
@@ -224,8 +224,18 @@ public struct FileUploadResponse: Decodable, Sendable {
             self.filename = try container.decodeIfPresent(String.self, forKey: FileUploadResponse.Upload.CodingKeys.filename)
             self.filekey = try container.decodeIfPresent(String.self, forKey: FileUploadResponse.Upload.CodingKeys.filekey)
             
-            let warningsDict = try container.decodeIfPresent([String: String].self, forKey: FileUploadResponse.Upload.CodingKeys.warnings)
-            self.warnings = warningsDict?.compactMap(Warning.init) ?? []
+
+
+            let stringWarningsDict: [String: String]? = try? container.decodeIfPresent([String: String].self, forKey: FileUploadResponse.Upload.CodingKeys.warnings)
+            let arrayWarningsDict: [String: [String]]? = try? container.decodeIfPresent([String: [String]].self, forKey: FileUploadResponse.Upload.CodingKeys.warnings)
+            if let stringWarningsDict {
+                self.warnings = stringWarningsDict.compactMap { Warning(withRawMediaWikiKey: $0.key) }
+            } else if let arrayWarningsDict {
+                self.warnings = arrayWarningsDict.compactMap { Warning(withRawMediaWikiKey: $0.key, description: $0.value.joined(separator: ", "))}
+            } else {
+                self.warnings = []
+            }
+
             
             self.badfilename = try container.decodeIfPresent(String.self, forKey: FileUploadResponse.Upload.CodingKeys.badfilename)
         }
