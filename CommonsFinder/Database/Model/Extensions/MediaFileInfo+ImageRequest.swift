@@ -20,11 +20,12 @@ extension MediaFileInfo {
         } else {
             false
         }
-
     }
 
+    // see acceptable thumb sizes: https://www.mediawiki.org/wiki/Common_thumbnail_sizes
+
     var thumbRequest: ImageRequest? {
-        let max = 640
+        let max = 500
 
         // shortcut to original image if that is smaller or same size as the thumb
         // this improves cachability, eg. when requesting the original in a zoom viewer.
@@ -114,7 +115,7 @@ extension MediaFileDraft {
 
     var localFileRequestResized: ImageRequest? {
         if let fileURL = localFileURL() {
-            let imageResize = ImageProcessors.Resize(size: .init(width: 640, height: 640))
+            let imageResize = ImageProcessors.Resize(size: .init(width: 500, height: 500))
             return .init(url: fileURL, processors: [imageResize])
         }
         return nil
