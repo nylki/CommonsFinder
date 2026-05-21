@@ -5,7 +5,158 @@
 //  Created by Tom Brewe on 19.11.24.
 //
 
+import CommonsAPI
 import Foundation
+import UniformTypeIdentifiers
+import os.log
+
+nonisolated enum ValidationError: Error {
+    case emptyArray
+}
+
+nonisolated enum DraftValidation {
+    static func canUploadDraft(_ draft: some Draftable, nameValidationResult: NameValidationResult?) -> UploadPossibleStatus? {
+        return
+            if draft.captionWithDesc.isEmpty
+            || draft.captionWithDesc.allSatisfy({ captionDesc in
+                captionDesc.caption.isEmpty && captionDesc.fullDescription.isEmpty
+            })
+        {
+            .missingCaptionOrDescription
+        } else if draft.tags.isEmpty {
+            .missingTags
+        } else if draft.license == nil {
+            .missingLicense
+        } else if let nameValidationResult {
+            switch nameValidationResult {
+            case .failure(let nameValidationError):
+                .validationError(nameValidationError)
+            case .success(_):
+                .uploadPossible
+            }
+        } else {
+            nil
+        }
+    }
+
+    static func validateFilename(name: String, mimeType: String) async -> NameValidationResult {
+        // iOS26 target: move into an Observation on draft.name
+        guard let uniformType = UTType(mimeType: mimeType) else {
+            assertionFailure("We expect drafts to always have a correct mimetype")
+            return .failure(.invalid(.disallowedMimetype))
+        }
+
+        // The API operates on filenames with type-endings (.jpg, .png, etc.)
+        let filename = name.appendingFileExtension(conformingTo: uniformType)
+
+        let localValidationResult = LocalFileNameValidation.validateFilenameWithSuffix(filename)
+        return switch localValidationResult {
+        case .success:
+            // if local validation was successful, check again with API
+            await validateFilenameWithAPI(filename) ?? .success(())
+        case .failure(let error):
+            .failure(.invalid(error))
+        }
+    }
+
+
+    /// validates multiple filenames that are expected to be similar in structure and only vary by counter, eg. adding 01, 02. (without "File:"-prefix, but with the filetype suffix)
+    @concurrent
+    static func validateBatchFilenames(filenamesWithSuffix: [String]) async throws -> NameValidationResult {
+        var localValidation: [String: Result<Void, LocalFilenameValidationError>] = .init()
+
+        for filename in filenamesWithSuffix {
+            localValidation[filename] = LocalFileNameValidation.validateFilenameWithSuffix(filename)
+        }
+
+        let allNamesPassedLocally = localValidation.values.allSatisfy({ result in
+            if case .success() = result { true } else { false }
+        })
+
+        guard allNamesPassedLocally else {
+            let failures: [LocalFilenameValidationError] = localValidation.values.compactMap { validation in
+                switch validation {
+                case .success(_): nil
+                case .failure(let error): error
+                }
+            }
+            return .failure(.invalid(failures.first))
+        }
+
+        guard let firstName = filenamesWithSuffix.first else {
+            throw ValidationError.emptyArray
+        }
+
+        // NOTE: we only check one file name for performance reasons against the blocklist.
+        // there is no batch-call for this. We usually expect that if the first item passes (eg. "name, 01.jpeg"), all other
+        // names in the list are fine ("name, 02.jpeg", "name, 99.jpeg" etc)
+        let apiBlocklistValidation = try await Networking.shared.api.validateFilename(filename: firstName)
+
+        guard apiBlocklistValidation == .ok else {
+            return .failure(apiBlocklistValidation == .disallowed ? .disallowed : .invalid(nil))
+        }
+
+        var existsAPIValidation: [String: FilenameExistsResult] = .init()
+        existsAPIValidation = try await Networking.shared.api.checkIfFilesExists(filenames: filenamesWithSuffix)
+
+
+        let allNamesPassedInAPI = existsAPIValidation.values.allSatisfy({ result in
+            if case .doesNotExist = result { true } else { false }
+        })
+
+        if allNamesPassedInAPI {
+            return .success(())
+        } else if existsAPIValidation.values.contains(.exists) {
+            let alreadyExistsNames: [String] = existsAPIValidation.compactMap { (name, validation) in
+                switch validation {
+                case .exists: name
+                default: nil
+                }
+            }
+            return .failure(.alreadyExists(filenames: alreadyExistsNames))
+        } else if existsAPIValidation.values.contains(.invalidFilename) {
+            return .failure(.disallowed)
+        } else {
+            assertionFailure("Likely added new cases to `FilenameExistsResult`")
+            return .failure(.undefinedAPIResult)
+        }
+    }
+
+    /// validates a filename (without "File:"-prefix & without file-type suffix (eg. .jpg)
+    private static func validateFilenameWithAPI(_ fileNameWithMimetypeSuffix: String) async -> NameValidationResult? {
+        let filename = fileNameWithMimetypeSuffix
+
+        do {
+            async let existsTask = Networking.shared.api.checkIfFileExists(
+                filename: filename
+            )
+            async let validationTask = Networking.shared.api.validateFilename(
+                filename: filename
+            )
+
+            let (existsResult, validationResult) = try await (existsTask, validationTask)
+
+            switch existsResult {
+            case .exists: return .failure(.alreadyExists(filenames: [filename]))
+            case .invalidFilename: return .failure(.invalid(nil))
+            case .doesNotExist:
+                switch validationResult {
+                case .disallowed: return .failure(.disallowed)
+                case .invalid: return .failure(.invalid(nil))
+                case .ok: return .success(())
+                case .unknownOther: return .failure(.undefinedAPIResult)
+                }
+            case .none:
+                return .failure(.undefinedAPIResult)
+            }
+        } catch is CancellationError {
+            return nil
+        } catch {
+            logger.error("Failed to validate filename \(error)")
+            return .failure(.undefinedAPIResult)
+        }
+    }
+}
 
 nonisolated enum EmailValidation {
     static func isValidEmailAddress(string: String) -> Bool {
@@ -56,13 +207,15 @@ nonisolated enum LocalFileNameValidation {
         /^(.)\1*$/
     }
 
-    /// valiidates filenames without "FILE:" prefix, and without filetype sufix (eg. ".jpg"), for
-    static func validateFileName(_ filename: String) -> Result<Void, LocalFilenameValidationError> {
-        guard filename.count >= minCharLength else { return .failure(.tooShort) }
-        guard !filename.contains(disallowedPrefixPattern) else { return .failure(.disallowedPrefix) }
-        guard !filename.contains(disallowedCharactersPattern) else { return .failure(.disallowedCharacters) }
-        guard !filename.localizedLowercase.contains(onlyRepeatingCharactersPattern) else { return .failure(.onlyRepeatingCharacters) }
-        guard !filename.contains(leadingTrailingSpacesPattern) else { return .failure(.leadingTrailingSpaces) }
+    /// validates filenames without "File:" prefix. Expected to already have the mimetype suffix
+    static func validateFilenameWithSuffix(_ fileNameWithMimetypeSuffix: String) -> Result<Void, LocalFilenameValidationError> {
+        let baseName = (fileNameWithMimetypeSuffix as NSString).deletingPathExtension
+
+        guard baseName.count >= minCharLength else { return .failure(.tooShort) }
+        guard !baseName.contains(disallowedPrefixPattern) else { return .failure(.disallowedPrefix) }
+        guard !baseName.contains(disallowedCharactersPattern) else { return .failure(.disallowedCharacters) }
+        guard !baseName.localizedLowercase.contains(onlyRepeatingCharactersPattern) else { return .failure(.onlyRepeatingCharacters) }
+        guard !baseName.contains(leadingTrailingSpacesPattern) else { return .failure(.leadingTrailingSpaces) }
         return .success(())
     }
 
@@ -92,6 +245,7 @@ nonisolated enum LocalFilenameValidationError: String, Error, Sendable, Codable,
     case disallowedCharacters
     case onlyRepeatingCharacters
     case leadingTrailingSpaces
+    case disallowedMimetype
 
     static let autoFixable: Set<Self> = [.disallowedPrefix, .disallowedCharacters, .leadingTrailingSpaces]
 

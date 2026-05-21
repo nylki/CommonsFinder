@@ -13,8 +13,8 @@ import os.log
 extension View {
     @ViewBuilder
     func publishingErrorDetailsSheet(
-        _ publishingStatus: PublishingState?,
-        _ error: PublishingError?,
+        _ publishingStatus: MediaFileDraft.PublishingState?,
+        _ error: MediaFileDraft.PublishingError?,
         isPresented: Binding<Bool>,
         onEditDraft: @escaping () -> Void,
         onDeleteDraft: @escaping () -> Void,
@@ -34,8 +34,8 @@ extension View {
 }
 
 private struct PublishingErrorDetailsSheetModifier: ViewModifier {
-    let publishingStatus: PublishingState?
-    let error: PublishingError?
+    let publishingStatus: MediaFileDraft.PublishingState?
+    let error: MediaFileDraft.PublishingError?
     @Binding var isPresented: Bool
     let onEditDraft: () -> Void
     let onDeleteDraft: () -> Void
@@ -59,8 +59,8 @@ private struct PublishingErrorDetailsSheetModifier: ViewModifier {
 }
 
 private struct PublishingErrorDetailsSheet: View {
-    let publishingStatus: PublishingState?
-    let error: PublishingError?
+    let publishingStatus: MediaFileDraft.PublishingState?
+    let error: MediaFileDraft.PublishingError?
 
     let onEditDraft: () -> Void
     let onDeleteDraft: () -> Void

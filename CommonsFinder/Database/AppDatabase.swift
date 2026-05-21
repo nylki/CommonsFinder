@@ -250,7 +250,34 @@ nonisolated final class AppDatabase: Sendable {
                 t.add(column: "publishingState", .jsonText)
                 t.add(column: "publishingStateVerificationRequired", .boolean)
                 t.add(column: "publishingError", .jsonText)
+
             }
+        }
+
+        migrator.registerMigration("add size to MediaFileDraft, add MultiDraft, add relation to MediaFileDraft") { db in
+            try db.create(table: "multiDraft") { t in
+                t.autoIncrementedPrimaryKey("id")
+                t.column("addedDate", .date)
+                t.column("name", .text)
+                t.column("nameSuffix", .jsonText)
+                t.column("nameAdditionalFallbackSuffix", .jsonText)
+                t.column("captionWithDesc", .jsonText)
+                t.column("tags", .jsonText)
+                t.column("license", .text)
+                t.column("author", .jsonText)
+                t.column("source", .jsonText)
+                t.column("locationHandling", .jsonText)
+                t.column("selectedFilenameType")
+                t.column("publishingState")
+                t.column("uploadPossibleStatus")
+            }
+
+            try db.alter(table: "mediaFileDraft") { t in
+                t.add(column: "size", .integer)
+                t.add(column: "multiDraftId", .integer)
+                    .references("multiDraft", onDelete: .cascade)
+            }
+
         }
 
         return migrator
@@ -697,6 +724,60 @@ extension AppDatabase {
     }
 }
 
+// MARK: - MultiDraftInfo Writes
+extension AppDatabase {
+    func upsertAndFetch(_ multiDraftInfo: MultiDraftInfo) throws -> MultiDraftInfo {
+        try dbWriter.write { db in
+            var multiDraftInfo = multiDraftInfo
+            let multiDraft = try multiDraftInfo.multiDraft.upsertAndFetch(db)
+
+            for var draft in multiDraftInfo.drafts {
+                draft.multiDraftId = multiDraft.id
+                try draft.upsert(db)
+            }
+
+
+            let updated =
+                try MultiDraftInfo
+                .all()
+                .filter(id: multiDraft.id)
+                .fetchOne(db)
+
+            guard let updated else {
+                throw DatabaseError.failedToFetchAfterUpdate
+            }
+            return updated
+        }
+    }
+    func delete(_ multiDraftInfo: MultiDraftInfo) throws {
+        let id = multiDraftInfo.multiDraft.id
+        try dbWriter.write { db in
+            // NOTE: sub-drafts *should* be deleted via cascade rule, so no need to delete them here separately.
+            _ = try multiDraftInfo.multiDraft.delete(db)
+        }
+
+        #if DEBUG
+            let subDraftCountAfterDelete = try dbWriter.write { db in
+                try MediaFileDraft.filter { $0.multiDraftId == id }.fetchCount(db)
+            }
+
+            assert(
+                subDraftCountAfterDelete == 0,
+                "We expect sub-drafts of a MultiDraft to be deleted via the cascade rule together with its parent."
+            )
+        #endif
+    }
+    // MARK: - MultiDraft Writes
+    func updateMultiDraft(id: MultiDraft.ID, withPublishingStep publishingState: MultiDraft.PublishingState?) throws {
+        try dbWriter.write { db in
+            guard var draft = try MultiDraft.fetchOne(db, id: id) else {
+                throw DatabaseError.itemNotFound
+            }
+            draft.publishingState = publishingState
+            try draft.upsert(db)
+        }
+    }
+}
 
 // MARK: - MediaFileDraft Writes
 extension AppDatabase {
@@ -706,20 +787,19 @@ extension AppDatabase {
         }
     }
 
-    @discardableResult
-    func updateDraft(id: MediaFileDraft.ID, withPublishingStep publishingState: PublishingState?, verificationRequired: Bool) throws -> MediaFileDraft {
+    func updateDraft(id: MediaFileDraft.ID, withPublishingStep publishingState: MediaFileDraft.PublishingState?, verificationRequired: Bool) throws {
         try dbWriter.write { db in
             guard var draft = try MediaFileDraft.fetchOne(db, id: id) else {
                 throw DatabaseError.itemNotFound
             }
             draft.publishingState = publishingState
             draft.publishingStateVerificationRequired = verificationRequired
-            return try draft.upsertAndFetch(db)
+            try draft.upsert(db)
         }
     }
 
     @discardableResult
-    func updateDraft(id: MediaFileDraft.ID, withPublishingError publishingError: PublishingError?) throws -> MediaFileDraft {
+    func updateDraft(id: MediaFileDraft.ID, withPublishingError publishingError: MediaFileDraft.PublishingError?) throws -> MediaFileDraft {
         try dbWriter.write { db in
             guard var draft = try MediaFileDraft.fetchOne(db, id: id) else {
                 throw DatabaseError.itemNotFound
@@ -729,10 +809,10 @@ extension AppDatabase {
         }
     }
 
-    func upsert(_ draft: MediaFileDraft) throws {
+    func upsert(_ draft: MediaFileDraft) throws -> MediaFileDraft {
         try dbWriter.write { db in
             var draft = draft
-            try draft.upsert(db)
+            return try draft.upsertAndFetch(db)
         }
     }
 
@@ -879,6 +959,23 @@ nonisolated extension AppDatabase {
         }
     }
 
+    func fetchMultiDraftInfo(id: MultiDraftInfo.ID) throws -> MultiDraftInfo? {
+        try dbWriter.read { db in
+            try MultiDraftInfo
+                .all()
+                .filter(id: id)
+                .fetchOne(db)
+        }
+    }
+
+    func fetchAllMultiDraftInfos() throws -> [MultiDraftInfo] {
+        try dbWriter.read { db in
+            try MultiDraftInfo
+                .all()
+                .fetchAll(db)
+        }
+    }
+
     func fetchInterruptedDraftsRequiringVerification() throws -> [MediaFileDraft] {
         try dbWriter.read { db in
             try MediaFileDraft
@@ -945,14 +1042,6 @@ nonisolated extension AppDatabase {
                 .fetchAll(db)
         }
     }
-
-    func fetchBookmarkedCategoryInfos() throws -> [CategoryInfo] {
-        try dbWriter.read { db in
-            try Category.including(required: Category.itemInteraction)
-                .asRequest(of: CategoryInfo.self)
-                .fetchAll(db)
-        }
-    }
 }
 nonisolated extension MediaFileInfo {
     static func fetchAll(ids: [String], db: Database) throws -> [Self] {
@@ -961,6 +1050,22 @@ nonisolated extension MediaFileInfo {
             .including(optional: MediaFile.itemInteraction)
             .asRequest(of: MediaFileInfo.self)
             .fetchAll(db)
+    }
+}
+
+nonisolated extension MultiDraftInfo {
+    static func all() -> QueryInterfaceRequest<MultiDraftInfo> {
+        MultiDraft
+            .annotated(
+                with: (MultiDraft.drafts.sum(MediaFileDraft.Columns.size) ?? 0)
+                    .forKey("combinedFileSizeInByte")
+            )
+            .including(all: MultiDraft.drafts)
+            .asRequest(of: MultiDraftInfo.self)
+    }
+
+    static func filter(id: MultiDraft.ID) -> QueryInterfaceRequest<MultiDraftInfo> {
+        all().filter(key: id)
     }
 }
 

@@ -1049,12 +1049,18 @@ LIMIT \(limit)
         return entitiesDict
     }
     
-    /// Check if a media file already exists by filename
-    public func checkIfFileExists(filename: String) async throws -> FilenameExistsResult {
+    public func checkIfFileExists(filename: String) async throws -> FilenameExistsResult? {
+        let result = try await checkIfFilesExists(filenames: [filename])
+        return result[filename]
+    }
+    
+    /// Check if a media file already exists by filename, returns [filename: FilenameExistsResult]
+    public func checkIfFilesExists(filenames: [String]) async throws -> [String: FilenameExistsResult] {
+        let titles = filenames.map { "File:" + $0 }
         let query: Parameters = [
             "action": "query",
             "format": "json",
-            "titles": "File:" + filename,
+            "titles": titles.joined(separator: "|"),
             "formatversion": "2",
             "curtimestamp": "1"
         ]
@@ -1062,17 +1068,34 @@ LIMIT \(limit)
         let request = try GET(url: commonsEndpoint, query: query)
         let (data, response) = try await response(for: request)
         let parsedResponse = try parse(QueryResponse<FileExistenceResponse>.self, from: data, response: response)
-        guard let fileInfo = parsedResponse.query?.pages?.first else {
+        
+        guard let pages = parsedResponse.query?.pages else {
             throw CommonAPIError.missingResponseValues
         }
         
-        if fileInfo.invalid == true {
-            return .invalidFilename
-        } else if fileInfo.missing == true {
-            return .doesNotExist
-        } else {
-            return .exists
+        var result: [String: FilenameExistsResult] = [:]
+        
+        for page in pages {
+            guard let title = page.title else {
+                continue
+            }
+            
+            var fromTitle = parsedResponse.query?.normalized?.first { normalizedResult in
+                normalizedResult.to == title
+            }?.from ?? title
+            
+            fromTitle = String(fromTitle.split(separator: "File:")[0])
+            
+            if page.invalid == true {
+                result[fromTitle] = .invalidFilename
+            } else if page.missing == true {
+                result[fromTitle] =  .doesNotExist
+            } else {
+                result[fromTitle] =  .exists
+            }
         }
+        
+        return result
     }
     
     // action=titleblacklist
@@ -1190,7 +1213,6 @@ LIMIT \(limit)
             }
         }
     }
-
     
     /// https://commons.wikimedia.org/w/api.php?action=upload&format=json&filename=&comment=&file=...&stash=1&token=&formatversion=2
     public func publish(file: MediaFileUploadable, startStep: PublishingStep = .uploadData) -> AsyncStream<UploadStatus> {
@@ -1199,6 +1221,7 @@ LIMIT \(limit)
         
         AsyncStream<UploadStatus> { continuation in
             Task<Void, Never> {
+    
                 do {
                     let csrfToken = try await fetchCSRFToken()
                     
@@ -1280,7 +1303,7 @@ LIMIT \(limit)
                         title: "File:\(file.filename)",
                         labels: file.captions,
                         statements: file.claims,
-                        comment: "Created initial structured data after upload"
+                        summary: "initial structured data"
                     )
                     
                     continuation.yield(.published)
@@ -1467,7 +1490,7 @@ LIMIT \(limit)
         title: String,
         labels: [LanguageString],
         statements: [WikidataClaim],
-        comment: String?
+        summary: String?
     ) async throws {
         let token = try await fetchCSRFToken()
         
@@ -1494,24 +1517,24 @@ LIMIT \(limit)
             throw CommonAPIError.failedToEncodeJSONData
         }
         
-        let commentString: String
+        let summaryString: String
         
-        if let comment {
-            commentString = comment
+        if let summary {
+            summaryString = summary
         } else if !labels.isEmpty, !statements.isEmpty {
-            commentString = "Edited labels (\(labels.map(\.languageCode).joined(separator: ", "))) and structured data statements"
+            summaryString = "Edited labels (\(labels.map(\.languageCode).joined(separator: ", "))) and structured data statements"
         } else if labels.isEmpty {
-            commentString = "Edited structured data statements"
+            summaryString = "Edited structured data statements"
         } else if statements.isEmpty {
-            commentString = "Edited labels (\( labels.map(\.languageCode).joined(separator: ", ")))"
+            summaryString = "Edited labels (\( labels.map(\.languageCode).joined(separator: ", ")))"
         } else {
-            commentString = "Edited labels or structured data statements"
+            summaryString = "Edited labels or structured data statements"
             assertionFailure()
         }
 
         let form: Parameters = [
             "action": "wbeditentity",
-            "comment": commentString,
+            "summary": summaryString,
             "token": token,
             "format": "json",
             "title": title,
