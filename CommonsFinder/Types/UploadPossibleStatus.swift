@@ -10,7 +10,6 @@ import Foundation
 
 nonisolated enum UploadPossibleStatus: Codable, Equatable, Hashable {
     case uploadPossible
-    case notLoggedIn
     case missingCaptionOrDescription
     case missingLicense
     case missingTags

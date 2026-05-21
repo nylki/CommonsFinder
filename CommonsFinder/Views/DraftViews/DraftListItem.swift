@@ -1,5 +1,5 @@
 //
-//  DraftFileListItem.swift
+//  DraftListItem.swift
 //  CommonsFinder
 //
 //  Created by Tom Brewe on 21.01.25.
@@ -12,10 +12,10 @@ import NukeUI
 import SwiftUI
 import os.log
 
-struct DraftFileListItem: View {
+struct DraftListItem: View {
     let draft: MediaFileDraft
 
-    @Environment(Navigation.self) private var navigationModel
+    @Environment(Navigation.self) private var navigation
     @Environment(AccountModel.self) private var account
     @Environment(UploadManager.self) private var uploadManager
     @Environment(\.appDatabase) private var appDatabase
@@ -27,7 +27,7 @@ struct DraftFileListItem: View {
     @State private var isShowingErrorSheet = false
 
     private func editDraft() {
-        navigationModel.editDrafts(drafts: [draft])
+        navigation.editDraft(draft: draft)
     }
 
     private func showDeleteDialog() {
@@ -40,9 +40,8 @@ struct DraftFileListItem: View {
 
     private func continueUpload() {
         isShowingErrorSheet = false
-        if let activeUser = account.activeUser,
-            let draft = try? appDatabase.updateDraft(id: draft.id, withPublishingError: nil)
-        {
+        if let activeUser = account.activeUser {
+            try? appDatabase.updateDraft(id: draft.id, withPublishingError: nil)
             uploadManager.upload(draft, username: activeUser.username)
         }
     }
@@ -51,14 +50,36 @@ struct DraftFileListItem: View {
     var body: some View {
         lazy var publishingState = draft.publishingState
 
-        let canUpload = draft.uploadPossibleStatus == .uploadPossible && draft.publishingState == nil
+        let canUpload = draft.uploadPossibleStatus == .uploadPossible && account.activeUser != nil && draft.publishingState == nil
         let isPublishingCurrently = publishingState != nil && draft.publishingError == nil
 
-        Button(action: editDraft) {
-            imageView
-                .blur(radius: isPublishingCurrently ? 20 : 0)
+
+        VStack {
+            Button(action: editDraft) {
+                imageView
+                    .overlay(alignment: .bottomTrailing) {
+                        ZStack {
+                            if canUpload {
+                                Button("Publish", systemImage: "arrowshape.up.fill", action: showUploadDialog)
+                            } else if publishingState == nil {
+                                Button("Edit", systemImage: "square.and.pencil", action: editDraft)
+                            }
+                        }
+                        .glassButtonStyle()
+                        .padding()
+                    }
+                    .blur(radius: isPublishingCurrently ? 20 : 0)
+            }
+            .frame(height: 200)
+            .buttonStyle(MediaCardButtonStyle())
+            .overlay {
+                uploadProgressOverlay
+            }
+
+            Text("Some info")
         }
-        .buttonStyle(MediaCardButtonStyle())
+        .frame(width: 200)
+        .contentShape(.contextMenuPreview, .rect(cornerRadius: 18))
         .contextMenu(
             menuItems: {
                 if !isPublishingCurrently {
@@ -77,40 +98,10 @@ struct DraftFileListItem: View {
                 }
             },
             preview: {
-                LazyImage(request: draft.localFileRequestResized) { phase in
-                    if draft.isDebugDraft {
-                        #if DEBUG
-                            Image(.debugDraft)
-                        #endif
-                    } else if let image = phase.image {
-                        image
-                            .resizable()
-                            .aspectRatio(contentMode: .fit)
-                    } else {
-                        Color.clear.frame(
-                            width: Double(draft.width ?? 200),
-                            height: Double(draft.height ?? 200)
-                        )
-                    }
-                }
-
+                imageView
             }
         )
-        .overlay(alignment: .bottomTrailing) {
-            ZStack {
-                if canUpload {
-                    Button("Publish", systemImage: "arrowshape.up.fill", action: showUploadDialog)
-                } else if publishingState == nil {
-                    Button("Edit", systemImage: "square.and.pencil", action: editDraft)
-                }
-            }
-            .glassButtonStyle()
-            .padding()
-        }
         .disabled(isPublishingCurrently)
-        .overlay {
-            uploadProgressOverlay
-        }
         .geometryGroup()
         .confirmationDialog("Are you sure you want to delete the Draft?", isPresented: $isShowingDeleteDialog, titleVisibility: .visible) {
             Button("Delete", systemImage: "trash", role: .destructive) {
@@ -149,6 +140,8 @@ struct DraftFileListItem: View {
                 if draft.isDebugDraft {
                     #if DEBUG
                         Image(.debugDraft)
+                            .resizable()
+                            .aspectRatio(contentMode: .fill)
                     #endif
                 } else if let image = phase.image {
                     image
@@ -157,20 +150,14 @@ struct DraftFileListItem: View {
 
                 } else {
                     Color.clear
-                        .frame(
-                            width: Double(draft.width ?? 200),
-                            height: Double(draft.height ?? 200)
-                        )
-                        .overlay {
-                            ProgressView()
-                                .frame(minWidth: 0, maxWidth: .infinity, minHeight: 0, maxHeight: .infinity)
-                        }
-
+                        .aspectRatio(contentMode: .fill)
                 }
             }
         }
         .clipShape(.rect(cornerRadius: 16))
-        .frame(width: 200, height: 200)
+        .frame(minWidth: 0, maxWidth: .infinity, minHeight: 0, maxHeight: .infinity)
+
+
     }
 
     @ViewBuilder
@@ -185,13 +172,19 @@ struct DraftFileListItem: View {
             } else if let publishingState {
                 switch publishingState {
                 case .uploading:
-                    ProgressView(value: publishingState.uploadProgress, total: 1)
+                    Text("\(Int((publishingState.uploadProgress ?? 0) * 100))%")
+                        .contentTransition(.numericText(countsDown: false))
+                        .font(.system(size: 40))
+                        .bold()
+                        .foregroundStyle(.regularMaterial)
+                        .shadow(radius: 10)
+
                 case .creatingWikidataClaims, .unstashingFile, .uploaded(filekey: _):
                     ProgressView().progressViewStyle(.circular)
                 case .published:
                     Image(systemName: "checkmark.circle.fill")
-                        .resizable()
-                        .scaledToFit()
+                        .aspectRatio(contentMode: .fit)
+                        .font(.system(size: 120))
                         .padding()
                         .foregroundStyle(.regularMaterial)
                         .transition(.blurReplace.animation(.bouncy(extraBounce: 0.2)))
@@ -225,5 +218,17 @@ struct DraftFileListItem: View {
         .transition(.blurReplace.animation(.bouncy))
         .foregroundStyle(.primary)
         .glassButtonStyle()
+    }
+}
+
+
+#Preview(traits: .previewEnvironment) {
+    ScrollView(.horizontal) {
+        HStack {
+            DraftListItem(draft: .makeRandomDraft(id: "1"))
+            DraftListItem(draft: .makeRandomDraft(id: "2"))
+            DraftListItem(draft: .makeRandomDraft(id: "3"))
+        }
+        .scenePadding()
     }
 }

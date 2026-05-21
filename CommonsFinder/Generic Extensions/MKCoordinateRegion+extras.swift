@@ -5,6 +5,9 @@
 //  Created by Tom Brewe on 07.11.25.
 //
 
+import CoreLocation
+import GEOSwift
+import GEOSwiftMapKit
 import MapKit
 
 extension MKCoordinateRegion {
@@ -108,6 +111,22 @@ extension MKCoordinateRegion {
 
         return (northEast, southWest)
 
+    }
+
+    init(containing geometry: GeometryConvertible, paddingFactor: Double, minPadding: CLLocationDistance) throws {
+
+        let envelope = try geometry.geometry.envelope()
+        let latPadding = (envelope.maxY - envelope.minY) * paddingFactor
+        let lonPadding = (envelope.maxX - envelope.minX) * paddingFactor
+        let center = try CLLocationCoordinate2D(envelope.geometry.centroid())
+        let minPaddingDegrees = GeoVectorMath.degrees(fromMeters: minPadding, atLatitude: center.latitude)
+
+        let span = MKCoordinateSpan(
+            latitudeDelta: max(minPaddingDegrees.latitudeDegrees, latPadding) + envelope.maxY - envelope.minY,
+            longitudeDelta: max(minPaddingDegrees.longitudeDegrees, lonPadding) + envelope.maxX - envelope.minX)
+
+
+        self.init(center: center, span: span)
     }
 
 }

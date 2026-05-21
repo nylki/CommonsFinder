@@ -136,7 +136,7 @@ struct FileDetailView: View {
                         Button {
                             UIPasteboard.general.string = mediaFileInfo.mediaFile.name
                         } label: {
-                            Image(systemName: "clipboard")
+                            Image(systemName: "document.on.document")
                             Text("Copy Filename")
                             Text(mediaFileInfo.mediaFile.name)
                         }

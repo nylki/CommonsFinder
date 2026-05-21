@@ -5,8 +5,8 @@
 //  Created by Tom Brewe on 17.02.26.
 //
 
+import CoreLocation
 import Foundation
-import ObservableLRUCache
 
 @Observable final class FileAnalysis {
     enum Status: Equatable, Hashable {
@@ -19,9 +19,10 @@ import ObservableLRUCache
         }
     }
 
-    enum Input: Equatable {
+    enum Input: Equatable, Identifiable {
         case draft(MediaFileDraft)
         case mediaFile(MediaFile)
+        case fileLocation(CLLocationCoordinate2D, horizontalError: CLLocationDistance?, bearing: CLLocationDegrees?)
 
         var id: String {
             switch self {
@@ -29,6 +30,8 @@ import ObservableLRUCache
                 mediaFileDraft.id
             case .mediaFile(let mediaFile):
                 mediaFile.id
+            case .fileLocation(let coordinate, let horizontalError, let bearing):
+                "\(coordinate.description) \(horizontalError ?? -1) \(bearing ?? 9999)"
             }
         }
     }
@@ -46,62 +49,52 @@ import ObservableLRUCache
     }
 
     func status(for input: Input?) -> Status? {
-        guard let input else { return nil }
-        return switch input {
-        case .draft(let mediaFileDraft):
-            status(for: mediaFileDraft)
-        case .mediaFile(let mediaFile):
-            status(for: mediaFile)
+        if let key = input?.id {
+            cache[key]
+        } else {
+            nil
         }
+
     }
 
-    func status(for draft: MediaFileDraft) -> Status? {
-        cache[draft.id]
+    func startAnalyzingIfNeeded(_ draft: MediaFileDraft) {
+        startAnalyzingIfNeeded(.draft(draft))
     }
 
-    func status(for mediaFile: MediaFile) -> Status? {
-        cache[mediaFile.id]
+    func startAnalyzingIfNeeded(_ mediaFile: MediaFile) {
+        startAnalyzingIfNeeded(.mediaFile(mediaFile))
+    }
+
+    func startAnalyzingIfNeeded(_ coordinate: CLLocationCoordinate2D, horizontalError: CLLocationDistance, bearing: CLLocationDegrees) {
+        startAnalyzingIfNeeded(.fileLocation(coordinate, horizontalError: horizontalError, bearing: bearing))
     }
 
 
     func startAnalyzingIfNeeded(_ input: Input) {
-        switch input {
-        case .draft(let mediaFileDraft):
-            startAnalyzingIfNeeded(mediaFileDraft)
-        case .mediaFile(let mediaFile):
-            startAnalyzingIfNeeded(mediaFile)
-        }
-    }
+        let key = input.id
+        guard cache[key] == nil else { return }
 
 
-    func startAnalyzingIfNeeded(_ draft: MediaFileDraft) {
-        guard cache[draft.id] == nil else { return }
-        analyze(forKey: draft.id) { [appDatabase] in
-            await FileAnalysisHelpers.analyze(draft: draft, appDatabase: appDatabase)
-        }
-    }
-
-
-    func startAnalyzingIfNeeded(_ mediaFile: MediaFile) {
-        guard cache[mediaFile.id] == nil else { return }
-        analyze(forKey: mediaFile.id) { [appDatabase] in
-            await FileAnalysisHelpers.analyze(mediaFile: mediaFile, appDatabase: appDatabase)
-        }
-    }
-
-    private func analyze(forKey key: String, operation: @escaping () async -> ImageAnalysisResult?) {
         if cache.keys.count > 200 {
             cache.removeAll()
         }
 
         tasks[key]?.cancel()
-
+        cache[key] = .analyzing
         tasks[key] = Task<Void, Never> {
-            cache[key] = .analyzing
-            let result = await operation()
-            guard !Task.isCancelled else { return }
+            let result =
+                switch input {
+                case .draft(let draft):
+                    await FileAnalysisHelpers.analyze(draft: draft, appDatabase: appDatabase)
+                case .mediaFile(let mediaFile):
+                    await FileAnalysisHelpers.analyze(mediaFile: mediaFile, appDatabase: appDatabase)
+                case .fileLocation(let coordinate, let horizontalError, let bearing):
+                    await FileAnalysisHelpers.analyze(coordinate: coordinate, horizontalError: horizontalError, bearing: bearing, appDatabase: appDatabase)
+                }
             cache[key] = .finished(result)
             tasks[key] = nil
         }
+
     }
+
 }

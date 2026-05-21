@@ -64,6 +64,16 @@
         }
       }
     },
+    "%lld files · %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$lld files · %2$@"
+          }
+        }
+      }
+    },
     "%lld Parent Categories" : {
       "extractionState" : "stale",
       "localizations" : {
@@ -145,6 +155,12 @@
           }
         }
       }
+    },
+    "%lld/250 characters" : {
+
+    },
+    "%lld%%" : {
+
     },
     "%lld×%lld pixel" : {
       "localizations" : {
@@ -458,6 +474,7 @@
       }
     },
     "Caption and Description" : {
+      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -750,6 +767,9 @@
         }
       }
     },
+    "customized Text" : {
+
+    },
     "Data upload interrupted at %lld%%" : {
       "localizations" : {
         "de" : {
@@ -813,14 +833,13 @@
       }
     },
     "Descending" : {
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Absteigend"
-          }
-        }
-      }
+
+    },
+    "Description" : {
+
+    },
+    "Descriptions" : {
+
     },
     "detailed description (optional)" : {
       "localizations" : {
@@ -841,6 +860,9 @@
           }
         }
       }
+    },
+    "Draft (%lld files)" : {
+
     },
     "E-Mail Address" : {
       "localizations" : {
@@ -1303,6 +1325,9 @@
         }
       }
     },
+    "Location metadata will be erased from all %lld files before uploading." : {
+
+    },
     "Location will be erased from the file metadata before uploading." : {
       "localizations" : {
         "de" : {
@@ -1464,6 +1489,7 @@
       }
     },
     "Multiple files" : {
+      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -2340,6 +2366,12 @@
         }
       }
     },
+    "show errors" : {
+
+    },
+    "Show File List" : {
+
+    },
     "show less…" : {
       "localizations" : {
         "de" : {
@@ -2399,6 +2431,9 @@
           }
         }
       }
+    },
+    "Some info" : {
+
     },
     "some rights reserved – attribution and sharing alike required" : {
       "localizations" : {
@@ -2542,6 +2577,12 @@
           }
         }
       }
+    },
+    "The file must be converted to a supported format before uploading." : {
+
+    },
+    "The file type is not supported." : {
+
     },
     "the filename already exists" : {
       "localizations" : {
@@ -2763,6 +2804,9 @@
           }
         }
       }
+    },
+    "untitled Draft" : {
+
     },
     "Upload" : {
       "localizations" : {
