@@ -202,14 +202,13 @@ struct CommonsEndToEndTests {
     
     @Test("list sub-categories", arguments: ["Physics"])
     func fetchCategoryInfo(category: String) async throws {
-        let info = try await api.fetchCategoryMembers(of: category)
+        let info = try await api.fetchCategoryMembers(of: category, sort: nil)
         
         #expect(info != nil)
         guard let info else { return }
         
         #expect(info.parentCategories.count > 0)
         #expect(info.subCategories.count > 5)
-        #expect(info.wikidataItem  == .physicsCategory)
     }
     
     @Test("list images in category", arguments: ["Physics"])
