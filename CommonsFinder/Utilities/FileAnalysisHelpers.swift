@@ -19,6 +19,17 @@ import os.log
 nonisolated enum FileAnalysisHelpers {
     typealias RadiusFetchOperation = (_ coordinate: CLLocationCoordinate2D, _ kilometerRadius: CLLocationDistance, _ limit: Int) async throws -> [Category]
 
+    @concurrent static func analyze(coordinate: CLLocationCoordinate2D, horizontalError: CLLocationDistance?, bearing: CLLocationDegrees?, appDatabase: AppDatabase) async -> ImageAnalysisResult? {
+        let categories = await fetchNearbyCategories(
+            coordinate: coordinate,
+            horizontalError: horizontalError,
+            bearing: bearing,
+            appDatabase: appDatabase
+        )
+
+        return .init(nearbyCategories: categories)
+    }
+
     @concurrent static func analyze(mediaFile: MediaFile, appDatabase: AppDatabase) async -> ImageAnalysisResult? {
         let coordinate: CLLocationCoordinate2D? = mediaFile.coordinate
         if coordinate == nil {

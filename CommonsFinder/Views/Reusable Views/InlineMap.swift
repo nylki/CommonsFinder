@@ -209,18 +209,10 @@ struct InlineMap: View {
         }
 
         Menu("More...") {
-            Button("Copy Coordinates", systemImage: "clipboard") {
-                UIPasteboard.general.string = coordinate.coordinateString
+            Button("Copy Coordinates", systemImage: "document.on.document") {
+                UIPasteboard.general.string = coordinate.description
             }
         }
-    }
-}
-
-extension CLLocationCoordinate2D {
-    fileprivate var coordinateString: String {
-        let latSign = latitude.sign == .minus ? "-" : ""
-        let lonSign = longitude.sign == .minus ? "-" : ""
-        return "\(latSign)\(latitude), \(lonSign)\(longitude)"
     }
 }
 

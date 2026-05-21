@@ -8,16 +8,13 @@
 import SwiftUI
 
 struct MultiDraftSheetModifier: ViewModifier {
-    @Binding var draftedFileModels: [MediaFileDraftModel]?
+    @Binding var multiDraftModel: MultiDraftModel?
 
     func body(content: Content) -> some View {
         content
-            .sheet(item: $draftedFileModels) { model in
+            .sheet(item: $multiDraftModel) { model in
                 NavigationStack {
-                    Color.red.overlay {
-                        Text("Multiple files \(model.count)")
-                    }
-
+                    MultiDraftView(model: model)
                 }
             }
     }

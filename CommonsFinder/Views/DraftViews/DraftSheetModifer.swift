@@ -65,10 +65,9 @@ struct ImportFilesModifer: ViewModifier {
             .photosPicker(
                 isPresented: isPhotosPickerPresented,
                 selection: photosPickerSelection,
-                // NOTE: For now only allow 1 image until
-                // multi-upload is refined.
-                maxSelectionCount: 1,
+                maxSelectionCount: 250,
                 matching: .any(of: [.images]),
+                // `.compatible` is what converts images to jpeg files
                 preferredItemEncoding: .compatible,
                 photoLibrary: .shared()
             )
@@ -103,14 +102,18 @@ struct ImportFilesModifer: ViewModifier {
                 if fileCount == 1, let newDraft = importModel.importedDrafts.values.first {
                     navigation.editDraft(draft: newDraft)
                 } else if fileCount > 1 {
-                    navigation.editMultipleDrafts(drafts: Array(importModel.importedDrafts.values))
+                    let info = MultiDraftInfo(
+                        multiDraft: .init(newDraftOptions: importModel.newDraftOptions),
+                        drafts: importModel.importedDrafts.values.elements
+                    )
+                    navigation.editMultipleDrafts(multiDraftInfo: info)
                 }
 
             }
     }
 }
 
-extension [MediaFileDraftModel]: @retroactive Identifiable {
+extension [SingleDraftModel]: @retroactive Identifiable {
     public var id: String {
         self.reduce("") { partialResult, next in
             partialResult + next.id

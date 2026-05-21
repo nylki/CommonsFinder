@@ -8,13 +8,13 @@
 import SwiftUI
 
 struct SingleDraftSheetModifier: ViewModifier {
-    @Binding var draftedFileModel: MediaFileDraftModel?
+    @Binding var draftedFileModel: SingleDraftModel?
 
     func body(content: Content) -> some View {
         content
             .sheet(item: $draftedFileModel) { model in
                 NavigationStack {
-                    SingleImageDraftView(model: model)
+                    SingleDraftView(model: model)
                 }
             }
     }

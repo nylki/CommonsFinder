@@ -34,9 +34,6 @@ enum DraftError: Error {
     }
     var importStatus: ImportStatus?
 
-    /// The currently centered file in the scrollView that is being edited
-    var selectedID: MediaFileDraftModel.ID?
-
     var photosPickerSelection: [PhotosPickerItem] = [] {
         didSet {
             handleNewPhotoItemSelection(oldValue: oldValue, currentValue: photosPickerSelection)
