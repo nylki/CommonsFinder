@@ -473,6 +473,9 @@
         }
       }
     },
+    "caption (%@)" : {
+
+    },
     "Caption and Description" : {
       "extractionState" : "stale",
       "localizations" : {
@@ -769,9 +772,6 @@
         }
       }
     },
-    "customized Text" : {
-
-    },
     "Data upload interrupted at %lld%%" : {
       "localizations" : {
         "de" : {
@@ -838,6 +838,9 @@
 
     },
     "Description" : {
+
+    },
+    "description (%@)" : {
 
     },
     "Descriptions" : {
@@ -1028,6 +1031,9 @@
         }
       }
     },
+    "filename" : {
+
+    },
     "Filename" : {
       "localizations" : {
         "de" : {
@@ -1037,6 +1043,9 @@
           }
         }
       }
+    },
+    "filename.jpg" : {
+
     },
     "filenames must be unique on the server" : {
       "localizations" : {
@@ -1110,6 +1119,9 @@
           }
         }
       }
+    },
+    "Here you can adjust fields for individual files if necessary." : {
+
     },
     "Here you will find your uploads, drafts, recently viewed media and more." : {
       "localizations" : {
@@ -2232,6 +2244,9 @@
           }
         }
       }
+    },
+    "Review your files before uploading" : {
+
     },
     "sanitize" : {
       "localizations" : {

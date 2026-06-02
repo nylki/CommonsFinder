@@ -418,7 +418,6 @@ struct SingleDraftView: View {
                 }
             }
         }
-
     }
 
 

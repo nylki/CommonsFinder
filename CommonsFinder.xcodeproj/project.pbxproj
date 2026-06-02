@@ -245,6 +245,7 @@
 				Views/DraftViews/Model/SingleDraftModel.swift,
 				Views/DraftViews/MultiDraftListItem.swift,
 				Views/DraftViews/MultiDraftOverviewList.swift,
+				Views/DraftViews/MultiDraftOverviewTip.swift,
 				Views/DraftViews/MultiDraftSheetModifier.swift,
 				Views/DraftViews/MultiDraftView.swift,
 				Views/DraftViews/SingleDraftSheetModifier.swift,
