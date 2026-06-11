@@ -12,10 +12,10 @@
 			<key>CFBundleTypeRole</key>
 			<string>None</string>
 			<key>CFBundleURLName</key>
-			<string>org.nylkiway.CommonsFinder</string>
+			<string>org.nylkiway.commonsfinder</string>
 			<key>CFBundleURLSchemes</key>
 			<array>
-				<string>CommonsFinder</string>
+				<string>commonsfinder</string>
 			</array>
 			<key>CFBundleURLTypes</key>
 			<array>
@@ -25,12 +25,21 @@
 				</dict>
 			</array>
 		</dict>
-		<dict/>
+		<dict>
+			<key>CFBundleTypeRole</key>
+			<string>None</string>
+			<key>CFBundleURLName</key>
+			<string></string>
+			<key>CFBundleURLSchemes</key>
+			<array/>
+		</dict>
 	</array>
 	<key>NSBonjourServices</key>
 	<array>
 		<string>_pulse._tcp</string>
 	</array>
+	<key>OAUTH_CLIENT_ID</key>
+	<string>$(OAUTH_CLIENT_ID)</string>
 	<key>UIDesignRequiresCompatibility</key>
 	<false/>
 </dict>

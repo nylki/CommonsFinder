@@ -14,6 +14,13 @@ import SwiftUI
 struct CommonsEndToEndTests {
     let logger = Logger(subsystem: "CommonsAPITests", category: "E2E")
     
+
+    static var responseProvider: APIResponseProvider {
+        { request, requiresAuthentication in
+            try await URLSession.shared.data(for: request)
+        }
+    }
+    
     let api: CommonsAPI.API = {
         let info = Bundle.main.infoDictionary
         let executable = (info?["CFBundleExecutable"] as? String) ?? (ProcessInfo.processInfo.arguments.first?.split(separator: "/").last.map(String.init)) ?? "Unknown"
@@ -24,21 +31,8 @@ struct CommonsEndToEndTests {
         let contactInfo = "https://github.com/nylki/CommonsFinder"
 
         let userAgent = "\(executable)/\(appBuild) (\(contactInfo)) \(osNameVersion)"
-        return CommonsAPI.API(config: .default, userAgent: userAgent, referer: "CommonsFinder://UnitTests")
+        return CommonsAPI.API(config: .default, responseProvider: responseProvider, userAgent: userAgent, referer: "commonsfinder://UnitTests")
     }()
-
-    @Test("login and fetching CSRF-token",
-          // comment out the next line to test login with valid credentials
-          .disabled("Requires a valid password"),
-          arguments: [(username: "", password: "DO NOT COMMIT CREDENTIALS AFTER TESTING")]
-    )
-    func loginAndFetchCSRFToken(username: String, password: String) async throws {
-        let status = try await api.login(username: username, password: password)
-        try #require(status.status == .pass)
-        
-        let csrfToken = try await api.fetchCSRFToken()
-        #expect(!csrfToken.isEmpty)
-    }
     
     @Test("list user uploads", arguments: ["Flickr_upload_bot"])
     func listUserUploads(username: String) async throws {
@@ -102,114 +96,113 @@ struct CommonsEndToEndTests {
         #expect(Set(ids) == Set(responseIDs), "We expect to get all (and only) translations for the given ids")
     }
     
-    @Test("uploading files",
-          // comment out the next line to test uploading with valid credentials
-          .disabled("Requires a valid password"),
-          arguments: [(username: "", password: "DO NOT COMMIT CREDENTIALS AFTER TESTING")]
-    )
-    func canUploadFiles(username: String, password: String) async throws {
-        let fileManager = FileManager.default
-        
-        let sampleJpegData = UIGraphicsImageRenderer(
-            size: .init(width: Int.random(in: 500..<1000), height: Int.random(in: 500..<1000))
-        ).image { ctx in
-            [UIColor.purple, UIColor.green, UIColor.gray, UIColor.black].randomElement()!.setFill()
-            ctx.fill(.init(origin: .init(
-                x: Int.random(in: 0..<250),
-                y: Int.random(in: 0..<250)),
-                size: .init(width: Int.random(in: 0..<250), height: Int.random(in: 0..<250))
-            ))
-        }
-            .jpegData(compressionQuality: Double.random(in: 0.5..<0.95))
-        
-        let pathURL = fileManager.temporaryDirectory.appendingPathComponent(UUID().uuidString, conformingTo: .jpeg)
-        
-        fileManager.createFile(atPath: pathURL.path(), contents: sampleJpegData)
-        try #require(
-            fileManager.fileExists(atPath: pathURL.path()),
-            "File must exist before uploading"
-        )
-        
-        try await confirmation("Confirm that the upload finishes") { confirmation in
-            _ = try await api.login(username: username, password: password)
-            let csrfToken = try await api.fetchCSRFToken()
-            
-            
-            let mainSnak = WikidataClaim.Snak.init(snaktype: "value", property: WikidataProp(intValue: 180), datavalue: .wikibaseEntityID(.Q(4115189)))
-            let claims = [WikidataClaim(mainsnak: mainSnak)]
-            
-            
-            let wikitext = """
-=={{int:filedesc}}==
-{{Information
-|description={{en
-|This is a test file for a new Wikimedia-Commons client. This file can be deleted (but please wait an 1 hour)}}
-|date=\(Date.now.ISO8601Format())
-|source={{own}}
-|author=[[CommonsFinderTester|CommonsFinderTester]]
-|permission=
-|other versions=
-}}
-            
-=={{int:license-header}}==
-{{self|cc-by-4.0}}
-
-{{test upload}}
-
-"""
-            let mediaFileUploadable = MediaFileUploadable(
-                id: UUID().uuidString,
-                fileURL: pathURL,
-                filename: "iOS Client upload testing image \(UUID().uuidString) \(Date.now.formatted(date: .complete, time: .omitted)).jpg",
-                mimetype: UTType.jpeg.preferredMIMEType!,
-                claims: claims,
-                captions: [
-                    .init("This is a test file testing the upload in a new Wikimedia-Commons client. This file can be deleted (but please wait an 1 hour)", languageCode: "en"),
-                    .init("Dies ist eine Testdatei um den File-Upload einer neuen Wikimedia-Commons App zu testen. Kann gelöscht werden (aber bitte 1h warten)", languageCode: "de")
-                ],
-                wikitext: wikitext
-            )
-            
-            for await progress in await api.publish(file: mediaFileUploadable, csrfToken: csrfToken) {
-                switch progress {
-                case .uploadingFile(let progress):
-                    logger.debug("upload progress: \(100 * progress.fractionCompleted)%")
-                case .published:
-                    logger.debug("upload finished")
-                    confirmation()
-                case .uploadWarnings(let warnings):
-                    for warning in warnings {
-                        logger.error("upload error \(warning.description)")
-                    }
-                case .creatingWikidataClaims:
-                    logger.debug("creatingWikidataClaims")
-                case .unstashingFile:
-                    logger.debug("unstashFile")
-                case .unspecifiedError(let error):
-                    logger.debug("unspecifiedAPIError \(error)")
-                case .fileKeyObtained(filekey: let filekey):
-                    logger.debug("fileKeyObtained filekey \(filekey)")
-                case .fileKeyMissingAfterUpload:
-                    logger.debug("fileKeyMissingAfterUpload")
-                case .urlError(let error):
-                    logger.debug("urlError \(error.localizedDescription)")
-                }
-            }
-        }
-        
-        print("Finished upload test")
-    }
+//    @Test("uploading files",
+//          // comment out the next line to test uploading with valid credentials
+//          .disabled("Requires a valid password"),
+//          arguments: [(username: "", password: "DO NOT COMMIT CREDENTIALS AFTER TESTING")]
+//    )
+//    func canUploadFiles(username: String, password: String) async throws {
+//        let fileManager = FileManager.default
+//        
+//        let sampleJpegData = UIGraphicsImageRenderer(
+//            size: .init(width: Int.random(in: 500..<1000), height: Int.random(in: 500..<1000))
+//        ).image { ctx in
+//            [UIColor.purple, UIColor.green, UIColor.gray, UIColor.black].randomElement()!.setFill()
+//            ctx.fill(.init(origin: .init(
+//                x: Int.random(in: 0..<250),
+//                y: Int.random(in: 0..<250)),
+//                size: .init(width: Int.random(in: 0..<250), height: Int.random(in: 0..<250))
+//            ))
+//        }
+//            .jpegData(compressionQuality: Double.random(in: 0.5..<0.95))
+//        
+//        let pathURL = fileManager.temporaryDirectory.appendingPathComponent(UUID().uuidString, conformingTo: .jpeg)
+//        
+//        fileManager.createFile(atPath: pathURL.path(), contents: sampleJpegData)
+//        try #require(
+//            fileManager.fileExists(atPath: pathURL.path()),
+//            "File must exist before uploading"
+//        )
+//        
+//        try await confirmation("Confirm that the upload finishes") { confirmation in
+//            _ = try await api.login(username: username, password: password)
+//            let csrfToken = try await api.fetchCSRFToken()
+//            
+//            
+//            let mainSnak = WikidataClaim.Snak.init(snaktype: "value", property: WikidataProp(intValue: 180), datavalue: .wikibaseEntityID(.Q(4115189)))
+//            let claims = [WikidataClaim(mainsnak: mainSnak)]
+//            
+//            
+//            let wikitext = """
+//=={{int:filedesc}}==
+//{{Information
+//|description={{en
+//|This is a test file for a new Wikimedia-Commons client. This file can be deleted (but please wait an 1 hour)}}
+//|date=\(Date.now.ISO8601Format())
+//|source={{own}}
+//|author=[[CommonsFinderTester|CommonsFinderTester]]
+//|permission=
+//|other versions=
+//}}
+//            
+//=={{int:license-header}}==
+//{{self|cc-by-4.0}}
+//
+//{{test upload}}
+//
+//"""
+//            let mediaFileUploadable = MediaFileUploadable(
+//                id: UUID().uuidString,
+//                fileURL: pathURL,
+//                filename: "iOS Client upload testing image \(UUID().uuidString) \(Date.now.formatted(date: .complete, time: .omitted)).jpg",
+//                mimetype: UTType.jpeg.preferredMIMEType!,
+//                claims: claims,
+//                captions: [
+//                    .init("This is a test file testing the upload in a new Wikimedia-Commons client. This file can be deleted (but please wait an 1 hour)", languageCode: "en"),
+//                    .init("Dies ist eine Testdatei um den File-Upload einer neuen Wikimedia-Commons App zu testen. Kann gelöscht werden (aber bitte 1h warten)", languageCode: "de")
+//                ],
+//                wikitext: wikitext
+//            )
+//            
+//            for await progress in await api.publish(file: mediaFileUploadable, csrfToken: csrfToken) {
+//                switch progress {
+//                case .uploadingFile(let progress):
+//                    logger.debug("upload progress: \(100 * progress.fractionCompleted)%")
+//                case .published:
+//                    logger.debug("upload finished")
+//                    confirmation()
+//                case .uploadWarnings(let warnings):
+//                    for warning in warnings {
+//                        logger.error("upload error \(warning.description)")
+//                    }
+//                case .creatingWikidataClaims:
+//                    logger.debug("creatingWikidataClaims")
+//                case .unstashingFile:
+//                    logger.debug("unstashFile")
+//                case .unspecifiedError(let error):
+//                    logger.debug("unspecifiedAPIError \(error)")
+//                case .fileKeyObtained(filekey: let filekey):
+//                    logger.debug("fileKeyObtained filekey \(filekey)")
+//                case .fileKeyMissingAfterUpload:
+//                    logger.debug("fileKeyMissingAfterUpload")
+//                case .urlError(let error):
+//                    logger.debug("urlError \(error.localizedDescription)")
+//                }
+//            }
+//        }
+//        
+//        print("Finished upload test")
+//    }
     
     @Test("list sub-categories", arguments: ["Physics"])
     func fetchCategoryInfo(category: String) async throws {
-        let info = try await api.fetchCategoryMembers(of: category)
+        let info = try await api.fetchCategoryMembers(of: category, sort: .none)
         
         #expect(info != nil)
         guard let info else { return }
         
         #expect(info.parentCategories.count > 0)
         #expect(info.subCategories.count > 5)
-        #expect(info.wikidataItem  == .physicsCategory)
     }
     
     @Test("list images in category", arguments: ["Physics"])

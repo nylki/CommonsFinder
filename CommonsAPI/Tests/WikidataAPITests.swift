@@ -14,6 +14,12 @@ import CoreLocation
 
 @Suite("Wikidata E2E Tests", .serialized)
 struct WikidataEndToEndTests {
+    
+    static var responseProvider: APIResponseProvider {
+        { request, requiresAuthentication in
+            try await URLSession.shared.data(for: request)
+        }
+    }
 
     let api: CommonsAPI.API = {
         let info = Bundle.main.infoDictionary
@@ -25,7 +31,8 @@ struct WikidataEndToEndTests {
         let contactInfo = "https://github.com/nylki/CommonsFinder"
 
         let userAgent = "\(executable)/\(appBuild) (\(contactInfo)) \(osNameVersion)"
-        return CommonsAPI.API(userAgent: userAgent, referer: "CommonsFinder://UnitTests")
+    
+        return CommonsAPI.API(config: .default, responseProvider: responseProvider, userAgent: userAgent, referer: "commonsfinder://UnitTests")
     }()
     
     @Test("Searching Q-Items", arguments: [("tree", "en"), ("Baum", "de")])

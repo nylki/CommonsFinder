@@ -1,0 +1,21 @@
+//
+//  Debug.xcconfig
+//  CommonsFinder
+//
+//  Created by Tom Brewe on 11.06.26.
+//
+
+// Configuration settings file format documentation can be found at:
+// https://developer.apple.com/documentation/xcode/adding-a-build-configuration-file-to-your-project
+
+// The wikimedia "consumer id" (https://meta.wikimedia.org/wiki/Special:OAuthConsumerRegistration/propose)
+// This value is public.
+OAUTH_CLIENT_ID=
+
+// NOTE: non-confidential clients must not use a client password to authenticate.
+// For that reason, DANGEROUS_OAUTH_CLIENT_PASSWORD will remain empty by defult.
+// However if you want to locally test OAuth2 with your single-user consumer
+// you may add the secret here.
+
+// MAKE SURE TO NOT COMMIT THIS VALUE TO YOUR CODE REPO!
+DANGEROUS_OAUTH_CLIENT_PASSWORD=

@@ -345,33 +345,7 @@ class UploadManager {
                 logger.debug("Cleanup up queuedUploadables and tasks for \(id) after task finished. bgTask identifier: \(bgTask?.identifier ?? "no BGTask")")
             }
 
-            let csrfToken: String
-            do {
-                let tokenAuthResult = try await Authentication.fetchCSRFToken()
-                switch tokenAuthResult {
-                case .twoFactorCodeRequired:
-                    // FIXME: actual trigger a re-login when auth failed (eg. due to 2fa, or password change)
-                    // and ability to retry/resume
-                    try setPublishingError(for: id, error: .twoFactorCodeRequired)
-                    bgTask?.setTaskCompleted(success: false)
-                    return
-                case .emailCodeRequired:
-                    // FIXME: actual trigger a re-login when auth failed (eg. due to 2fa, or password change)
-                    // and ability to retry/resume
-                    try setPublishingError(for: id, error: .emailCodeRequired)
-                    bgTask?.setTaskCompleted(success: false)
-                    return
-                case .tokenReceived(let token):
-                    csrfToken = token
-                }
-            } catch {
-                logger.error("failed to fetch CSRF token for upload: \(error)")
-                bgTask?.setTaskCompleted(success: false)
-                try setPublishingError(for: id, error: .error(errorDescription: error.localizedDescription, recoverySuggestion: "Check if you are logged in to your Wikimedia Account."))
-                return
-            }
-
-            let request = await Networking.shared.api.publish(file: uploadable, csrfToken: csrfToken, startStep: startStep)
+            let request = await Networking.shared.api.publish(file: uploadable, startStep: startStep)
 
             for await status in request {
 

@@ -7,6 +7,8 @@
 
 import AppIntents
 import Nuke
+import OAuthenticator
+import SwiftSecurity
 import SwiftUI
 import TipKit
 import os.log
@@ -31,7 +33,6 @@ struct CommonsFinderApp: App {
 
     init() {
         postInstallMaintenance()
-        configureNukeAndPulse()
 
         let appDatabase = AppDatabase.shared
         self.appDatabase = appDatabase
@@ -95,6 +96,9 @@ struct CommonsFinderApp: App {
                 .environment(mapModel)
                 .environment(fileAnalysis)
                 .task {
+                    #if DEBUG
+                        Pulse.RemoteLogger.shared.isAutomaticConnectionEnabled = true
+                    #endif
 
                     // Configure and load your TipKit tips at app launch.
                     do {
@@ -128,32 +132,6 @@ struct CommonsFinderApp: App {
     }
 }
 
-private func configureNukeAndPulse() {
-    // NUKE setup
-    var pipelineConfig = ImagePipeline.Configuration.withDataCache(
-        name: "app.CommonsFinder.DataCache",
-        sizeLimit: 1024 * 1024 * 256
-    )
-    ImageCache.shared.costLimit = 1024 * 1024 * 512  // 512 MB
-    ImageCache.shared.ttl = 60 * 10  // Invalidate images in memory cache after 10 minutes
-
-    // configures a rate limiter that complies with the strict server-site rate limiting
-    // for non-authenticated clients, which is max 10 requests in a 10s sliding window.
-    pipelineConfig.rateLimiterConfig = .init(interval: 10, maxRequestCount: 10)
-    let dataLoader = DataLoader(configuration: Networking.shared.config)
-
-    /// TESTING NOTE: If tests fail in Pulse package, comment out the following block and try again.
-    #if DEBUG
-        RemoteLogger.shared.isAutomaticConnectionEnabled = true
-        ImagePipeline.Configuration.isSignpostLoggingEnabled = true
-        dataLoader.delegate = URLSessionProxyDelegate()
-    #endif
-
-    pipelineConfig.dataLoader = dataLoader
-    let pipeline = ImagePipeline(configuration: pipelineConfig)
-    ImagePipeline.shared = pipeline
-}
-
 private func postInstallMaintenance() {
     // Perform post install maintanence
 
@@ -170,7 +148,7 @@ private func postInstallMaintenance() {
         // alternative handling (2): Persisted username/password is accepted -> faster login for user
         // but may complicate things a bit if not intended by user or password was already changed or something...
         do {
-            try Authentication.clearKeychain()
+            try Keychain.default.removeAll(includingSynchronizableCredentials: true)
         } catch {
             assertionFailure("Failed to clear keychain of first launch!")
         }

@@ -74,11 +74,10 @@ struct SettingsView: View {
                 }
                 .imageScale(.large)
                 .animation(.default, value: account.activeUser)
-
             } else {
                 Button {
                     tip.invalidate(reason: .actionPerformed)
-                    navigation.openOnboarding()
+                    account.addAccount()
                 } label: {
                     Label("Add Account", systemImage: "person.crop.circle")
                         .bold()
@@ -143,11 +142,14 @@ struct SettingsView: View {
     }
 
     private func logout() {
-        do {
-            try account.logout()
-        } catch {
-            logger.fault("failed to logout user: \(error)")
+        Task<Void, Never> {
+            do {
+                try await account.logout()
+            } catch {
+                logger.fault("failed to logout user: \(error)")
+            }
         }
+
     }
 }
 

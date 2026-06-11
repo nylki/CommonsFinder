@@ -21,7 +21,12 @@ import os.log
         self.appDatabase = appDatabase
     }
 
-    func publishChanges(of model: EditedMediaFile) {
+    /// Will first await for authentication, then quickly start the network calls in a new Task to return early.
+    func startPublishChanges(of model: EditedMediaFile) async throws {
+        // NOTE: we pre-emptively authenticate here, to avoid this error in the caller:
+        // "Attempted to present SFAuthenticationViewController from a view controller that is being dismissed"
+        try await Networking.shared.authenticate()
+
         let mediaFile = model.referenceMediaFileInfo.mediaFile
         let id = mediaFile.id
 
@@ -77,12 +82,6 @@ import os.log
             status[id] = .editing
 
             do {
-                let tokenResult = try await Authentication.fetchCSRFToken()
-                guard case .tokenReceived(let token) = tokenResult else {
-                    throw EditingError.authenticationRequired
-                }
-
-
                 if captionsChanged || depictsChanged {
                     let entityId = mediaFile.entityId
                     let labelChanges = PublishHelpers.labelDiff(current: trimmedReferenceCaptions, target: trimmedCaptions)
@@ -94,8 +93,7 @@ import os.log
                             entityId: entityId,
                             language: label.languageCode,
                             value: label.string,
-                            summary: summary,
-                            csrfToken: token
+                            summary: summary
                         )
                     }
 
@@ -104,8 +102,7 @@ import os.log
                             entityId: entityId,
                             language: language,
                             value: nil,
-                            summary: summary,
-                            csrfToken: token
+                            summary: summary
                         )
                     }
 
@@ -127,8 +124,7 @@ import os.log
                             entityId: entityId,
                             property: .depicts,
                             value: wikidataItem,
-                            summary: summary,
-                            csrfToken: token
+                            summary: summary
                         )
                     }
 
@@ -136,8 +132,7 @@ import os.log
                         guard let claimId = existingByItemID[itemId]?.id else { continue }
                         try await Networking.shared.api.removeClaim(
                             claimId: claimId,
-                            summary: summary,
-                            csrfToken: token
+                            summary: summary
                         )
                     }
                 }
@@ -160,8 +155,7 @@ import os.log
                     try await Networking.shared.api.editPageText(
                         pageID: mediaFile.id,
                         text: updatedText,
-                        summary: summary,
-                        csrfToken: token
+                        summary: summary
                     )
                 }
                 status[id] = .finishedAndPerformingRefresh

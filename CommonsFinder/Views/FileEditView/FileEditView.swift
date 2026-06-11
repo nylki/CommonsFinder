@@ -264,8 +264,16 @@ struct FileEditView: View {
 
     private func publishChangesAndDismiss() {
         guard let model else { return }
-        editingManager.publishChanges(of: model)
-        dismiss()
+        Task<Void, Never> {
+            do {
+                try await editingManager.startPublishChanges(of: model)
+                dismiss()
+            } catch {
+                logger.error("Failed to start publishing edit changes \(error)")
+                dismiss()
+            }
+        }
+
     }
 }
 
