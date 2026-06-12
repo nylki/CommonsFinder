@@ -9,7 +9,7 @@
 // https://developer.apple.com/documentation/xcode/adding-a-build-configuration-file-to-your-project
 
 // The wikimedia "consumer id" (https://meta.wikimedia.org/wiki/Special:OAuthConsumerRegistration/propose)
-// This value is public.
+// This value is considered public (see: https://meta.wikimedia.org/wiki/Special:OAuthListConsumers)
 OAUTH_CLIENT_ID=
 
 // NOTE: non-confidential clients must not use a client password to authenticate.

@@ -52,29 +52,27 @@ actor Networking {
         authenticator.responseProvider
     }
 
+    private var oauthTokenProvider: OAuthTokenProvider {
+        { try await self.authenticator.authenticate().accessToken.value }
+    }
+
     private var apiResponseProvider: APIResponseProvider {
         { request, requiresAuthentication in
-            if requiresAuthentication {
-                try await self.authenticatedResponseProvider(request)
-            } else if await self.assumeLoggedInUser {
-                try await self.authenticatedResponseProvider(request)
+            let assumeLoggedInUser = await self.assumeLoggedInUser
+            if requiresAuthentication || assumeLoggedInUser {
+                return try await self.authenticatedResponseProvider(request)
             } else {
-                try await self.urlSession.responseProvider(request)
+                return try await self.urlSession.responseProvider(request)
             }
         }
     }
 
-    @discardableResult
-    private func rebuildAPI() -> API {
-        let api = API(config: config, responseProvider: apiResponseProvider, userAgent: userAgent, referer: referer)
-        lazyAPI = api
-        configureImagePipeline()
-        return api
-    }
 
     private static var oauthClientID: String {
         guard let clientID = Bundle.main.object(forInfoDictionaryKey: "OAUTH_CLIENT_ID") as? String, !clientID.isEmpty else {
-            fatalError("The clientId for OAuth must be present in the Config for the app to function properly.")
+            fatalError(
+                "The clientId for OAuth must be present in the Config for the app to function properly. See Debug.xcconfig. `Release.xcconfig` will get its value automatically from XCode Cloud variables via `ce_pre_xcodebuild`"
+            )
         }
         return clientID
     }
@@ -89,33 +87,6 @@ actor Networking {
         #else
             return ""
         #endif
-    }
-
-    // Nuke ImagePipeline setup and configuration
-    private func configureImagePipeline() {
-        var pipelineConfig = ImagePipeline.Configuration.withDataCache(
-            name: "app.CommonsFinder.DataCache",
-            sizeLimit: 1024 * 1024 * 256
-        )
-        ImageCache.shared.costLimit = 1024 * 1024 * 512  // 512 MB
-        ImageCache.shared.ttl = 60 * 10  // Invalidate images in memory cache after 10 minutes
-
-        // configures a rate limiter that complies with the strict server-site rate limiting
-        // for non-authenticated clients, which is max 10 requests in a 10s sliding window.
-        pipelineConfig.rateLimiterConfig = .init(interval: 10, maxRequestCount: 10)
-        let dataLoader = DataLoader(configuration: config)
-
-        /// TESTING NOTE: If tests fail in Pulse package, comment out the following block and try again.
-        #if DEBUG
-            ImagePipeline.Configuration.isSignpostLoggingEnabled = true
-            dataLoader.delegate = URLSessionProxyDelegate()
-        #endif
-
-        pipelineConfig.dataLoader = dataLoader
-        let pipeline = ImagePipeline(configuration: pipelineConfig, delegate: self)
-
-        ImagePipeline.shared = pipeline
-
     }
 
     init() {
@@ -146,6 +117,40 @@ actor Networking {
         self.urlSession = urlSession
 
         self.authenticator = Self.buildAuthenticator(with: urlSession.responseProvider)
+    }
+
+    @discardableResult
+    private func rebuildAPI() -> API {
+        let api = API(config: config, responseProvider: apiResponseProvider, tokenProvider: oauthTokenProvider, userAgent: userAgent, referer: referer)
+        lazyAPI = api
+        configureImagePipeline()
+        return api
+    }
+
+    // Nuke ImagePipeline setup and configuration
+    private func configureImagePipeline() {
+        var pipelineConfig = ImagePipeline.Configuration.withDataCache(
+            name: "app.CommonsFinder.DataCache",
+            sizeLimit: 1024 * 1024 * 256
+        )
+        ImageCache.shared.costLimit = 1024 * 1024 * 512  // 512 MB
+        ImageCache.shared.ttl = 60 * 10  // Invalidate images in memory cache after 10 minutes
+
+        // configures a rate limiter that complies with the strict server-site rate limiting
+        // for non-authenticated clients, which is max 10 requests in a 10s sliding window.
+        pipelineConfig.rateLimiterConfig = .init(interval: 10, maxRequestCount: 10)
+        let dataLoader = DataLoader(configuration: config)
+
+        /// TESTING NOTE: If tests fail in Pulse package, comment out the following block and try again.
+        #if DEBUG
+            ImagePipeline.Configuration.isSignpostLoggingEnabled = true
+            dataLoader.delegate = URLSessionProxyDelegate()
+        #endif
+
+        pipelineConfig.dataLoader = dataLoader
+        let pipeline = ImagePipeline(configuration: pipelineConfig, delegate: self)
+
+        ImagePipeline.shared = pipeline
     }
 
 
@@ -184,12 +189,14 @@ actor Networking {
         )
 
         let authenticationStatusHandler: Authenticator.AuthenticationStatusHandler = { result in
-            switch result {
-            case .success(let login):
-                logger.debug("authentication: SUCCESS")
-            case .failure(let error):
-                logger.debug("authentication: FAILURE \(error)")
-            }
+            #if DEBUG
+                switch result {
+                case .success(_):
+                    logger.debug("authentication: SUCCESS")
+                case .failure(let error):
+                    logger.debug("authentication: FAILURE \(error)")
+                }
+            #endif
         }
 
         let loginStorage = LoginStorage(
@@ -204,19 +211,18 @@ actor Networking {
             storeLogin: { login in
                 do {
                     // logger.debug("LoginStorage store: accesstoken: \(login.accessToken.value) \n\nrefreshtoken: \(login.refreshToken?.value ?? "-")")
-                    let info = try? Keychain.default.info(for: .login)
-                    let containsCredentials = info?.isNegative == false
-                    if containsCredentials {
-                        try Keychain.default.remove(.login)
-                    }
+                    try Keychain.default.remove(.login)
                     try Keychain.default.store(login, query: .login)
                 } catch {
                     switch error as? SwiftSecurityError {
                     case .duplicateItem:
                         logger.error("duplicate keychain key \(error)")
+                        fatalError("Failed to store OAuth token (duplicate key error)")
                     default:
                         // unhandled
                         logger.error("Failed to store oauth2 token. \(error)")
+                        assertionFailure("Failed to store oauth2 token. \(error)")
+                        _ = try? Keychain.default.remove(.login)
                     }
                 }
             })
@@ -305,6 +311,8 @@ extension Networking: ImagePipeline.Delegate {
     }
 }
 
+public typealias URLResponseProviderWithDelegate = @Sendable (URLRequest, URLSessionTaskDelegate) async throws -> (Data, URLResponse)
+
 // responseProvider: extending URLSessionProtocol to support Pulse logging.
 // effectively it's just a copy of the responseProvider of the URLSession extension in OAuthenticator.
 nonisolated extension URLSessionProtocol {
@@ -324,6 +332,12 @@ nonisolated extension URLSessionProtocol {
 
                 task.resume()
             }
+        }
+    }
+
+    public var responseProviderWithDelegate: URLResponseProviderWithDelegate {
+        return { request, delegate in
+            return try await self.data(for: request, delegate: delegate)
         }
     }
 }

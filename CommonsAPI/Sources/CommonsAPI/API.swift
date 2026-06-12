@@ -22,30 +22,29 @@ internal typealias Parameters = [String:String]
 
 
 public typealias APIResponseProvider = @Sendable (_ request: URLRequest, _ requiresAuthentication: Bool) async throws -> (Data, URLResponse)
-
+public typealias OAuthTokenProvider = @Sendable () async throws -> String
 
 public actor API {
-    let logger = Logger(subsystem: "CommonsFinder", category: "CommonsAPI")
-    let wikipediaHomepage = URL(string: "https://wikipedia.org")!
+    private let logger = Logger(subsystem: "CommonsFinder", category: "CommonsAPI")
     
-    let commonsHomepage = URL(string: "https://commons.wikimedia.org")!
-    let commonsEndpoint = URL(string: "https://commons.wikimedia.org/w/api.php")!
-    let wikidataEndpoint = URL(string: "https://www.wikidata.org/w/api.php")!
-    let profileEndpoint = URL(string: "https://commons.wikimedia.org/w/rest.php/oauth2/resource/profile")!
+    private let commonsHomepage = URL(string: "https://commons.wikimedia.org")!
+    private let commonsEndpoint = URL(string: "https://commons.wikimedia.org/w/api.php")!
+    private let wikidataEndpoint = URL(string: "https://www.wikidata.org/w/api.php")!
+    private let profileEndpoint = URL(string: "https://commons.wikimedia.org/w/rest.php/oauth2/resource/profile")!
     
     // see: https://www.wikidata.org/wiki/Wikidata:SPARQL_query_service
-    let wikidataSparqlEndpoint = URL(string: "https://query.wikidata.org/bigdata/namespace/wdq/sparql")!
-    let createAccountRedirectURL = URL(string: "https://commons.m.wikimedia.beta.wmflabs.org/w/index.php?title=Main_Page&welcome=yes")!
+    private let wikidataSparqlEndpoint = URL(string: "https://query.wikidata.org/bigdata/namespace/wdq/sparql")!
     
     private(set) var userAgent: String
     private(set) var referer: String
-    private(set) var responseProvider: APIResponseProvider
+    private var responseProvider: APIResponseProvider
+    private var tokenProvider: OAuthTokenProvider
     
-#if DEBUG
-    let urlSession: URLSessionProxy
-#else
-    let urlSession: URLSession
-#endif
+    #if DEBUG
+        private let urlSession: URLSessionProxy
+    #else
+        private let urlSession: URLSession
+    #endif
 
     private lazy var jsonDecoder: JSONDecoder = {
         let decoder = JSONDecoder()
@@ -61,46 +60,22 @@ public actor API {
         )
     }
 
-    public init(config: URLSessionConfiguration, responseProvider: @escaping APIResponseProvider, userAgent: String, referer: String) {
+    public init(
+        config: URLSessionConfiguration,
+        responseProvider: @escaping APIResponseProvider,
+        tokenProvider: @escaping OAuthTokenProvider,
+        userAgent: String,
+        referer: String
+    ) {
         self.responseProvider = responseProvider
+        self.tokenProvider = tokenProvider
         self.userAgent = userAgent
         self.referer = referer
 #if DEBUG
-    urlSession = URLSessionProxy(configuration: config)
+        urlSession = URLSessionProxy(configuration: config)
 #else
-    urlSession = URLSession(configuration: config)
+        urlSession = URLSession(configuration: config)
 #endif
-        
-
- // Un-Comment the following code block to test EmailAuth via email-code (https://www.mediawiki.org/wiki/Help:Extension:EmailAuth)
-//#if DEBUG
-//        let c1 = HTTPCookie(properties: [
-//            .domain: "auth.wikimedia.org",
-//            .name: "forceEmailAuth",
-//            .path: "/",
-//            .value: "1",
-//            .expires: Date().addingTimeInterval(600)
-//        ])
-//        
-//        let c2 = HTTPCookie(properties: [
-//            .domain: "commons.wikimedia.org",
-//            .name: "forceEmailAuth",
-//            .path: "/",
-//            .value: "1",
-//            .expires: Date().addingTimeInterval(600)
-//        ])
-//        
-//        if let c1, let c2 {
-//            configuration.httpCookieStorage?.setCookie(c1)
-//            configuration.httpCookieStorage?.setCookie(c2)
-//
-//        } else {
-//            assertionFailure()
-//        }
-// #endif
-        
-//        var eventMonitors: [any EventMonitor] = [AlamofireNotifications()]
-        
     }
     
     public func setReferer(_ newReferer: String) {
@@ -1242,7 +1217,7 @@ LIMIT \(limit)
                         var filekey: String?
                         
                         if startStep == .uploadData {
-                            let request = try POSTMultipart(
+                            var request = try POSTMultipart(
                                 url: commonsEndpoint,
                                 fileURL: file.fileURL,
                                 filename: file.filename,
@@ -1254,7 +1229,13 @@ LIMIT \(limit)
                                 continuation.yield(.uploadingFile(progress))
                             }
                             
+                            // NOTE: This is the only exception where the OAuthToken is inserted directly here and URLSession + Authorization headers are directly used
+                            // instead of response(for: request).
+                            // Here we need the delegate to observe the progress, but the optional delegate is not supported in the upstream library OAuthenticator (yet).
+                            let oauthToken = try await tokenProvider()
+                            request.setValue("Bearer \(oauthToken)", forHTTPHeaderField: "Authorization")
                             let (data, response) = try await urlSession.data(for: request, delegate: progressDelegate)
+                            
                             let fileUploadResponse = try parse(FileUploadResponse.self, from: data, response: response)
                             let responseValue = fileUploadResponse.upload
                             filekey = responseValue.filekey

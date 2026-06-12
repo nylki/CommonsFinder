@@ -25,8 +25,6 @@
 		E290323F2D9EA84700A0CD8F /* GRDBQuery in Frameworks */ = {isa = PBXBuildFile; productRef = E290323E2D9EA84700A0CD8F /* GRDBQuery */; };
 		E29112B62DF34733007A3998 /* WhatToTest.de-DE.txt in Resources */ = {isa = PBXBuildFile; fileRef = E29112B52DF3463E007A3998 /* WhatToTest.de-DE.txt */; };
 		E29112B72DF34733007A3998 /* WhatToTest.en-US.txt in Resources */ = {isa = PBXBuildFile; fileRef = E29112B42DF344F0007A3998 /* WhatToTest.en-US.txt */; };
-		E2A683D32FDB05D800FB0858 /* Debug.xcconfig in Resources */ = {isa = PBXBuildFile; fileRef = E2A683D12FDB05D800FB0858 /* Debug.xcconfig */; };
-		E2A683D42FDB05D800FB0858 /* Debug.xcconfig in Resources */ = {isa = PBXBuildFile; fileRef = E2A683D12FDB05D800FB0858 /* Debug.xcconfig */; };
 		E2BA76322FCEDAA90027717A /* OAuthenticator in Frameworks */ = {isa = PBXBuildFile; productRef = E2BA76312FCEDAA90027717A /* OAuthenticator */; };
 		E2C92DD32ED60D4000EAA248 /* ObservableLRUCache in Frameworks */ = {isa = PBXBuildFile; productRef = E2C92DD22ED60D4000EAA248 /* ObservableLRUCache */; };
 		E2D76FAB2F3E2CB8009CC4CB /* Nuke in Frameworks */ = {isa = PBXBuildFile; productRef = E2D76FAA2F3E2CB8009CC4CB /* Nuke */; };
@@ -35,8 +33,6 @@
 		E2E2BFD52D8718AE00751949 /* Algorithms in Frameworks */ = {isa = PBXBuildFile; productRef = E2E2BFD42D8718AE00751949 /* Algorithms */; };
 		E2F19BC62CA43C6400E19DCD /* SwiftSecurity in Frameworks */ = {isa = PBXBuildFile; productRef = E2F19BC52CA43C6400E19DCD /* SwiftSecurity */; };
 		E2F1B9D52CD006C700410991 /* GRDB in Frameworks */ = {isa = PBXBuildFile; productRef = E2F1B9D42CD006C700410991 /* GRDB */; };
-		E2FDF2542FDB0E7300240A92 /* Release.xcconfig in Resources */ = {isa = PBXBuildFile; fileRef = E2FDF2532FDB0E7300240A92 /* Release.xcconfig */; };
-		E2FDF2562FDB0E7300240A92 /* Release.xcconfig in Resources */ = {isa = PBXBuildFile; fileRef = E2FDF2532FDB0E7300240A92 /* Release.xcconfig */; };
 		E2FF0A2E2D9EAA29008F915C /* GRDB in Frameworks */ = {isa = PBXBuildFile; productRef = E25278722CB03FAF00D00640 /* GRDB */; };
 		E2FF0A2F2D9EAA29008F915C /* GRDBQuery in Frameworks */ = {isa = PBXBuildFile; productRef = E25278752CB03FBB00D00640 /* GRDBQuery */; };
 /* End PBXBuildFile section */
@@ -637,8 +633,6 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				E2FDF2542FDB0E7300240A92 /* Release.xcconfig in Resources */,
-				E2A683D42FDB05D800FB0858 /* Debug.xcconfig in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -655,8 +649,6 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				E2FDF2562FDB0E7300240A92 /* Release.xcconfig in Resources */,
-				E2A683D32FDB05D800FB0858 /* Debug.xcconfig in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -765,7 +757,7 @@
 		};
 		E283A00A2CA2DD910053C312 /* Debug */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = E2FDF2532FDB0E7300240A92 /* Release.xcconfig */;
+			baseConfigurationReference = E2A683D12FDB05D800FB0858 /* Debug.xcconfig */;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
