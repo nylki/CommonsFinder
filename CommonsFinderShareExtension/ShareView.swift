@@ -109,7 +109,7 @@ struct ShareView: View {
             return
         }
         
-        guard let url = URL(string: "CommonsFinder://ShareExtension/openDrafts"),
+        guard let url = URL(string: "commonsfinder://ShareExtension/openDrafts"),
               var components = URLComponents(url: url, resolvingAgainstBaseURL: false) else {
             onError(ShareResultError.URLInitError)
             return

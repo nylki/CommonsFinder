@@ -8,9 +8,11 @@
 import Algorithms
 import CommonsAPI
 import Foundation
+import OAuthenticator
+import SwiftSecurity
 import os.log
 
-struct User: Sendable, Codable, Hashable, Equatable {
+nonisolated struct User: Sendable, Codable, Hashable, Equatable {
     //    let id: String
     let username: String
     var userPage: URL? {
@@ -26,18 +28,21 @@ struct User: Sendable, Codable, Hashable, Equatable {
     }
 }
 
+nonisolated extension User {
+    init(_ profileInfo: CommonsAPI.ProfileInfo) {
+        self.username = profileInfo.username
+    }
+}
+
 enum LoginSuccess {
     case loggedIn(User)
     case twoFactorCodeRequired
     case emailCodeRequired
 }
 
-// UserManager is designed to be lean and does not hold any data unrelated to authentication
-// and basic profile data (username, profile image, preferences?)
-
+// AccountModel is designed to be lean. It only holds basic profile data (username, profile image, preferences?)
 // It also explicity **should not store information about uploads**. That should be stored inside the DB
 // and  dynamically queried in views via GRDB @Query so as little memory.
-
 
 @Observable
 final class AccountModel {
@@ -50,10 +55,10 @@ final class AccountModel {
 
     init(appDatabase: AppDatabase) {
         self.appDatabase = appDatabase
+
         do {
-            if let activeUsername = try Authentication.retrieveActiveUsername() {
-                let user = User(username: activeUsername)
-                self.activeUser = user
+            if let activeUsername = try Keychain.default.retrieveActiveUsername() {
+                self.activeUser = User(username: activeUsername)
             }
         } catch {
             logger.error("Auth error (TODO: really an error or just not yet saved?): \(error)")
@@ -66,63 +71,34 @@ final class AccountModel {
         self.activeUser = testUser
     }
 
-    func logout() throws {
+    func logout() async throws {
         postLoginTask?.cancel()
         postLoginTask = nil
         recurringSyncTask?.cancel()
         recurringSyncTask = nil
         activeUser = nil
         try appDatabase.deleteLogoutRelatedItems()
-        try Authentication.clearKeychain()
+        try await Networking.shared.logoutAndClearKeychain()
     }
 
 
-    @discardableResult
-    func login(username: String, password: String, oneTimeCode: OneTimeCode?) async throws(Authentication.AuthError) -> LoginSuccess {
-        guard activeUser == nil else {
-            throw .existingUserLogin
-        }
-
-        // see uppercasing: https://en.wikipedia.org/wiki/Wikipedia:Username_policy
-        let username = username.capitalizingFirstLetter()
-        let result = try await Authentication.login(username: username, password: password, oneTimeCode: oneTimeCode)
-
-        switch result {
-        case .twoFactorCodeRequired: return .twoFactorCodeRequired
-        case .emailCodeRequired: return .emailCodeRequired
-        case .authenticationComplete:
-            let user = User(username: username)
-            activeUser = user
-            schedulePostLoginTasks(forUser: user)
-            return .loggedIn(user)
+    func addAccount() {
+        guard activeUser == nil else { return }
+        Task {
+            do {
+                try await Networking.shared.authenticate()
+                let profileInfo = try await Networking.shared.api.fetchProfileInfo()
+                let user = User(profileInfo)
+                activeUser = user
+                try Keychain.default.storeActiveUsername(user.username)
+                schedulePostLoginTasks()
+            } catch {
+                logger.error("error adding account \(error)")
+            }
         }
     }
 
-    func ensureUserIsAuthenticated() {
-
-    }
-
-    func createAccount(username: String, password: String, email: String, captchaWord: String, captchaID: String, token: String) async throws(Authentication.AuthError) -> User {
-        // see uppercasing: https://en.wikipedia.org/wiki/Wikipedia:Username_policy
-        let username = username.capitalizingFirstLetter()
-
-        try await Authentication.createAccount(
-            username: username,
-            password: password,
-            email: email,
-            captchaWord: captchaWord,
-            captchaID: captchaID,
-            token: token
-        )
-
-        let user = User(username: username)
-        activeUser = user
-        schedulePostLoginTasks(forUser: user)
-
-        return user
-    }
-
-    private func schedulePostLoginTasks(forUser user: User) {
+    private func schedulePostLoginTasks() {
         postLoginTask = Task<Void, Never> {
             logger.info("schedulePostLoginTasks...")
             defer { postLoginTask = nil }
@@ -131,7 +107,6 @@ final class AccountModel {
                     taskGroup.addTask {
                         try await self.fetchMostRecentUploads()
                     }
-                    taskGroup.addTask(operation: fetchUserProfile)
                 }
                 UserDefaults.standard.set(Date.now, forKey: "lastSyncDate")
             } catch {
@@ -142,10 +117,6 @@ final class AccountModel {
             }
 
         }
-
-    }
-
-    func fetchUserProfile() async throws {
 
     }
 

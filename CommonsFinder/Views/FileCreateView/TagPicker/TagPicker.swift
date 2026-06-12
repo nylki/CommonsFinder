@@ -42,7 +42,6 @@ struct TagPicker: View {
 
     @State private var isSuggestedNearbyTagsExpanded = false
 
-    @ObservationIgnored
     @State private var searchTask: Task<Void, Never>?
 
     @State private var tags: OrderedSet<TagModel> = []

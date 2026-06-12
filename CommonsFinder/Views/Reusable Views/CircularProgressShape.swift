@@ -8,7 +8,7 @@
 import SwiftUI
 
 @Animatable
-struct CircularProgressShape: Shape {
+nonisolated struct CircularProgressShape: Shape {
     /// 0...1
     var progress: Double
 

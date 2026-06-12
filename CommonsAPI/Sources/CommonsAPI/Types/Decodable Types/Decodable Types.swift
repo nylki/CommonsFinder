@@ -1279,6 +1279,29 @@ internal struct ValidateFilenameResponse: Sendable, Decodable {
     }
 }
 
+public struct ProfileInfo: Decodable, Sendable {
+    /// central user id
+    public let sub: String
+    public let username: String
+    public let blocked: Bool
+    public let emailVerified: Bool
+    public let confirmedEmail: Bool
+    public let editcount: Int
+    public let groups: [String]
+    public let rights: [String]
+    
+    enum CodingKeys: String, CodingKey {
+        case sub
+        case username
+        case blocked
+        case emailVerified = "email_verified"
+        case confirmedEmail = "confirmed_email"
+        case editcount
+        case groups
+        case rights
+    }
+}
+
 public enum FilenameValidationStatus: Sendable {
     case ok
     case disallowed

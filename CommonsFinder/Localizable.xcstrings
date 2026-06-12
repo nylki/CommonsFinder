@@ -631,6 +631,7 @@
       }
     },
     "Continue" : {
+      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -711,6 +712,7 @@
       }
     },
     "Creating Account..." : {
+      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -843,6 +845,7 @@
       }
     },
     "E-Mail Address" : {
+      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -903,6 +906,7 @@
       }
     },
     "Email-Code" : {
+      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -1284,6 +1288,7 @@
       }
     },
     "Loading captcha..." : {
+      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -1344,6 +1349,7 @@
       }
     },
     "logging in..." : {
+      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -1354,6 +1360,7 @@
       }
     },
     "Login" : {
+      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -1364,6 +1371,7 @@
       }
     },
     "Login to Wikimedia Commons" : {
+      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -1517,6 +1525,7 @@
       }
     },
     "new account" : {
+      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -1842,6 +1851,7 @@
       }
     },
     "Password" : {
+      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -1852,6 +1862,7 @@
       }
     },
     "Password is Empty" : {
+      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -1862,6 +1873,7 @@
       }
     },
     "Password is too common and therefore considered insecure (found in the list of common passwords)" : {
+      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -1872,6 +1884,7 @@
       }
     },
     "Password is too long" : {
+      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -1882,6 +1895,7 @@
       }
     },
     "Password is too short" : {
+      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -1892,6 +1906,7 @@
       }
     },
     "Password must not contains you choosen username" : {
+      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -1962,6 +1977,7 @@
       }
     },
     "Please enter a code from your two-factor authentication application to continue." : {
+      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -1972,6 +1988,7 @@
       }
     },
     "Please enter the one-time verification code sent by email to continue." : {
+      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -1982,6 +1999,7 @@
       }
     },
     "Please enter the text seen above" : {
+      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -2094,6 +2112,7 @@
       }
     },
     "Register" : {
+      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -2104,6 +2123,7 @@
       }
     },
     "Register at Wikimedia Commons" : {
+      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -2534,6 +2554,7 @@
       }
     },
     "The email-address is not valid." : {
+      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -2644,6 +2665,7 @@
       }
     },
     "The Password is invalid" : {
+      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -2664,6 +2686,7 @@
       }
     },
     "The text was not correct, please try again." : {
+      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -2674,6 +2697,7 @@
       }
     },
     "The Username is already taken" : {
+      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -2735,6 +2759,7 @@
       }
     },
     "Two-factor token or recovery code" : {
+      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -2745,6 +2770,7 @@
       }
     },
     "Unfortunately, wikimedia commons does not have an audio alternative available.\nPlease contact the site administrators for assistance if this is unexpectedly preventing you from making legitimate posts at the Commons:Help desk. If you are giving a correct answer that is not being accepted, please provide details of the problem." : {
+      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -2855,6 +2881,7 @@
       }
     },
     "Username" : {
+      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -2865,6 +2892,7 @@
       }
     },
     "Username contain characters that cannot be used. Do not use an email address as username." : {
+      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -2875,6 +2903,7 @@
       }
     },
     "validating..." : {
+      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -2965,6 +2994,7 @@
       }
     },
     "with existing account" : {
+      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
