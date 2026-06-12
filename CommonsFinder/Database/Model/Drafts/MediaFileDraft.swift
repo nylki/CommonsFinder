@@ -5,6 +5,7 @@
 //  Created by Tom Brewe on 21.01.25.
 //
 
+
 import CommonsAPI
 import CoreGraphics
 import CoreLocation
@@ -21,9 +22,10 @@ import os.log
 // avoiding duplicates with wikidata structured data (eg. for location, date etc.)
 
 nonisolated
-    struct MediaFileDraft: Identifiable, Equatable, Hashable
+    struct MediaFileDraft: Draftable, Identifiable, Equatable, Hashable
 {
     // UUID-string
+    // FIXME: make this an auto-incrementable id
     let id: String
 
     var addedDate: Date
@@ -61,15 +63,6 @@ nonisolated
         set { locationHandling = newValue ? .exifLocation : .noLocation }
     }
 
-    enum LocationHandling: Codable, Equatable, Hashable {
-        /// location data will be removed from EXIF if it exists inside the binary and won't be added to wikitext or structured data
-        case noLocation
-        /// location data from EXIF will be used for wikitext and structured data
-        case exifLocation
-        /// user defined location data will be used for wikitext and structured data, EXIF-location will be overwritten by user defined location
-        case userDefinedLocation(latitude: CLLocationDegrees, longitude: CLLocationDegrees, precision: CLLocationDegrees)
-    }
-
     var tags: [TagItem]
 
     var license: DraftMediaLicense?
@@ -78,21 +71,78 @@ nonisolated
 
     var width: Int?
     var height: Int?
+    /// in byte
+    var size: Int64?
 
-    enum DraftAuthor: Codable, Equatable, Hashable {
-        case appUser
-        case custom(name: String, wikimediaUsername: String?, url: URL?)
-        case wikidataId(wikidataItem: WikidataItemID)
+    var multiDraftId: Int64?
+
+    enum PublishingError: Equatable, Sendable, CustomStringConvertible, Codable, Hashable {
+        case twoFactorCodeRequired
+        case emailCodeRequired
+        case uploadWarnings([FileUploadResponse.Warning])
+        case urlError(urlErrorCode: Int, errorDescription: String)
+        case error(errorDescription: String?, recoverySuggestion: String?)
+        case appQuitOrCrash
+
+        var description: String {
+            switch self {
+            case .twoFactorCodeRequired:
+                "twoFactorCodeRequired"
+            case .emailCodeRequired:
+                "emailCodeRequired"
+            case .uploadWarnings(let array):
+                "uploadWarnings \(array.description)"
+            case .error(let errorDescription, let recoverySuggestion):
+                "error \(errorDescription ?? ""), \(recoverySuggestion ?? "")"
+            case .urlError(let urlErrorCode, let errorDescription):
+                "urlError \(urlErrorCode) \(errorDescription)"
+            case .appQuitOrCrash:
+                "appQuitOrCrash"
+            }
+        }
+
+        static func == (lhs: PublishingError, rhs: PublishingError) -> Bool {
+            lhs.description == rhs.description
+        }
     }
 
-    enum DraftSource: Codable, Equatable, Hashable {
-        // see: https://commons.wikimedia.org/wiki/Commons:Structured_data/Modeling/Source
-        // "Wikidata: *\(id)*"P7482
+    enum PublishingState: Equatable, Sendable, Identifiable, CustomStringConvertible, Codable, Hashable {
+        case uploading(_ fractionCompleted: Double)
+        case uploaded(filekey: String)
+        case unstashingFile(filekey: String)
+        case creatingWikidataClaims
+        case published
 
-        case own
-        case fileFromTheWeb(URL)
-        // TODO: check correct modelling
-        case book(WikidataItemID, page: Int)
+        var uploadProgress: Double? {
+            if case .uploading(let fractionCompleted) = self {
+                fractionCompleted
+            } else {
+                nil
+            }
+        }
+
+        var id: String {
+            description
+        }
+
+        var description: String {
+            switch self {
+            case .uploading(let fractionCompleted):
+                "uploading \(fractionCompleted)"
+            case .uploaded(let filekey):
+                "filekey \(filekey)"
+            case .creatingWikidataClaims:
+                "creatingWikidataClaims"
+            case .unstashingFile:
+                "unstashingFile"
+            case .published:
+                "published"
+            }
+        }
+
+        static func == (lhs: PublishingState, rhs: PublishingState) -> Bool {
+            lhs.description == rhs.description
+        }
     }
 }
 
@@ -143,6 +193,8 @@ nonisolated
         case source
         case width
         case height
+        case size
+        case multiDraftId
     }
 
     // Define database columns from CodingKeys
@@ -162,10 +214,12 @@ nonisolated
 
         static let width = Column(CodingKeys.width)
         static let height = Column(CodingKeys.height)
+        static let size = Column(CodingKeys.size)
 
         static let license = Column(CodingKeys.license)
         static let author = Column(CodingKeys.author)
         static let source = Column(CodingKeys.source)
+        static let multiDraftId = Column(CodingKeys.multiDraftId)
     }
 
 
@@ -182,15 +236,17 @@ nonisolated
         self.captionWithDesc = try container.decode([CaptionWithDescription].self, forKey: .captionWithDesc)
         self.inceptionDate = try container.decode(Date.self, forKey: .inceptionDate)
         self.timezone = try container.decodeIfPresent(String.self, forKey: .timezone)
-        self.locationHandling = try container.decodeIfPresent(MediaFileDraft.LocationHandling.self, forKey: .locationHandling)
+        self.locationHandling = try container.decodeIfPresent(LocationHandling.self, forKey: .locationHandling)
         self.license = try container.decodeIfPresent(DraftMediaLicense.self, forKey: .license)
-        self.author = try container.decodeIfPresent(MediaFileDraft.DraftAuthor.self, forKey: .author)
-        self.source = try container.decodeIfPresent(MediaFileDraft.DraftSource.self, forKey: .source)
+        self.author = try container.decodeIfPresent(DraftAuthor.self, forKey: .author)
+        self.source = try container.decodeIfPresent(DraftSource.self, forKey: .source)
         self.width = try container.decodeIfPresent(Int.self, forKey: .width)
         self.height = try container.decodeIfPresent(Int.self, forKey: .height)
+        self.size = try container.decodeIfPresent(Int64.self, forKey: .size)
         self.publishingState = try container.decodeIfPresent(PublishingState.self, forKey: .publishingState)
         self.publishingError = try container.decodeIfPresent(PublishingError.self, forKey: .publishingError)
         self.publishingStateVerificationRequired = try container.decodeIfPresent(Bool.self, forKey: .publishingStateVerificationRequired) ?? false
+        self.multiDraftId = try container.decodeIfPresent(Int64.self, forKey: .multiDraftId)
         if let tags = try? container.decode([TagItem].self, forKey: .tags) {
             self.tags = tags
         } else {
@@ -232,19 +288,24 @@ extension MediaFileDraft {
 extension MediaFileDraft {
 
     /// creates a new draft from an FileItem by reading its EXIF-Data filling the fields as complete as possible at this stage
-    init(_ fileItem: FileItem) throws {
+    init(_ fileItem: FileItem, newDraftOptions: NewDraftOptions?) throws {
         id = UUID().uuidString
         addedDate = .now
         localFileName = fileItem.localFileName
         finalFilename = ""
-        name = localFileName
+        name = ""
         uploadPossibleStatus = nil
         selectedFilenameType = .captionAndDate
+
+        if let initialTag = newDraftOptions?.tag {
+            tags = [initialTag]
+        } else {
+            tags = []
+        }
 
         let languageCode = Locale.current.wikiLanguageCodeIdentifier
         captionWithDesc = [.init(languageCode: languageCode)]
 
-        tags = []
         license = UserDefaults.standard.defaultPublishingLicense
         author = .appUser
         source = .own
@@ -280,7 +341,13 @@ extension MediaFileDraft {
 
             width = exifData.normalizedWidth
             height = exifData.normalizedHeight
+        }
 
+        if let fileURL = localFileURL(),
+            let fileAttributes = try? FileManager.default.attributesOfItem(atPath: fileURL.path()),
+            let bytes = fileAttributes[.size] as? Int64
+        {
+            size = bytes
         }
     }
 }

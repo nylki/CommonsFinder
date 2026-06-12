@@ -15,8 +15,8 @@ import TipKit
 import UniformTypeIdentifiers
 import os.log
 
-struct SingleImageDraftView: View {
-    @Bindable var model: MediaFileDraftModel
+struct SingleDraftView: View {
+    @Bindable var model: SingleDraftModel
 
     @Environment(UploadManager.self) private var uploadManager
     @Environment(AccountModel.self) private var account
@@ -37,6 +37,8 @@ struct SingleImageDraftView: View {
     @State private var isShowingUploadDialog = false
     @State private var isShowingCloseConfirmationDialog = false
     @State private var isShowingUploadDisabledAlert = false
+    @State private var isShowingTagsPicker = false
+    @State private var isShowingCategoryPicker = false
 
     private var draftExistsInDB: Bool {
         do {
@@ -74,10 +76,10 @@ struct SingleImageDraftView: View {
         // NOTE: Not using a regular sheet here: .sheet + ScrollView + ForEach Buttons causes accidental button taps when scrolling (SwiftUI bug?)
         // so for now until this behaviour is fixed by Apple
         // this is a fullScreenCover (but TODO: consider using a push navigation here)
-        .fullScreenCover(isPresented: $model.isShowingTagsPicker) {
+        .fullScreenCover(isPresented: $isShowingTagsPicker) {
             TagPicker(
                 initialTags: model.draft.tags,
-                draft: model.draft,
+                analysisInput: .draft(model.draft),
                 onEditedTags: {
                     model.draft.tags = $0
                 }
@@ -97,7 +99,11 @@ struct SingleImageDraftView: View {
             if focus != .filename {
                 generateFilename()
             }
-            model.draft.uploadPossibleStatus = model.canUploadDraft()
+
+            model.draft.uploadPossibleStatus = DraftValidation.canUploadDraft(
+                model.draft,
+                nameValidationResult: model.nameValidationResult
+            )
         }
         .onChange(of: model.draft.selectedFilenameType) { oldValue, newValue in
             filenameSelection = .none
@@ -107,7 +113,7 @@ struct SingleImageDraftView: View {
         }
         .onDisappear {
             if draftExistsInDB, model.draft.publishingState == nil {
-                saveChanges()
+                model.saveChanges(appDatabase: appDatabase)
             }
         }
         .task(id: model.draft.name) {
@@ -148,19 +154,8 @@ struct SingleImageDraftView: View {
         }
     }
 
-    private func saveChanges() {
-        do {
-            if let fileItem = model.fileItem {
-                model.draft.localFileName = fileItem.localFileName
-            }
-            try appDatabase.upsert(model.draft)
-        } catch {
-            logger.error("Failed to save all drafts \(error)")
-        }
-    }
-
     private func saveChangesAndDismiss() {
-        saveChanges()
+        model.saveChanges(appDatabase: appDatabase)
         dismiss()
     }
 
@@ -174,7 +169,7 @@ struct SingleImageDraftView: View {
     }
     @ViewBuilder
     private var captionAndDescriptionSection: some View {
-        Section("Caption and Description") {
+        Section("Descriptions") {
             let enumeratedDescs = Array(model.draft.captionWithDesc.enumerated())
             let disabledLanguages = model.draft.captionWithDesc.map(\.languageCode)
 
@@ -274,63 +269,24 @@ struct SingleImageDraftView: View {
                     .tint(.primary)
                     .padding(.trailing)
                 Spacer(minLength: 0)
-                if model.nameValidationResult == nil {
-                    ProgressView()
-                } else {
-                    Button {
-                        switch model.nameValidationResult {
-                        case .success(_), .none:
-                            // do nothing, alternatively, tell user, the full filename including name ending and
-                            // that it was checked with the backend?
-                            break
-                        case .failure(_):
-                            isFilenameErrorSheetPresented = true
-                        }
 
-                    } label: {
-                        switch model.nameValidationResult {
-                        case .failure(_), .none:
-                            Image(systemName: "exclamationmark.circle")
-                                .foregroundStyle(.red)
-                        case .success(_):
-                            Image(systemName: "checkmark.circle")
-                                .foregroundStyle(.green)
-                        }
-                    }
-                    .alert(
-                        model.nameValidationResult?.alertTitle ?? "", isPresented: $isFilenameErrorSheetPresented, presenting: model.nameValidationResult?.error,
-                        actions: { error in
-                            if case .invalid(let localInvalidationError) = error,
-                                localInvalidationError?.canBeAutoFixed == true,
-                                model.draft.selectedFilenameType == .custom
-                            {
-                                Button("sanitize") {
-                                    filenameSelection = .none
-                                    model.draft.name = LocalFileNameValidation.sanitizeFileName(model.draft.name)
-                                }
-                            }
-                            Button("Ok") {
-                                let endIdx = model.draft.name.endIndex
-                                focus = .filename
-                                filenameSelection = .init(range: endIdx..<endIdx)
-                            }
+
+                if let nameValidationResult = model.nameValidationResult {
+                    FilenameErrorButton(
+                        nameValidationResult: nameValidationResult,
+                        fileNameType: model.draft.selectedFilenameType,
+                        onDismiss: {
+                            let endIdx = model.draft.name.endIndex
+                            focus = .filename
+                            filenameSelection = .init(range: endIdx..<endIdx)
                         },
-                        message: { error in
-                            let failureReason = model.nameValidationResult?.error?.failureReason
-                            let recoverySuggestion = model.nameValidationResult?.error?.recoverySuggestion
-
-                            let isFailureReasonIdenticalToTitle = failureReason == model.nameValidationResult?.alertTitle
-                            if let failureReason, let recoverySuggestion, !isFailureReasonIdenticalToTitle {
-                                Text(failureReason + "\n\n\(recoverySuggestion)")
-                            } else if let recoverySuggestion {
-                                Text(recoverySuggestion)
-                            }
-
+                        onSanitize: {
+                            filenameSelection = .none
+                            model.draft.name = LocalFileNameValidation.sanitizeFileName(model.draft.name)
                         }
                     )
-
-                    .imageScale(.large)
-                    .frame(width: 10)
+                } else {
+                    ProgressView()
                 }
             }
             .frame(minWidth: 0, maxWidth: .infinity)
@@ -406,7 +362,7 @@ struct SingleImageDraftView: View {
                 HFlowLayout(alignment: .leading) {
                     ForEach(tags) { tag in
                         Button {
-                            model.isShowingTagsPicker = true
+                            isShowingTagsPicker = true
                         } label: {
                             TagLabel(tag: tag)
                         }
@@ -423,7 +379,7 @@ struct SingleImageDraftView: View {
                 model.draft.tags.isEmpty ? "Add" : "Edit",
                 systemImage: model.draft.tags.isEmpty ? "plus" : "pencil"
             ) {
-                model.isShowingTagsPicker = true
+                isShowingTagsPicker = true
             }
             .focused($focus, equals: .tags)
         } header: {
@@ -457,12 +413,11 @@ struct SingleImageDraftView: View {
                         Text("Location will be erased from the file metadata before uploading.")
                             .font(.caption)
                     } else if let coordinate = model.choosenCoordinate {
-                        FileLocationMapView(coordinate: coordinate, label: locationLabel)
+                        FileLocationMapView(coordinates: [coordinate], label: locationLabel)
                     }
                 }
             }
         }
-
     }
 
 
@@ -619,7 +574,7 @@ struct SingleImageDraftView: View {
 
 
         ToolbarItem(placement: .confirmationAction) {
-            if model.draft.uploadPossibleStatus == .uploadPossible {
+            if let username = account.activeUser?.username, model.draft.uploadPossibleStatus == .uploadPossible {
                 Button {
                     isShowingUploadDialog = true
                 } label: {
@@ -627,11 +582,7 @@ struct SingleImageDraftView: View {
                 }
                 .confirmationDialog("Start upload to Wikimedia Commons now?", isPresented: $isShowingUploadDialog, titleVisibility: .visible) {
                     Button("Upload", systemImage: "square.and.arrow.up", role: .fallbackConfirm) {
-                        guard let username = account.activeUser?.username else {
-                            assertionFailure()
-                            return
-                        }
-                        saveChanges()
+                        model.saveChanges(appDatabase: appDatabase)
                         uploadManager.upload(model.draft, username: username)
                         dismiss()
                     }
@@ -653,7 +604,6 @@ struct SingleImageDraftView: View {
                         Button("Ok") {
                             switch model.draft.uploadPossibleStatus {
                             case .uploadPossible: break
-                            case .notLoggedIn: break
                             case .missingCaptionOrDescription:
                                 focus = .caption
                             case .missingLicense:
@@ -668,28 +618,30 @@ struct SingleImageDraftView: View {
                         }
                     },
                     message: {
-                        switch model.draft.uploadPossibleStatus {
-                        case .uploadPossible:
-                            Text("Unknown error, please make a screenshot and report this issue if you see this.")
-                        case .notLoggedIn:
+                        if account.activeUser == nil {
                             Text("You must be logged in to a Wikimedia account to upload files.")
-                        case .missingCaptionOrDescription:
-                            Text("Please provide a caption or description.")
-                        case .missingLicense:
-                            Text("You must choose the license under which you want to publish the file.")
-                        case .missingTags:
-                            Text("You should add atleast one category or depicted item in the Tags-section.")
-                        case .validationError(let nameValidationError):
-                            if let errorDescription = nameValidationError.errorDescription {
-                                Text(errorDescription)
+                        } else {
+                            switch model.draft.uploadPossibleStatus {
+                            case .uploadPossible:
+                                Text("Unknown error, please make a screenshot and report this issue if you see this.")
+                            case .missingCaptionOrDescription:
+                                Text("Please provide a caption or description.")
+                            case .missingLicense:
+                                Text("You must choose the license under which you want to publish the file.")
+                            case .missingTags:
+                                Text("You should add atleast one category or depicted item in the Tags-section.")
+                            case .validationError(let nameValidationError):
+                                if let errorDescription = nameValidationError.errorDescription {
+                                    Text(errorDescription)
+                                }
+                                if let failureReason = nameValidationError.failureReason {
+                                    Text(failureReason)
+                                }
+                            case .failedToValidate:
+                                Text("There was an error validating the file name.")
+                            case nil:
+                                Text("Currently checking if you can upload. please wait a short moment...")
                             }
-                            if let failureReason = nameValidationError.failureReason {
-                                Text(failureReason)
-                            }
-                        case .failedToValidate:
-                            Text("There was an error validating the file name.")
-                        case nil:
-                            Text("Currently checking if you can upload. please wait a short moment...")
                         }
                     })
             }
@@ -699,41 +651,16 @@ struct SingleImageDraftView: View {
     }
 }
 
-struct FileLocationMapView: View {
-    let coordinate: CLLocationCoordinate2D
-    var label: String?
-
-    @State private var markerLabel: String?
-
-    var body: some View {
-        let halfKmRadius = MKCoordinateRegion(
-            center: coordinate,
-            latitudinalMeters: 500,
-            longitudinalMeters: 500
-        )
-
-        Map(initialPosition: .region(halfKmRadius)) {
-            Marker(label ?? "", coordinate: coordinate)
-        }
-        .mapControlVisibility(.automatic)
-        .allowsHitTesting(false)
-        .frame(height: 150)
-        .clipShape(.rect(cornerRadius: 15))
-
-
-    }
-}
-
 
 #Preview("New Draft", traits: .previewEnvironment) {
-    @Previewable @State var draft = MediaFileDraftModel(existingDraft: .makeRandomEmptyDraft(id: "1"))
+    @Previewable @State var draft = SingleDraftModel(existingDraft: .makeRandomEmptyDraft(id: "1"))
 
-    SingleImageDraftView(model: draft)
+    SingleDraftView(model: draft)
 }
 
 #Preview("With Metadata", traits: .previewEnvironment) {
-    @Previewable @State var draft = MediaFileDraftModel(existingDraft: .makeRandomDraft(id: "2"))
+    @Previewable @State var draft = SingleDraftModel(existingDraft: .makeRandomDraft(id: "2"))
 
-    SingleImageDraftView(model: draft)
+    SingleDraftView(model: draft)
 
 }

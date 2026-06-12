@@ -96,7 +96,7 @@ nonisolated struct ExifData: Codable, Equatable, Hashable {
     /// and test with front/back cam for accuracy of angle
     private var destBearing: Double?
 
-    var normalizedBearing: Double? {
+    var normalizedBearing: CLLocationDegrees? {
         if let destBearing {
             GeoVectorMath.normalizeBearing(degrees: destBearing)
         } else {

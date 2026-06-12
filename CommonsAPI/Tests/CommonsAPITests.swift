@@ -196,7 +196,11 @@ struct CommonsEndToEndTests {
     
     @Test("list sub-categories", arguments: ["Physics"])
     func fetchCategoryInfo(category: String) async throws {
+<<<<<<< HEAD
         let info = try await api.fetchCategoryMembers(of: category, sort: .none)
+=======
+        let info = try await api.fetchCategoryMembers(of: category, sort: nil)
+>>>>>>> e4e431c (basic multifile support)
         
         #expect(info != nil)
         guard let info else { return }

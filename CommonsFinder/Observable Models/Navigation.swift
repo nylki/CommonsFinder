@@ -74,7 +74,9 @@ import os.log
     }
 
     //    var isViewingFileSheetOpen: MediaFile.ID?
-    var isEditingDraft: FileImportModel?
+    var isImportingFiles: FileImportModel?
+    var isEditingDraft: SingleDraftModel?
+    var isEditingMultipleDrafts: MultiDraftModel?
 
     enum DraftSheetNavItem: Identifiable, Equatable {
         case newDraft(NewDraftOptions?)
@@ -176,16 +178,20 @@ extension Navigation {
         path[tabItem] = []
     }
 
-    func editDrafts(drafts: [MediaFileDraft]) {
-        isEditingDraft = .init(existingDrafts: drafts)
+    func editDraft(draft: MediaFileDraft) {
+        isEditingDraft = .init(existingDraft: draft)
+    }
+
+    func editMultipleDrafts(multiDraftInfo: MultiDraftInfo) {
+        isEditingMultipleDrafts = .init(multiDraftInfo)
     }
 
     func openNewDraft(options: NewDraftOptions) {
-        isEditingDraft = .init(newDraftOptions: options)
+        isImportingFiles = .init(newDraftOptions: options)
     }
 
     func openNewDraft() {
-        isEditingDraft = .init(newDraftOptions: nil)
+        isImportingFiles = .init(newDraftOptions: nil)
     }
 
     func viewFile(mediaFile: MediaFileInfo, namespace: Namespace.ID) {

@@ -14,7 +14,8 @@ import UniformTypeIdentifiers
 import os.log
 
 extension MediaFileUploadable {
-    init(_ draft: MediaFileDraft, appWikimediaUsername: String) throws(UploadManagerError) {
+    /// when the multiDraft is present, empty fields in the draft will be filled from the multiDraft
+    init(_ draft: MediaFileDraft, multiDraft: MultiDraft? = nil, appWikimediaUsername: String) throws(UploadManagerError) {
         guard let localFileURL = draft.localFileURL() else {
             throw UploadManagerError.fileURLMissing(id: draft.id)
         }
@@ -28,20 +29,24 @@ extension MediaFileUploadable {
             throw UploadManagerError.finalFilenameMissing
         }
 
-        guard let license = draft.license else {
+        guard let license = draft.license ?? multiDraft?.license else {
             assertionFailure("The license must have been chosen before uploading.")
             throw UploadManagerError.licenseMissing
         }
 
-        guard let source = draft.source else {
+        guard let source = draft.source ?? multiDraft?.source else {
             assertionFailure("The source must have been chosen before uploading.")
             throw UploadManagerError.sourceMissing
         }
 
-        guard let author = draft.author else {
+        guard let author = draft.author ?? multiDraft?.author else {
             assertionFailure("The author must have been set before uploading.")
             throw UploadManagerError.authorMissing
         }
+
+        let mimeType = draft.mimeType
+
+        let locationHandling = draft.locationHandling ?? multiDraft?.locationHandling
 
         // see: https://commons.wikimedia.org/wiki/Template:Information
         let wikitextDate: String = draft.inceptionDate.formatted(.iso8601.year().month().day())
@@ -60,7 +65,14 @@ extension MediaFileUploadable {
         var depictStatements: [WikidataClaim] = []
         var categories: [String] = ["Uploaded with CommonsFinder", "Mobile upload"]
 
-        for tag in draft.tags {
+        let tags: [TagItem] =
+            if draft.tags.isEmpty {
+                multiDraft?.tags ?? []
+            } else {
+                draft.tags
+            }
+
+        for tag in tags {
             lazy var wikidataItemID = tag.baseItem.wikidataItemID
             lazy var commonsCategory = tag.baseItem.commonsCategory
 
@@ -130,7 +142,7 @@ extension MediaFileUploadable {
         let exifData = draft.loadExifData()
         let exifCoordinate = exifData?.coordinate
 
-        switch draft.locationHandling {
+        switch locationHandling {
         case .exifLocation:
             if let exifData, let exifCoordinate {
                 let precision =
@@ -226,9 +238,20 @@ extension MediaFileUploadable {
             }
         }
 
-        statements.append(.mimeType(draft.mimeType))
+        statements.append(.mimeType(mimeType))
 
-        let nonEmptyDescriptions: [(languageCode: LanguageCode, string: String)] = draft.captionWithDesc.compactMap {
+        let captionWithDesc =
+            if draft.captionWithDesc.isEmpty || draft.captionWithDesc.allSatisfy({ $0.caption.isEmpty && $0.fullDescription.isEmpty }) {
+                multiDraft?.captionWithDesc ?? []
+            } else {
+                draft.captionWithDesc
+            }
+
+        let captions: [LanguageString] = captionWithDesc.map {
+            .init($0.caption, languageCode: $0.languageCode)
+        }
+
+        let nonEmptyDescriptions: [(languageCode: LanguageCode, string: String)] = captionWithDesc.compactMap {
             $0.fullDescription.isEmpty ? nil : ($0.languageCode, $0.fullDescription)
         }
         var wikitextDescriptions: String = ""
@@ -274,16 +297,11 @@ extension MediaFileUploadable {
             \(testUploadString)
             """
 
-
-        let captions: [LanguageString] = draft.captionWithDesc.map {
-            .init($0.caption, languageCode: $0.languageCode)
-        }
-
         self.init(
             id: draft.id,
             fileURL: localFileURL,
             filename: finalFileName,
-            mimetype: draft.mimeType,
+            mimetype: mimeType,
             claims: statements,
             captions: captions,
             wikitext: wikiText
