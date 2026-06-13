@@ -12,21 +12,6 @@ public nonisolated enum MediaWikiOAuth {
     static let tokenPath: String = "/w/rest.php/oauth2/access_token"
     static let profilePath: String = "/w/rest.php/oauth2/resource/profile"
 
-    static let clientIDKey: String = "client_id"
-    static let clientSecretKey: String = "client_secret"
-    static let redirectURIKey: String = "redirect_uri"
-
-    static let responseTypeKey: String = "response_type"
-    static let responseTypeCode: String = "code"
-
-    static let scopeKey: String = "scope"
-    static let includeGrantedScopeKey: String = "include_granted_scopes"
-    static let loginHint: String = "login_hint"
-
-    static let codeKey: String = "code"
-    static let refreshTokenKey: String = "refresh_token"
-
-    static let grantTypeKey: String = "grant_type"
     static let grantTypeAuthorizationCode: String = "authorization_code"
     static let grantTypeRefreshToken: String = "refresh_token"
 
@@ -119,7 +104,7 @@ public nonisolated enum MediaWikiOAuth {
             urlBuilder.host = serverConfig.host
             urlBuilder.path = authorizePath
             urlBuilder.queryItems = [
-                URLQueryItem(name: grantTypeKey, value: grantTypeAuthorizationCode),
+                URLQueryItem(name: "grant_type", value: grantTypeAuthorizationCode),
                 URLQueryItem(name: "client_id", value: credentials.clientId),
                 URLQueryItem(name: "redirect_uri", value: credentials.callbackURL.absoluteString),
                 URLQueryItem(name: "scope", value: credentials.scopeString),
@@ -152,7 +137,7 @@ public nonisolated enum MediaWikiOAuth {
         urlBuilder.path = tokenPath
 
         var form: [String: String] = [
-            grantTypeKey: grantTypeAuthorizationCode,
+            "grant_type": grantTypeAuthorizationCode,
             "client_id": appCredentials.clientId,
             "client_secret": appCredentials.clientPassword,
             "redirect_uri": appCredentials.callbackURL.absoluteString,
@@ -180,10 +165,6 @@ public nonisolated enum MediaWikiOAuth {
     @Sendable
     static func loginProvider(serverConfig: ServerConfig) -> TokenHandling.LoginProvider {
         return { params in
-            logger.debug("redirect url? \(params.redirectURL.absoluteString)")
-            logger.debug("auth url? \(params.authorizationURL.absoluteString)")
-            logger.debug("state? \(params.stateToken)")
-
             let request = try authenticationRequest(
                 serverConfig: serverConfig,
                 redirectURL: params.redirectURL,
@@ -192,7 +173,6 @@ public nonisolated enum MediaWikiOAuth {
             )
 
             let (data, _) = try await params.responseProvider(request)
-
             let utf8 = String(data: data, encoding: .ascii)
 
             do {
@@ -251,6 +231,7 @@ public nonisolated enum MediaWikiOAuth {
     @Sendable
     static func refreshProvider(serverConfig: ServerConfig) -> TokenHandling.RefreshProvider {
         return { login, appCredentials, urlLoader in
+
             let request = try authenticationRefreshRequest(serverConfig: serverConfig, login: login, appCredentials: appCredentials)
             let (data, _) = try await urlLoader(request)
 
@@ -262,6 +243,14 @@ public nonisolated enum MediaWikiOAuth {
                     throw apiError
                 }
                 throw decodingError
+            } catch let urlError as URLError {
+                switch urlError.code {
+                case .notConnectedToInternet, .cannotLoadFromNetwork, .networkConnectionLost:
+                    logger.notice("! Tried to refresh with no internet connection. Treat as recoverable and return the old login for now.")
+                    return login
+                default:
+                    throw urlError
+                }
             }
         }
     }
