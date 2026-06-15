@@ -136,7 +136,7 @@ struct MapView: View {
                         let label = category.label?.truncate(to: 80) ?? ""
                         Annotation(label, coordinate: coordinate, anchor: .center) {
                             // TODO: custom marker with image
-                            WikiAnnotationView(item: category, isSelected: true) {
+                            CategoryAnnotationView(item: category, isSelected: true) {
                                 navigation.viewCategory(.init(category))
                             }
                             .id(category.geoRefID)
@@ -432,7 +432,7 @@ struct MapView: View {
                     {
                         // single category
                         Annotation(singleCategory.label ?? "", coordinate: coordinate, anchor: .center) {
-                            WikiAnnotationView(item: singleCategory, isSelected: false) {
+                            CategoryAnnotationView(item: singleCategory, isSelected: false) {
                                 mapModel.selectCluster(cluster.h3Index)
                             }
                             .id(singleCategory.geoRefID)
