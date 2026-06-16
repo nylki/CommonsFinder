@@ -86,41 +86,37 @@ struct SettingsView: View {
                 .listRowBackground(Color.accentColor)
             }
 
-            Section("Upload") {
+            Section("Uploading and Editing") {
                 Button {
                     isLicensePickerShowing = true
                 } label: {
-
-                    HStack {
-                        VStack(alignment: .leading) {
-                            Text("Default License")
+                    VStack(alignment: .leading) {
+                        HStack {
+                            Label("Default License", image: .ccSymbol)
                                 .tint(Color.primary)
-                            Text("This license will be pre-selected when you upload an image")
-                                .font(.footnote)
-                                .tint(.secondary)
-                                .padding(.trailing)
+                            Spacer(minLength: 0)
+                            if let license = defaultPublishingLicense {
+                                Text(license.abbreviation)
+                            } else {
+                                Text("choose")
+                            }
+                            Image(systemName: "chevron.up.chevron.down")
                         }
-
-                        Spacer(minLength: 0)
-                        if let license = defaultPublishingLicense {
-                            Text(license.abbreviation)
-                        } else {
-                            Text("choose")
-                        }
-                        Image(systemName: "chevron.up.chevron.down")
                     }
-
-
                 }
                 .sheet(isPresented: $isLicensePickerShowing) {
                     LicensePicker(selectedLicense: $defaultPublishingLicense, allowsEmptySelection: true)
+                }
+
+                NavigationLink(destination: InputLanguageSettings.init()) {
+                    Label("Input Languages", systemImage: "globe")
                 }
             }
 
 
             Section("General") {
                 Link(destination: URL(string: "https://github.com/nylki/CommonsFinder")!) {
-                    Label("About", systemImage: "info.circle")
+                    Label("About this App", systemImage: "info.circle")
                 }
                 .foregroundStyle(.primary)
             }

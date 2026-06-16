@@ -5,8 +5,11 @@
 //  Created by Tom Brewe on 30.01.25.
 //
 
-import SwiftUI
 
+import SwiftUI
+import TipKit
+
+// This license will be pre-selected when you upload an image
 struct LicensePicker: View {
     @Binding var selectedLicense: DraftMediaLicense?
     let allowsEmptySelection: Bool
@@ -35,6 +38,7 @@ struct LicensePicker: View {
             }
             .compositingGroup()
             .scenePadding()
+
             //            .shadow(radius: 200)
             .navigationTitle("Choose a License")
             .navigationBarTitleDisplayMode(.inline)
@@ -53,7 +57,7 @@ struct LicensePicker: View {
             .background(Color(.secondarySystemBackground))
 
         }
-        .presentationDetents([.fraction(0.63), .large])
+        .presentationDetents([.large])
     }
 }
 
@@ -65,13 +69,15 @@ private struct LicenseButton: View {
 
     var body: some View {
         Button(action: action) {
-            VStack(alignment: .leading, spacing: 10) {
-                Text(license.shortDescription).bold()
-                Text(license.explanation)
+            HStack {
+                VStack(alignment: .leading, spacing: 10) {
+                    Text(license.shortDescription).bold()
+                    Text(license.explanation)
+                }
+                Spacer(minLength: 0)
             }
             .multilineTextAlignment(.leading)
             .foregroundStyle(isSelected ? Color.white : .primary)
-            .labelStyle(ExpandingLabelStyle())
             .padding()
             .background {
                 RoundedRectangle(cornerRadius: 15)

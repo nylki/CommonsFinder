@@ -163,11 +163,22 @@
       }
     },
     "About" : {
+      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Über"
+          }
+        }
+      }
+    },
+    "About this App" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Über diese App"
           }
         }
       }
@@ -198,6 +209,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Füge **Kategorien** hinzu und definiere was auf dem Bild abgebildet ist (Motiv). Das macht dein Bild auffindbarer und nützlicher."
+          }
+        }
+      }
+    },
+    "Add a Language" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sprache hinzufügen"
           }
         }
       }
@@ -252,12 +273,32 @@
         }
       }
     },
+    "Add Language..." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sprache hinzufügen…"
+          }
+        }
+      }
+    },
     "Add or edit **categories** and define what the image **depicts**. More specific categories are usually preferred." : {
       "localizations" : {
         "de" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Füge **Kategorien** hinzu und definiere was auf dem Bild abgebildet ist (Motiv). Das macht dein Bild auffindbarer und nützlicher."
+          }
+        }
+      }
+    },
+    "Additional Languages" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zusätzliche Sprachen"
           }
         }
       }
@@ -508,13 +549,13 @@
       }
     },
     "CC BY" : {
-
+      "shouldTranslate" : false
     },
     "CC BY-SA" : {
-
+      "shouldTranslate" : false
     },
     "CC0" : {
-
+      "shouldTranslate" : false
     },
     "Certain characters are reserved due to technical reasons and cannot be used for file names" : {
       "localizations" : {
@@ -617,7 +658,7 @@
       }
     },
     "Commons" : {
-
+      "shouldTranslate" : false
     },
     "Console" : {
       "extractionState" : "stale",
@@ -1207,6 +1248,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Info"
+          }
+        }
+      }
+    },
+    "Input Languages" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Eingabesprachen"
           }
         }
       }
@@ -2155,7 +2206,14 @@
       }
     },
     "Relevant" : {
-
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Relevant"
+          }
+        }
+      }
     },
     "Remove Bookmark" : {
       "localizations" : {
@@ -2513,6 +2571,16 @@
         }
       }
     },
+    "System Languages" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Systemsprachen"
+          }
+        }
+      }
+    },
     "Tags" : {
       "localizations" : {
         "de" : {
@@ -2737,17 +2805,6 @@
         }
       }
     },
-    "This license will be pre-selected when you upload an image" : {
-      "comment" : "Diese Lizenz wird beim Bild-Upload vorausgewählt",
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Diese Lizenz wird beim Upload vorausgewählt."
-          }
-        }
-      }
-    },
     "thumbnail" : {
       "localizations" : {
         "de" : {
@@ -2826,6 +2883,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "vor %@ hochgeladen"
+          }
+        }
+      }
+    },
+    "Uploading and Editing" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hochladen und Editieren"
           }
         }
       }

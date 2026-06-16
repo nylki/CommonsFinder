@@ -43,7 +43,7 @@ struct ExpandingLabelStyle: LabelStyle {
                 configuration.icon
             }
         )
-        .frame(maxWidth: .infinity)
+        .frame(minWidth: 0, maxWidth: .infinity)
     }
 }
 
