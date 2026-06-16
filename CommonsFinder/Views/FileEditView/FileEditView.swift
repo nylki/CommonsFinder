@@ -194,11 +194,11 @@ struct FileEditView: View {
                     let languageCode = caption.languageCode
 
                     VStack(alignment: .leading) {
-                        Menu(WikimediaLanguage(code: languageCode).localizedDescription) {
+                        Menu(languageCode) {
                             Text("Choose Language")
                             Divider()
-                            LanguageButtons(disabledLanguages: addedLanguages) { selectedLanguage in
-                                changeLanguageForCaptionAndDesc(old: languageCode, new: selectedLanguage.code)
+                            InputLanguageButtons(disabledLanguages: addedLanguages) { selectedLanguage in
+                                changeLanguageForCaptionAndDesc(old: languageCode, new: selectedLanguage.identifier)
                             }
                             Divider()
                             Button("Delete", role: .destructive) {
@@ -223,9 +223,9 @@ struct FileEditView: View {
 
                 Menu("Add", systemImage: "plus") {
                     Text("Choose language")
-                    LanguageButtons(
+                    InputLanguageButtons(
                         disabledLanguages: addedLanguages,
-                        onSelect: { addLanguage(code: $0.code) }
+                        onSelect: { addLanguage(code: $0.identifier) }
                     )
                 }
             }

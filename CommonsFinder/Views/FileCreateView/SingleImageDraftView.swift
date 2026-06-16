@@ -6,6 +6,7 @@
 //
 
 import CommonsAPI
+import Foundation
 import FrameUp
 @preconcurrency import MapKit
 import NukeUI
@@ -183,11 +184,11 @@ struct SingleImageDraftView: View {
                     let languageCode = desc.languageCode
 
                     VStack(alignment: .leading) {
-                        Menu(WikimediaLanguage(code: languageCode).localizedDescription) {
+                        Menu(Locale.LanguageCode(languageCode).localizedLanguageName) {
                             Text("Select Language")
                             Divider()
-                            LanguageButtons(disabledLanguages: disabledLanguages) { selectedLanguage in
-                                changeLanguageForCaptionAndDesc(old: languageCode, new: selectedLanguage.code)
+                            InputLanguageButtons(disabledLanguages: disabledLanguages) { selectedLanguage in
+                                changeLanguageForCaptionAndDesc(old: languageCode, new: selectedLanguage.identifier)
                             }
                             Divider()
                             Button("Delete", role: .destructive) {
@@ -227,7 +228,9 @@ struct SingleImageDraftView: View {
 
                 Menu("Add", systemImage: "plus") {
                     Text("Choose language")
-                    LanguageButtons(disabledLanguages: disabledLanguages, onSelect: { addLanguage(code: $0.code) })
+                    InputLanguageButtons(
+                        disabledLanguages: disabledLanguages,
+                        onSelect: { addLanguage(code: $0.identifier) })
                 }
             }
 
