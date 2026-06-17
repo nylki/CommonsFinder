@@ -191,13 +191,13 @@ struct MultiDraftView: View {
             List {
                 ForEach(enumeratedDescs, id: \.element.languageCode) { (idx, desc) in
                     let languageCode = desc.languageCode
-
+                    let languageName = Locale.LanguageCode(languageCode).localizedLanguageName
                     VStack(alignment: .leading) {
-                        Menu(WikimediaLanguage(code: languageCode).localizedDescription) {
+                        Menu(languageName) {
                             Text("Select Language")
                             Divider()
-                            LanguageButtons(disabledLanguages: disabledLanguages) { selectedLanguage in
-                                changeLanguageForCaptionAndDesc(old: languageCode, new: selectedLanguage.code)
+                            InputLanguageButtons(disabledLanguages: disabledLanguages) { selectedLanguage in
+                                changeLanguageForCaptionAndDesc(old: languageCode, new: selectedLanguage.identifier)
                             }
                             Divider()
                             Button("Delete", role: .destructive) {
@@ -254,7 +254,7 @@ struct MultiDraftView: View {
 
                 Menu("Add", systemImage: "plus") {
                     Text("Choose language")
-                    LanguageButtons(disabledLanguages: disabledLanguages, onSelect: { addLanguage(code: $0.code) })
+                    InputLanguageButtons(disabledLanguages: disabledLanguages, onSelect: { addLanguage(code: $0.identifier) })
                 }
             }
 
