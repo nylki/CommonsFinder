@@ -22,12 +22,16 @@ struct InputLanguageSettings: View {
     }
 
     private func addLanguage(_ languageCode: Locale.LanguageCode) {
+        guard !alreadyChoosenLanguages.contains(languageCode) else { return }
         additionalInputLanguages.append(languageCode)
     }
 
-    var body: some View {
-        let alreadyChoosenLanguags = Set(Locale.LanguageCode.preferredLanguageCodes + additionalInputLanguages)
+    private var alreadyChoosenLanguages: Set<Locale.LanguageCode> {
+        Set(Locale.LanguageCode.preferredLanguageCodes + additionalInputLanguages)
+    }
 
+
+    var body: some View {
         List {
             Section("System Languages") {
                 ForEach(Locale.LanguageCode.preferredLanguageCodes) { languageCode in
@@ -56,7 +60,7 @@ struct InputLanguageSettings: View {
         .navigationBarTitleDisplayMode(.inline)
         .animation(.default, value: additionalInputLanguages)
         .sheet(isPresented: $isShowingAdditionaLanguageSheet) {
-            AddLanguageDialog(alreadyChoosenLanguages: alreadyChoosenLanguags, onLanguageChoosen: addLanguage)
+            AddLanguageDialog(alreadyChoosenLanguages: alreadyChoosenLanguages, onLanguageChoosen: addLanguage)
 
         }
     }

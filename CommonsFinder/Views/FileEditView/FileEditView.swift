@@ -191,10 +191,12 @@ struct FileEditView: View {
 
             List {
                 ForEach(enumeratedCaptions, id: \.element.languageCode) { (idx, caption) in
+
                     let languageCode = caption.languageCode
+                    let languageName = Locale.LanguageCode(languageCode).localizedLanguageName
 
                     VStack(alignment: .leading) {
-                        Menu(languageCode) {
+                        Menu(languageName) {
                             Text("Choose Language")
                             Divider()
                             InputLanguageButtons(disabledLanguages: addedLanguages) { selectedLanguage in

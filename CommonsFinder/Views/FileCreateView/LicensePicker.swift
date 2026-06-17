@@ -7,7 +7,6 @@
 
 
 import SwiftUI
-import TipKit
 
 // This license will be pre-selected when you upload an image
 struct LicensePicker: View {

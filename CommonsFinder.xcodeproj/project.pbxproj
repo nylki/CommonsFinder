@@ -152,7 +152,6 @@
 				"Generic Extensions/CLLocation+generateHumanReadableString.swift",
 				"Generic Extensions/CLLocationCoordinate2D+isLocationInBoundingBox.swift",
 				"Generic Extensions/Date+dateOnlyWikidataCompatibleISOString.swift",
-				"Generic Extensions/Date+RawRepresentable.swift",
 				"Generic Extensions/FileNameType+generateFilename.swift",
 				"Generic Extensions/FloatingPoint+interpolateRanges.swift",
 				"Generic Extensions/Locale+languageCode.swift",

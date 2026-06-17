@@ -12,12 +12,18 @@ struct InputLanguageButtons: View {
     let disabledLanguages: [Locale.LanguageCode]
     let onSelect: (Locale.LanguageCode) -> Void
 
-    private let languages: [Locale.LanguageCode]
+    @AppStorage("additionalInputLanguages")
+    private var additionalInputLanguages: [Locale.LanguageCode] = []
+
+    private var languages: [Locale.LanguageCode] {
+        (Locale.LanguageCode.preferredLanguageCodes + additionalInputLanguages)
+            .uniqued(on: \.id)
+    }
+
     init(disabledLanguages: [String], onSelect: @escaping (Locale.LanguageCode) -> Void) {
         self.disabledLanguages = disabledLanguages.map { Locale.LanguageCode($0) }
         self.onSelect = onSelect
-        self.languages = (Locale.LanguageCode.preferredLanguageCodes + UserDefaults.standard.additionalInputLanguages)
-            .uniqued(on: \.id)
+
     }
 
     var body: some View {

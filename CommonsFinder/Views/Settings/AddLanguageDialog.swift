@@ -40,6 +40,7 @@ struct AddLanguageDialog: View {
                 } label: {
                     HStack {
                         Text(languageCode.localizedLanguageName)
+                            .tint(.primary)
 
                         Spacer()
 
@@ -48,6 +49,8 @@ struct AddLanguageDialog: View {
                             .foregroundStyle(.green)
                     }
                 }
+                .disabled(isAlreadyUsed)
+
             }
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
