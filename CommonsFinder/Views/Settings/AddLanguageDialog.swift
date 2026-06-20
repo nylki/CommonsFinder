@@ -8,39 +8,35 @@
 import SwiftUI
 
 struct AddLanguageDialog: View {
-    let alreadyChoosenLanguages: Set<Locale.LanguageCode>
-    let onLanguageChoosen: (Locale.LanguageCode) -> Void
+    let alreadyChoosenLanguageCodes: Set<String>
+    let onLanguageChoosen: (WikimediaLanguage) -> Void
 
     @Environment(\.dismiss) private var dismiss
+    @Environment(WikimediaLanguageStore.self) private var languageStore
 
     @State private var searchString = ""
 
-    private let isoLanguageCodes = Locale.LanguageCode.isoLanguageCodes.sorted(by: \.identifier, .orderedAscending)
-
-    private var filteredLanguageCodes: [Locale.LanguageCode] {
-        if searchString.isEmpty {
-            isoLanguageCodes
-        } else {
-            isoLanguageCodes.filter { code in
-                code.identifier.localizedStandardContains(searchString) || code.localizedLanguageName.localizedStandardContains(searchString)
-            }
-        }
-
-
+    private var filteredLanguages: [WikimediaLanguage] {
+        languageStore.query(searchString)
     }
 
     var body: some View {
         NavigationStack {
-            List(filteredLanguageCodes) { languageCode in
-                let isAlreadyUsed = alreadyChoosenLanguages.contains(languageCode)
+            List(filteredLanguages) { language in
+                let isAlreadyUsed = alreadyChoosenLanguageCodes.contains(language.code)
 
                 Button {
-                    onLanguageChoosen(languageCode)
+                    onLanguageChoosen(language)
                     dismiss()
                 } label: {
                     HStack {
-                        Text(languageCode.localizedLanguageName)
-                            .tint(.primary)
+                        VStack(alignment: .leading) {
+                            Text(language.description)
+                            if let autonym = language.autonym, autonym != language.description {
+                                Text(autonym).foregroundStyle(.secondary)
+                            }
+                        }
+                        .tint(.primary)
 
                         Spacer()
 
@@ -49,7 +45,6 @@ struct AddLanguageDialog: View {
                             .foregroundStyle(.green)
                     }
                 }
-                .disabled(isAlreadyUsed)
 
             }
             .toolbar {
@@ -66,10 +61,10 @@ struct AddLanguageDialog: View {
     }
 }
 
-#Preview {
+#Preview(traits: .previewEnvironment) {
     Color.clear.sheet(isPresented: .constant(true)) {
-        AddLanguageDialog(alreadyChoosenLanguages: [.english, .ainu]) {
-            print($0.localizedLanguageName)
+        AddLanguageDialog(alreadyChoosenLanguageCodes: ["en", "de"]) {
+            print($0.description)
         }
     }
 }

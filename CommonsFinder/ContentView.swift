@@ -15,6 +15,7 @@ struct ContentView: View {
     @Environment(SearchModel.self) private var searchModel
     @Environment(AccountModel.self) private var accountModel
     @Environment(UploadManager.self) private var uploadManager
+    @Environment(WikimediaLanguageStore.self) private var wikimediaLanguageStore
     @Environment(\.appDatabase) private var appDatabase
     @Environment(\.locale) private var locale
     @Environment(\.scenePhase) private var scenePhase
@@ -71,6 +72,10 @@ struct ContentView: View {
             if newValue == .active, accountModel.activeUser != nil {
                 accountModel.syncUserData()
             }
+        }
+        .onChange(of: locale.language.languageCode, initial: true) {
+            guard let languageCode = locale.language.languageCode else { return }
+            wikimediaLanguageStore.loadOrDownloadInputLanguages(for: languageCode)
         }
     }
 

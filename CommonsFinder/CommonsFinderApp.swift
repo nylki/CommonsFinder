@@ -30,6 +30,7 @@ struct CommonsFinderApp: App {
     private let mediaFileCache: MediaFileReactiveCache
     private let mapModel: MapModel
     private let fileAnalysis: FileAnalysis
+    private let wikimediaLanguageStore: WikimediaLanguageStore
 
     init() {
         postInstallMaintenance()
@@ -60,6 +61,10 @@ struct CommonsFinderApp: App {
 
         let fileAnalysis = FileAnalysis(appDatabase: appDatabase)
         self.fileAnalysis = fileAnalysis
+
+        let wikimediaLanguageStore = WikimediaLanguageStore()
+        self.wikimediaLanguageStore = wikimediaLanguageStore
+
 
         /** _Comment from Apple's AppIntentsSampleApp_:
 
@@ -95,6 +100,7 @@ struct CommonsFinderApp: App {
                 .environment(mediaFileCache)
                 .environment(mapModel)
                 .environment(fileAnalysis)
+                .environment(wikimediaLanguageStore)
                 .task {
                     #if DEBUG
                         Pulse.RemoteLogger.shared.isAutomaticConnectionEnabled = true
