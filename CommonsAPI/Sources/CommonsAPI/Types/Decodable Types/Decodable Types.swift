@@ -895,6 +895,16 @@ public struct GeosearchListResponse: Decodable, Sendable {
     let geosearch: [GeoSearchFileItem]
 }
 
+public struct WikimediaLanguage: Hashable, Equatable, Sendable, Decodable {
+    public let code: String
+    public let autonym: String?
+    public let name: String?
+}
+
+internal struct ContentLanguageResponse: Decodable, Sendable {
+    let wbcontentlanguages: [String: WikimediaLanguage]
+}
+
 internal struct FileExistenceResponse: Decodable, Sendable {
     let pages: [Item]?
     

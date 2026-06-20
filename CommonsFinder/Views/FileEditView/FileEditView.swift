@@ -67,6 +67,7 @@ struct FileEditView: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(\.appDatabase) private var appDatabase
     @Environment(EditingManager.self) private var editingManager
+    @Environment(WikimediaLanguageStore.self) private var languageStore
 
     private var addedLanguages: [LanguageCode] {
         model?.captions.map(\.languageCode) ?? mediaFileInfo.mediaFile.captions.map(\.languageCode)
@@ -193,14 +194,14 @@ struct FileEditView: View {
                 ForEach(enumeratedCaptions, id: \.element.languageCode) { (idx, caption) in
 
                     let languageCode = caption.languageCode
-                    let languageName = Locale.LanguageCode(languageCode).localizedLanguageName
+                    let languageName = languageStore.languages[languageCode]?.description ?? languageCode
 
                     VStack(alignment: .leading) {
                         Menu(languageName) {
                             Text("Choose Language")
                             Divider()
                             InputLanguageButtons(disabledLanguages: addedLanguages) { selectedLanguage in
-                                changeLanguageForCaptionAndDesc(old: languageCode, new: selectedLanguage.identifier)
+                                changeLanguageForCaptionAndDesc(old: languageCode, new: selectedLanguage.code)
                             }
                             Divider()
                             Button("Delete", role: .destructive) {
@@ -227,7 +228,7 @@ struct FileEditView: View {
                     Text("Choose language")
                     InputLanguageButtons(
                         disabledLanguages: addedLanguages,
-                        onSelect: { addLanguage(code: $0.identifier) }
+                        onSelect: { addLanguage(code: $0.code) }
                     )
                 }
             }

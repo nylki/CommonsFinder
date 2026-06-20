@@ -9,29 +9,26 @@ import Algorithms
 import SwiftUI
 
 struct InputLanguageButtons: View {
-    let disabledLanguages: [Locale.LanguageCode]
-    let onSelect: (Locale.LanguageCode) -> Void
+    @Environment(WikimediaLanguageStore.self) private var languageStore
+
+    let disabledLanguages: [String]
+    let onSelect: (WikimediaLanguage) -> Void
 
     @AppStorage("additionalInputLanguages")
-    private var additionalInputLanguages: [Locale.LanguageCode] = []
+    private var additionalInputLanguages: [WikimediaLanguage] = []
 
-    private var languages: [Locale.LanguageCode] {
-        (Locale.LanguageCode.preferredLanguageCodes + additionalInputLanguages)
+    private var languages: [WikimediaLanguage] {
+        (languageStore.preferredLanguages + additionalInputLanguages)
             .uniqued(on: \.id)
     }
 
-    init(disabledLanguages: [String], onSelect: @escaping (Locale.LanguageCode) -> Void) {
-        self.disabledLanguages = disabledLanguages.map { Locale.LanguageCode($0) }
-        self.onSelect = onSelect
-
-    }
 
     var body: some View {
         ForEach(languages) { language in
-            Button(language.localizedLanguageName) {
+            Button(language.name ?? language.autonym ?? language.code) {
                 onSelect(language)
             }
-            .disabled(disabledLanguages.contains(language))
+            .disabled(disabledLanguages.contains(language.code))
         }
     }
 }

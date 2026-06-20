@@ -9,7 +9,10 @@ import SwiftUI
 
 struct InputLanguageSettings: View {
 
-    @AppStorage("additionalInputLanguages") private var additionalInputLanguages: [Locale.LanguageCode] = []
+    @AppStorage("additionalInputLanguages") private var additionalInputLanguages: [WikimediaLanguage] = []
+
+    @Environment(WikimediaLanguageStore.self) private var languageStore
+
 
     @State private var isShowingAdditionaLanguageSheet = false
 
@@ -21,13 +24,20 @@ struct InputLanguageSettings: View {
         additionalInputLanguages.move(fromOffsets: indexSet, toOffset: offset)
     }
 
-    private func addLanguage(_ languageCode: Locale.LanguageCode) {
-        guard !alreadyChoosenLanguages.contains(languageCode) else { return }
-        additionalInputLanguages.append(languageCode)
+    private func addLanguage(_ language: WikimediaLanguage) {
+        if alreadyChoosenLanguageCodes.contains(language.code) {
+            additionalInputLanguages.removeAll(where: {
+                $0.code == language.code
+            })
+        } else {
+            additionalInputLanguages.append(language)
+        }
     }
 
-    private var alreadyChoosenLanguages: Set<Locale.LanguageCode> {
-        Set(Locale.LanguageCode.preferredLanguageCodes + additionalInputLanguages)
+    private var alreadyChoosenLanguageCodes: Set<String> {
+        Set(
+            languageStore.preferredLanguages.map(\.code) + additionalInputLanguages.map(\.code)
+        )
     }
 
 
@@ -39,28 +49,25 @@ struct InputLanguageSettings: View {
                 }
             }
 
-            if !additionalInputLanguages.isEmpty {
-                Section("Additional Languages") {
-                    ForEach(additionalInputLanguages) { languageCode in
-                        Text(languageCode.localizedLanguageName)
-                    }
-                    .onMove(perform: onMove)
-                    .onDelete(perform: onDelete)
-
-                    addButton
+            Section("Additional Languages") {
+                ForEach(additionalInputLanguages) { language in
+                    Text(language.description)
                 }
-            } else {
+                .onMove(perform: onMove)
+                .onDelete(perform: onDelete)
+
                 addButton
             }
-
-
         }
         .toolbar { EditButton() }
         .navigationTitle("Input Languages")
         .navigationBarTitleDisplayMode(.inline)
         .animation(.default, value: additionalInputLanguages)
         .sheet(isPresented: $isShowingAdditionaLanguageSheet) {
-            AddLanguageDialog(alreadyChoosenLanguages: alreadyChoosenLanguages, onLanguageChoosen: addLanguage)
+            AddLanguageDialog(
+                alreadyChoosenLanguageCodes: alreadyChoosenLanguageCodes,
+                onLanguageChoosen: addLanguage
+            )
 
         }
     }

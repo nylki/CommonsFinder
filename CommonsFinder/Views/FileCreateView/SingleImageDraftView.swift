@@ -19,6 +19,7 @@ import os.log
 struct SingleImageDraftView: View {
     @Bindable var model: MediaFileDraftModel
 
+    @Environment(WikimediaLanguageStore.self) private var languageStore
     @Environment(UploadManager.self) private var uploadManager
     @Environment(AccountModel.self) private var account
     @Environment(\.appDatabase) private var appDatabase
@@ -182,13 +183,14 @@ struct SingleImageDraftView: View {
             List {
                 ForEach(enumeratedDescs, id: \.element.languageCode) { (idx, desc) in
                     let languageCode = desc.languageCode
+                    let languageDescription = languageStore.languages[languageCode]?.description ?? languageCode
 
                     VStack(alignment: .leading) {
-                        Menu(Locale.LanguageCode(languageCode).localizedLanguageName) {
+                        Menu(languageDescription) {
                             Text("Select Language")
                             Divider()
                             InputLanguageButtons(disabledLanguages: disabledLanguages) { selectedLanguage in
-                                changeLanguageForCaptionAndDesc(old: languageCode, new: selectedLanguage.identifier)
+                                changeLanguageForCaptionAndDesc(old: languageCode, new: selectedLanguage.code)
                             }
                             Divider()
                             Button("Delete", role: .destructive) {
@@ -230,7 +232,7 @@ struct SingleImageDraftView: View {
                     Text("Choose language")
                     InputLanguageButtons(
                         disabledLanguages: disabledLanguages,
-                        onSelect: { addLanguage(code: $0.identifier) })
+                        onSelect: { addLanguage(code: $0.code) })
                 }
             }
 

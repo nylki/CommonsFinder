@@ -1539,6 +1539,27 @@ LIMIT \(limit)
 //        print(debugString ?? "----")
         return profileInfo
     }
+    
+    // https://commons.wikimedia.org/wiki/Special:ApiSandbox#action=query&format=json&meta=wbcontentlanguages&formatversion=2&wbclcontext=term&wbclprop=code%7Cautonym%7Cname
+    public func fetchContentLanguages(localizedFor languageCode: String) async throws -> [String: WikimediaLanguage] {
+        let query: Parameters = [
+            "action": "query",
+            "meta": "wbcontentlanguages",
+            "wbclprop": "code|autonym|name",
+            "wbclcontext": "term",
+            "smaxage": "999999",
+            "maxage": "999999",
+            "uselang": languageCode,
+            "format": "json",
+            "formatversion": "2",
+            "curtimestamp": "1"
+        ]
+        
+        let request = try GET(url: commonsEndpoint, query: query)
+        let (data, response) = try await response(for: request)
+        let resultValue = try parse(QueryResponse<ContentLanguageResponse>.self, from: data, response: response)
+        return resultValue.query?.wbcontentlanguages ?? [:]
+    }
 }
 
 internal extension [MediawikiNamespace] {
