@@ -64,17 +64,17 @@ import os.log
     }
 
     private func updateReferer() {
-        if let currentPath = currentPath.last {
-            Networking.shared.setReferer("CommonsFinder://\(currentPath.refererPath)")
-        } else {
-            Networking.shared.setReferer("CommonsFinder://\(selectedTab.refererPath)")
+        Task {
+            if let currentPath = currentPath.last {
+                await Networking.shared.setReferer("commonsfinder://\(currentPath.refererPath)")
+            } else {
+                await Networking.shared.setReferer("commonsfinder://\(selectedTab.refererPath)")
+            }
         }
-        logger.debug("Referer: \(Networking.shared.referer)")
     }
 
     //    var isViewingFileSheetOpen: MediaFile.ID?
     var isEditingDraft: FileImportModel?
-    var isAuthSheetOpen: AuthNavigationDestination?
 
     enum DraftSheetNavItem: Identifiable, Equatable {
         case newDraft(NewDraftOptions?)
@@ -202,14 +202,6 @@ extension Navigation {
 
     func viewRelatedCategories(of categoryInfo: CategoryInfo, type: RelatedCategoriesType) {
         path[selectedTab]?.append(.relatedCategories(categoryInfo, type))
-    }
-
-    func openOnboarding() {
-        isAuthSheetOpen = .onboardingChoice
-    }
-
-    func dismissOnboarding() {
-        isAuthSheetOpen = nil
     }
 
     func showOnMap(category: Category, mapModel: MapModel) {

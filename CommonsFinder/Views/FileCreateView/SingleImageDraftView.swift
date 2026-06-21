@@ -6,6 +6,7 @@
 //
 
 import CommonsAPI
+import Foundation
 import FrameUp
 @preconcurrency import MapKit
 import NukeUI
@@ -18,6 +19,7 @@ import os.log
 struct SingleImageDraftView: View {
     @Bindable var model: MediaFileDraftModel
 
+    @Environment(WikimediaLanguageStore.self) private var languageStore
     @Environment(UploadManager.self) private var uploadManager
     @Environment(AccountModel.self) private var account
     @Environment(\.appDatabase) private var appDatabase
@@ -181,12 +183,13 @@ struct SingleImageDraftView: View {
             List {
                 ForEach(enumeratedDescs, id: \.element.languageCode) { (idx, desc) in
                     let languageCode = desc.languageCode
+                    let languageDescription = languageStore.languages[languageCode]?.description ?? languageCode
 
                     VStack(alignment: .leading) {
-                        Menu(WikimediaLanguage(code: languageCode).localizedDescription) {
+                        Menu(languageDescription) {
                             Text("Select Language")
                             Divider()
-                            LanguageButtons(disabledLanguages: disabledLanguages) { selectedLanguage in
+                            InputLanguageButtons(disabledLanguages: disabledLanguages) { selectedLanguage in
                                 changeLanguageForCaptionAndDesc(old: languageCode, new: selectedLanguage.code)
                             }
                             Divider()
@@ -227,7 +230,9 @@ struct SingleImageDraftView: View {
 
                 Menu("Add", systemImage: "plus") {
                     Text("Choose language")
-                    LanguageButtons(disabledLanguages: disabledLanguages, onSelect: { addLanguage(code: $0.code) })
+                    InputLanguageButtons(
+                        disabledLanguages: disabledLanguages,
+                        onSelect: { addLanguage(code: $0.code) })
                 }
             }
 

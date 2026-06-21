@@ -15,4 +15,17 @@ extension UserDefaults {
             nil
         }
     }
+
+    var additionalInputLanguages: [Locale.LanguageCode] {
+        get {
+            if let rawValue = string(forKey: "additionalInputLanguages") {
+                [Locale.LanguageCode](rawValue: rawValue) ?? []
+            } else {
+                []
+            }
+        }
+        set {
+            set(newValue.rawValue, forKey: "additionalInputLanguages")
+        }
+    }
 }

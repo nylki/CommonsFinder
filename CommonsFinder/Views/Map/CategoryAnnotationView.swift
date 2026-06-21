@@ -11,7 +11,7 @@ import NukeUI
 import SwiftUI
 import os.log
 
-struct WikiAnnotationView: View {
+struct CategoryAnnotationView: View {
     let item: Category
     let isSelected: Bool
     let onTap: () -> Void
@@ -32,13 +32,9 @@ struct WikiAnnotationView: View {
                             .frame(width: diameter, height: diameter)
                             .clipShape(shape)
                             .transition(.opacity)
-                    } else if imageLoadingState.isLoading {
-                        shape
-                            .fill(.clear)
-                            .frame(width: diameter, height: diameter)
                     } else {
                         shape
-                            .fill(.accent)
+                            .fill(.accent.opacity(imageLoadingState.isLoading ? 0.67 : 1))
                             .opacity(isVisible ? 1 : 0)
                             .frame(width: diameter, height: diameter)
                     }
@@ -83,32 +79,32 @@ struct WikiAnnotationView: View {
     }
     Map {
         Annotation("", coordinate: .init(latitude: 50, longitude: 2)) {
-            WikiAnnotationView(item: .earth, isSelected: true) {}
+            CategoryAnnotationView(item: .earth, isSelected: true) {}
                 .environment(navigation)
         }
 
         Annotation("", coordinate: .init(latitude: 50.01, longitude: 2.01)) {
-            WikiAnnotationView(item: .earth, isSelected: false) {}
+            CategoryAnnotationView(item: .earth, isSelected: false) {}
                 .environment(navigation)
         }
 
         Annotation("", coordinate: .init(latitude: 50.015, longitude: 2.012)) {
-            WikiAnnotationView(item: .earth, isSelected: false) {}
+            CategoryAnnotationView(item: .earth, isSelected: false) {}
                 .environment(navigation)
         }
 
         Annotation("", coordinate: .init(latitude: 49.995, longitude: 2.005)) {
-            WikiAnnotationView(item: .earth, isSelected: false) {}
+            CategoryAnnotationView(item: .earth, isSelected: false) {}
                 .environment(navigation)
         }
 
         Annotation("", coordinate: .init(latitude: 50.005, longitude: 1.999)) {
-            WikiAnnotationView(item: .earth, isSelected: false) {}
+            CategoryAnnotationView(item: .earth, isSelected: false) {}
                 .environment(navigation)
         }
 
         Annotation("", coordinate: .init(latitude: 50.02, longitude: 2.02)) {
-            WikiAnnotationView(item: .earth, isSelected: false) {}
+            CategoryAnnotationView(item: .earth, isSelected: false) {}
                 .environment(navigation)
         }
     }

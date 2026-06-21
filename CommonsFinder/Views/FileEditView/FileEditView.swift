@@ -67,6 +67,7 @@ struct FileEditView: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(\.appDatabase) private var appDatabase
     @Environment(EditingManager.self) private var editingManager
+    @Environment(WikimediaLanguageStore.self) private var languageStore
 
     private var addedLanguages: [LanguageCode] {
         model?.captions.map(\.languageCode) ?? mediaFileInfo.mediaFile.captions.map(\.languageCode)
@@ -191,13 +192,15 @@ struct FileEditView: View {
 
             List {
                 ForEach(enumeratedCaptions, id: \.element.languageCode) { (idx, caption) in
+
                     let languageCode = caption.languageCode
+                    let languageName = languageStore.languages[languageCode]?.description ?? languageCode
 
                     VStack(alignment: .leading) {
-                        Menu(WikimediaLanguage(code: languageCode).localizedDescription) {
+                        Menu(languageName) {
                             Text("Choose Language")
                             Divider()
-                            LanguageButtons(disabledLanguages: addedLanguages) { selectedLanguage in
+                            InputLanguageButtons(disabledLanguages: addedLanguages) { selectedLanguage in
                                 changeLanguageForCaptionAndDesc(old: languageCode, new: selectedLanguage.code)
                             }
                             Divider()
@@ -223,7 +226,7 @@ struct FileEditView: View {
 
                 Menu("Add", systemImage: "plus") {
                     Text("Choose language")
-                    LanguageButtons(
+                    InputLanguageButtons(
                         disabledLanguages: addedLanguages,
                         onSelect: { addLanguage(code: $0.code) }
                     )
@@ -264,8 +267,16 @@ struct FileEditView: View {
 
     private func publishChangesAndDismiss() {
         guard let model else { return }
-        editingManager.publishChanges(of: model)
-        dismiss()
+        Task<Void, Never> {
+            do {
+                try await editingManager.startPublishChanges(of: model)
+                dismiss()
+            } catch {
+                logger.error("Failed to start publishing edit changes \(error)")
+                dismiss()
+            }
+        }
+
     }
 }
 

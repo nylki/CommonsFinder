@@ -40,7 +40,6 @@ extension MediaFileInfo {
         if let thumbURL = mediaFile.thumbURL {
             let imageResize = ImageProcessors.Resize(size: .init(width: max, height: max))
             var urlRequest = URLRequest(url: thumbURL, cachePolicy: .returnCacheDataElseLoad)
-            urlRequest.setValue(Networking.shared.referer, forHTTPHeaderField: "Referer")
             return .init(urlRequest: urlRequest, processors: [imageResize])
         }
         return nil
@@ -65,7 +64,6 @@ extension MediaFileInfo {
         if let resizedURL = try? mediaFile.url.resizedCommonsImageURL(maxWidth: w) {
             let imageResize = ImageProcessors.Resize(size: .init(width: w, height: w))
             var urlRequest = URLRequest(url: resizedURL, cachePolicy: .returnCacheDataElseLoad)
-            urlRequest.setValue(Networking.shared.referer, forHTTPHeaderField: "Referer")
             return .init(urlRequest: urlRequest, processors: [imageResize])
         }
         return nil
@@ -78,7 +76,6 @@ extension MediaFileInfo {
         if let resizedURL = try? mediaFile.url.resizedCommonsImageURL(maxWidth: w) {
             let imageResize = ImageProcessors.Resize(size: .init(width: w, height: w))
             var urlRequest = URLRequest(url: resizedURL, cachePolicy: .returnCacheDataElseLoad)
-            urlRequest.setValue(Networking.shared.referer, forHTTPHeaderField: "Referer")
             return .init(urlRequest: urlRequest, processors: [imageResize])
         }
         return nil
@@ -87,7 +84,6 @@ extension MediaFileInfo {
     func originalImageRequest(cachePolicy: URLRequest.CachePolicy = .returnCacheDataElseLoad) -> ImageRequest {
 
         var urlRequest = URLRequest(url: mediaFile.url, cachePolicy: cachePolicy)
-        urlRequest.setValue(Networking.shared.referer, forHTTPHeaderField: "Referer")
         return .init(urlRequest: urlRequest, processors: [])
     }
 

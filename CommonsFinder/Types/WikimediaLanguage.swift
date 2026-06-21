@@ -2,45 +2,23 @@
 //  WikimediaLanguage.swift
 //  CommonsFinder
 //
-//  Created by Tom Brewe on 23.11.24.
+//  Created by Tom Brewe on 17.06.26.
 //
 
 import Foundation
 
-// http://www.wikidata.org/entity/Help:Wikimedia_language_codes/lists/all
-// search API: https://commons.wikimedia.org/wiki/Special:ApiSandbox#action=languagesearch&format=json&search=b&formatversion=2
-struct WikimediaLanguage: Hashable, Equatable, Identifiable, Sendable {
+struct WikimediaLanguage: Sendable, Hashable, Equatable, Codable, CustomStringConvertible {
     let code: String
+    /// the name if the language in its own language
+    let autonym: String?
+    /// this is a localized name
+    let name: String?
 
-    /// The corresponding system Locale if applicable
-    let locale: Locale?
+    var description: String {
+        name ?? autonym ?? code
+    }
+}
 
+extension WikimediaLanguage: Identifiable {
     var id: String { code }
-
-    // Returns either the name or if not available just the language-code as a fallback
-    var localizedDescription: String {
-        localizedName ?? code
-    }
-
-    var localizedName: String? {
-        Locale.current.localizedString(forLanguageCode: code)
-    }
-
-    init(code: String) {
-        self.code = code
-        self.locale = .init(languageCode: .init(code))
-    }
-
-    init(code: String, locale: Locale) {
-        self.code = code
-        self.locale = locale
-    }
-
-    // these are just for testing and prototyping now: TODO: (we need a complete list later):
-    static let all: [WikimediaLanguage] = [
-        .init(code: "en"),
-        .init(code: "de"),
-        .init(code: "fr"),
-        .init(code: "nl"),
-    ]
 }

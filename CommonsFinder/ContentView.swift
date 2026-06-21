@@ -15,6 +15,7 @@ struct ContentView: View {
     @Environment(SearchModel.self) private var searchModel
     @Environment(AccountModel.self) private var accountModel
     @Environment(UploadManager.self) private var uploadManager
+    @Environment(WikimediaLanguageStore.self) private var wikimediaLanguageStore
     @Environment(\.appDatabase) private var appDatabase
     @Environment(\.locale) private var locale
     @Environment(\.scenePhase) private var scenePhase
@@ -61,15 +62,6 @@ struct ContentView: View {
 
             }
         }
-        .sheet(item: $navigation.isAuthSheetOpen, content: AuthView.init)
-        //        .sheet(item: $navigation.isEditingDraft) { destination in
-        //            switch destination {
-        //            case .existing(let files):
-        //                FileCreateView(appDatabase: appDatabase, files: files)
-        //            case .newDraft(let options):
-        //                FileCreateView(appDatabase: appDatabase, newDraftOptions: options)
-        //            }
-        //        }
         .modifier(DraftSheetModifer(importModel: $navigation.isEditingDraft))
         .onOpenURL(perform: handleURL)
         .onContinueUserActivity(NSUserActivityTypeLiveActivity) { userActivity in
@@ -80,6 +72,10 @@ struct ContentView: View {
             if newValue == .active, accountModel.activeUser != nil {
                 accountModel.syncUserData()
             }
+        }
+        .onChange(of: locale.language.languageCode, initial: true) {
+            guard let languageCode = locale.language.languageCode else { return }
+            wikimediaLanguageStore.loadOrDownloadInputLanguages(for: languageCode)
         }
     }
 
@@ -101,8 +97,8 @@ struct ContentView: View {
         }
 
         switch (url.scheme, components.host) {
-        // -> "CommonsFinder://ShareExtension"
-        case ("CommonsFinder", "ShareExtension"):
+        // -> "commonsfinder://ShareExtension"
+        case ("commonsfinder", "ShareExtension"):
             // TODO: this could be implemented with an intent handler instead in iOS 26 maybe?
             // -> "CommonsFinder://ShareExtension/openDrafts"
             guard url.pathComponents.count == 2, url.pathComponents[1] == "openDrafts" else {

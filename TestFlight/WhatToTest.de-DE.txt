@@ -1,1 +1,5 @@
-- behebt Ladedehler der Bilder in Kategoriekacheln
+CommonsFinder benutzt jetzt das neuere und sicherere OAuth 2 zum authentizifieren mit Wikimedia.
+Beim nächsten öffnen wird sich daher ein neuer Login-Dialog öffnen.
+″
+Außerdem sind nun alle Wikimedia-Sprachen für Bildbeschr″eibungen (Hochladen/Editieren) möglich.
+Die Eingabesprachen können in den Einstellungen angepasst werden.

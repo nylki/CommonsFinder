@@ -1,1 +1,5 @@
-- fixes thumbnail loading issues for category preview cards
+CommonsFinder now uses the newer and more secure OAuth 2 for authentication with Wikimedia.
+Therefore, a new login dialog will appear the next time you open the app.
+
+Additionally, all Wikimedia languages are now available for image descriptions (uploading/editing).
+The input languages can be adjusted in a new settings option.

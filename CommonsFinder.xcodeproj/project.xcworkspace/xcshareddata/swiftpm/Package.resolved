@@ -1,5 +1,5 @@
 {
-  "originHash" : "8083ea7850dc0b2cf5f6a0e222c121e101aebf6ae0d0506380cec02c3e878683",
+  "originHash" : "6df43d7409cb0d1ec0f40bed5feba2b19c396c778eb3b7baab11dd40e27fca96",
   "pins" : [
     {
       "identity" : "frameup",
@@ -71,6 +71,15 @@
       "state" : {
         "branch" : "alternative-sliding-time-window-rate-limiter",
         "revision" : "7bc94d64f3089de653ecadedd8d6e7ffa21805a2"
+      }
+    },
+    {
+      "identity" : "oauthenticator",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/ChimeHQ/OAuthenticator",
+      "state" : {
+        "revision" : "835bc01596dfba77de92acfecf82c6f65105cb2d",
+        "version" : "0.7.2"
       }
     },
     {

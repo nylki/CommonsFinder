@@ -895,6 +895,16 @@ public struct GeosearchListResponse: Decodable, Sendable {
     let geosearch: [GeoSearchFileItem]
 }
 
+public struct WikimediaLanguage: Hashable, Equatable, Sendable, Decodable {
+    public let code: String
+    public let autonym: String?
+    public let name: String?
+}
+
+internal struct ContentLanguageResponse: Decodable, Sendable {
+    let wbcontentlanguages: [String: WikimediaLanguage]
+}
+
 internal struct FileExistenceResponse: Decodable, Sendable {
     let pages: [Item]?
     
@@ -1276,6 +1286,29 @@ internal struct ValidateFilenameResponse: Sendable, Decodable {
             case blacklisted = "blacklisted"
             case ok
         }
+    }
+}
+
+public struct ProfileInfo: Decodable, Sendable {
+    /// central user id
+    public let sub: String
+    public let username: String
+    public let blocked: Bool
+    public let emailVerified: Bool
+    public let confirmedEmail: Bool
+    public let editcount: Int
+    public let groups: [String]
+    public let rights: [String]
+    
+    enum CodingKeys: String, CodingKey {
+        case sub
+        case username
+        case blocked
+        case emailVerified = "email_verified"
+        case confirmedEmail = "confirmed_email"
+        case editcount
+        case groups
+        case rights
     }
 }
 
