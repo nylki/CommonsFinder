@@ -55,6 +55,10 @@ enum WikimediaLanguageStoreError: Error {
     }
 
     private static func loadJSON(url: URL) -> LanguageDictionary? {
+        guard FileManager.default.fileExists(atPath: url.path()) else {
+            return nil
+        }
+
         do {
             let data = try Data(contentsOf: url)
             let decoder = JSONDecoder()
