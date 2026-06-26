@@ -118,8 +118,17 @@ enum WikimediaLanguageStoreError: Error {
         } else if let bundledLanguages = Self.loadBundledInputLanguages() {
             result = bundledLanguages
         } else {
-            assertionFailure("We always expect to have language JSON files (downloaded or bundled).")
-            result = ["en": .init(code: "en", autonym: "English", name: nil)]
+            if ProcessInfo.isRunningInPreview {
+                result = [
+                    "en": .init(code: "en", autonym: "English", name: nil),
+                    "yyy": .init(code: "te", autonym: "Test Language (Running in Preview)", name: "Preview Test Language"),
+                ]
+            } else {
+                assertionFailure("We always expect to have language JSON files (downloaded or bundled) if not running in a Preview.")
+                result = [:]
+            }
+
+
         }
 
         self.languages = result

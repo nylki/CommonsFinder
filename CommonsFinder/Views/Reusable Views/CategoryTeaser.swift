@@ -86,6 +86,8 @@ struct CategoryTeaserButtonStyle: ButtonStyle {
 }
 
 #Preview(traits: .previewEnvironment) {
+
+
     ScrollView(.vertical) {
         LazyVStack {
             CategoryTeaser(categoryInfo: .init(.earth))

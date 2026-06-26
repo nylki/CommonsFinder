@@ -156,6 +156,7 @@
 				"Generic Extensions/FloatingPoint+interpolateRanges.swift",
 				"Generic Extensions/Locale+languageCode.swift",
 				"Generic Extensions/MKCoordinateRegion+extras.swift",
+				"Generic Extensions/ProcessInfo+isRunnungInPreview.swift",
 				"Generic Extensions/Sequence+sortedByKeyPath.swift",
 				"Generic Extensions/String+CapitalizedFirstLetter.swift",
 				"Generic Extensions/String+FileExtension.swift",

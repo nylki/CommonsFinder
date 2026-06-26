@@ -6,13 +6,13 @@
 //
 
 import CommonsAPI
-import FrameUp
 import NukeUI
 import SwiftUI
 import os.log
 
 struct MediaFileListItem: View {
     let mediaFileInfo: MediaFileInfo
+    let containerWidth: CGFloat
     var isImageLoadingAllowed = true
 
     @Environment(Navigation.self) private var navigationModel
@@ -36,18 +36,25 @@ struct MediaFileListItem: View {
         .clipShape(.rect(cornerRadius: 16))
     }
 
-    private func imageHeight(containerWidth: Double) -> Double {
-        let imageAspect = mediaFileInfo.mediaFile.aspectRatio ?? 1
+    private func imageHeight(imageAspectRatio: Double = 1, containerWidth: Double) -> Double {
         let preferredAspect: Double = 3 / 2
-        let preferredHeight = containerWidth / preferredAspect
-        var height = preferredHeight
-        height = (1 / imageAspect) * containerWidth
-        return min(450, max(110, height))
+        var preferredHeight = containerWidth / preferredAspect
+        preferredHeight = (1 / imageAspectRatio) * containerWidth
+        preferredHeight = min(450, max(110, preferredHeight))
+        return preferredHeight.rounded(.towardZero)
     }
 
+    @ViewBuilder
     private var label: some View {
         VStack(alignment: .leading) {
-            imageView
+            let imageHeight = imageHeight(
+                imageAspectRatio: mediaFileInfo.mediaFile.aspectRatio ?? 1,
+                containerWidth: containerWidth
+            )
+
+            MediaFileThumbImage(mediaFileInfo, isImageLoadingAllowed: isImageLoadingAllowed)
+                .frame(width: containerWidth, height: imageHeight)
+                .clipped()
 
             Spacer()
 
@@ -58,18 +65,6 @@ struct MediaFileListItem: View {
             .multilineTextAlignment(.leading)
             .padding(11)
             .animation(.default, value: mediaFileInfo.mediaFile.bestShortTitle)
-        }
-    }
-
-    @ViewBuilder
-    private var imageView: some View {
-        WidthReader { width in
-            MediaFileThumbImage(mediaFileInfo, isImageLoadingAllowed: isImageLoadingAllowed)
-                .frame(
-                    width: width,
-                    height: imageHeight(containerWidth: width)
-                )
-                .clipped()
         }
     }
 }
@@ -90,19 +85,22 @@ struct MediaCardButtonStyle: ButtonStyle {
 
 #Preview("Square", traits: .previewEnvironment) {
     LazyVStack {
-        MediaFileListItem(mediaFileInfo: .makeRandomUploaded(id: "1234", .squareImage))
+        MediaFileListItem(mediaFileInfo: .makeRandomUploaded(id: "1234", .squareImage), containerWidth: 400)
     }
+    .frame(width: 400)
 
 }
 
 #Preview("Vertical", traits: .previewEnvironment) {
     LazyVStack {
-        MediaFileListItem(mediaFileInfo: .makeRandomUploaded(id: "1234", .verticalImage))
+        MediaFileListItem(mediaFileInfo: .makeRandomUploaded(id: "1234", .verticalImage), containerWidth: 400)
     }
+    .frame(width: 400)
 }
 
 #Preview("Panorama", traits: .previewEnvironment) {
     LazyVStack {
-        MediaFileListItem(mediaFileInfo: .makeRandomUploaded(id: "1234", .horizontalImage))
+        MediaFileListItem(mediaFileInfo: .makeRandomUploaded(id: "1234", .horizontalImage), containerWidth: 400)
     }
+    .frame(width: 400)
 }

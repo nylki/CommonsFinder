@@ -16,10 +16,11 @@ struct PaginatableList<Item: Equatable & Identifiable, ItemView: View>: View {
 
     /// return the item to render and if the item or one of its neighbors (prev, next) was visible long enough (based on scroll visibility)
     @ViewBuilder
-    let itemView: (_ item: Item, _ itemOrNeighorVisible: Bool) -> ItemView
+    let itemView: (_ item: Item, _ paddedContainerWidth: CGFloat, _ itemOrNeighorVisible: Bool) -> ItemView
 
     @State private var visibilityTask: [Item.ID: Task<Void, Never>] = [:]
     @State private var longViewedItems: Set<Item.ID> = .init()
+    @State private var paddedContainerWidth: CGFloat?
 
     private func checkPagination(visibleItem: Item) {
         let threshold = min(items.count - 1, max(0, items.count - 5))
@@ -71,8 +72,13 @@ struct PaginatableList<Item: Equatable & Identifiable, ItemView: View>: View {
         let enumeratedItems = Array(items.enumerated())
 
         LazyVStack(spacing: 20) {
-            ForEach(enumeratedItems, id: \.element.id) { (idx, item) in
-                itemView(item, itemOrNeighborVisible(item: item))
+            if let paddedContainerWidth {
+                ForEach(enumeratedItems, id: \.element.id) { (idx, item) in
+                    itemView(
+                        item,
+                        paddedContainerWidth,
+                        itemOrNeighborVisible(item: item)
+                    )
                     .onScrollVisibilityChange(threshold: 0.1) { isVisible in
                         if isVisible {
                             checkPagination(visibleItem: item)
@@ -81,9 +87,12 @@ struct PaginatableList<Item: Equatable & Identifiable, ItemView: View>: View {
                             scheduleVisibilityTask(id: item.id, prewarmItem: nextItem, isVisible: isVisible)
                         }
                     }
+                }
             }
-
             paginatingIndicator
+        }
+        .onGeometryChange(for: CGFloat.self, of: { $0.size.width }) { newValue in
+            paddedContainerWidth = newValue
         }
         .compositingGroup()
         .padding()
@@ -128,7 +137,7 @@ struct PaginatableList<Item: Equatable & Identifiable, ItemView: View>: View {
                 print("paginate")
             },
             canPrewarmItem: { item in }
-        ) { item, _ in
+        ) { item, _, _ in
             CategoryTeaser(categoryInfo: .init(item))
                 .frame(height: 185)
         }
