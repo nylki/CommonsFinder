@@ -197,7 +197,7 @@ struct MultiDraftView: View {
                             Text("Select Language")
                             Divider()
                             InputLanguageButtons(disabledLanguages: disabledLanguages) { selectedLanguage in
-                                changeLanguageForCaptionAndDesc(old: languageCode, new: selectedLanguage.identifier)
+                                changeLanguageForCaptionAndDesc(old: languageCode, new: selectedLanguage.code)
                             }
                             Divider()
                             Button("Delete", role: .destructive) {
@@ -254,7 +254,7 @@ struct MultiDraftView: View {
 
                 Menu("Add", systemImage: "plus") {
                     Text("Choose language")
-                    InputLanguageButtons(disabledLanguages: disabledLanguages, onSelect: { addLanguage(code: $0.identifier) })
+                    InputLanguageButtons(disabledLanguages: disabledLanguages, onSelect: { addLanguage(code: $0.code) })
                 }
             }
 
