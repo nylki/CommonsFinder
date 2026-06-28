@@ -781,6 +781,21 @@ extension AppDatabase {
             try draft.upsert(db)
         }
     }
+
+    func delete(_ multiDraft: MultiDraft) throws {
+        try dbWriter.write { db in
+            _ = try multiDraft.delete(db)
+        }
+    }
+
+
+    func deleteMultiDraft(id: MultiDraft.ID) throws -> Bool {
+        try dbWriter.write { db in
+            try MultiDraft.deleteOne(db, id: id)
+        }
+    }
+
+
 }
 
 // MARK: - MediaFileDraft Writes

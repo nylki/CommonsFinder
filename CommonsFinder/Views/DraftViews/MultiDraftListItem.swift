@@ -231,6 +231,8 @@ struct MultiDraftListItem: View {
 
         Group {
             switch draftCount {
+            case 0, 1:
+                EmptyView()
             case 2:
                 HStack(spacing: spacing) {
                     ForEach(multiDraftInfo.drafts[0...1]) { draft in

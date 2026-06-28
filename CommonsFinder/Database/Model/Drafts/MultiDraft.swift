@@ -54,7 +54,7 @@ nonisolated struct MultiDraft: Draftable, Identifiable, Equatable, Hashable {
 
     struct PublishingState: Equatable, Hashable, Codable {
         /// This is an aggregated progress of all uploads, succesfull or failed, normalized to 0....1,
-        ///  The same value is display via tzhe BGProcessingTask that shows in the Dynamic Island
+        ///  The same value is display via the BGContinuedProcessingTask that shows in the Dynamic Island
         var overallProgress: Double
 
         /// This will `true` after all files have been processed, no matter

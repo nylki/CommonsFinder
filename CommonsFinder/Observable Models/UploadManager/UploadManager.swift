@@ -544,8 +544,10 @@ class UploadManager {
                             to: .uploading(progress.fractionCompleted)
                         )
 
+                        // Each file contributes an equal share (1 / totalCount) to the normalized 0...1 progress.
+                        // Already-completed files contribute their full share, the current file contributes its fraction.
                         publishingState.overallProgress =
-                            Double(Int(publishingState.completedCount) / publishingState.totalCount) + Double(progress.fractionCompleted / Double(publishingState.totalCount))
+                            (Double(publishingState.completedCount) + progress.fractionCompleted) / Double(publishingState.totalCount)
 
                     case .fileKeyObtained(let filekey):
                         _ = try? setPublishingState(for: uploadable.id, to: .uploaded(filekey: filekey))
@@ -573,18 +575,18 @@ class UploadManager {
 
                     try? setPublishingState(for: multiDraftID, updatedState: publishingState)
                     if #available(iOS 26.0, *), let bgTask = bgTask as? BGContinuedProcessingTask {
-                        bgTask.progress.completedUnitCount = Int64(publishingState.overallProgress)
+                        bgTask.progress.completedUnitCount = Int64(publishingState.overallProgress * 100)
                     }
                 }
             }
 
             publishingState.completedCount = publishingState.totalCount
-            publishingState.overallProgress = 100
+            publishingState.overallProgress = 1
             publishingState.isFinished = true
             try? setPublishingState(for: multiDraftID, updatedState: publishingState)
 
             if #available(iOS 26.0, *), let bgTask = bgTask as? BGContinuedProcessingTask {
-                bgTask.progress.completedUnitCount = Int64(publishingState.overallProgress)
+                bgTask.progress.completedUnitCount = Int64(publishingState.overallProgress * 100)
             }
 
             if encounteredErrors || publishingState.completedCount != publishingState.totalCount {
@@ -592,13 +594,31 @@ class UploadManager {
                 // so the user can review which were succesful or not in the detailed multi-draft list overview.
                 bgTask?.setTaskCompleted(success: false)
             } else {
-                cleanupDraftAfterPublished(ids: uploadables.map(\.id))
+                cleanupMultiDraftAfterPublished(multiDraftID: multiDraftID)
                 bgTask?.setTaskCompleted(success: true)
             }
 
         }
     }
 
+    private func cleanupMultiDraftAfterPublished(multiDraftID: MultiDraft.ID) {
+        accountModel.syncUserData()
+
+        Task<Void, Never> {
+            // We want to give the user some time to realize that the file has been uploaded, via the green checkmark etc.
+            try? await Task.sleep(for: .milliseconds(2000))
+
+            do {
+                // NOTE: sub-drafts are automatically deleted due to CASCADE SQL rule (see AppDatabase.swift)
+                let didDelete = try appDatabase.deleteMultiDraft(id: multiDraftID)
+                if !didDelete {
+                    logger.info("Failed to delete multidraft after upload uploaded.")
+                }
+            } catch {
+                logger.error("Failed to remove drafts after upload \(error)")
+            }
+        }
+    }
 
     private func cleanupDraftAfterPublished(ids: [MediaFileDraft.ID]) {
         accountModel.syncUserData()
