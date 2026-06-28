@@ -1085,9 +1085,6 @@
         }
       }
     },
-    "filename.jpg" : {
-
-    },
     "filenames must be unique on the server" : {
       "localizations" : {
         "de" : {
@@ -2463,6 +2460,9 @@
 
     },
     "Show File List" : {
+
+    },
+    "Show file list with filenames" : {
 
     },
     "show less…" : {

@@ -325,8 +325,13 @@ struct MultiDraftView: View {
             Button {
                 isShowingFileListSheet = true
             } label: {
-                Text("\(model.info.multiDraft.filenamePreviewWithCounter)")
-                    .foregroundStyle(.secondary)
+                switch try? FilenameUtils.finalFilenamePreviewWithRange(multiDraftInfo: model.info) {
+                case .identicalMimetypes(let previewString):
+                    Text(previewString)
+                        .foregroundStyle(.secondary)
+                case .differingMimetypes, .none:
+                    Text("Show file list with filenames")
+                }
             }
 
         } header: {
@@ -669,16 +674,6 @@ struct MultiDraftView: View {
         }
 
 
-    }
-}
-
-extension MultiDraft {
-    var filenamePreviewWithCounter: AttributedString {
-        let attributedString = AttributedString(name)
-        var ending = AttributedString(", 01...99")
-        ending.foregroundColor = .accent
-        let finalString = attributedString + ending + AttributedString(".jpg")
-        return finalString
     }
 }
 

@@ -74,7 +74,10 @@ nonisolated
     /// in byte
     var size: Int64?
 
+    /// if not nil, the a draft is part of a multi-draft
     var multiDraftId: Int64?
+    /// the assigned `multiDraftIndex` is used for stable filename generation (adding 01, 02, ... , 99 suffix) and ordering
+    var multiDraftIndex: Int?
 
     enum PublishingError: Equatable, Sendable, CustomStringConvertible, Codable, Hashable {
         case twoFactorCodeRequired
@@ -194,6 +197,7 @@ nonisolated
         case width
         case height
         case size
+        case multiDraftIndex
         case multiDraftId
     }
 
@@ -219,6 +223,7 @@ nonisolated
         static let license = Column(CodingKeys.license)
         static let author = Column(CodingKeys.author)
         static let source = Column(CodingKeys.source)
+        static let multiDraftIndex = Column(CodingKeys.multiDraftIndex)
         static let multiDraftId = Column(CodingKeys.multiDraftId)
     }
 
@@ -246,6 +251,7 @@ nonisolated
         self.publishingState = try container.decodeIfPresent(PublishingState.self, forKey: .publishingState)
         self.publishingError = try container.decodeIfPresent(PublishingError.self, forKey: .publishingError)
         self.publishingStateVerificationRequired = try container.decodeIfPresent(Bool.self, forKey: .publishingStateVerificationRequired) ?? false
+        self.multiDraftIndex = try container.decodeIfPresent(Int.self, forKey: .multiDraftIndex)
         self.multiDraftId = try container.decodeIfPresent(Int64.self, forKey: .multiDraftId)
         if let tags = try? container.decode([TagItem].self, forKey: .tags) {
             self.tags = tags

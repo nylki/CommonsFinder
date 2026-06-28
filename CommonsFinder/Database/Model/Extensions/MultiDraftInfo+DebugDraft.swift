@@ -47,6 +47,7 @@ extension MultiDraftInfo {
         for idx in 0..<imageCount {
             var draft = MediaFileDraft.makeRandomDraft(id: "\(id)-\(idx)")
             draft.multiDraftId = id
+            draft.multiDraftIndex = idx
 
 
             if finishedWithErrors {

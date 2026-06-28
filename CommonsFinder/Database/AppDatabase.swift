@@ -274,6 +274,7 @@ nonisolated final class AppDatabase: Sendable {
 
             try db.alter(table: "mediaFileDraft") { t in
                 t.add(column: "size", .integer)
+                t.add(column: "multiDraftIndex", .integer)
                 t.add(column: "multiDraftId", .integer)
                     .references("multiDraft", onDelete: .cascade)
             }
@@ -731,9 +732,12 @@ extension AppDatabase {
             var multiDraftInfo = multiDraftInfo
             let multiDraft = try multiDraftInfo.multiDraft.upsertAndFetch(db)
 
+            var index = 0
             for var draft in multiDraftInfo.drafts {
                 draft.multiDraftId = multiDraft.id
+                draft.multiDraftIndex = index
                 try draft.upsert(db)
+                index += 1
             }
 
 

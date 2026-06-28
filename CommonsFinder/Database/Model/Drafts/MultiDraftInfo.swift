@@ -35,8 +35,21 @@ nonisolated struct MultiDraftInfo: FetchableRecord, Equatable, Hashable, Decodab
     }
 
     init(multiDraft: MultiDraft, drafts: [MediaFileDraft], combinedFileSizeInByte: Int64? = nil) {
+
+        let draftsHaveAlreadyAssignedIndices = drafts.allSatisfy({ $0.multiDraftIndex != nil })
+
+        if draftsHaveAlreadyAssignedIndices {
+            self.drafts = drafts
+        } else {
+            self.drafts = drafts.enumerated()
+                .map { (idx, draft) in
+                    var draft = draft
+                    draft.multiDraftIndex = idx
+                    return draft
+                }
+        }
+
         self.multiDraft = multiDraft
-        self.drafts = drafts
 
         if let combinedFileSizeInByte {
             self.combinedFileSizeInByte = combinedFileSizeInByte

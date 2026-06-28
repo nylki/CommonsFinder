@@ -81,7 +81,9 @@ struct MultiDraftOverviewList: View {
                         }
                     }
 
-                    Text("filename.jpg")
+                    let filename = try? FilenameUtils.finalFilename(for: draft, in: multiDraftModel.info)
+
+                    Text(filename ?? "failed to create filename")
                     Text("filename")
                         .font(.caption)
                         .foregroundStyle(.secondary)
