@@ -237,6 +237,7 @@
 				Views/ContextMenus/CategoryContextMenu.swift,
 				Views/ContextMenus/MediaFileContextMenu.swift,
 				Views/DraftViews/BaseDraftImageView.swift,
+				Views/DraftViews/DraftListItem.swift,
 				Views/DraftViews/DraftSheetModifer.swift,
 				Views/DraftViews/FileLocationMapView.swift,
 				Views/DraftViews/FilenameErrorButton.swift,
