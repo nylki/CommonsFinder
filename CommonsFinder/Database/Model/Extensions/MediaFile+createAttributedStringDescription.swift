@@ -5,20 +5,13 @@
 //  Created by Tom Brewe on 05.11.24.
 //
 
-import CommonsAPI
 import Foundation
 import SwiftSoup
 import SwiftUI
 import os.log
 
 extension AttributedString {
-
-    init(htmlOrString: String) async {
-        self.init()
-        self = await Self.parse(htmlOrString: htmlOrString) ?? .init()
-    }
-
-    @concurrent static private func parse(htmlOrString: String, font: Font = .body) async -> AttributedString? {
+    nonisolated static func parse(htmlOrString: String, font: Font = .body) -> AttributedString? {
         do {
             var attributedString = AttributedString()
 
@@ -32,7 +25,7 @@ extension AttributedString {
                 return nil
             }
 
-            let document: Document = try SwiftSoup.parseBodyFragment(clean)
+            let document = try SwiftSoup.parseBodyFragment(clean)
             guard let body = document.body() else { return nil }
 
             for node in body.getChildNodes() {
@@ -63,17 +56,5 @@ extension AttributedString {
         } catch {
             return nil
         }
-    }
-}
-
-extension MediaFile {
-    /// returns the localized version of the file full description, parsed as AttributedString
-    /// values are cached.
-    var attributedStringDescription: AttributedString? {
-        let preferredLanguage = Locale.current.wikiLanguageCodeIdentifier
-        let languageString = fullDescriptions.first { $0.languageCode == preferredLanguage } ?? fullDescriptions.first { $0.languageCode == "en" }
-        guard let localizedDescription = languageString?.string else { return nil }
-
-        return AttributedStringCache.shared[localizedDescription]
     }
 }

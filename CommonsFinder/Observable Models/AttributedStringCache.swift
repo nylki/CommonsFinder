@@ -16,6 +16,8 @@
 import Foundation
 import ObservableLRUCache
 import os.log
+import SwiftUI
+import SwiftSoup
 
 @Observable final class AttributedStringCache {
 
@@ -53,10 +55,10 @@ import os.log
         }
     }
 
-    @concurrent func generateAttributedStrings(from strings: some Collection<String>) async -> [(String, AttributedString)] {
+    @concurrent private func generateAttributedStrings(from strings: some Collection<String>) async -> [(String, AttributedString)] {
         var result: [(String, AttributedString)] = []
         for string in strings {
-            let attributedString = await AttributedString(htmlOrString: string)
+            let attributedString = AttributedString.parse(htmlOrString: string) ?? .init()
             result.append((string, attributedString))
         }
         return result
