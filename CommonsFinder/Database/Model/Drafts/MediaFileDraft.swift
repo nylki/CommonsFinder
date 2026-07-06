@@ -291,7 +291,7 @@ extension MediaFileDraft {
 }
 
 // MARK: - Constructors
-extension MediaFileDraft {
+nonisolated extension MediaFileDraft {
 
     /// creates a new draft from an FileItem by reading its EXIF-Data filling the fields as complete as possible at this stage
     init(_ fileItem: FileItem, newDraftOptions: NewDraftOptions?) throws {

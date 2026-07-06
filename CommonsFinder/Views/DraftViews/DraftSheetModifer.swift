@@ -108,8 +108,13 @@ struct ImportFilesModifer: ViewModifier {
                     )
                     navigation.editMultipleDrafts(multiDraftInfo: info)
                 }
-
             }
+            .modifier(
+                FileImportProgressOverlayModifier(
+                    options: importModel?.fileImporterOverlayOptions,
+                    onCancel: { importModel?.onFileImportCancel() }
+                ))
+
     }
 }
 

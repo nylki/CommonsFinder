@@ -54,7 +54,7 @@ struct ContentView: View {
                 }
             }
         }
-        .modifier(ImportFilesModifer(importModel: $navigation.isImportingFiles))
+        .modifier(ImportFilesModifer(importModel: $navigation.fileImportModel))
         .modifier(SingleDraftSheetModifier(draftedFileModel: $navigation.isEditingDraft))
         .modifier(MultiDraftSheetModifier(multiDraftModel: $navigation.isEditingMultipleDrafts))
         .onOpenURL(perform: handleURL)

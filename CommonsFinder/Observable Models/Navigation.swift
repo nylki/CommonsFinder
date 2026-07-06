@@ -74,7 +74,7 @@ import os.log
     }
 
     //    var isViewingFileSheetOpen: MediaFile.ID?
-    var isImportingFiles: FileImportModel?
+    var fileImportModel: FileImportModel?
     var isEditingDraft: SingleDraftModel?
     var isEditingMultipleDrafts: MultiDraftModel?
 
@@ -187,11 +187,11 @@ extension Navigation {
     }
 
     func openNewDraft(options: NewDraftOptions) {
-        isImportingFiles = .init(newDraftOptions: options)
+        fileImportModel = .init(newDraftOptions: options)
     }
 
     func openNewDraft() {
-        isImportingFiles = .init(newDraftOptions: nil)
+        fileImportModel = .init(newDraftOptions: nil)
     }
 
     func viewFile(mediaFile: MediaFileInfo, namespace: Namespace.ID) {

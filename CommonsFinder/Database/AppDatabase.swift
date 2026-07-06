@@ -756,7 +756,7 @@ extension AppDatabase {
     func delete(_ multiDraftInfo: MultiDraftInfo) throws {
         let id = multiDraftInfo.multiDraft.id
         try dbWriter.write { db in
-            // NOTE: sub-drafts *should* be deleted via cascade rule, so no need to delete them here separately.
+
             _ = try multiDraftInfo.multiDraft.delete(db)
         }
 
@@ -765,10 +765,12 @@ extension AppDatabase {
                 try MediaFileDraft.filter { $0.multiDraftId == id }.fetchCount(db)
             }
 
-            assert(
-                subDraftCountAfterDelete == 0,
-                "We expect sub-drafts of a MultiDraft to be deleted via the cascade rule together with its parent."
-            )
+            if id != nil {
+                assert(
+                    subDraftCountAfterDelete == 0,
+                    "For stored drafts (id != nil), we expect sub-drafts of a MultiDraft to be deleted via the cascade rule together with its parent."
+                )
+            }
         #endif
     }
     // MARK: - MultiDraft Writes

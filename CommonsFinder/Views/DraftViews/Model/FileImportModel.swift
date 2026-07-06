@@ -19,7 +19,7 @@ enum DraftError: Error {
 
 /// DraftModel models a drafting session where the user can add & remove files and also edit their metadata
 @Observable class FileImportModel: Identifiable {
-    private var photoImportTask: Task<Void, Error>?
+    private var importTask: Task<Void, Error>?
     let newDraftOptions: NewDraftOptions?
 
     var isPhotosPickerPresented = false
@@ -29,10 +29,37 @@ enum DraftError: Error {
     let id: UUID
 
     enum ImportStatus: Equatable {
-        case importing
+        case importing(importedFiles: Int, totalFilesToImport: Int?)
         case finished
+
+        var isImporting: Bool {
+            switch self {
+            case .importing(let importedFiles, let totalFilesToImport):
+                if let totalFilesToImport {
+                    importedFiles < totalFilesToImport
+                } else {
+                    true
+                }
+            case .finished:
+                false
+            }
+        }
     }
     var importStatus: ImportStatus?
+
+    var fileImporterOverlayOptions: FileImportProgressOverlayModifier.Options? {
+        switch importStatus {
+        case .importing(let importedFiles, let totalFilesToImport):
+            if let totalFilesToImport, totalFilesToImport > 1 {
+                // for single files the import should fast enough to to show an overlay
+                .init(value: importedFiles, total: totalFilesToImport)
+            } else {
+                nil
+            }
+        case .finished, nil:
+            nil
+        }
+    }
 
     var photosPickerSelection: [PhotosPickerItem] = [] {
         didSet {
@@ -60,9 +87,9 @@ enum DraftError: Error {
     }
 
     func handleNewPhotoItemSelection(oldValue: [PhotosPickerItem], currentValue: [PhotosPickerItem]) {
-        importStatus = .importing
+        importStatus = .importing(importedFiles: 0, totalFilesToImport: nil)
 
-        photoImportTask?.cancel()
+        importTask?.cancel()
         let itemIDs = Set(currentValue.compactMap(\.itemIdentifier))
         let oldItemIDs = Set(oldValue.compactMap(\.itemIdentifier))
         let addedItemIDs = itemIDs.subtracting(oldItemIDs)
@@ -73,7 +100,7 @@ enum DraftError: Error {
             importedDrafts.removeValue(forKey: id)
         }
 
-        photoImportTask = Task<Void, Error> {
+        importTask = Task<Void, Error> {
             let photoItems = currentValue.filter {
                 if let itemIdentifier = $0.itemIdentifier {
                     addedItemIDs.contains(itemIdentifier)
@@ -82,13 +109,17 @@ enum DraftError: Error {
                 }
             }
 
+            importStatus = .importing(importedFiles: 0, totalFilesToImport: photoItems.count)
+
             // import data for all new files
             for photoItem in photoItems {
+                try Task.checkCancellation()
                 do {
                     let fileItem = try await FileItem.init(photoPickerItem: photoItem)
                     try Task.checkCancellation()
                     let draft = try MediaFileDraft(fileItem, newDraftOptions: newDraftOptions)
                     importedDrafts[draft.id] = draft
+                    importStatus = .importing(importedFiles: importedDrafts.count, totalFilesToImport: photoItems.count)
                 } catch {
                     logger.error("Failed to create fileItem of photo \(photoItem.itemIdentifier ?? ""): \(error)")
                 }
@@ -98,16 +129,17 @@ enum DraftError: Error {
     }
 
     func handleFileImport(result: Result<[URL], Error>) {
-        importStatus = .importing
-
         switch result {
         case .success(let fileURLs):
-            Task<Void, Error> {
+            importStatus = .importing(importedFiles: 0, totalFilesToImport: fileURLs.count)
+            importTask = Task<Void, Error> {
                 for url in fileURLs {
+                    try Task.checkCancellation()
                     do {
                         let fileItem = try await loadFileItem(url: url)
                         let draft = try MediaFileDraft(fileItem, newDraftOptions: newDraftOptions)
                         importedDrafts[draft.id] = draft
+                        importStatus = .importing(importedFiles: importedDrafts.count, totalFilesToImport: fileURLs.count)
                     } catch {
                         logger.error("Failed to import file. \(error)")
                     }
@@ -121,8 +153,9 @@ enum DraftError: Error {
     }
 
     func handleCameraImage(_ uiImage: UIImage, metadata: NSDictionary) throws {
-        importStatus = .importing
-        Task {
+        importStatus = .importing(importedFiles: 0, totalFilesToImport: 1)
+
+        importTask = Task<Void, Error> {
             var cameraLocation: CLLocation?
 
             do {
@@ -147,6 +180,12 @@ enum DraftError: Error {
             importStatus = .finished
         }
 
+    }
+
+    func onFileImportCancel() {
+        importTask?.cancel()
+        importedDrafts = .init()
+        importStatus = .none
     }
 
     private func loadFileItem(url: URL) async throws -> FileItem {

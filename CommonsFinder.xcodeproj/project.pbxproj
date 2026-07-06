@@ -9,7 +9,6 @@
 /* Begin PBXBuildFile section */
 		E2035C452D52544D0079235B /* CommonsAPI in Frameworks */ = {isa = PBXBuildFile; productRef = E2035C442D52544D0079235B /* CommonsAPI */; };
 		E206777A2EBE52FF00981A79 /* H3kit in Frameworks */ = {isa = PBXBuildFile; productRef = E20677792EBE52FF00981A79 /* H3kit */; };
-		E213C6B92EA29F570085C60E /* SwiftSoup in Frameworks */ = {isa = PBXBuildFile; productRef = E213C6B82EA29F570085C60E /* SwiftSoup */; };
 		E2390F962EBCC64C0013F0FC /* ObservableLRUCache in Frameworks */ = {isa = PBXBuildFile; productRef = E2390F952EBCC64C0013F0FC /* ObservableLRUCache */; };
 		E2390F982EBCC7250013F0FC /* ObservableLRUCache in Frameworks */ = {isa = PBXBuildFile; productRef = E2390F972EBCC7250013F0FC /* ObservableLRUCache */; };
 		E24D3BFD2CF3ACDC003484CC /* FrameUp in Frameworks */ = {isa = PBXBuildFile; productRef = E24D3BFC2CF3ACDC003484CC /* FrameUp */; };
@@ -19,6 +18,8 @@
 		E2549B262CBD68B9005DFE14 /* Algorithms in Frameworks */ = {isa = PBXBuildFile; productRef = E2549B252CBD68B9005DFE14 /* Algorithms */; };
 		E2549B2D2CBD69C7005DFE14 /* OrderedCollections in Frameworks */ = {isa = PBXBuildFile; productRef = E2549B2C2CBD69C7005DFE14 /* OrderedCollections */; };
 		E26D503C2DA5A75F00621D1C /* CommonsAPI in Frameworks */ = {isa = PBXBuildFile; productRef = E26D503B2DA5A75F00621D1C /* CommonsAPI */; };
+		E26ED9932FFC11680089B9C9 /* SwiftSoup in Frameworks */ = {isa = PBXBuildFile; productRef = E26ED9922FFC11680089B9C9 /* SwiftSoup */; };
+		E26ED9952FFC11680089B9C9 /* SwiftSoupProfile in Frameworks */ = {isa = PBXBuildFile; productRef = E26ED9942FFC11680089B9C9 /* SwiftSoupProfile */; };
 		E28B17662CB03CBB00D6FEA0 /* GRDBQuery in Frameworks */ = {isa = PBXBuildFile; productRef = E28B17652CB03CBB00D6FEA0 /* GRDBQuery */; };
 		E290323A2D9EA52000A0CD8F /* Pulse in Frameworks */ = {isa = PBXBuildFile; productRef = E29032392D9EA52000A0CD8F /* Pulse */; settings = {ATTRIBUTES = (Required, ); }; };
 		E290323C2D9EA52000A0CD8F /* PulseUI in Frameworks */ = {isa = PBXBuildFile; productRef = E290323B2D9EA52000A0CD8F /* PulseUI */; settings = {ATTRIBUTES = (Required, ); }; };
@@ -239,6 +240,7 @@
 				Views/DraftViews/BaseDraftImageView.swift,
 				Views/DraftViews/DraftListItem.swift,
 				Views/DraftViews/DraftSheetModifer.swift,
+				Views/DraftViews/FileImportProgressOverlay.swift,
 				Views/DraftViews/FileLocationMapView.swift,
 				Views/DraftViews/FilenameErrorButton.swift,
 				Views/DraftViews/FilenameTip.swift,
@@ -418,6 +420,7 @@
 				E2D8C66A2ECF5B8200CEBB37 /* GEOSwiftMapKit in Frameworks */,
 				E2FF0A2E2D9EAA29008F915C /* GRDB in Frameworks */,
 				E290323A2D9EA52000A0CD8F /* Pulse in Frameworks */,
+				E26ED9952FFC11680089B9C9 /* SwiftSoupProfile in Frameworks */,
 				E2549B2D2CBD69C7005DFE14 /* OrderedCollections in Frameworks */,
 				E2F1B9D52CD006C700410991 /* GRDB in Frameworks */,
 				E290323C2D9EA52000A0CD8F /* PulseUI in Frameworks */,
@@ -435,7 +438,7 @@
 				E24D3BFD2CF3ACDC003484CC /* FrameUp in Frameworks */,
 				E2549B232CBD6886005DFE14 /* AsyncAlgorithms in Frameworks */,
 				E2390F982EBCC7250013F0FC /* ObservableLRUCache in Frameworks */,
-				E213C6B92EA29F570085C60E /* SwiftSoup in Frameworks */,
+				E26ED9932FFC11680089B9C9 /* SwiftSoup in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -559,7 +562,6 @@
 				E290323B2D9EA52000A0CD8F /* PulseUI */,
 				E290323E2D9EA84700A0CD8F /* GRDBQuery */,
 				E26D503B2DA5A75F00621D1C /* CommonsAPI */,
-				E213C6B82EA29F570085C60E /* SwiftSoup */,
 				E2390F952EBCC64C0013F0FC /* ObservableLRUCache */,
 				E2390F972EBCC7250013F0FC /* ObservableLRUCache */,
 				E20677792EBE52FF00981A79 /* H3kit */,
@@ -568,6 +570,8 @@
 				E2D76FAA2F3E2CB8009CC4CB /* Nuke */,
 				E2D76FAC2F3E2CB8009CC4CB /* NukeUI */,
 				E2BA76312FCEDAA90027717A /* OAuthenticator */,
+				E26ED9922FFC11680089B9C9 /* SwiftSoup */,
+				E26ED9942FFC11680089B9C9 /* SwiftSoupProfile */,
 			);
 			productName = CommonsFinder;
 			productReference = E2839FE72CA2DD900053C312 /* CommonsFinder.app */;
@@ -637,12 +641,12 @@
 				E29032382D9EA52000A0CD8F /* XCRemoteSwiftPackageReference "Pulse" */,
 				E290323D2D9EA84700A0CD8F /* XCRemoteSwiftPackageReference "GRDBQuery" */,
 				E26D503A2DA5A75F00621D1C /* XCLocalSwiftPackageReference "CommonsAPI" */,
-				E213C6B72EA29F570085C60E /* XCRemoteSwiftPackageReference "SwiftSoup" */,
 				E20677782EBE52FF00981A79 /* XCRemoteSwiftPackageReference "h3kit-ios" */,
 				E2D8C6682ECF5B8200CEBB37 /* XCRemoteSwiftPackageReference "GEOSwiftMapKit" */,
 				E2C92DD12ED60D4000EAA248 /* XCRemoteSwiftPackageReference "ObservableLRUCache" */,
 				E2D76FA92F3E2CB8009CC4CB /* XCRemoteSwiftPackageReference "Nuke" */,
 				E2BA76302FCEDAA90027717A /* XCRemoteSwiftPackageReference "OAuthenticator" */,
+				E26ED9912FFC11680089B9C9 /* XCRemoteSwiftPackageReference "SwiftSoup" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = E2839FE82CA2DD900053C312 /* Products */;
@@ -1140,14 +1144,6 @@
 				kind = branch;
 			};
 		};
-		E213C6B72EA29F570085C60E /* XCRemoteSwiftPackageReference "SwiftSoup" */ = {
-			isa = XCRemoteSwiftPackageReference;
-			repositoryURL = "https://github.com/scinfu/SwiftSoup.git";
-			requirement = {
-				kind = upToNextMajorVersion;
-				minimumVersion = 2.11.1;
-			};
-		};
 		E24D3BFB2CF3ACDC003484CC /* XCRemoteSwiftPackageReference "FrameUp" */ = {
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/ryanlintott/FrameUp";
@@ -1178,6 +1174,14 @@
 			requirement = {
 				kind = exactVersion;
 				version = 1.4.1;
+			};
+		};
+		E26ED9912FFC11680089B9C9 /* XCRemoteSwiftPackageReference "SwiftSoup" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/t089/SwiftSoup.git";
+			requirement = {
+				kind = revision;
+				revision = 83336847e47b2f499330c15426ad2fb180e72d9b;
 			};
 		};
 		E29032382D9EA52000A0CD8F /* XCRemoteSwiftPackageReference "Pulse" */ = {
@@ -1260,11 +1264,6 @@
 			isa = XCSwiftPackageProductDependency;
 			productName = H3kit;
 		};
-		E213C6B82EA29F570085C60E /* SwiftSoup */ = {
-			isa = XCSwiftPackageProductDependency;
-			package = E213C6B72EA29F570085C60E /* XCRemoteSwiftPackageReference "SwiftSoup" */;
-			productName = SwiftSoup;
-		};
 		E2390F952EBCC64C0013F0FC /* ObservableLRUCache */ = {
 			isa = XCSwiftPackageProductDependency;
 			productName = ObservableLRUCache;
@@ -1304,6 +1303,16 @@
 		E26D503B2DA5A75F00621D1C /* CommonsAPI */ = {
 			isa = XCSwiftPackageProductDependency;
 			productName = CommonsAPI;
+		};
+		E26ED9922FFC11680089B9C9 /* SwiftSoup */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = E26ED9912FFC11680089B9C9 /* XCRemoteSwiftPackageReference "SwiftSoup" */;
+			productName = SwiftSoup;
+		};
+		E26ED9942FFC11680089B9C9 /* SwiftSoupProfile */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = E26ED9912FFC11680089B9C9 /* XCRemoteSwiftPackageReference "SwiftSoup" */;
+			productName = SwiftSoupProfile;
 		};
 		E28B17652CB03CBB00D6FEA0 /* GRDBQuery */ = {
 			isa = XCSwiftPackageProductDependency;
