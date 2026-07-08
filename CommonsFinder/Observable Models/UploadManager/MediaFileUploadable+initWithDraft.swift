@@ -263,7 +263,7 @@ extension MediaFileUploadable {
                 }
                 .joined(separator: "\n")
 
-            wikitextDescriptions = "|description=\(formattedWikitextDescriptions)"
+            wikitextDescriptions = formattedWikitextDescriptions
         }
 
         let wikitextCategories =
@@ -280,7 +280,7 @@ extension MediaFileUploadable {
         let wikiText = """
             =={{int:filedesc}}==
             {{Information
-            \(wikitextDescriptions)
+            |description=\(wikitextDescriptions)
             |date={{ISOdate|\(wikitextDate)}}
             |source=\(wikitextSource)
             |author=\(wikitextAuthor)
