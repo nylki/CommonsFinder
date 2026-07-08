@@ -1178,10 +1178,10 @@
 		};
 		E26ED9912FFC11680089B9C9 /* XCRemoteSwiftPackageReference "SwiftSoup" */ = {
 			isa = XCRemoteSwiftPackageReference;
-			repositoryURL = "https://github.com/t089/SwiftSoup.git";
+			repositoryURL = "https://github.com/scinfu/SwiftSoup";
 			requirement = {
 				kind = revision;
-				revision = 83336847e47b2f499330c15426ad2fb180e72d9b;
+				revision = 8d6ad267714cac3ae747cefdd21f7a6665006e1f;
 			};
 		};
 		E29032382D9EA52000A0CD8F /* XCRemoteSwiftPackageReference "Pulse" */ = {
