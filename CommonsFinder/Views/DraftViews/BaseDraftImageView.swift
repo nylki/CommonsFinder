@@ -10,18 +10,24 @@ import SwiftUI
 
 struct BaseDraftImageView: View {
     let draft: MediaFileDraft
+    let size: DraftImageSize
+
     var body: some View {
-        LazyImage(request: draft.localFileRequestResizedGridThumb, transaction: .init(animation: .linear(duration: 0.3))) { state in
+        LazyImage(
+            request: draft.imageRequest(size: size),
+            transaction: .init(animation: .linear(duration: 0.3))
+        ) { state in
             if let image = state.image {
                 image
                     .resizable()
-                    .scaledToFill()
-                    .clipped()
-            } else {
+                    .aspectRatio(draft.aspectRatio, contentMode: .fill)
+            } else if draft.isDebugDraft {
                 Image(.debugDraft)
                     .resizable()
-                    .scaledToFill()
-                    .clipped()
+                    .aspectRatio(draft.aspectRatio, contentMode: .fill)
+            } else {
+                Color.clear
+                    .aspectRatio(draft.aspectRatio, contentMode: .fill)
             }
         }
         .frame(minWidth: 0, maxWidth: .infinity, minHeight: 0, maxHeight: .infinity)
@@ -29,6 +35,14 @@ struct BaseDraftImageView: View {
     }
 }
 
-#Preview {
-    BaseDraftImageView(draft: .makeRandomDraft(id: "1"))
+#Preview("thumb") {
+    BaseDraftImageView(draft: .makeRandomDraft(id: "1"), size: .thumb)
+}
+
+#Preview("resized") {
+    BaseDraftImageView(draft: .makeRandomDraft(id: "2"), size: .resized)
+}
+
+#Preview("full") {
+    BaseDraftImageView(draft: .makeRandomDraft(id: "3"), size: .full)
 }

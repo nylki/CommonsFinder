@@ -29,7 +29,7 @@ struct MultiDraftOverviewList: View {
 
 
                 VStack(alignment: .leading) {
-                    BaseDraftImageView(draft: draft)
+                    BaseDraftImageView(draft: draft, size: .resized)
                         .frame(minWidth: 0, maxWidth: .infinity, minHeight: 0, maxHeight: .infinity)
                         .clipShape(.rect(cornerRadius: 16))
 

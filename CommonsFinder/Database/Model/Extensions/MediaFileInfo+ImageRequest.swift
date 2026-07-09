@@ -101,7 +101,23 @@ extension MediaFileInfo {
     }
 }
 
+enum DraftImageSize {
+    case full
+    case resized
+    case thumb
+}
+
 extension MediaFileDraft {
+    func imageRequest(size: DraftImageSize) -> ImageRequest? {
+        switch size {
+        case .full:
+            localFileRequestFull
+        case .resized:
+            localFileRequestResized
+        case .thumb:
+            localFileRequestResizedGridThumb
+        }
+    }
     var localFileRequestFull: ImageRequest? {
         if let fileURL = localFileURL() {
             return .init(url: fileURL, processors: [])

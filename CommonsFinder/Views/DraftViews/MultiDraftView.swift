@@ -55,6 +55,17 @@ struct MultiDraftView: View {
         case filename
     }
 
+    private var imageGridRows: [GridItem] {
+        let draftCount = model.info.drafts.count
+        return if draftCount <= 3 {
+            [.init()]
+        } else if draftCount <= 6 {
+            [.init(), .init()]
+        } else {
+            [.init(), .init(), .init()]
+        }
+    }
+
     private var analysisInput: FileAnalysis.Input? {
         return if let centroidCoordinate = model.centroidCoordinate {
             .fileLocation(centroidCoordinate, horizontalError: model.minimumBoundingCircleRadiusOfCoordinates, bearing: nil)
@@ -154,9 +165,14 @@ struct MultiDraftView: View {
 
     private func generateFilename() {
         // TODO: move to model
+
         Task<Void, Never> {
+            guard let selectedFilenameType = model.info.multiDraft.selectedFilenameType else {
+                return
+            }
+
             let generatedFilename =
-                await model.info.multiDraft.selectedFilenameType.generateFilename(
+                await selectedFilenameType.generateFilename(
                     // FIXME: coordinate?
                     coordinate: nil,
                     date: model.info.drafts.first?.inceptionDate,
@@ -349,22 +365,47 @@ struct MultiDraftView: View {
 
                 }
             } label: {
-                Label(
-                    model.info.multiDraft.selectedFilenameType.description,
-                    systemImage: model.info.multiDraft.selectedFilenameType.systemIconName
-                )
+                if let selectedFilenameType = model.info.multiDraft.selectedFilenameType {
+                    Label(
+                        selectedFilenameType.description,
+                        systemImage: selectedFilenameType.systemIconName
+                    )
+                } else {
+                    EmptyView()
+                }
+
             }
         }
         .task(id: model.info.multiDraft.name) {
             // TODO: generate in model of name change
+
+            let firstFileDate = model.exifData.first?.value.dateOriginal
+
+            let allFilesCreatedOnSameDay = model.info.drafts.allSatisfy({ draft in
+                if let firstFileDate, let date = model.exifData[draft.id]?.dateOriginal {
+                    Calendar.current.isDate(date, inSameDayAs: firstFileDate)
+                } else {
+                    false
+                }
+            })
+
+            let possibleTypes: [FileNameType] =
+                if allFilesCreatedOnSameDay {
+                    [.captionAndDate, .captionOnly]
+                } else {
+                    [.captionOnly]
+                }
+
+            if model.info.multiDraft.selectedFilenameType == nil {
+                model.info.multiDraft.selectedFilenameType = possibleTypes.first
+            }
+
             var generatedSuggestions: [FileNameTypeTuple] = []
-            for type in FileNameType.automaticTypes {
+
+            for type in possibleTypes {
                 let generatedFilename =
                     await type.generateFilename(
                         coordinate: model.centroidCoordinate,
-                        // FIXME: check if date is identical everywhere, find other solution (eg. <date> token placeholder)
-                        // for UI
-                        // so the date is filled automatically?
                         date: model.info.drafts.first?.inceptionDate,
                         desc: model.info.multiDraft.captionWithDesc,
                         locale: Locale.current,
@@ -381,15 +422,21 @@ struct MultiDraftView: View {
 
             guard !model.info.multiDraft.name.isEmpty else { return }
 
-            let matchingAutomatic = generatedSuggestions.first(where: { suggestion in
-                model.info.multiDraft.name == suggestion.name
-            })
 
-            if let matchingAutomatic {
-                model.info.multiDraft.selectedFilenameType = matchingAutomatic.type
+            if model.info.multiDraft.selectedFilenameType == nil {
+                model.info.multiDraft.selectedFilenameType = generatedSuggestions.first?.type
             } else {
-                model.info.multiDraft.selectedFilenameType = .custom
+                let matchingAutomatic = generatedSuggestions.first(where: { suggestion in
+                    model.info.multiDraft.name == suggestion.name
+                })
+                if let matchingAutomatic {
+                    model.info.multiDraft.selectedFilenameType = matchingAutomatic.type
+                } else {
+                    model.info.multiDraft.selectedFilenameType = .custom
+                }
             }
+
+
         }
 
     }
@@ -488,7 +535,7 @@ struct MultiDraftView: View {
     @ViewBuilder
     var imageCarouselView: some View {
         ScrollView(.horizontal) {
-            LazyHGrid(rows: [.init(), .init(), .init()]) {
+            LazyHGrid(rows: imageGridRows) {
                 ForEach(model.info.drafts) { draft in
                     Button {
                         if let localFileRequestResized = draft.localFileRequestFull {
@@ -498,50 +545,19 @@ struct MultiDraftView: View {
                             assertionFailure()
                         }
                     } label: {
-                        LazyImage(request: draft.localFileRequestResized) { phase in
-                            if let image = phase.image {
-                                image
-                                    .resizable()
-                                    .aspectRatio(contentMode: .fit)
-                                    .transition(.blurReplace)
-                                    .clipShape(.containerRelative)
-                            } else {
-                                Color.clear.background(.regularMaterial)
-                            }
-                        }
+                        BaseDraftImageView(draft: draft, size: .thumb)
+                            .clipShape(ViewConstants.draftImageCarouselContainerShape)
                     }
+                    .frame(maxWidth: 180, maxHeight: 180)
                     .buttonStyle(ImageButtonStyle())
-
-
                 }
             }
-            .containerShape(ViewConstants.draftImageCarouselContainerShape)
+
         }
         .frame(maxHeight: 300)
         .listRowInsets(.init())
         .listRowBackground(Color.clear)
-
-
-        //        // we only expect the model.fileItem?.fileURL, but thumburl is useful for previews
-        //        Button {
-        //            isZoomableImageViewerPresented = true
-        //        } label: {
-        //            LazyImage(request: model.imageRequest) { phase in
-        //                if let image = phase.image {
-        //                    image
-        //                        .resizable()
-        //                        .aspectRatio(contentMode: .fill)
-        //                        .transition(.blurReplace)
-        //                        .clipShape(.containerRelative)
-        //                } else {
-        //                    Color.clear.background(.regularMaterial)
-        //                }
-        //            }
-        //        }
-        .buttonStyle(ImageButtonStyle())
-        //        .containerRelativeFrame(.horizontal)
-        //        .listRowInsets(.init())
-        //        .listRowBackground(Color.clear)
+        .padding(.horizontal)
         .zoomableImageFullscreenCover(
             imageReference: zoomableImageReference,
             isPresented: $isZoomableImageViewerPresented

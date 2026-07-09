@@ -33,7 +33,7 @@ nonisolated struct MultiDraft: Draftable, Identifiable, Equatable, Hashable {
         set { locationHandling = newValue ? .exifLocation : .noLocation }
     }
 
-    var selectedFilenameType: FileNameType
+    var selectedFilenameType: FileNameType?
     var uploadPossibleStatus: UploadPossibleStatus?
 
     /// tracks the overall publishing state of a multi-upload that is in progress or has finished.
@@ -93,7 +93,7 @@ extension MultiDraft {
         source = .own
 
         locationHandling = .exifLocation
-        selectedFilenameType = .captionAndDate
+        selectedFilenameType = nil
         uploadPossibleStatus = nil
     }
 }

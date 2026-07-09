@@ -236,18 +236,18 @@ struct MultiDraftListItem: View {
             case 2:
                 HStack(spacing: spacing) {
                     ForEach(multiDraftInfo.drafts[0...1]) { draft in
-                        BaseDraftImageView(draft: draft)
+                        BaseDraftImageView(draft: draft, size: .thumb)
                     }
                 }
 
             case 3:
                 HStack(spacing: spacing) {
-                    BaseDraftImageView(draft: multiDraftInfo.drafts[0])
+                    BaseDraftImageView(draft: multiDraftInfo.drafts[0], size: .thumb)
                         .containerRelativeFrame(.horizontal, count: 2, spacing: 5)
 
                     VStack(spacing: spacing) {
                         ForEach(multiDraftInfo.drafts[1...2]) { draft in
-                            BaseDraftImageView(draft: draft)
+                            BaseDraftImageView(draft: draft, size: .thumb)
                                 .frame(maxWidth: .infinity, maxHeight: .infinity)
                         }
                     }
@@ -258,13 +258,13 @@ struct MultiDraftListItem: View {
                 Grid(horizontalSpacing: spacing, verticalSpacing: spacing) {
                     GridRow {
                         ForEach(multiDraftInfo.drafts[0...1]) { draft in
-                            BaseDraftImageView(draft: draft)
+                            BaseDraftImageView(draft: draft, size: .thumb)
                                 .frame(maxWidth: .infinity, maxHeight: .infinity)
                         }
                     }
                     GridRow {
                         ForEach(multiDraftInfo.drafts[2...3]) { draft in
-                            BaseDraftImageView(draft: draft)
+                            BaseDraftImageView(draft: draft, size: .thumb)
                                 .frame(maxWidth: .infinity, maxHeight: .infinity)
                         }
                     }

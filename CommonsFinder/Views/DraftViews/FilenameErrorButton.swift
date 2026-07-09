@@ -10,7 +10,7 @@ import SwiftUI
 
 struct FilenameErrorButton: View {
     let nameValidationResult: NameValidationResult
-    let fileNameType: FileNameType
+    let fileNameType: FileNameType?
 
     let onDismiss: () -> Void
     let onSanitize: () -> Void

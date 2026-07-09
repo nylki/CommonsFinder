@@ -52,7 +52,6 @@ private struct FileImportProgressOverlay: View {
                 .padding(.horizontal)
             } else {
                 ProgressView()
-
             }
         }
         .padding()

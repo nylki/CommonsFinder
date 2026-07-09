@@ -20,8 +20,6 @@ import SwiftUI
 import os.log
 
 @Observable final class AttributedStringCache {
-
-    // The key is explicitly generic as it could be a Q-item or P-item ID
     private var cache: ObservableLRUCache<String, AttributedString> = .init(countLimit: 250)
 
     @ObservationIgnored

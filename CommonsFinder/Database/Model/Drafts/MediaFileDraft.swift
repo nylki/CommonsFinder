@@ -281,7 +281,7 @@ nonisolated extension MediaFileDraft {
 }
 
 extension MediaFileDraft {
-    var aspectRatio: Double? {
+    var aspectRatio: CGFloat? {
         if let width, let height {
             (Double(width) / Double(height))
         } else {

@@ -466,17 +466,7 @@ struct SingleDraftView: View {
         Button {
             isZoomableImageViewerPresented = true
         } label: {
-            LazyImage(request: model.imageRequest) { phase in
-                if let image = phase.image {
-                    image
-                        .resizable()
-                        .aspectRatio(contentMode: .fill)
-                        .transition(.blurReplace)
-                        .clipShape(.containerRelative)
-                } else {
-                    Color.clear.background(.regularMaterial)
-                }
-            }
+            BaseDraftImageView(draft: model.draft, size: .resized)
         }
         .buttonStyle(ImageButtonStyle())
         .containerRelativeFrame(.horizontal)

@@ -11,9 +11,9 @@ extension MultiDraftInfo {
     /// DEBUG ONLY value, will always be `false` in Release.
     var isDebugDraft: Bool {
         #if DEBUG
-            false
+            multiDraft.name.starts(with: "DEBUG-DRAFT-")
         #else
-            return false
+            false
         #endif
     }
 
@@ -23,7 +23,7 @@ extension MultiDraftInfo {
         var randomMultiDraft = MultiDraft(
             id: id,
             addedDate: date,
-            name: "Lorem Ipsum dolor sitit",
+            name: "DEBUG-DRAFT-Lorem Ipsum dolor sitit",
             nameSuffix: .numbering,
             nameAdditionalFallbackSuffix: .asciiLetters,
             captionWithDesc: [.init(caption: "Lorem Caption", languageCode: "en")],
@@ -45,10 +45,9 @@ extension MultiDraftInfo {
             }
 
         for idx in 0..<imageCount {
-            var draft = MediaFileDraft.makeRandomDraft(id: "\(id)-\(idx)")
+            var draft = MediaFileDraft.makeRandomDraft(id: "DEBUG-DRAFT-\(id)-\(idx)")
             draft.multiDraftId = id
             draft.multiDraftIndex = idx
-
 
             if finishedWithErrors {
                 draft.publishingError = .appQuitOrCrash
