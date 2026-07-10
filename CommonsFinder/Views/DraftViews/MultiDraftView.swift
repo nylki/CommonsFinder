@@ -489,8 +489,8 @@ struct MultiDraftView: View {
                 if model.info.multiDraft.locationEnabled == false {
                     Text("Location metadata will be erased from all \(model.info.drafts.count) files before uploading.")
                         .font(.caption)
-                } else if !model.choosenCoordinates.isEmpty {
-                    FileLocationMapView(coordinates: model.choosenCoordinates, label: locationLabel)
+                } else if !model.choosenMapItems.isEmpty {
+                    DraftInlineMapView(items: model.choosenMapItems, label: locationLabel)
                 }
             }
         }

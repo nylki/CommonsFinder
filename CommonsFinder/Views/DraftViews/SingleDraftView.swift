@@ -418,7 +418,7 @@ struct SingleDraftView: View {
                         Text("Location will be erased from the file metadata before uploading.")
                             .font(.caption)
                     } else if let coordinate = model.choosenCoordinate {
-                        FileLocationMapView(coordinates: [coordinate], label: locationLabel)
+                        DraftInlineMapView(items: [.init(id: model.draft.id, imageRequest: model.draft.localFileRequestResizedGridThumb, coordinate: coordinate)], label: locationLabel)
                     }
                 }
             }

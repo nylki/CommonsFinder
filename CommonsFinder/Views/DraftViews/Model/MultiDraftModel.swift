@@ -24,12 +24,20 @@ import os.log
     var suggestedFilenames: [FileNameTypeTuple] = []
     var nameValidationResult: NameValidationResult?
 
-    var choosenCoordinates: [CLLocationCoordinate2D] {
+    var choosenMapItems: [DraftMapItem] {
         return switch info.multiDraft.locationHandling {
         case .userDefinedLocation(latitude: let lat, longitude: let lon, _):
             [.init(latitude: lat, longitude: lon)]
         case .exifLocation:
-            exifData.values.compactMap(\.coordinate)
+            self.info.drafts.compactMap { draft in
+                if let coordinate = exifData[draft.id]?.coordinate {
+                    .init(id: draft.id, imageRequest: draft.localFileRequestResizedGridThumb, coordinate: coordinate)
+                } else {
+                    nil
+                }
+            }
+
+
         case .noLocation:
             []
         case .none:
@@ -38,7 +46,7 @@ import os.log
     }
 
     var centroidCoordinate: CLLocationCoordinate2D? {
-        let points: GEOSwift.MultiPoint = .init(points: choosenCoordinates.compactMap(Point.init))
+        let points: GEOSwift.MultiPoint = .init(points: choosenMapItems.map(\.coordinate).compactMap(Point.init))
         if let centroid = try? points.centroid() {
             return .init(centroid)
         } else {
@@ -47,7 +55,7 @@ import os.log
     }
 
     var minimumBoundingCircleRadiusOfCoordinates: Double? {
-        let points: GEOSwift.MultiPoint = .init(points: choosenCoordinates.compactMap(Point.init))
+        let points: GEOSwift.MultiPoint = .init(points: choosenMapItems.map(\.coordinate).compactMap(Point.init))
         return try? points.minimumBoundingCircle().radius
     }
 
