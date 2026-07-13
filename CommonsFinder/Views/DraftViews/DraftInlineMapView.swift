@@ -9,24 +9,32 @@ import CoreLocation
 import GEOSwift
 import GEOSwiftMapKit
 import MapKit
+import Nuke
 import NukeUI
 import SwiftUI
 
-struct DraftMapItem: Identifiable {
-    let id: String
+struct DraftMapItem: Hashable, Equatable {
     let imageRequest: ImageRequest?
     let coordinate: CLLocationCoordinate2D
 
     init(id: String, imageRequest: ImageRequest?, coordinate: CLLocationCoordinate2D) {
-        self.id = id
         self.coordinate = coordinate
         self.imageRequest = imageRequest
     }
 
+
     init(latitude: CLLocationDegrees, longitude: CLLocationDegrees) {
-        id = UUID().uuidString
         coordinate = .init(latitude: latitude, longitude: longitude)
         imageRequest = nil
+    }
+
+    static func == (lhs: borrowing DraftMapItem, rhs: borrowing DraftMapItem) -> Bool {
+        lhs.coordinate == rhs.coordinate && lhs.imageRequest?.url?.absoluteString == rhs.imageRequest?.url?.absoluteString
+    }
+
+    func hash(into hasher: inout Hasher) {
+        hasher.combine(coordinate)
+        hasher.combine(imageRequest?.url?.absoluteString)
     }
 }
 
@@ -87,7 +95,7 @@ struct DraftInlineMapView: View {
 
     @MapContentBuilder
     private var annotations: some MapContent {
-        ForEach(items) { item in
+        ForEach(items, id: \.self) { item in
             ImageArrowMapAnnotation(coordinate: item.coordinate, imageRequest: item.imageRequest)
         }
     }

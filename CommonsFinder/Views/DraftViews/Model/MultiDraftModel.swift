@@ -65,9 +65,6 @@ import os.log
         info.multiDraft.uploadPossibleStatus = nil
         try await Task.sleep(for: .milliseconds(500))
 
-        // FIXME: actually validate
-
-
         let finalFilenames: [String] =
             try FilenameUtils
             .generateMultiDraftFinalFilenames(multiDraftInfo: info)
@@ -76,6 +73,18 @@ import os.log
 
         nameValidationResult = try await DraftValidation.validateBatchFilenames(filenamesWithSuffix: finalFilenames)
         info.multiDraft.uploadPossibleStatus = DraftValidation.canUploadDraft(info.multiDraft, nameValidationResult: nameValidationResult)
+    }
+
+    func delete(_ subDraftIDs: [MediaFileDraft.ID], appDatabase: AppDatabase) {
+        do {
+            _ = try appDatabase.deleteDrafts(ids: subDraftIDs)
+            if let updated = try appDatabase.fetchMultiDraftInfo(id: info.id) {
+                info = updated
+            }
+        } catch {
+            logger.error("Failed to delete a sub-draft  with ids \(subDraftIDs), \(error)")
+        }
+
     }
 
     func saveChanges(appDatabase: AppDatabase) {
