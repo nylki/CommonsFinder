@@ -10,6 +10,14 @@ import GRDB
 
 /// A container type storing attributes that will be used for its sub/child-MediaFileDrafts
 /// for relevant views and for uploading.
+///
+/// IMPORTANT: All sub-drafts (MediaFileDraft) of a MultiDraft have nil/blank fields by default. The values of the linked MultiDraft
+/// (via multiDraftId) are used during upload.
+/// However both MultiDraft and MediaFileDraft are designed, so that fields in a sub-MediaFileDraft can "customized", by filling the fields
+/// with values that would otherwise be copied from the parent MultiDraft.
+/// Not all fields may actually be customizable yet in UI, but the intend is to be able to do that in future polishing passes,
+/// so that the user can eg. adjust captions, filenames and categories.
+
 nonisolated struct MultiDraft: Draftable, Identifiable, Equatable, Hashable {
     typealias MultiDraftID = Int64
 
@@ -18,8 +26,6 @@ nonisolated struct MultiDraft: Draftable, Identifiable, Equatable, Hashable {
     /// The (base-)name is used to construct individual file names by adding the nameSuffix
     var name: String
     var nameSuffix: MultiFileNameSuffix
-    /// if name+nameSuffix is already taken, this suffix will be appended additionally if possible
-    var nameAdditionalFallbackSuffix: MultiFileFallbackSuffix
 
     var captionWithDesc: [CaptionWithDescription]
     var tags: [TagItem]
@@ -47,11 +53,6 @@ nonisolated struct MultiDraft: Draftable, Identifiable, Equatable, Hashable {
         case numbering
     }
 
-    enum MultiFileFallbackSuffix: Equatable, Hashable, Codable {
-        /// from B to Z
-        case asciiLetters
-    }
-
     struct PublishingState: Equatable, Hashable, Codable {
         /// This is an aggregated progress of all uploads, succesfull or failed, normalized to 0....1,
         ///  The same value is display via the BGContinuedProcessingTask that shows in the Dynamic Island
@@ -77,7 +78,6 @@ extension MultiDraft {
         addedDate = .now
         name = ""
         nameSuffix = .numbering
-        nameAdditionalFallbackSuffix = .asciiLetters
 
         let languageCode = Locale.current.wikiLanguageCodeIdentifier
         captionWithDesc = [.init(languageCode: languageCode)]
@@ -115,7 +115,6 @@ nonisolated extension MultiDraft: Codable, FetchableRecord, MutablePersistableRe
         case addedDate
         case name
         case nameSuffix
-        case nameAdditionalFallbackSuffix
         case captionWithDesc
         case tags
         case license

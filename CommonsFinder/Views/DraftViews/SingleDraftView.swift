@@ -99,7 +99,7 @@ struct SingleDraftView: View {
         }
         .onChange(of: model.draft) {
             if focus != .filename {
-                generateFilename()
+                model.generateFilename()
             }
 
             model.draft.uploadPossibleStatus = DraftValidation.canUploadDraft(
@@ -110,7 +110,7 @@ struct SingleDraftView: View {
         .onChange(of: model.draft.selectedFilenameType) { oldValue, newValue in
             filenameSelection = .none
             if newValue != .custom {
-                generateFilename()
+                model.generateFilename()
             }
         }
         .onDisappear {
@@ -139,23 +139,6 @@ struct SingleDraftView: View {
         }
     }
 
-
-    private func generateFilename() {
-        // TODO: move to model
-        Task<Void, Never> {
-            let generatedFilename =
-                await model.draft.selectedFilenameType.generateFilename(
-                    coordinate: model.exifData?.coordinate,
-                    date: model.draft.inceptionDate,
-                    desc: model.draft.captionWithDesc,
-                    locale: locale,
-                    tags: model.draft.tags
-                ) ?? model.draft.name
-
-            model.draft.name = generatedFilename
-        }
-    }
-
     private func saveChangesAndDismiss() {
         model.saveChanges(appDatabase: appDatabase)
         dismiss()
@@ -171,7 +154,7 @@ struct SingleDraftView: View {
     }
     @ViewBuilder
     private var captionAndDescriptionSection: some View {
-        Section("Descriptions") {
+        Section("Description") {
             let enumeratedDescs = Array(model.draft.captionWithDesc.enumerated())
             let disabledLanguages = model.draft.captionWithDesc.map(\.languageCode)
 

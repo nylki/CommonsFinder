@@ -16,6 +16,7 @@ import UniformTypeIdentifiers
 import os.log
 
 // TODO: perhaps consolidate as view state directly, because a dedicated @observable model doesn't provide a benefit with the current setup, same for single draft model (!)
+
 @Observable final class MultiDraftModel: @preconcurrency Identifiable {
     typealias ID = String
     var id: ID
@@ -23,6 +24,8 @@ import os.log
 
     var suggestedFilenames: [FileNameTypeTuple] = []
     var nameValidationResult: NameValidationResult?
+
+    private var generateFilenameTask: Task<Void, Never>?
 
     var choosenMapItems: [DraftMapItem] {
         return switch info.multiDraft.locationHandling {
@@ -36,7 +39,6 @@ import os.log
                     nil
                 }
             }
-
 
         case .noLocation:
             []
@@ -92,6 +94,33 @@ import os.log
             info = try appDatabase.upsertAndFetch(info)
         } catch {
             logger.error("Failed to save all drafts \(error)")
+        }
+    }
+
+    func generateFilename() {
+        generateFilenameTask?.cancel()
+        generateFilenameTask = Task<Void, Never> {
+            guard let selectedFilenameType = info.multiDraft.selectedFilenameType else {
+                return
+            }
+
+            try? await Task.sleep(for: .milliseconds(500))
+
+            let generatedFilename =
+                await selectedFilenameType.generateFilename(
+                    coordinate: centroidCoordinate,
+                    date: info.drafts.first?.inceptionDate,
+                    desc: info.multiDraft.captionWithDesc,
+                    locale: Locale.current,
+                    tags: info.multiDraft.tags
+                ) ?? info.multiDraft.name
+
+            guard !Task.isCancelled else {
+                generateFilenameTask = nil
+                return
+            }
+
+            info.multiDraft.name = generatedFilename
         }
     }
 

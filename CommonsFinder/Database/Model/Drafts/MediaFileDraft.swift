@@ -294,8 +294,9 @@ extension MediaFileDraft {
 nonisolated extension MediaFileDraft {
 
     /// creates a new draft from an FileItem by reading its EXIF-Data filling the fields as complete as possible at this stage
-    init(_ fileItem: FileItem, newDraftOptions: NewDraftOptions?) throws {
+    init(_ fileItem: FileItem, isPartOfMultiDraft: Bool, newDraftOptions: NewDraftOptions?) throws {
         id = UUID().uuidString
+
         addedDate = .now
         localFileName = fileItem.localFileName
         finalFilename = ""
@@ -309,12 +310,19 @@ nonisolated extension MediaFileDraft {
             tags = []
         }
 
-        let languageCode = Locale.current.wikiLanguageCodeIdentifier
-        captionWithDesc = [.init(languageCode: languageCode)]
 
-        license = UserDefaults.standard.defaultPublishingLicense
-        author = .appUser
-        source = .own
+        if isPartOfMultiDraft {
+            captionWithDesc = .init()
+            license = nil
+            author = nil
+            source = nil
+        } else {
+            license = UserDefaults.standard.defaultPublishingLicense
+            author = .appUser
+            source = .own
+            let languageCode = Locale.current.wikiLanguageCodeIdentifier
+            captionWithDesc = [.init(languageCode: languageCode)]
+        }
 
         if let mimeType = fileItem.fileType.preferredMIMEType {
             self.mimeType = mimeType
@@ -333,7 +341,9 @@ nonisolated extension MediaFileDraft {
 
         // Read EXIF-Data and update relevant values
         if let exifData = loadExifData() {
-            locationHandling = .exifLocation
+            if !isPartOfMultiDraft {
+                locationHandling = .exifLocation
+            }
 
             if let date = exifData.dateOriginal {
                 inceptionDate = date

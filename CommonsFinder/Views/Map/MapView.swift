@@ -229,55 +229,6 @@ struct MapView: View {
                         }
                     }
                 })
-            //            .sheet(
-            //                isPresented: mapModel.isMapSelectionSheetPresentedBinding,
-            //                onDismiss: {
-            //                    if navigation.mapPath.isEmpty {
-            //                        // only clear the selected cluster if the dismiss comes from actively dismissing
-            //                        // by the user, and not indirectly when a navigation mapPath update was pushed (eg. viewing an image)
-            //                        mapModel.resetClusterSelection()
-            //                    }
-            //                }
-            //            ) {
-            //                if let model = (mapModel.selectedMapItem as? MediaInClusterModel) {
-            //                    @Bindable var model = model
-            //                    MediaClusterSheet(
-            //                        model: model,
-            //                        mapAnimationNamespace: namespace,
-            //                        onClose: mapModel.resetClusterSelection
-            //                    )
-            //                    .id(model.id)
-            //                    .presentationBackgroundInteraction(.enabled)
-            //                } else if let model = (mapModel.selectedMapItem as? CategoriesInClusterModel) {
-            //                    @Bindable var model = model
-            //                    CategoryClusterSheet(
-            //                        model: model,
-            //                        mapAnimationNamespace: namespace,
-            //                        onClose: mapModel.resetClusterSelection
-            //                    )
-            //                    .id(model.id)
-            //                    .presentationBackgroundInteraction(.enabled)
-            //                } else if let model = (mapModel.selectedMapItem as? MediaAroundLocationModel) {
-            //                    @Bindable var model = model
-            //                    MediaCircleSheet(
-            //                        model: model,
-            //                        mapAnimationNamespace: namespace,
-            //                        onClose: mapModel.resetClusterSelection
-            //                    )
-            //                    .id(model.id)
-            //                    .presentationBackgroundInteraction(.enabled)
-            //                } else if let model = (mapModel.selectedMapItem as? CategoriesAroundLocationModel) {
-            //                    @Bindable var model = model
-            //                    CategoryCircleSheet(
-            //                        model: model,
-            //                        mapAnimationNamespace: namespace,
-            //                        onClose: mapModel.resetClusterSelection
-            //                    )
-            //                    .id(model.id)
-            //                    .presentationBackgroundInteraction(.enabled)
-            //                }
-            //
-            //            }
         }
         .overlay {
             if mapModel.isRefreshingMap {
@@ -332,17 +283,6 @@ struct MapView: View {
 
             let isSelected: Bool = selectedCluster?.h3Index == cluster.h3Index
 
-            //            let containsFocusedSheetItem = if let focusedItemID = focusedMapSheetItem {
-            //                switch focusedItemID {
-            //                case .media:
-            //                    Set(cluster.mediaItems.map(\.geoRefID)).contains(focusedItemID.geoRefID)
-            //                case .category:
-            //                    Set(cluster.categoryItems.map(\.geoRefID)).contains(focusedItemID.geoRefID)
-            //                }
-            //            } else {
-            //                false
-            //            }
-
             let isContainedInSelectedCluster: Bool =
                 if let selectedClusterRes = selectedCluster?.h3Index.resolution,
                     let parent = try? H3.cellToParent(cell: cluster.h3Index, parentRes: selectedClusterRes)
@@ -365,14 +305,6 @@ struct MapView: View {
                     return false
                 }
             }()
-
-            let isZoomedIntoSelected =
-                if let selectedClusterRes = selectedCluster?.h3Index.resolution {
-                    selectedClusterRes.rawValue < mapModel.currentResolution.rawValue
-                } else {
-                    false
-                }
-
 
             if isSelected {
                 if let selectedClusterHull {

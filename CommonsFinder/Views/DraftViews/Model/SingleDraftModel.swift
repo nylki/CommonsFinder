@@ -21,6 +21,8 @@ import os.log
     var suggestedFilenames: [FileNameTypeTuple] = []
     var nameValidationResult: NameValidationResult?
 
+    private var generateFilenameTask: Task<Void, Never>?
+
     @ObservationIgnored
     lazy var exifData: ExifData? = {
         draft.loadExifData()
@@ -42,6 +44,29 @@ import os.log
             nil
         case .none:
             nil
+        }
+    }
+
+    func generateFilename() {
+        generateFilenameTask?.cancel()
+        generateFilenameTask = Task<Void, Never> {
+            try? await Task.sleep(for: .milliseconds(500))
+
+            let generatedFilename =
+                await draft.selectedFilenameType.generateFilename(
+                    coordinate: exifData?.coordinate,
+                    date: draft.inceptionDate,
+                    desc: draft.captionWithDesc,
+                    locale: Locale.current,
+                    tags: draft.tags
+                ) ?? draft.name
+
+            guard !Task.isCancelled else {
+                generateFilenameTask = nil
+                return
+            }
+
+            draft.name = generatedFilename
         }
     }
 

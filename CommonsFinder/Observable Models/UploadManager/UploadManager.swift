@@ -254,21 +254,37 @@ class UploadManager {
                     uploadable.id == draft.id,
                     "We expect the MediaFileDraft in the DB the temporary MediaFileUploadable to have the same ID"
                 )
-            } catch (.databaseErrorOnFinalFilenameUpdate(let error)) {
-                logger.error("Failed to update draft in SQL DB with final filename! \(error)")
-            } catch (.missingMimetypePreventedFinalFilenameGeneration) {
-                logger.error("Failed to create uploadable because the final filename with file-ending (eg. .jpg) could be be generated because the mimeType is unknown")
-            } catch (.fileURLMissing) {
-                logger.error("Failed to create uploadable because fileURL field is missing")
-            } catch (.onlyDraftsCanBeUploaded) {
-                logger.error("Failed to create uploadable because it must be a local draft.")
-            } catch (.failedToOverwriteExifLocation(let error)) {
-                logger.error("Failed to overwrite exif location \(error)")
             } catch {
-                // Swift 6.0 compiler correctly produces warning: “Case will never be executed”
-                // retry in XCode 16.3-4
-                // see: https://github.com/swiftlang/swift/issues/74555
-                logger.error("this is required to silence 'non-exhaustive' error, but generates a 'will never be executed' warning")
+                switch error {
+                case .onlyDraftsCanBeUploaded(let id):
+                    logger.error("Failed to create uploadable because it must be a local draft.")
+                case .fileURLMissing(let id):
+                    logger.error("Failed to create uploadable because fileURL field is missing")
+                case .nameMissing:
+                    logger.error("Failed to create uploadable because name is missing")
+                case .finalFilenameMissing:
+                    logger.error("Failed to create uploadable because final filename is missing")
+                case .failedToGenerateFilenameForMultiUpload:
+                    logger.error("Failed to create filename for multi upload")
+                case .failedToGenerateIndividualFilenameForMultiUpload:
+                    logger.error("Failed to create individual filename for multi upload")
+                case .licenseMissing:
+                    logger.error("Failed to create uploadable: license is missing")
+                case .sourceMissing:
+                    logger.error("Failed to create uploadable: source is missing")
+                case .authorMissing:
+                    logger.error("Failed to create uploadable: author is missing")
+                case .missingMimetypePreventedFinalFilenameGeneration:
+                    logger.error("Failed to create uploadable because the final filename with file-ending (eg. .jpg) could not be generated because the mimeType is unknown")
+                case .databaseErrorOnFinalFilenameUpdate(let error):
+                    logger.error("Failed to update draft in SQL DB with final filename! \(error)")
+                case .emptyMultiDraftInfoAfterUpdatingFilenames:
+                    logger.error("Failed to create uploadable: empty MultiDraftInfo after updating filenames")
+                case .failedToReadFileData:
+                    logger.error("Failed to create uploadable: failed to read file data")
+                case .failedToOverwriteExifLocation(let error):
+                    logger.error("Failed to overwrite exif location \(error)")
+                }
             }
         }
 
@@ -299,7 +315,7 @@ class UploadManager {
         } catch (.databaseErrorOnFinalFilenameUpdate(let error)) {
             logger.error("Failed to update draft in SQL DB with final filename! \(error)")
         } catch (.missingMimetypePreventedFinalFilenameGeneration) {
-            logger.error("Failed to create uploadable because the final filename with file-ending (eg. .jpg) could be be generated because the mimeType is unknown")
+            logger.error("Failed to create uploadable because the final filename with file-ending (eg. .jpg) could not be generated because the mimeType is unknown")
         } catch (.fileURLMissing) {
             logger.error("Failed to create uploadable because fileURL field is missing")
         } catch (.onlyDraftsCanBeUploaded) {

@@ -98,13 +98,35 @@ struct ImportFilesModifer: ViewModifier {
             }
             .onChange(of: importModel?.importStatus) {
                 guard let importModel, importModel.importStatus == .finished else { return }
-                let fileCount = importModel.importedDrafts.count
-                if fileCount == 1, let newDraft = importModel.importedDrafts.values.first {
-                    navigation.editDraft(draft: newDraft)
+                let fileCount = importModel.importedItems.count
+                if fileCount == 1, var fileItem = importModel.importedItems.values.first {
+                    do {
+                        let newDraft = try MediaFileDraft(
+                            fileItem,
+                            isPartOfMultiDraft: false,
+                            newDraftOptions: importModel.newDraftOptions
+                        )
+                        navigation.editDraft(draft: newDraft)
+                    } catch {
+                        logger.error("Failed to create draft \(error)")
+                    }
                 } else if fileCount > 1 {
+                    let multiDraft = MultiDraft(newDraftOptions: importModel.newDraftOptions)
+                    let subDrafts: [MediaFileDraft] = importModel.importedItems.values.compactMap { fileItem in
+                        do {
+                            return try .init(
+                                fileItem,
+                                isPartOfMultiDraft: true,
+                                newDraftOptions: nil
+                            )
+                        } catch {
+                            logger.error("Failed to create draft \(error)")
+                            return nil
+                        }
+                    }
                     let info = MultiDraftInfo(
                         multiDraft: .init(newDraftOptions: importModel.newDraftOptions),
-                        drafts: importModel.importedDrafts.values.elements
+                        drafts: subDrafts
                     )
                     navigation.editMultipleDrafts(multiDraftInfo: info)
                 }

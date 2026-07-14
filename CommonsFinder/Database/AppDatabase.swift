@@ -260,7 +260,6 @@ nonisolated final class AppDatabase: Sendable {
                 t.column("addedDate", .date)
                 t.column("name", .text)
                 t.column("nameSuffix", .jsonText)
-                t.column("nameAdditionalFallbackSuffix", .jsonText)
                 t.column("captionWithDesc", .jsonText)
                 t.column("tags", .jsonText)
                 t.column("license", .text)
@@ -363,7 +362,7 @@ extension AppDatabase {
                     file.itemInteractionID = itemInteractionID
                     return try file.upsertAndFetch(db)
                 } catch {
-                    logger.warning("Filed to insert media file \(error)")
+                    logger.warning("Failed to insert media file \(error)")
                     return nil
                 }
             }
@@ -602,7 +601,7 @@ extension AppDatabase {
             /// can we still split this up, while keeping them in the same transaction to be safer?
             if let redirectItems {
                 for (fromWikidataID, toWikidataID) in redirectItems {
-                    // This item will replace the original "from" item and poinst to the "to" item
+                    // This item will replace the original "from" item and points to the "to" item
                     var redirectingCategory = Category(
                         wikidataID: fromWikidataID,
                         redirectsTo: toWikidataID

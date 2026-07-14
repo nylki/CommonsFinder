@@ -120,7 +120,7 @@ struct MultiDraftView: View {
         }
         .onChange(of: model.info) {
             if focus != .filename {
-                generateFilename()
+                model.generateFilename()
             }
 
             model.info.multiDraft.uploadPossibleStatus = DraftValidation.canUploadDraft(
@@ -131,7 +131,7 @@ struct MultiDraftView: View {
         .onChange(of: model.info.multiDraft.selectedFilenameType) { oldValue, newValue in
             filenameSelection = .none
             if newValue != .custom {
-                generateFilename()
+                model.generateFilename()
             }
         }
         //        .onDisappear {
@@ -160,29 +160,6 @@ struct MultiDraftView: View {
         //                logger.error("failed generateHumanReadableString \(error)")
         //            }
         //        }
-    }
-
-
-    private func generateFilename() {
-        // TODO: move to model
-
-        Task<Void, Never> {
-            guard let selectedFilenameType = model.info.multiDraft.selectedFilenameType else {
-                return
-            }
-
-            let generatedFilename =
-                await selectedFilenameType.generateFilename(
-                    // FIXME: coordinate?
-                    coordinate: nil,
-                    date: model.info.drafts.first?.inceptionDate,
-                    desc: model.info.multiDraft.captionWithDesc,
-                    locale: locale,
-                    tags: model.info.multiDraft.tags
-                ) ?? model.info.multiDraft.name
-
-            model.info.multiDraft.name = generatedFilename
-        }
     }
 
     private func saveChangesAndDismiss() {

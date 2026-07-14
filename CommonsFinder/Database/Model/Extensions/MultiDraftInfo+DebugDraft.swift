@@ -25,7 +25,6 @@ extension MultiDraftInfo {
             addedDate: date,
             name: "DEBUG-DRAFT-Lorem Ipsum dolor sitit",
             nameSuffix: .numbering,
-            nameAdditionalFallbackSuffix: .asciiLetters,
             captionWithDesc: [.init(caption: "Lorem Caption", languageCode: "en")],
             tags: [.init(.earth)],
             license: .CC0,
