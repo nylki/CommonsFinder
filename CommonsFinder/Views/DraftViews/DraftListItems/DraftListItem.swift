@@ -76,7 +76,9 @@ struct DraftListItem: View {
                 uploadProgressOverlay
             }
 
-            Text("Some info")
+            DraftListItemInfo(name: draft.name, statusLine: nil, combinedFileSizeInByte: draft.size, count: 1)
+                .multilineTextAlignment(.leading)
+                .padding(.horizontal, 5)
         }
         .frame(width: 200)
         .contentShape(.contextMenuPreview, .rect(cornerRadius: 18))

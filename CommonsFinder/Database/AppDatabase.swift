@@ -105,7 +105,7 @@ nonisolated final class AppDatabase: Sendable {
                 t.column("captionWithDesc", .jsonText)
                 t.column("tags", .jsonText)
 
-                t.column("locationHandling", .jsonText).notNull()
+                t.column("locationHandling", .jsonText)
 
                 t.column("license", .text)
                 t.column("author", .jsonText)
@@ -269,6 +269,7 @@ nonisolated final class AppDatabase: Sendable {
                 t.column("selectedFilenameType")
                 t.column("publishingState")
                 t.column("uploadPossibleStatus")
+                t.column("copiedFieldsIntoSubDrafts", .boolean).defaults(to: false)
             }
 
             try db.alter(table: "mediaFileDraft") { t in
@@ -726,6 +727,11 @@ extension AppDatabase {
 
 // MARK: - MultiDraftInfo Writes
 extension AppDatabase {
+    func upsertAndFetch(_ multiDraft: MultiDraft) throws -> MultiDraft {
+        try dbWriter.write { db in
+            try multiDraft.updateAndFetch(db)
+        }
+    }
     func upsertAndFetch(_ multiDraftInfo: MultiDraftInfo) throws -> MultiDraftInfo {
         try dbWriter.write { db in
             var multiDraftInfo = multiDraftInfo

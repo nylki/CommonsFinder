@@ -31,12 +31,13 @@ extension MultiDraftInfo {
             author: .appUser,
             source: .own,
             selectedFilenameType: .captionAndDate,
-            uploadPossibleStatus: uploadPossibleStatus
+            uploadPossibleStatus: uploadPossibleStatus,
+            copiedFieldsIntoSubDrafts: false
         )
 
         var randomDrafts: [MediaFileDraft] = []
 
-        var publishingState: MultiDraft.PublishingState? =
+        let publishingState: MultiDraft.PublishingState? =
             if finishedWithErrors {
                 MultiDraft.PublishingState(overallProgress: 1, isFinished: true, completedCount: imageCount, totalCount: imageCount)
             } else {

@@ -167,8 +167,8 @@ struct MultiDraftListItem: View {
         }
         .confirmationDialog("Start upload to Wikimedia Commons now?", isPresented: $isShowingUploadDialog, titleVisibility: .visible) {
             Button("Upload", systemImage: "square.and.arrow.up") {
-                if let activeUser = account.activeUser {
-                    uploadManager.upload(multiDraftInfo, username: activeUser.username)
+                if account.activeUser != nil {
+                    uploadManager.upload(multiDraftInfo)
                 }
             }
 
@@ -194,32 +194,12 @@ struct MultiDraftListItem: View {
     }
 
     private var info: some View {
-        VStack(alignment: .leading) {
-            let name = multiDraftInfo.multiDraft.name
-            if !name.isEmpty {
-                Text(name)
-                    .lineLimit(2, reservesSpace: false)
-                    .foregroundStyle(.primary)
-                    .bold()
-            } else {
-                Text("untitled Draft")
-                    .italic()
-                    .foregroundStyle(.secondary)
-            }
-
-            let byteStyle = ByteCountFormatStyle(style: .file, allowedUnits: [.kb, .mb, .gb, .tb])
-
-
-            if let statusLine {
-                Text(statusLine)
-            } else {
-                let totalBytesFormatted = byteStyle.format(multiDraftInfo.combinedFileSizeInByte)
-
-                Text("\(multiDraftInfo.drafts.count) files · \(totalBytesFormatted)")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-            }
-        }
+        DraftListItemInfo(
+            name: multiDraftInfo.multiDraft.name,
+            statusLine: statusLine,
+            combinedFileSizeInByte: multiDraftInfo.combinedFileSizeInByte,
+            count: multiDraftInfo.drafts.count
+        )
         .multilineTextAlignment(.leading)
         .padding(.horizontal, 5)
     }

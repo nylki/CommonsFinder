@@ -12,7 +12,6 @@ import Nuke
 import UniformTypeIdentifiers
 import os.log
 
-// TODO: perhaps consolidate as view state directly
 @Observable final class SingleDraftModel: @preconcurrency Identifiable {
     typealias ID = String
     var id: ID
@@ -50,7 +49,7 @@ import os.log
     func generateFilename() {
         generateFilenameTask?.cancel()
         generateFilenameTask = Task<Void, Never> {
-            try? await Task.sleep(for: .milliseconds(500))
+            try? await Task.sleep(for: .milliseconds(250))
 
             let generatedFilename =
                 await draft.selectedFilenameType.generateFilename(
@@ -71,6 +70,8 @@ import os.log
     }
 
     func validateFilenameImpl() async throws {
+        // FIXME: combine with general .onChangeOf(draft)
+        // and check conditionally if newValue.name != oldValue.name to validate filename
         nameValidationResult = nil
         draft.uploadPossibleStatus = nil
         try await Task.sleep(for: .milliseconds(500))

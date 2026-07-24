@@ -10,6 +10,7 @@ import SwiftUI
 
 enum NameValidationError: LocalizedError, Codable, Hashable, Equatable {
     case alreadyExists(filenames: [String])
+    case duplicatedNameInMultiFileDraft(String)
     case disallowed
     case invalid(LocalFilenameValidationError?)
     case undefinedAPIResult
@@ -19,6 +20,8 @@ enum NameValidationError: LocalizedError, Codable, Hashable, Equatable {
         switch self {
         case .alreadyExists:
             String(localized: "the filename already exists")
+        case .duplicatedNameInMultiFileDraft(_):
+            String(localized: "duplicate filename")
         case .disallowed:
             String(localized: "the filename contains invalid character sequences or blocked words")
         case .invalid:
@@ -31,7 +34,13 @@ enum NameValidationError: LocalizedError, Codable, Hashable, Equatable {
     var failureReason: String? {
         switch self {
         case .alreadyExists(let filenames):
-            String(localized: "filenames must be unique on the server")
+            if filenames.count == 1, let filename = filenames.first {
+                String(localized: "A file with the name \"\(filename)\" already exists on the server.")
+            } else {
+                String(localized: "Files with same filename already exist on the server")
+            }
+        case .duplicatedNameInMultiFileDraft(let filename):
+            String(localized: "The filename \"\(filename)\" is duplicated.")
         case .disallowed:
             String(localized: "some words or combinations of characters have been blocked on the server either because they are to generic and non-descript or due to other reasons.")
         case .invalid(let localValidationError):
@@ -61,6 +70,8 @@ enum NameValidationError: LocalizedError, Codable, Hashable, Equatable {
         switch self {
         case .alreadyExists:
             String(localized: "Please choose a more unique name. For example you could add the date, location, an event name or a number.")
+        case .duplicatedNameInMultiFileDraft:
+            String(localized: "Please check the filenames in your draft and make sure that each has a different, unique name.")
         case .disallowed:
             String(localized: "Please choose a different name.")
         case .invalid(let localValidationError):
@@ -79,7 +90,6 @@ enum NameValidationError: LocalizedError, Codable, Hashable, Equatable {
                 String(localized: "The file must be converted to a supported format before uploading.")
             case nil:
                 String(localized: "Please choose a different filename.")
-
             }
         case .undefinedAPIResult:
             nil
@@ -90,6 +100,8 @@ enum NameValidationError: LocalizedError, Codable, Hashable, Equatable {
         switch self {
         case .alreadyExists:
             String(localized: "Edit the name to make it unique, You could add the date, location, event name or a number.")
+        case .duplicatedNameInMultiFileDraft:
+            String(localized: "Edit duplicate names to make them unique, You could add the date, location, event name or a number.")
         case .disallowed:
             String(localized: "Choose a different name.")
         case .invalid:

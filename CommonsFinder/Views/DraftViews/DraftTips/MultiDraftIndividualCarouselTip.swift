@@ -1,13 +1,14 @@
 //
-//  MultiDraftOverview.swift
+//  MultiDraftIndividualCarouselTip2.swift
 //  CommonsFinder
 //
-//  Created by Tom Brewe on 29.05.26.
+//  Created by Tom on 24.07.26.
 //
+
 
 import TipKit
 
-struct MultiDraftOverviewTip: Tip {
+struct MultiDraftIndividualCarouselTip: Tip {
     let id = "MultiDraftOverviewTip"
 
     var options: [any TipOption] {

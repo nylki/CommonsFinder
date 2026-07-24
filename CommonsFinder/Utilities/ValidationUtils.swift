@@ -65,7 +65,12 @@ nonisolated enum DraftValidation {
     static func validateBatchFilenames(filenamesWithSuffix: [String]) async throws -> NameValidationResult {
         var localValidation: [String: Result<Void, LocalFilenameValidationError>] = .init()
 
+        var uniqueSet = Set<String>()
+
         for filename in filenamesWithSuffix {
+            guard uniqueSet.insert(filename).inserted else {
+                return .failure(.duplicatedNameInMultiFileDraft(filename))
+            }
             localValidation[filename] = LocalFileNameValidation.validateFilenameWithSuffix(filename)
         }
 
@@ -124,7 +129,7 @@ nonisolated enum DraftValidation {
 
     /// validates a filename (without "File:"-prefix & without file-type suffix (eg. .jpg)
     private static func validateFilenameWithAPI(_ fileNameWithMimetypeSuffix: String) async -> NameValidationResult? {
-        let filename = fileNameWithMimetypeSuffix
+        let filename = fileNameWithMimetypeSuffix.precomposedStringWithCanonicalMapping
 
         do {
             async let existsTask = Networking.shared.api.checkIfFileExists(

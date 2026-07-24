@@ -147,9 +147,10 @@ class UploadManager {
         }
 
         var draft = draft
+
         draft.finalFilename =
-            draft.name
-            .appendingFileExtension(conformingTo: uniformType)
+            draft
+            .name.appendingFileExtension(conformingTo: uniformType)
             .precomposedStringWithCanonicalMapping
         do {
             return try appDatabase.upsertAndFetch(draft)
@@ -159,21 +160,20 @@ class UploadManager {
     }
 
     private func updateDraftsWithFinalFilename(multiDraftInfo: MultiDraftInfo) throws(UploadManagerError) -> MultiDraftInfo {
-        guard !multiDraftInfo.multiDraft.name.isEmpty else {
-            throw UploadManagerError.nameMissing
-        }
-
-        let finalFilenames: [MediaFileDraft.ID: String]
-        do {
-            finalFilenames = try FilenameUtils.generateMultiDraftFinalFilenames(multiDraftInfo: multiDraftInfo)
-        } catch {
-            throw .failedToGenerateFilenameForMultiUpload
-        }
-
         for draft in multiDraftInfo.drafts {
             var draft = draft
-            guard let finalFilename = finalFilenames[draft.id] else {
-                throw .failedToGenerateIndividualFilenameForMultiUpload
+
+            let finalFilename: String
+
+            do {
+                finalFilename = try FilenameUtils.finalFilename(
+                    for: draft,
+                    in: multiDraftInfo.multiDraft,
+                    totalFileCount: multiDraftInfo.drafts.count,
+                    withFileExtension: true
+                )
+            } catch {
+                throw .failedToGenerateIndividualFilenameForMultiUpload(error)
             }
 
             do {
@@ -228,7 +228,20 @@ class UploadManager {
         }
     }
 
-    func upload(_ multiDraftInfo: MultiDraftInfo, username: String) {
+    func upload(multiDraftWithID id: MultiDraft.MultiDraftID) {
+        guard let multiDraftInfo = try? appDatabase.fetchMultiDraftInfo(id: id) else {
+            assertionFailure("We expect the draft to be already stored in the DB before uploading.")
+            return
+        }
+
+        self.upload(multiDraftInfo)
+    }
+
+    func upload(_ multiDraftInfo: MultiDraftInfo) {
+        guard let username = accountModel.activeUser?.username else {
+            logger.error("cannot upload without username")
+            return
+        }
         var multiDraftInfo = multiDraftInfo
 
         guard let multiDraftID = multiDraftInfo.id else {
@@ -256,9 +269,9 @@ class UploadManager {
                 )
             } catch {
                 switch error {
-                case .onlyDraftsCanBeUploaded(let id):
+                case .onlyDraftsCanBeUploaded(_):
                     logger.error("Failed to create uploadable because it must be a local draft.")
-                case .fileURLMissing(let id):
+                case .fileURLMissing(_):
                     logger.error("Failed to create uploadable because fileURL field is missing")
                 case .nameMissing:
                     logger.error("Failed to create uploadable because name is missing")
@@ -725,7 +738,7 @@ enum UploadManagerError: Error {
     case nameMissing
     case finalFilenameMissing
     case failedToGenerateFilenameForMultiUpload
-    case failedToGenerateIndividualFilenameForMultiUpload
+    case failedToGenerateIndividualFilenameForMultiUpload(Error? = nil)
     case licenseMissing
     case sourceMissing
     case authorMissing

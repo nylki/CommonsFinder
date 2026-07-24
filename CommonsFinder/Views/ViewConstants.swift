@@ -7,7 +7,7 @@
 
 import SwiftUI
 
-struct ViewConstants {
+nonisolated struct ViewConstants {
     static let draftImageCarouselContainerShape: RoundedRectangle = .rect(cornerRadius: 15)
     static let mapSheetContainerShape: RoundedRectangle = .rect(cornerRadius: 33)
 
@@ -20,4 +20,6 @@ struct ViewConstants {
 
     // FIXME: should be dynamic based on resolution (imagePixel / screen pixel) min 5 or something
     static let maxZoomFactor = 10.0
+
+    static let multiDraftMaxFileDistanceWarningThreshold: CLLocationDistance = 2000
 }

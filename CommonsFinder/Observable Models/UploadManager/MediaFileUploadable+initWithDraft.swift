@@ -14,7 +14,7 @@ import UniformTypeIdentifiers
 import os.log
 
 extension MediaFileUploadable {
-    /// when the multiDraft is present, empty fields in the draft will be filled from the multiDraft
+    /// when the multiDraft is present, empty fields in the draft will be filled from the multiDraft if they should be missing
     init(_ draft: MediaFileDraft, multiDraft: MultiDraft? = nil, appWikimediaUsername: String) throws(UploadManagerError) {
         guard let localFileURL = draft.localFileURL() else {
             throw UploadManagerError.fileURLMissing(id: draft.id)

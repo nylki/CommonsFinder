@@ -46,6 +46,12 @@ nonisolated struct MultiDraft: Draftable, Identifiable, Equatable, Hashable {
     /// the more detailed per-file publishing state is stored in the individial MediaFileDraft items.
     var publishingState: PublishingState?
 
+    /// After this is set to `true`, the shared fields in `MultiDraft` are expected to have been copied
+    /// to all sub-drafts.
+    /// The UI uses `copiedFieldsIntoSubDrafts` to present the review view where
+    /// the sub-drafts can be edited individually before uploading, to make final adjustments.
+    var copiedFieldsIntoSubDrafts: Bool
+
     enum MultiFileNameSuffix: Equatable, Hashable, Codable {
         /// eg. 001, 002 .... 999
         case numberingZeroPadded
@@ -95,6 +101,8 @@ extension MultiDraft {
         locationHandling = .exifLocation
         selectedFilenameType = nil
         uploadPossibleStatus = nil
+
+        copiedFieldsIntoSubDrafts = false
     }
 }
 
@@ -124,6 +132,7 @@ nonisolated extension MultiDraft: Codable, FetchableRecord, MutablePersistableRe
         case selectedFilenameType
         case publishingState
         case uploadPossibleStatus
+        case copiedFieldsIntoSubDrafts
 
     }
 

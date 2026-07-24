@@ -331,7 +331,10 @@ nonisolated extension MediaFileDraft {
             throw MediaFileDraftError.failedToReadMimetype
         }
 
-        locationHandling = .noLocation
+        // Sub-drafts of a multi-draft default to `nil` so that their location handling is
+        // inherited from the parent MultiDraft (see MediaFileUploadable+initWithDraft).
+        // Single drafts default to `.noLocation` and may switch to `.exifLocation` below.
+        locationHandling = isPartOfMultiDraft ? nil : .noLocation
         inceptionDate = .now
         timezone = TimeZone.current.identifier
         publishingState = nil

@@ -12,12 +12,13 @@ import MapKit
 import Nuke
 import NukeUI
 import SwiftUI
+import os.log
 
 struct DraftMapItem: Hashable, Equatable {
     let imageRequest: ImageRequest?
     let coordinate: CLLocationCoordinate2D
 
-    init(id: String, imageRequest: ImageRequest?, coordinate: CLLocationCoordinate2D) {
+    init(imageRequest: ImageRequest?, coordinate: CLLocationCoordinate2D) {
         self.coordinate = coordinate
         self.imageRequest = imageRequest
     }
@@ -40,7 +41,6 @@ struct DraftMapItem: Hashable, Equatable {
 
 struct DraftInlineMapView: View {
     let items: [DraftMapItem]
-    var label: String?
 
     @State private var markerLabel: String?
     @State private var isMapSheetPresented = false
@@ -59,7 +59,7 @@ struct DraftInlineMapView: View {
                 .mapControlVisibility(.hidden)
                 .mapStyle(.standard(pointsOfInterest: .excludingAll))
                 .allowsHitTesting(false)
-                .frame(height: 225)
+                .frame(height: 200)
                 .clipShape(.rect(cornerRadius: 15))
             }
             .sheet(isPresented: $isMapSheetPresented) {
@@ -87,8 +87,6 @@ struct DraftInlineMapView: View {
                     }
                 }
             }
-
-
         }
 
     }
@@ -106,7 +104,7 @@ struct DraftInlineMapView: View {
     DraftInlineMapView(
         items: [
             .init(latitude: 51.509865, longitude: -0.118092)
-        ], label: "Caption abc")
+        ])
 }
 
 #Preview("multiple coordinates, same area", traits: .previewEnvironment) {
@@ -116,7 +114,7 @@ struct DraftInlineMapView: View {
             .init(latitude: 51.5152, longitude: -0.13),
             .init(latitude: 51.5151, longitude: -0.13),
             .init(latitude: 51.5159, longitude: -0.129),
-        ], label: "Caption abc")
+        ])
 }
 
 #Preview("multiple coordinates, long distance", traits: .previewEnvironment) {
@@ -126,5 +124,5 @@ struct DraftInlineMapView: View {
             .init(latitude: 51.5152, longitude: -0.13),
             .init(latitude: 51.5151, longitude: -0.13),
             .init(latitude: 52, longitude: -0.129),
-        ], label: "Caption abc")
+        ])
 }
