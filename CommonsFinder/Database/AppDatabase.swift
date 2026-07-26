@@ -1086,7 +1086,7 @@ nonisolated extension MultiDraftInfo {
                 with: (MultiDraft.drafts.sum(MediaFileDraft.Columns.size) ?? 0)
                     .forKey("combinedFileSizeInByte")
             )
-            .including(all: MultiDraft.drafts)
+            .including(all: MultiDraft.drafts.order(\.multiDraftIndex.asc))
             .asRequest(of: MultiDraftInfo.self)
     }
 

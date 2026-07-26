@@ -14,6 +14,7 @@ import GEOSwiftMapKit
 import Nuke
 import UniformTypeIdentifiers
 import os.log
+import OrderedCollections
 
 // TODO: perhaps consolidate as view state directly, because a dedicated @observable model doesn't provide a benefit with the current setup, same for single draft model (!)
 
@@ -23,7 +24,7 @@ import os.log
     //    var info: MultiDraftInfo
 
     var multiDraft: MultiDraft
-    var subDraftModels: [MediaFileDraft.ID: SingleDraftModel]
+    var subDraftModels: OrderedDictionary<MediaFileDraft.ID, SingleDraftModel>
     var suggestedFilenames: [FileNameTypeTuple] = []
     var nameValidationResult: NameValidationResult?
 
@@ -199,7 +200,7 @@ import os.log
     }()
 
     func initSubDraftModels(from drafts: [MediaFileDraft]) {
-        var subDraftModels: [MediaFileDraft.ID: SingleDraftModel] = [:]
+        var subDraftModels: OrderedDictionary<MediaFileDraft.ID, SingleDraftModel> = [:]
         for draft in drafts {
             subDraftModels[draft.id] = SingleDraftModel(existingDraft: draft)
         }

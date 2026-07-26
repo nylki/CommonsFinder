@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import CoreLocation
 
 nonisolated struct ViewConstants {
     static let draftImageCarouselContainerShape: RoundedRectangle = .rect(cornerRadius: 15)

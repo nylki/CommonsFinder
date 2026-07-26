@@ -268,6 +268,7 @@ class UploadManager {
                     "We expect the MediaFileDraft in the DB the temporary MediaFileUploadable to have the same ID"
                 )
             } catch {
+                // FIXME: expose errors to user (eg. combining them inside a variable UploadManager, exposing an error alert)
                 switch error {
                 case .onlyDraftsCanBeUploaded(_):
                     logger.error("Failed to create uploadable because it must be a local draft.")

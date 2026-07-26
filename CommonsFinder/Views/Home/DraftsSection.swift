@@ -38,7 +38,7 @@ struct DraftsSection: View {
     init(drafts: [MediaFileDraft], multiDrafts: [MultiDraftInfo]) {
         let single = drafts.map { DraftWrapper.single($0) }
         let multi = multiDrafts.map { DraftWrapper.multi($0) }
-        let allSorted = (single + multi).sorted(by: \.addedDate)
+        let allSorted = (single + multi).sorted(by: \.addedDate, .orderedDescending)
         allDrafts = allSorted
     }
 

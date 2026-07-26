@@ -109,7 +109,7 @@ struct CommonsFinderApp: App {
                     // Configure and load your TipKit tips at app launch.
                     do {
                         #if DEBUG
-                            Tips.showAllTipsForTesting()
+//                            Tips.showAllTipsForTesting()
                         #endif
 
                         try Tips.configure()

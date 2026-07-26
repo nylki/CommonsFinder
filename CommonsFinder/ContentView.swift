@@ -99,8 +99,8 @@ struct ContentView: View {
                 assertionFailure()
                 return
             }
-            let urls: [URL]?
-            urls = components.queryItems?
+            let fileURLs: [URL]?
+            fileURLs = components.queryItems?
                 .filter { $0.name == "draft" }
                 .compactMap {
                     if let filename = $0.value {
@@ -111,37 +111,37 @@ struct ContentView: View {
                 }
 
 
-            guard let urls, !urls.isEmpty else {
+            guard let fileURLs, !fileURLs.isEmpty else {
                 assertionFailure("We expect a list of file urls from the share extension. It must not be empty!")
                 return
             }
 
-            logger.info("Received drafts from share extension \(urls)")
-            let drafts: [MediaFileDraft] = urls.compactMap { temporaryPath in
-                do {
-                    let fileItem = try FileItem(movingLocalFileFromPath: temporaryPath)
-                    let draft = try MediaFileDraft(fileItem, isPartOfMultiDraft: false, newDraftOptions: nil)
-                    return try appDatabase.upsertAndFetch(draft)
-                } catch {
-                    logger.error("Failed to move draft file from ShareExtension. \(error)")
-                    assertionFailure()
-                    return nil
-                }
-            }
-
-            Task {
+            logger.info("Received drafts from share extension \(fileURLs)")
+            
+            Task<Void, Never> {
                 // A short visually delay to allow the opening app animations to settle a moment
                 try? await Task.sleep(for: .milliseconds(200))
 
                 navigation.selectedTab = .home
-
-                if drafts.count > 1 {
-                    navigation.editMultipleDrafts(multiDraftInfo: .init(multiDraft: .init(newDraftOptions: nil), drafts: drafts))
-                } else if let draft = drafts.first {
-                    navigation.editDraft(draft: draft)
+                do {
+                    if fileURLs.count == 1, let fileURL = fileURLs.first {
+                        let fileItem = try FileItem(movingLocalFileFromPath: fileURL)
+                        let draft = try MediaFileDraft(fileItem, isPartOfMultiDraft: false, newDraftOptions: nil)
+                        navigation.editDraft(draft: draft)
+                    } else {
+                        let drafts: [MediaFileDraft] = try fileURLs.compactMap { temporaryPath in
+                            let fileItem = try FileItem(movingLocalFileFromPath: temporaryPath)
+                            let draft = try MediaFileDraft(fileItem, isPartOfMultiDraft: true, newDraftOptions: nil)
+                            return draft
+                        }
+                        navigation.editMultipleDrafts(multiDraftInfo: .init(multiDraft: .init(newDraftOptions: nil), drafts: drafts))
+                    }
+                } catch {
+                    logger.error("Failed to move draft file from ShareExtension. \(error)")
+                    assertionFailure()
                 }
+                
             }
-
         default:
             logger.warning(
                 """

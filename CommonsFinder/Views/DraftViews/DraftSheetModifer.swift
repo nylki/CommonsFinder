@@ -65,7 +65,7 @@ struct ImportFilesModifer: ViewModifier {
             .photosPicker(
                 isPresented: isPhotosPickerPresented,
                 selection: photosPickerSelection,
-                maxSelectionCount: 250,
+                maxSelectionCount: 50,
                 matching: .any(of: [.images]),
                 // `.compatible` is what converts images to jpeg files
                 preferredItemEncoding: .compatible,

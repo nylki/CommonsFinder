@@ -71,7 +71,7 @@ nonisolated enum FilenameUtils {
             }
             guard totalFilesCount >= 2 else { throw FilenameError.cannotCreateRangePreviewForMultiDraftWithSingleFile }
 
-            let rangeSuffix = multiDraft.nameSuffix.rangeDescription(indexRange: 0...totalFilesCount - 1)
+            let rangeSuffix = multiDraft.nameSuffix.rangeDescription(indexRange: 0...totalFilesCount - 1, totalFileCount: totalFilesCount)
 
             var name = AttributedString(
                 (multiDraft.name + rangeSuffix).appendingFileExtension(conformingTo: uniformType)
@@ -110,8 +110,7 @@ nonisolated extension MultiDraft.MultiFileNameSuffix {
     }
 
     /// returns just range, eg. 0...12 -> "01 ... 16"
-    func rangeSuffix(indexRange: ClosedRange<Int>) -> String {
-        let totalFileCount = indexRange.upperBound - 1
+    func rangeSuffix(indexRange: ClosedRange<Int>, totalFileCount: Int) -> String {
         let startSuffix = suffix(forIndex: indexRange.lowerBound, totalFileCount: totalFileCount)
         let endSuffix = suffix(forIndex: indexRange.upperBound, totalFileCount: totalFileCount)
 
@@ -124,8 +123,8 @@ nonisolated extension MultiDraft.MultiFileNameSuffix {
     }
 
     /// returns the complete range suffix with comma (eg. ", 01...16")
-    func rangeDescription(indexRange: ClosedRange<Int>) -> String {
-        Self.suffixSeparator + rangeSuffix(indexRange: indexRange)
+    func rangeDescription(indexRange: ClosedRange<Int>, totalFileCount: Int) -> String {
+        Self.suffixSeparator + rangeSuffix(indexRange: indexRange, totalFileCount: totalFileCount)
     }
 
     private static let suffixSeparator = ", "
