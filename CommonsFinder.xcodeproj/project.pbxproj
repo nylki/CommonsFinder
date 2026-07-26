@@ -1189,8 +1189,8 @@
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/scinfu/SwiftSoup";
 			requirement = {
-				kind = revision;
-				revision = 8d6ad267714cac3ae747cefdd21f7a6665006e1f;
+				kind = exactVersion;
+				version = 2.13.7;
 			};
 		};
 		E29032382D9EA52000A0CD8F /* XCRemoteSwiftPackageReference "Pulse" */ = {
