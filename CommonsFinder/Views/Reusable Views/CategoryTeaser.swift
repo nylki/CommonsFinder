@@ -56,7 +56,7 @@ struct CategoryTeaserContent: View {
                             .allowsTightening(true)
                     }
                 }
-                .foregroundStyle(Color.white)
+                .foregroundStyle(hasBackgroundImage ? .white : .primary)
                 .shadow(color: hasBackgroundImage ? .black : .clear, radius: 2)
                 .shadow(color: hasBackgroundImage ? .black.opacity(0.7) : .clear, radius: 7)
 

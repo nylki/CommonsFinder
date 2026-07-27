@@ -15,9 +15,9 @@
 
 import Foundation
 import ObservableLRUCache
-import os.log
-import SwiftUI
 import SwiftSoup
+import SwiftUI
+import os.log
 
 @Observable final class AttributedStringCache {
 

@@ -42,11 +42,7 @@ struct CategoryTeaserBackground: View {
                         switch colorScheme {
                         case .light:
                             [
-                                .init(color: .accent.opacity(0.2), location: 0),
-                                .init(color: .accent.opacity(0.25), location: 0.2),
-                                .init(color: .accent.opacity(0.5), location: 0.35),
-                                .init(color: .accent.opacity(1), location: 0.5),
-                                .init(color: .accent.opacity(1), location: 1),
+                                .init(color: .accent.opacity(1), location: 1)
                             ]
                         case .dark:
                             [
@@ -76,14 +72,10 @@ struct CategoryTeaserBackground: View {
         case .light:
             LinearGradient(
                 stops: [
-                    .init(color: .accent.opacity(0.01), location: 0),
-                    .init(color: .accent.opacity(0.05), location: 0.2),
-                    .init(color: .accent.opacity(0.3), location: 0.45),
-                    .init(color: .accent.opacity(0.85), location: 0.85),
-                    .init(color: .accent.opacity(1), location: 1),
-                ], startPoint: .top, endPoint: .bottom)
-
-
+                    .init(color: .accent.opacity(0.1), location: 0.0),
+                    .init(color: .accent.opacity(0.1), location: 1),
+                ], startPoint: .top, endPoint: .bottom
+            )
         case .dark:
             LinearGradient(
                 stops: [
