@@ -1,5 +1,5 @@
 //
-//  MultiDraftListItem.swift
+//  MultiDraftTeaser.swift
 //  CommonsFinder
 //
 //  Created by Tom Brewe on 07.05.26.
@@ -10,7 +10,7 @@ import NukeUI
 import SwiftUI
 import os.log
 
-struct MultiDraftListItem: View {
+struct MultiDraftTeaser: View {
     let multiDraftInfo: MultiDraftInfo
 
     @Environment(Navigation.self) private var navigation
@@ -85,7 +85,7 @@ struct MultiDraftListItem: View {
 
             return attributedString
         } else {
-            var attributedString = AttributedString("\(publishingState.completedCount) of \(publishingState.totalCount)")
+            var attributedString = AttributedString("\(publishingState.completedCount + 1) of \(publishingState.totalCount)")
 
             attributedString.foregroundColor = Color.publishingInProgressAccent
 
@@ -194,7 +194,7 @@ struct MultiDraftListItem: View {
     }
 
     private var info: some View {
-        DraftListItemInfo(
+        DraftTeaserInfoView(
             name: multiDraftInfo.multiDraft.name,
             statusLine: statusLine,
             combinedFileSizeInByte: multiDraftInfo.combinedFileSizeInByte,
@@ -311,13 +311,13 @@ struct MultiDraftListItem: View {
         LazyVGrid(columns: [.init(), .init()], alignment: .center, spacing: 5) {
 
             Group {
-                MultiDraftListItem(multiDraftInfo: .makeRandom(id: 1, imageCount: 2))
+                MultiDraftTeaser(multiDraftInfo: .makeRandom(id: 1, imageCount: 2))
 
-                MultiDraftListItem(multiDraftInfo: .makeRandom(id: 2, imageCount: 3))
+                MultiDraftTeaser(multiDraftInfo: .makeRandom(id: 2, imageCount: 3))
 
-                MultiDraftListItem(multiDraftInfo: .makeRandom(id: 3, imageCount: 4))
+                MultiDraftTeaser(multiDraftInfo: .makeRandom(id: 3, imageCount: 4))
 
-                MultiDraftListItem(multiDraftInfo: .makeRandom(id: 4, imageCount: 51))
+                MultiDraftTeaser(multiDraftInfo: .makeRandom(id: 4, imageCount: 51))
             }
 
 

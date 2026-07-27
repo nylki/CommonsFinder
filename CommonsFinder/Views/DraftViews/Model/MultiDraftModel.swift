@@ -12,9 +12,9 @@ import Foundation
 import GEOSwift
 import GEOSwiftMapKit
 import Nuke
+import OrderedCollections
 import UniformTypeIdentifiers
 import os.log
-import OrderedCollections
 
 // TODO: perhaps consolidate as view state directly, because a dedicated @observable model doesn't provide a benefit with the current setup, same for single draft model (!)
 

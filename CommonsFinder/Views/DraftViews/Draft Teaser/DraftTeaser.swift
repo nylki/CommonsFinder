@@ -1,5 +1,5 @@
 //
-//  DraftListItem.swift
+//  DraftTeaser.swift
 //  CommonsFinder
 //
 //  Created by Tom Brewe on 21.01.25.
@@ -12,7 +12,7 @@ import NukeUI
 import SwiftUI
 import os.log
 
-struct DraftListItem: View {
+struct DraftTeaser: View {
     let draft: MediaFileDraft
 
     @Environment(Navigation.self) private var navigation
@@ -227,9 +227,9 @@ struct DraftListItem: View {
 #Preview(traits: .previewEnvironment) {
     ScrollView(.horizontal) {
         HStack {
-            DraftListItem(draft: .makeRandomDraft(id: "1"))
-            DraftListItem(draft: .makeRandomDraft(id: "2"))
-            DraftListItem(draft: .makeRandomDraft(id: "3"))
+            DraftTeaser(draft: .makeRandomDraft(id: "1"))
+            DraftTeaser(draft: .makeRandomDraft(id: "2"))
+            DraftTeaser(draft: .makeRandomDraft(id: "3"))
         }
         .scenePadding()
     }

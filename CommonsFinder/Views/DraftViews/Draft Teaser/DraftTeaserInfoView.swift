@@ -1,5 +1,5 @@
 //
-//  DraftListItemInfo.swift
+//  DraftTeaserInfoView.swift
 //  CommonsFinder
 //
 //  Created by Tom on 16.07.26.
@@ -7,7 +7,7 @@
 
 import SwiftUI
 
-struct DraftListItemInfo: View {
+struct DraftTeaserInfoView: View {
     let name: String
     let statusLine: AttributedString?
     let combinedFileSizeInByte: Int64?
@@ -46,5 +46,5 @@ struct DraftListItemInfo: View {
 }
 
 #Preview {
-    DraftListItemInfo(name: "Build in City XY", statusLine: nil, combinedFileSizeInByte: 9_999_999, count: 2)
+    DraftTeaserInfoView(name: "Build in City XY", statusLine: nil, combinedFileSizeInByte: 9_999_999, count: 2)
 }

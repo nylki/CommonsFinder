@@ -48,9 +48,9 @@ struct DraftsSection: View {
                 ForEach(allDrafts) { draft in
                     switch draft {
                     case .multi(let draft):
-                        MultiDraftListItem(multiDraftInfo: draft)
+                        MultiDraftTeaser(multiDraftInfo: draft)
                     case .single(let draft):
-                        DraftListItem(draft: draft)
+                        DraftTeaser(draft: draft)
                     }
                 }
             }

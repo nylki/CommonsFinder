@@ -563,7 +563,7 @@ class UploadManager {
                     if #available(iOS 26.0, *), let bgTask = bgTask as? BGContinuedProcessingTask {
                         bgTask.updateTitle(
                             bgTask.title,
-                            subtitle: "File \(publishingState.completedCount + 1)/\(publishingState.totalCount)"
+                            subtitle: "File \(publishingState.completedCount + 1)/   of \(publishingState.totalCount)"
                         )
                     }
 

@@ -117,7 +117,7 @@ struct ContentView: View {
             }
 
             logger.info("Received drafts from share extension \(fileURLs)")
-            
+
             Task<Void, Never> {
                 // A short visually delay to allow the opening app animations to settle a moment
                 try? await Task.sleep(for: .milliseconds(200))
@@ -140,7 +140,7 @@ struct ContentView: View {
                     logger.error("Failed to move draft file from ShareExtension. \(error)")
                     assertionFailure()
                 }
-                
+
             }
         default:
             logger.warning(
