@@ -64,7 +64,11 @@ struct SingleDraftView: View {
     }
 
     private func saveChangesAndDismiss() {
-        model.saveChanges(appDatabase: appDatabase)
+        do {
+            try model.saveEditingChanges(appDatabase: appDatabase)
+        } catch {
+            logger.error("Failed to save all drafts \(error)")
+        }
         dismiss()
     }
 
@@ -131,7 +135,11 @@ struct SingleDraftView: View {
                 }
                 .confirmationDialog("Start upload to Wikimedia Commons now?", isPresented: $isShowingUploadDialog, titleVisibility: .visible) {
                     Button("Upload", systemImage: "square.and.arrow.up", role: .fallbackConfirm) {
-                        model.saveChanges(appDatabase: appDatabase)
+                        do {
+                            try model.saveEditingChanges(appDatabase: appDatabase)
+                        } catch {
+                            logger.error("Failed to save all drafts \(error)")
+                        }
                         uploadManager.upload(model.draft, username: username)
                         dismiss()
                     }

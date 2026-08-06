@@ -115,8 +115,12 @@ struct IndividualDraftForm: View {
             }
         }
         .onDisappear {
-            if draftExistsInDB, model.draft.publishingState == nil {
-                model.saveChanges(appDatabase: appDatabase)
+            if draftExistsInDB {
+                do {
+                    try model.saveEditingChanges(appDatabase: appDatabase)
+                } catch {
+                    logger.error("Failed to save all drafts \(error)")
+                }
             }
         }
         .task(id: model.draft.name) {

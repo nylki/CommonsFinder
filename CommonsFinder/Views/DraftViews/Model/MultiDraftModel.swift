@@ -18,6 +18,10 @@ import os.log
 
 // TODO: perhaps consolidate as view state directly, because a dedicated @observable model doesn't provide a benefit with the current setup, same for single draft model (!)
 
+enum MultiDraftModelError: Error {
+    case cannotSaveEditingChangesDuringActiveUpload
+}
+
 @Observable final class MultiDraftModel: @preconcurrency Identifiable {
     typealias ID = String
     var id: ID
@@ -110,14 +114,19 @@ import os.log
         }
     }
 
-    func saveChanges(appDatabase: AppDatabase) {
+    func saveEditingChanges(appDatabase: AppDatabase) throws {
+        // Editing is only permitted before an upload has started (no publishing state)
+        // or after it has fully finished (possibly with per-sub-draft errors to correct).
+        // While an upload is still in progress we must not persist edits.
+        if let publishingState = multiDraft.publishingState, !publishingState.isFinished {
+            throw MultiDraftModelError.cannotSaveEditingChangesDuringActiveUpload
+        }
+
         do {
-            // If multi draft has finished publishing, but user edited afterwards
-            // this is due to errors in individual sub-drafts.
-            // So reset the publishingState when edits get changed at this point.
-            if multiDraft.publishingState?.isFinished == true {
-                multiDraft.publishingState = nil
-            }
+            // Any edit invalidates the prior (finished) publishing attempt, so always reset
+            // the aggregate publishing state. Per-sub-draft state is reset in SingleDraftModel.
+            multiDraft.publishingState = nil
+
             let updated = try appDatabase.upsertAndFetch(
                 MultiDraftInfo(multiDraft: multiDraft, drafts: subDraftModels.values.map(\.draft))
             )
@@ -129,9 +138,9 @@ import os.log
         }
     }
 
-    func startUpload(appDatabase: AppDatabase, uploadManager: UploadManager) {
+    func startUpload(appDatabase: AppDatabase, uploadManager: UploadManager) throws {
 
-        saveChanges(appDatabase: appDatabase)
+        try saveEditingChanges(appDatabase: appDatabase)
 
         guard let id = multiDraft.id else {
             assertionFailure("We expect the draft to have been saved in DB and in effect having an ID.")
@@ -168,7 +177,7 @@ import os.log
         }
     }
 
-    func copyFieldsIntoSubDrafts(appDatabase: AppDatabase) {
+    func copyFieldsIntoSubDrafts(appDatabase: AppDatabase) throws {
         guard multiDraft.uploadPossibleStatus == .uploadPossible else {
             return
         }
@@ -191,7 +200,7 @@ import os.log
         }
 
         multiDraft.copiedFieldsIntoSubDrafts = true
-        saveChanges(appDatabase: appDatabase)
+        try saveEditingChanges(appDatabase: appDatabase)
     }
 
     @ObservationIgnored

@@ -194,6 +194,7 @@
 				"Observable Models/WikimediaLanguageStore.swift",
 				"Preview Content/Preview Assets.xcassets",
 				Tests/DatabaseTests.swift,
+				Tests/DraftModelResetTests.swift,
 				Tests/FileAnalysisHelpersTests.swift,
 				Tests/FilenameTests.swift,
 				Tests/GeoVectorMathTests.swift,
@@ -374,6 +375,7 @@
 			membershipExceptions = (
 				Info.plist,
 				Tests/DatabaseTests.swift,
+				Tests/DraftModelResetTests.swift,
 				Tests/FileAnalysisHelpersTests.swift,
 				Tests/FilenameTests.swift,
 				Tests/GeoVectorMathTests.swift,

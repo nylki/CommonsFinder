@@ -75,7 +75,12 @@ struct MultiDraftIndividualCarouselView: View {
         }
         .confirmationDialog("Start upload to Wikimedia Commons now?", isPresented: $isShowingUploadDialog, titleVisibility: .visible) {
             Button("Upload", systemImage: "square.and.arrow.up", role: .fallbackConfirm) {
-                model.startUpload(appDatabase: appDatabase, uploadManager: uploadManager)
+                do {
+                    try model.startUpload(appDatabase: appDatabase, uploadManager: uploadManager)
+                } catch {
+                    // TODO: surface error to use?
+                    logger.error("Failed to start upload")
+                }
                 dismiss()
             }
 
@@ -237,7 +242,11 @@ struct MultiDraftIndividualCarouselView: View {
     }
 
     private func saveChangesAndDismiss() {
-        model.saveChanges(appDatabase: appDatabase)
+        do {
+            try model.saveEditingChanges(appDatabase: appDatabase)
+        } catch {
+            logger.error("Failed to save editing changes")
+        }
         dismiss()
     }
 

@@ -165,7 +165,11 @@ struct MultiDraftCombinedView: View {
 
 
     private func saveChangesAndDismiss() {
-        model.saveChanges(appDatabase: appDatabase)
+        do {
+            try model.saveEditingChanges(appDatabase: appDatabase)
+        } catch {
+            logger.error("Failed to save editing changes")
+        }
         dismiss()
     }
 
@@ -630,7 +634,11 @@ struct MultiDraftCombinedView: View {
         ToolbarItem(placement: .confirmationAction) {
             if model.multiDraft.uploadPossibleStatus == .uploadPossible {
                 Button("Continue", systemImage: "arrow.forward") {
-                    model.copyFieldsIntoSubDrafts(appDatabase: appDatabase)
+                    do {
+                        try model.copyFieldsIntoSubDrafts(appDatabase: appDatabase)
+                    } catch {
+                        logger.error("Error copying multidraft fields into individual sub drafts")
+                    }
                 }
             } else {
                 continueDisabledButton

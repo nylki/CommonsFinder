@@ -12,6 +12,10 @@ import Nuke
 import UniformTypeIdentifiers
 import os.log
 
+enum SingleDraftModelError: Error {
+    case cannotSaveEditsAfterDraftAlreadyPublished
+}
+
 @Observable final class SingleDraftModel: @preconcurrency Identifiable {
     typealias ID = String
     var id: ID
@@ -79,18 +83,17 @@ import os.log
         draft.uploadPossibleStatus = DraftValidation.canUploadDraft(draft, nameValidationResult: nameValidationResult)
     }
 
-    func saveChanges(appDatabase: AppDatabase) {
-        do {
-            // If draft was edited after a failed upload, reset the publishing state
-            // for UI and "startStep" decision in UploadManager.
-            if draft.publishingError != nil {
-                draft.publishingError = nil
-                draft.publishingState = nil
-            }
-
-            draft = try appDatabase.upsert(draft)
-        } catch {
-            logger.error("Failed to save all drafts \(error)")
+    func saveEditingChanges(appDatabase: AppDatabase) throws {
+        guard draft.publishingState != .published else {
+            throw SingleDraftModelError.cannotSaveEditsAfterDraftAlreadyPublished
         }
+
+        // Any edit invalidates a prior publishing attempt, so reset the publishing
+        // state/error for the UI and the "startStep" decision in UploadManager.
+        draft.publishingError = nil
+        draft.publishingState = nil
+        draft.publishingStateVerificationRequired = false
+
+        draft = try appDatabase.upsert(draft)
     }
 }
