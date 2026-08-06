@@ -17,7 +17,6 @@ enum DraftError: Error {
     case filenameExistsAlready(name: String)
 }
 
-/// DraftModel models a drafting session where the user can add & remove files and also edit their metadata
 @Observable class FileImportModel: Identifiable {
     private var importTask: Task<Void, Error>?
     let newDraftOptions: NewDraftOptions?
@@ -68,8 +67,6 @@ enum DraftError: Error {
     }
 
     var importedItems: OrderedDictionary<FileItem.ID, FileItem>
-    //    var draftsExistInDB: Bool = false
-
 
     init(newDraftOptions: NewDraftOptions?) {
         id = .init()
@@ -109,7 +106,11 @@ enum DraftError: Error {
                 }
             }
 
-            importStatus = .importing(importedFiles: 0, totalFilesToImport: photoItems.count)
+            let totalFilesToImport = photoItems.count
+            importStatus = .importing(
+                importedFiles: 0,
+                totalFilesToImport: totalFilesToImport
+            )
 
             // import data for all new files
             for photoItem in photoItems {
@@ -118,7 +119,10 @@ enum DraftError: Error {
                     let fileItem = try await FileItem.init(photoPickerItem: photoItem)
                     try Task.checkCancellation()
                     importedItems[fileItem.id] = fileItem
-                    importStatus = .importing(importedFiles: importedItems.count, totalFilesToImport: photoItems.count)
+                    importStatus = .importing(
+                        importedFiles: importedItems.count,
+                        totalFilesToImport: totalFilesToImport
+                    )
                 } catch {
                     logger.error("Failed to create fileItem of photo \(photoItem.itemIdentifier ?? ""): \(error)")
                 }

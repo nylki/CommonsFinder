@@ -185,6 +185,7 @@ nonisolated extension QueryInterfaceRequest<Category> {
     }
 }
 
+
 /// A @Query request that observes a single media item in the database
 struct MediaFileRequest: ValueObservationQueryable {
     let id: String

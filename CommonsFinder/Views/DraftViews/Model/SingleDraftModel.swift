@@ -81,6 +81,13 @@ import os.log
 
     func saveChanges(appDatabase: AppDatabase) {
         do {
+            // If draft was edited after a failed upload, reset the publishing state
+            // for UI and "startStep" decision in UploadManager.
+            if draft.publishingError != nil {
+                draft.publishingError = nil
+                draft.publishingState = nil
+            }
+
             draft = try appDatabase.upsert(draft)
         } catch {
             logger.error("Failed to save all drafts \(error)")

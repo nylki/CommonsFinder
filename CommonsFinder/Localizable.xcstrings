@@ -137,6 +137,9 @@
     "%lld%%" : {
 
     },
+    "%lld%% completed" : {
+
+    },
     "%lld×%lld pixel" : {
       "localizations" : {
         "de" : {
@@ -1230,6 +1233,9 @@
         }
       }
     },
+    "in progress" : {
+
+    },
     "In-App Search" : {
       "localizations" : {
         "de" : {
@@ -2071,6 +2077,9 @@
         }
       }
     },
+    "Retry all %lld failed files" : {
+
+    },
     "Retry and continue the upload when you have a stable internet connection." : {
       "localizations" : {
         "de" : {
@@ -2713,6 +2722,12 @@
           }
         }
       }
+    },
+    "Upload Status" : {
+
+    },
+    "upload succesful" : {
+
     },
     "uploaded %@ ago" : {
       "localizations" : {

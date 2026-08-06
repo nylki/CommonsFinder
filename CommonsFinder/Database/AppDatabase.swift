@@ -105,7 +105,7 @@ nonisolated final class AppDatabase: Sendable {
                 t.column("captionWithDesc", .jsonText)
                 t.column("tags", .jsonText)
 
-                t.column("locationHandling", .jsonText)
+                t.column("locationHandling", .jsonText).notNull()
 
                 t.column("license", .text)
                 t.column("author", .jsonText)
@@ -277,6 +277,11 @@ nonisolated final class AppDatabase: Sendable {
                 t.add(column: "multiDraftIndex", .integer)
                 t.add(column: "multiDraftId", .integer)
                     .references("multiDraft", onDelete: .cascade)
+                // make locationHandling optional (for subdrafts of multidrafts)
+                t.drop(column: "locationHandling")
+                t.add(column: "locationHandling", .jsonText)
+
+
             }
 
         }
@@ -1093,6 +1098,11 @@ nonisolated extension MultiDraftInfo {
     static func filter(id: MultiDraft.ID) -> QueryInterfaceRequest<MultiDraftInfo> {
         all().filter(key: id)
     }
+
+    static func fetchOne(_ db: Database, id: MultiDraft.ID) throws -> Self? {
+        try filter(id: id).fetchOne(db)
+    }
+
 }
 
 nonisolated extension CategoryInfo {

@@ -69,41 +69,11 @@ private struct PublishingErrorDetailsSheet: View {
     @Environment(UploadManager.self) private var uploadManager
 
     private var isContinuationPossible: Bool {
-        return switch error {
-        case .twoFactorCodeRequired, .emailCodeRequired:
-            true
-        case .uploadWarnings(let warnings):
-            if warnings.contains(.duplicate(name: nil)) || warnings.contains(.duplicateArchive) {
-                false
-            } else {
-                true
-            }
-        case .appQuitOrCrash:
-            true
-        case .urlError(_, _):
-            true
-        case .error(_, _):
-            true
-        case nil:
-            true
-        }
+        error.isContinuationPossible
     }
 
     private var isEditingPossible: Bool {
-        return switch publishingStatus {
-        case .uploading(_):
-            true
-        case .uploaded(_):
-            true
-        case .unstashingFile(_):
-            true
-        case .creatingWikidataClaims:
-            false
-        case .published:
-            false
-        case nil:
-            true
-        }
+        publishingStatus.isEditingPossible
     }
 
     @Environment(\.dismiss) private var dismiss
@@ -113,12 +83,12 @@ private struct PublishingErrorDetailsSheet: View {
             ScrollView {
                 detailsList
             }
-            .safeAreaInset(edge: .bottom) {
-                bottomButtons
-            }
             .scenePadding([.horizontal, .top])
             .navigationBarTitle("", displayMode: .inline)
             .toolbar {
+                ToolbarItem(placement: .bottomBar) {
+                    bottomToolbarButton
+                }
                 ToolbarItem(placement: .title) {
                     Text("\(Image(systemName: "square.and.arrow.up.trianglebadge.exclamationmark.fill")) Upload Error")
                         .bold()
@@ -151,25 +121,6 @@ private struct PublishingErrorDetailsSheet: View {
     @ViewBuilder
     private var detailsList: some View {
         VStack {
-            //            GroupBox(label: Label("Last Status", systemImage: "info.circle")) {
-            //                HStack {
-            //                    switch publishingStatus {
-            //                    case .uploading(let fractionCompleted):
-            //                        Text("The data upload was interrupted at \(Int(fractionCompleted * 100))%.")
-            //                    case .uploaded(_), .unstashingFile(_):
-            //                        Text("File was uploaded, but is still **un-published** and also **missing structured metadata**.")
-            //                    case .creatingWikidataClaims:
-            //                        Text("file was uploaded and published. Captions and other structured metadata are not yet created though.")
-            //                    case .published, nil:
-            //                        EmptyView()
-            //                    }
-            //                    Spacer(minLength: 0)
-            //                }
-            //                .padding(5)
-            //
-            //            }
-
-
             GroupBox {
                 HStack {
                     switch error {
@@ -274,26 +225,26 @@ private struct PublishingErrorDetailsSheet: View {
     }
 
     @ViewBuilder
-    private var bottomButtons: some View {
+    private var bottomToolbarButton: some View {
         if uploadManager.isVerifyingErrorDrafts {
             ProgressView().progressViewStyle(.circular)
         } else {
             if isContinuationPossible {
                 Button(action: onContinueUpload) {
-                    Label(
-                        publishingStatus == .creatingWikidataClaims ? "Finish Details" : "Retry Upload",
-                        systemImage: "arrow.trianglehead.2.clockwise.rotate.90"
-                    )
-                    .frame(minWidth: 0, maxWidth: .infinity)
-                    .padding(10)
+                    HStack {
+                        Image(systemName: "arrow.trianglehead.2.clockwise.rotate.90")
+                        Text(publishingStatus == .creatingWikidataClaims ? "Finish Details" : "Retry Upload")
+                    }
+                    .padding()
                 }
-                .glassButtonStyle(prominent: true)
+                //                .glassButtonStyle(prominent: true)
             } else {
                 Button(role: .destructive, action: onDeleteDraft) {
-                    Label("Delete Draft", systemImage: "trash")
-                        .frame(minWidth: 0, maxWidth: .infinity)
-                        .padding(10)
-                        .foregroundStyle(.red)
+                    HStack {
+                        Image(systemName: "trash")
+                        Text("Delete Draft")
+                    }
+                    .foregroundStyle(.red)
                 }
                 .glassButtonStyle()
             }

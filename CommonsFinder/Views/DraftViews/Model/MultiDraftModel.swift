@@ -112,6 +112,12 @@ import os.log
 
     func saveChanges(appDatabase: AppDatabase) {
         do {
+            // If multi draft has finished publishing, but user edited afterwards
+            // this is due to errors in individual sub-drafts.
+            // So reset the publishingState when edits get changed at this point.
+            if multiDraft.publishingState?.isFinished == true {
+                multiDraft.publishingState = nil
+            }
             let updated = try appDatabase.upsertAndFetch(
                 MultiDraftInfo(multiDraft: multiDraft, drafts: subDraftModels.values.map(\.draft))
             )

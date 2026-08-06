@@ -22,7 +22,7 @@ struct MultiDraftTeaser: View {
 
     @State private var isShowingDeleteDialog = false
     @State private var isShowingUploadDialog = false
-    @State private var isShowingErrorSheet = false
+    @State private var isShowingStatusSheet = false
 
 
     private var rowCount: Int {
@@ -33,6 +33,7 @@ struct MultiDraftTeaser: View {
     }
 
     private func editDraft() {
+        isShowingStatusSheet = false
         navigation.editMultipleDrafts(multiDraftInfo: multiDraftInfo)
     }
 
@@ -44,17 +45,24 @@ struct MultiDraftTeaser: View {
         isShowingUploadDialog = true
     }
 
-    //    private func continueUpload() {
-    //        isShowingErrorSheet = false
-    //        if let activeUser = account.activeUser,
-    //            let draft = try? appDatabase.updateDraft(id: draft.id, withPublishingError: nil)
-    //        {
-    //            uploadManager.upload(draft, username: activeUser.username)
-    //        }
-    //    }
+    private func continueUpload() {
+        guard let id = multiDraftInfo.id else {
+            logger.error("No multidraft id")
+            return
+        }
+        uploadManager.upload(multiDraftWithID: id)
+    }
 
     private var publishingState: MultiDraft.PublishingState? {
         multiDraftInfo.multiDraft.publishingState
+    }
+
+    private var isPublishingCurrently: Bool {
+        publishingState != nil
+    }
+
+    private var hasDraftsWithError: Bool {
+        multiDraftInfo.drafts.allSatisfy({ $0.publishingError == nil }) == false
     }
 
     private var canUpload: Bool {
@@ -74,7 +82,7 @@ struct MultiDraftTeaser: View {
         if publishingState.isFinished {
             var attributedString = AttributedString("\(multiDraftInfo.publishingSuccessUploadCount) uploaded")
 
-            attributedString.foregroundColor = Color.publishingInProgressAccent
+            attributedString.foregroundColor = .completed
 
 
             if multiDraftInfo.publishingErrorUploadCount >= 1 {
@@ -87,7 +95,7 @@ struct MultiDraftTeaser: View {
         } else {
             var attributedString = AttributedString("\(publishingState.completedCount + 1) of \(publishingState.totalCount)")
 
-            attributedString.foregroundColor = Color.publishingInProgressAccent
+            attributedString.foregroundColor = Color.completed
 
 
             if multiDraftInfo.publishingErrorUploadCount >= 1 {
@@ -182,7 +190,9 @@ struct MultiDraftTeaser: View {
     @ViewBuilder
     private var imageGridButton: some View {
         Button {
-            navigation.editMultipleDrafts(multiDraftInfo: multiDraftInfo)
+            if !isPublishingCurrently {
+                navigation.editMultipleDrafts(multiDraftInfo: multiDraftInfo)
+            }
         } label: {
             imageGrid
                 .frame(width: 200, height: 200)
@@ -263,12 +273,18 @@ struct MultiDraftTeaser: View {
             {
                 errorButton
             } else if !publishingState.isFinished {
-                Text("\(Int(publishingState.overallProgress * 100))%")
-                    .contentTransition(.numericText(countsDown: false))
-                    .font(.system(size: 40))
-                    .bold()
-                    .foregroundStyle(.regularMaterial)
-                    .shadow(radius: 10)
+                Button {
+                    isShowingStatusSheet = true
+                } label: {
+                    Text("\(Int(publishingState.overallProgress * 100))%")
+                        .contentTransition(.numericText(countsDown: false))
+                        .font(.system(size: 40))
+                        .bold()
+                        .foregroundStyle(.regularMaterial)
+                        .shadow(radius: 10)
+                }
+
+
             } else if publishingState.isFinished, multiDraftInfo.publishingErrorUploadCount == 0 {
                 Image(systemName: "checkmark.circle.fill")
                     .aspectRatio(contentMode: .fit)
@@ -282,20 +298,19 @@ struct MultiDraftTeaser: View {
         .padding()
         .clipShape(.rect(cornerRadius: 16))
         .animation(.default, value: publishingState)
-        //        .publishingErrorDetailsSheet(
-        //            draft.publishingState,
-        //            draft.publishingError,
-        //            isPresented: $isShowingErrorSheet,
-        //            onEditDraft: editDraft,
-        //            onDeleteDraft: showDeleteDialog,
-        //            onContinueUpload: continueUpload
-        //        )
+        .multiDraftStatusSheet(
+            id: multiDraftInfo.id,
+            isPresented: $isShowingStatusSheet,
+            onEditDraft: editDraft,
+            onDeleteDraft: showDeleteDialog,
+            onContinueUpload: continueUpload
+        )
     }
 
     @ViewBuilder
     private var errorButton: some View {
         Button {
-            isShowingErrorSheet = true
+            isShowingStatusSheet = true
         } label: {
             Label("show errors", systemImage: "exclamationmark.triangle.fill")
                 .symbolRenderingMode(.hierarchical)

@@ -50,7 +50,7 @@ extension MultiDraftInfo {
             draft.multiDraftIndex = idx
 
             if finishedWithErrors {
-                draft.publishingError = .appQuitOrCrash
+                draft.publishingError = .error(errorDescription: "Test Error", recoverySuggestion: "Restart the Preview and have fun testing errors.")
             }
 
             randomDrafts.append(draft)

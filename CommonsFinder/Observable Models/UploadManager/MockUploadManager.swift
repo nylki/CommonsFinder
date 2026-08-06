@@ -54,46 +54,33 @@ final class MockUploadManager: UploadManager {
                 _ = try? setPublishingState(for: id, to: .published)
                 try? await Task.sleep(for: .milliseconds(1000))
             }
-        case .multiDraft(let id):
-            print("simulateRegularUpload multi \(id)")
+        case .multiDraft(let multiDraftID):
+            print("simulateRegularUpload multi \(multiDraftID)")
             Task {
+                guard let uploadables = queuedMultiUploadables[idType] else { return }
+
                 var state = MultiDraft.PublishingState(overallProgress: 0.00, isFinished: false, completedCount: 0, totalCount: 4)
-
-                try? await Task.sleep(for: .milliseconds(100))
-                state.overallProgress = 0.05
-                try? setPublishingState(for: id, updatedState: state)
-
-                try? await Task.sleep(for: .milliseconds(500))
-                state.overallProgress = 0.1
-                try? setPublishingState(for: id, updatedState: state)
-
-                try? await Task.sleep(for: .milliseconds(500))
-                state.overallProgress = 0.2
-                state.completedCount = 1
-                try? setPublishingState(for: id, updatedState: state)
-
-                try? await Task.sleep(for: .milliseconds(500))
-                state.overallProgress = 0.45
-                state.completedCount = 2
-                try? setPublishingState(for: id, updatedState: state)
-
-                try? await Task.sleep(for: .milliseconds(1000))
-                state.overallProgress = 0.652
-                state.completedCount = 3
-                try? setPublishingState(for: id, updatedState: state)
-
-                try? await Task.sleep(for: .milliseconds(500))
-                state.overallProgress = 1
-                state.completedCount = 4
-                try? setPublishingState(for: id, updatedState: state)
-                try? await Task.sleep(for: .milliseconds(500))
+                let count = uploadables.count
+                for subDraft in uploadables {
+                    try? setPublishingState(for: subDraft.id, to: .uploading(0.5))
+                    try? await Task.sleep(for: .milliseconds(500))
+                    try? setPublishingState(for: subDraft.id, to: .uploading(0.8))
+                    try? await Task.sleep(for: .milliseconds(500))
+                    try? setPublishingState(for: subDraft.id, to: .uploading(1))
+                    try? await Task.sleep(for: .milliseconds(500))
+                    try? setPublishingState(for: subDraft.id, to: .unstashingFile(filekey: ""))
+                    try? await Task.sleep(for: .milliseconds(500))
+                    try? setPublishingState(for: subDraft.id, to: .published)
+                    state.overallProgress += 1 / Double(count)
+                    state.completedCount += 1
+                    try? setPublishingState(for: multiDraftID, updatedState: state)
+                }
 
                 state.overallProgress = 1
                 state.completedCount = state.totalCount
                 state.isFinished = true
 
-                try? setPublishingState(for: id, updatedState: state)
-
+                try? setPublishingState(for: multiDraftID, updatedState: state)
             }
         }
 
@@ -121,7 +108,6 @@ final class MockUploadManager: UploadManager {
             guard let uploadables = queuedMultiUploadables[idType] else { return }
 
             Task {
-
                 var state = MultiDraft.PublishingState(overallProgress: 0.00, isFinished: false, completedCount: 0, totalCount: uploadables.count)
 
                 for uploadable in uploadables {

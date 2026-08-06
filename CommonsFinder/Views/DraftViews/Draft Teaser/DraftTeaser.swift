@@ -76,7 +76,7 @@ struct DraftTeaser: View {
                 uploadProgressOverlay
             }
 
-            DraftListItemInfo(name: draft.name, statusLine: nil, combinedFileSizeInByte: draft.size, count: 1)
+            DraftTeaserInfoView(name: draft.name, statusLine: nil, combinedFileSizeInByte: draft.size, count: 1)
                 .multilineTextAlignment(.leading)
                 .padding(.horizontal, 5)
         }

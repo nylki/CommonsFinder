@@ -94,7 +94,10 @@ struct DraftsSection: View {
         _ = try? appDatabase.upsert(
             .makeRandomDraft(id: "7", uploadPossibleStatus: .uploadPossible))
 
-        _ = try? appDatabase.upsertAndFetch(.makeRandom(id: 8, imageCount: 5, uploadPossibleStatus: .uploadPossible))
+        _ = try? appDatabase.upsertAndFetch(.makeRandom(id: 6, imageCount: 5, uploadPossibleStatus: .uploadPossible))
+        _ = try? appDatabase.upsertAndFetch(.makeRandom(id: 5, imageCount: 4, uploadPossibleStatus: .uploadPossible))
+        _ = try? appDatabase.upsertAndFetch(.makeRandom(id: 4, imageCount: 3, uploadPossibleStatus: .uploadPossible))
+        _ = try? appDatabase.upsertAndFetch(.makeRandom(id: 3, imageCount: 2, uploadPossibleStatus: .uploadPossible))
 
     }
 }
@@ -112,11 +115,20 @@ struct DraftsSection: View {
         _ = try? appDatabase.deleteAllDrafts()
         _ = try? appDatabase.upsert(
             .makeRandomDraft(
-                id: "9", uploadPossibleStatus: .uploadPossible, publishingState: MediaFileDraft.PublishingState.unstashingFile(filekey: "12345"),
-                publishingError: MediaFileDraft.PublishingError.error(errorDescription: "Some Error", recoverySuggestion: "Retry?"))
+                id: "9",
+                uploadPossibleStatus: .uploadPossible,
+                publishingState: MediaFileDraft.PublishingState.unstashingFile(filekey: "12345"),
+                publishingError:
+                    MediaFileDraft.PublishingError.error(
+                        errorDescription: "Some Error", recoverySuggestion: "Retry?"
+                    )
+            )
         )
 
 
-        _ = try? appDatabase.upsertAndFetch(.makeRandom(id: 10, imageCount: 5, uploadPossibleStatus: .uploadPossible, finishedWithErrors: true))
+        _ = try? appDatabase.upsertAndFetch(.makeRandom(id: 6, imageCount: 5, uploadPossibleStatus: .uploadPossible, finishedWithErrors: true))
+        _ = try? appDatabase.upsertAndFetch(.makeRandom(id: 5, imageCount: 4, uploadPossibleStatus: .uploadPossible, finishedWithErrors: true))
+        _ = try? appDatabase.upsertAndFetch(.makeRandom(id: 4, imageCount: 3, uploadPossibleStatus: .uploadPossible, finishedWithErrors: true))
+        _ = try? appDatabase.upsertAndFetch(.makeRandom(id: 3, imageCount: 2, uploadPossibleStatus: .uploadPossible, finishedWithErrors: true))
     }
 }

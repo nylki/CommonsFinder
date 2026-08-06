@@ -255,10 +255,12 @@ class UploadManager {
             logger.error("Failed to set names of multi draft \(error)")
         }
 
+        let draftsToUpload = multiDraftInfo.drafts.filter { $0.publishingState != .published }
         var uploadables: [MediaFileUploadable] = []
 
-        for draft in multiDraftInfo.drafts {
+        for draft in draftsToUpload {
             do {
+                // FIXME: update exif (and other future destructive edits) to a copy.
                 try draft.updateExifLocation()
                 let uploadable = try MediaFileUploadable.init(draft, multiDraft: multiDraftInfo.multiDraft, appWikimediaUsername: username)
                 uploadables.append(uploadable)
@@ -344,8 +346,7 @@ class UploadManager {
         }
     }
 
-    // FIXME: !!!!! reconsider "startStep" usage
-
+    // TODO: !!!!! reconsider "startStep" usage
     func performUpload(_ id: DraftIDType, startStep: API.PublishingStep = .uploadData) {
         if #available(iOS 26.0, *) {
             performUploadWithBGTask(id: id, startStep: startStep)
@@ -523,7 +524,6 @@ class UploadManager {
         assert(id.isMultiDraft, "We expect a multi draft ID")
         let multiDraftID = id.multiDraftID
         guard let uploadables = queuedMultiUploadables[id] else { return }
-        assert(uploadables.count > 1, "We expect to  have multiple uploadables for this id.")
 
         var publishingState: MultiDraft.PublishingState = .init(
             overallProgress: 0,
@@ -531,8 +531,6 @@ class UploadManager {
             completedCount: 0,
             totalCount: uploadables.count
         )
-
-        var encounteredErrors = false
 
         if #available(iOS 26.0, *), let bgTask = bgTask as? BGContinuedProcessingTask {
             bgTask.progress.totalUnitCount = 100
@@ -547,11 +545,15 @@ class UploadManager {
                 logger.debug("Cleanup up queuedUploadables and tasks for \(id) after task finished. bgTask identifier: \(bgTask?.identifier ?? "no BGTask")")
             }
 
+            var encounteredErrors = false
+
             for uploadable in uploadables {
                 defer { publishingState.completedCount += 1 }
 
                 try? setPublishingState(for: multiDraftID, updatedState: publishingState)
 
+                // FIXME: startStep is always uploadData here, consider writing the startstep into the Uploadable OR reconsidering the whole
+                // concept of startStep and allow granular steps (eg. only creating wikidata items)
                 let request = await Networking.shared.api.publish(file: uploadable, startStep: .uploadData)
 
                 for await status in request {
@@ -563,7 +565,7 @@ class UploadManager {
                     if #available(iOS 26.0, *), let bgTask = bgTask as? BGContinuedProcessingTask {
                         bgTask.updateTitle(
                             bgTask.title,
-                            subtitle: "File \(publishingState.completedCount + 1)/   of \(publishingState.totalCount)"
+                            subtitle: "\(publishingState.completedCount + 1) of \(publishingState.totalCount)"
                         )
                     }
 
@@ -610,16 +612,17 @@ class UploadManager {
                 }
             }
 
-            publishingState.completedCount = publishingState.totalCount
-            publishingState.overallProgress = 1
-            publishingState.isFinished = true
-            try? setPublishingState(for: multiDraftID, updatedState: publishingState)
 
             if #available(iOS 26.0, *), let bgTask = bgTask as? BGContinuedProcessingTask {
                 bgTask.progress.completedUnitCount = Int64(publishingState.overallProgress * 100)
             }
 
-            if encounteredErrors || publishingState.completedCount != publishingState.totalCount {
+            publishingState.completedCount = publishingState.totalCount
+            publishingState.overallProgress = 1
+            publishingState.isFinished = true
+            try? setPublishingState(for: multiDraftID, updatedState: publishingState)
+
+            if encounteredErrors {
                 // For multi-drafts we don't clean up the individual drafts if some failed,
                 // so the user can review which were succesful or not in the detailed multi-draft list overview.
                 bgTask?.setTaskCompleted(success: false)
@@ -627,7 +630,6 @@ class UploadManager {
                 cleanupMultiDraftAfterPublished(multiDraftID: multiDraftID)
                 bgTask?.setTaskCompleted(success: true)
             }
-
         }
     }
 
