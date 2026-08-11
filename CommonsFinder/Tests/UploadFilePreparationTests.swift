@@ -108,12 +108,12 @@ struct UploadFilePreparationTests {
 
         let originalDraftEXIF = draft.loadExifData()?.coordinate
         #expect(
-            draft.loadExifData()?.coordinate?.latitude == 10 &&
-            draft.loadExifData()?.coordinate?.latitude == 10,
+            draft.loadExifData()?.coordinate?.latitude == 10 && draft.loadExifData()?.coordinate?.latitude == 10,
             "original draft file should be untouched."
         )
 
-        #expect((try? ExifData(url: uploadURL))?.coordinate == nil,
+        #expect(
+            (try? ExifData(url: uploadURL))?.coordinate == nil,
             "We expect the EXIF GPS location to be removed when the user defined/refined a location for correctness and expectations: a user defined location is not a GPS-determined location and treating it as such can create misunderstandings in the context of public/commons files."
         )
     }

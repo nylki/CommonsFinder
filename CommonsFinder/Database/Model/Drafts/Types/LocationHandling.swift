@@ -14,7 +14,7 @@ nonisolated enum LocationHandling: Codable, Equatable, Hashable {
     case noLocation
     /// location data from EXIF will be used for wikitext and structured data
     case exifLocation
-    
+
     /// user defined location data will be used for wikitext and structured data.
     /// NOTE:  for correctness and to avoid misinterpretation of the uploaded file, **EXIF-location will be deleted** in this case
     /// since the location data does not come from GPS, but the original GPS data is not preferred to be kept (may contain sensitiv, inaccurate location etc.)

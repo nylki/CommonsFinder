@@ -22,9 +22,11 @@ struct BaseDraftImageView: View {
                     .resizable()
                     .aspectRatio(draft.aspectRatio, contentMode: .fill)
             } else if draft.isDebugDraft {
-                Image(.debugDraft)
-                    .resizable()
-                    .aspectRatio(draft.aspectRatio, contentMode: .fill)
+                #if DEBUG
+                    Image(.debugDraft)
+                        .resizable()
+                        .aspectRatio(draft.aspectRatio, contentMode: .fill)
+                #endif
             } else {
                 Color.clear
                     .aspectRatio(draft.aspectRatio, contentMode: .fill)

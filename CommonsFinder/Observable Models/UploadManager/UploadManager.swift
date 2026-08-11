@@ -710,30 +710,31 @@ extension MediaFileDraft {
             throw .fileURLMissing(id: id)
         }
 
-        let shouldExcludeGPS: Bool = switch locationHandling {
-        case .exifLocation:
-            // Keep the original location: no staging copy for EXIF overwriting needed
-            false
-        case .noLocation, .none:
-            true
-        case .userDefinedLocation(_, _, _):
-            // lat, lon will not be used here to overwrite GPS data
-            // for correctness. GPS EXIF data will instead be removed from the uploaded file
-            // and location will only be set via structured data.
-            true
-        }
-        
-        
+        let shouldExcludeGPS: Bool =
+            switch locationHandling {
+            case .exifLocation:
+                // Keep the original location: no staging copy for EXIF overwriting needed
+                false
+            case .noLocation, .none:
+                true
+            case .userDefinedLocation(_, _, _):
+                // lat, lon will not be used here to overwrite GPS data
+                // for correctness. GPS EXIF data will instead be removed from the uploaded file
+                // and location will only be set via structured data.
+                true
+            }
+
+
         // IMPORTANT NOTE: this is a shortcut, since no other data is written to EXIF
         // so if GPS is not touched, we can return the original here.
         // if **in the future** other fields are edited in the file's metadata
         // we should not return from here, but restructure this function to allow/check for
         // >1 edit.
-        
+
         guard shouldExcludeGPS else {
             return originalURL
         }
-        
+
 
         guard let source = CGImageSourceCreateWithURL(originalURL as CFURL, nil),
             let type = CGImageSourceGetType(source)

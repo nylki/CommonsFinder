@@ -133,33 +133,9 @@ struct DraftTeaser: View {
 
     @ViewBuilder
     private var imageView: some View {
-        let transaction = Transaction(animation: .linear)
-        LazyImage(
-            request: draft.localFileRequestResized,
-            transaction: transaction
-        ) { phase in
-            ZStack {
-                if draft.isDebugDraft {
-                    #if DEBUG
-                        Image(.debugDraft)
-                            .resizable()
-                            .aspectRatio(contentMode: .fill)
-                    #endif
-                } else if let image = phase.image {
-                    image
-                        .resizable()
-                        .aspectRatio(contentMode: .fill)
-
-                } else {
-                    Color.clear
-                        .aspectRatio(contentMode: .fill)
-                }
-            }
-        }
-        .clipShape(.rect(cornerRadius: 16))
-        .frame(minWidth: 0, maxWidth: .infinity, minHeight: 0, maxHeight: .infinity)
-
-
+        BaseDraftImageView(draft: draft, size: .resized)
+            .clipShape(.rect(cornerRadius: 16))
+            .frame(minWidth: 0, maxWidth: .infinity, minHeight: 0, maxHeight: .infinity)
     }
 
     @ViewBuilder

@@ -66,6 +66,8 @@ struct ImageArrowMapAnnotation: MapContent {
         data: {
             #if DEBUG
                 UIImage(named: "debugDraftImage")?.jpegData(compressionQuality: 1) ?? .init()
+            #else
+                .init()
             #endif
         })
 
