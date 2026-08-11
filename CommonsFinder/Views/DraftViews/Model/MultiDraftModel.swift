@@ -123,10 +123,6 @@ enum MultiDraftModelError: Error {
         }
 
         do {
-            // Any edit invalidates the prior (finished) publishing attempt, so always reset
-            // the aggregate publishing state. Per-sub-draft state is reset in SingleDraftModel.
-            multiDraft.publishingState = nil
-
             let updated = try appDatabase.upsertAndFetch(
                 MultiDraftInfo(multiDraft: multiDraft, drafts: subDraftModels.values.map(\.draft))
             )

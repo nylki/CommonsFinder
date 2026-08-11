@@ -525,12 +525,21 @@ class UploadManager {
         let multiDraftID = id.multiDraftID
         guard let uploadables = queuedMultiUploadables[id] else { return }
 
+        
+        // reset state and errors for multi-draft...
         var publishingState: MultiDraft.PublishingState = .init(
             overallProgress: 0,
             isFinished: false,
             completedCount: 0,
             totalCount: uploadables.count
         )
+        try? setPublishingState(for: id.multiDraftID, updatedState: publishingState)
+
+        // ... and sub-drafts before starting the upload.
+        for uploadable in uploadables {
+            try? setPublishingError(for: uploadable.id, error: nil)
+            try? setPublishingState(for: uploadable.id, to: nil)
+        }
 
         if #available(iOS 26.0, *), let bgTask = bgTask as? BGContinuedProcessingTask {
             bgTask.progress.totalUnitCount = 100

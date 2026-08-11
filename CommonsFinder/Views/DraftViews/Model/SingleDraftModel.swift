@@ -84,15 +84,10 @@ enum SingleDraftModelError: Error {
     }
 
     func saveEditingChanges(appDatabase: AppDatabase) throws {
+        // FIXME: only allow changes when not yet unstashed
         guard draft.publishingState != .published else {
             throw SingleDraftModelError.cannotSaveEditsAfterDraftAlreadyPublished
         }
-
-        // Any edit invalidates a prior publishing attempt, so reset the publishing
-        // state/error for the UI and the "startStep" decision in UploadManager.
-        draft.publishingError = nil
-        draft.publishingState = nil
-        draft.publishingStateVerificationRequired = false
 
         draft = try appDatabase.upsert(draft)
     }

@@ -95,7 +95,7 @@ struct MultiDraftTeaser: View {
         } else {
             var attributedString = AttributedString("\(publishingState.completedCount + 1) of \(publishingState.totalCount)")
 
-            attributedString.foregroundColor = Color.completed
+            attributedString.foregroundColor = .completed
 
 
             if multiDraftInfo.publishingErrorUploadCount >= 1 {
