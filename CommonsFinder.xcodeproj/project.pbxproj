@@ -199,6 +199,7 @@
 				Tests/GeoVectorMathTests.swift,
 				Tests/OtherTests.swift,
 				Tests/PublishHelpersTests.swift,
+				Tests/UploadFilePreparationTests.swift,
 				Tests/WikimediaLanguageStoreTests.swift,
 				Types/CaptionWithDescription.swift,
 				Types/DraftIDType.swift,
@@ -379,6 +380,7 @@
 				Tests/GeoVectorMathTests.swift,
 				Tests/OtherTests.swift,
 				Tests/PublishHelpersTests.swift,
+				Tests/UploadFilePreparationTests.swift,
 				Tests/WikimediaLanguageStoreTests.swift,
 			);
 			target = E2839FE62CA2DD900053C312 /* CommonsFinder */;

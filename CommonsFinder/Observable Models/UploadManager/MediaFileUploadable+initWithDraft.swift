@@ -16,9 +16,11 @@ import os.log
 extension MediaFileUploadable {
     /// when the multiDraft is present, empty fields in the draft will be filled from the multiDraft if they should be missing
     init(_ draft: MediaFileDraft, multiDraft: MultiDraft? = nil, appWikimediaUsername: String) throws(UploadManagerError) {
-        guard let localFileURL = draft.localFileURL() else {
+        guard draft.localFileURL() != nil else {
             throw UploadManagerError.fileURLMissing(id: draft.id)
         }
+
+        let uploadFileURL = try draft.preparedUploadFileURL()
 
         // This will be the final filename that **cannot** be renamed later online
         // so we have to make sure it is correct and has the correct file extension.
@@ -218,23 +220,21 @@ extension MediaFileUploadable {
                 statements.append(.height(height))
             }
 
-            if let fileURL = draft.localFileURL() {
-                if let fileAttributes = try? FileManager.default.attributesOfItem(atPath: fileURL.path()),
-                    let bytes = fileAttributes[.size] as? Int64
-                {
-                    statements.append(.dataSize(bytes))
-                }
+            if let fileAttributes = try? FileManager.default.attributesOfItem(atPath: uploadFileURL.path()),
+                let bytes = fileAttributes[.size] as? Int64
+            {
+                statements.append(.dataSize(bytes))
+            }
 
-                do {
-                    let sha1 = try Insecure.SHA1
-                        .hash(data: Data(contentsOf: fileURL))
-                        .map { String(format: "%02hhx", $0) }
-                        .joined()
+            do {
+                let sha1 = try Insecure.SHA1
+                    .hash(data: Data(contentsOf: uploadFileURL))
+                    .map { String(format: "%02hhx", $0) }
+                    .joined()
 
-                    statements.append(.sha1Checksum(sha1))
-                } catch {
-                    throw .failedToReadFileData
-                }
+                statements.append(.sha1Checksum(sha1))
+            } catch {
+                throw .failedToReadFileData
             }
         }
 
@@ -299,7 +299,7 @@ extension MediaFileUploadable {
 
         self.init(
             id: draft.id,
-            fileURL: localFileURL,
+            fileURL: uploadFileURL,
             filename: finalFileName,
             mimetype: mimeType,
             claims: statements,

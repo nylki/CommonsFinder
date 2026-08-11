@@ -11,6 +11,7 @@ import CommonsAPI
 import CoreGraphics
 import CoreLocation
 import Foundation
+import ImageIO
 import UIKit
 import UniformTypeIdentifiers
 import os.log
@@ -43,6 +44,10 @@ class UploadManager {
     }
 
     func runPostLaunchOperations() {
+        // Clear staging file directory (ongoing uploads don't survive an app re-start
+        // the directory and will be re-recreated when new uploads are started
+        try? FileManager.default.removeItem(at: MediaFileDraft.uploadStagingDirectory)
+
         do {
             try markUnfinishedUploadsAfterAppStartWithError()
         } catch {
@@ -260,9 +265,12 @@ class UploadManager {
 
         for draft in draftsToUpload {
             do {
-                // FIXME: update exif (and other future destructive edits) to a copy.
-                try draft.updateExifLocation()
-                let uploadable = try MediaFileUploadable.init(draft, multiDraft: multiDraftInfo.multiDraft, appWikimediaUsername: username)
+                let uploadable = try MediaFileUploadable(
+                    draft,
+                    multiDraft: multiDraftInfo.multiDraft,
+                    appWikimediaUsername: username
+                )
+
                 uploadables.append(uploadable)
 
                 assert(
@@ -310,11 +318,7 @@ class UploadManager {
     }
 
     func upload(_ draft: MediaFileDraft, username: String, startStep: API.PublishingStep) {
-        // TODO: check auth here instead of failing later, so the upload isn't officially started yet
-        // .... try ensureUserIsLoggedIn() // throwing re-auth required
-
         do {
-            try draft.updateExifLocation()
             let finalDraft = try updateDraftWithFinalFilename(draft: draft)
             let id = DraftIDType.singleDraft(finalDraft.id)
 
@@ -438,6 +442,7 @@ class UploadManager {
             defer {
                 tasks[id] = nil
                 queuedSingleUploadables[id] = nil
+                MediaFileDraft.removeUploadStagingFile(at: uploadable.fileURL)
                 logger.debug("Cleanup up queuedUploadables and tasks for \(id) after task finished. bgTask identifier: \(bgTask?.identifier ?? "no BGTask")")
             }
 
@@ -525,7 +530,7 @@ class UploadManager {
         let multiDraftID = id.multiDraftID
         guard let uploadables = queuedMultiUploadables[id] else { return }
 
-        
+
         // reset state and errors for multi-draft...
         var publishingState: MultiDraft.PublishingState = .init(
             overallProgress: 0,
@@ -551,6 +556,9 @@ class UploadManager {
             defer {
                 tasks[id] = nil
                 queuedMultiUploadables[id] = nil
+                for uploadable in uploadables {
+                    MediaFileDraft.removeUploadStagingFile(at: uploadable.fileURL)
+                }
                 logger.debug("Cleanup up queuedUploadables and tasks for \(id) after task finished. bgTask identifier: \(bgTask?.identifier ?? "no BGTask")")
             }
 
@@ -682,64 +690,93 @@ class UploadManager {
 }
 
 extension MediaFileDraft {
-    /// erases existing location on `location=nil`
-    fileprivate func updateExifLocation() throws(UploadManagerError) {
+    /// Transient directory holding EXIF-adjusted copies prepared for upload.
+    /// These are throwaway files; the pristine original always stays in the Documents directory.
+    static let uploadStagingDirectory = URL.temporaryDirectory.appending(path: "upload-staging")
 
-        let location: CLLocation?
+    /// Deterministic staging path, requires calling `preparedUploadFileURL()`
+    private func uploadStagingFileURL() -> URL {
+        Self.uploadStagingDirectory
+            .appending(path: id)
+            .appendingPathExtension(localFileName.fileExtension())
+    }
 
-        switch locationHandling {
-        case .exifLocation:
-            return
-        case .noLocation, .none:
-            location = nil
-        case .userDefinedLocation(let latitude, let longitude, let precision):
-            location = .init(latitude: latitude, longitude: longitude)
-        }
-
-        guard let filePath = self.localFileURL() else {
+    /// returns the URL to the file that should be uploaded
+    /// the original file is never modified. So changes to the EXIF-data (eg. removed geo-location, or user-defined location)
+    /// are written to a staging copy. If changes were required, the URL to the copy is returned here, otherwise the URL to the untouched original.
+    func preparedUploadFileURL() throws(UploadManagerError) -> URL {
+        guard let originalURL = localFileURL() else {
             assertionFailure("We expect the draft to have a local file (url)")
+            throw .fileURLMissing(id: id)
+        }
+
+        let shouldExcludeGPS: Bool = switch locationHandling {
+        case .exifLocation:
+            // Keep the original location: no staging copy for EXIF overwriting needed
+            false
+        case .noLocation, .none:
+            true
+        case .userDefinedLocation(_, _, _):
+            // lat, lon will not be used here to overwrite GPS data
+            // for correctness. GPS EXIF data will instead be removed from the uploaded file
+            // and location will only be set via structured data.
+            true
+        }
+        
+        
+        // IMPORTANT NOTE: this is a shortcut, since no other data is written to EXIF
+        // so if GPS is not touched, we can return the original here.
+        // if **in the future** other fields are edited in the file's metadata
+        // we should not return from here, but restructure this function to allow/check for
+        // >1 edit.
+        
+        guard shouldExcludeGPS else {
+            return originalURL
+        }
+        
+
+        guard let source = CGImageSourceCreateWithURL(originalURL as CFURL, nil),
+            let type = CGImageSourceGetType(source)
+        else {
+            throw UploadManagerError.failedToOverwriteExifLocation()
+        }
+
+        let stagingURL = uploadStagingFileURL()
+        do {
+            try FileManager.default.createDirectory(at: Self.uploadStagingDirectory, withIntermediateDirectories: true)
+            // remove potential leftover file
+            try? FileManager.default.removeItem(at: stagingURL)
+        } catch {
+            throw .failedToOverwriteExifLocation(error)
+        }
+
+        guard let destination = CGImageDestinationCreateWithURL(stagingURL as CFURL, type, 1, nil) else {
+            throw UploadManagerError.failedToOverwriteExifLocation()
+        }
+
+        var options: [CFString: Any] = [:]
+
+        if shouldExcludeGPS {
+            // Copy everything except the GPS metadata.
+            options[kCGImageMetadataShouldExcludeGPS] = true
+        }
+
+        var error: Unmanaged<CFError>?
+        let success = CGImageDestinationCopyImageSource(destination, source, options as CFDictionary, &error)
+        if !success {
+            throw .failedToOverwriteExifLocation(error?.takeRetainedValue())
+        }
+
+        return stagingURL
+    }
+
+    /// Removes a transient staging copy at `url`, but only if it lives in `uploadStagingDirectory`.
+    /// This guarantees the pristine original in the Documents directory is never deleted.
+    static func removeUploadStagingFile(at url: URL) {
+        guard url.deletingLastPathComponent().standardizedFileURL == uploadStagingDirectory.standardizedFileURL else {
             return
         }
-
-        let data: CFData
-        do {
-            data = try Data(contentsOf: filePath) as CFData
-        } catch {
-            throw UploadManagerError.failedToOverwriteExifLocation(error)
-        }
-
-
-        guard let source = CGImageSourceCreateWithData(data, nil),
-            let type = CGImageSourceGetType(source),
-            let imageRef = CGImageSourceCreateImageAtIndex(source, 0, nil)
-        else {
-            throw UploadManagerError.failedToOverwriteExifLocation()
-        }
-
-        let options = [kCGImageSourceShouldCache as String: kCFBooleanFalse]
-        guard let imgSrc = CGImageSourceCreateWithData(data, options as CFDictionary),
-            let rawMetadata = CGImageSourceCopyPropertiesAtIndex(imgSrc, 0, options as CFDictionary)
-        else {
-            throw UploadManagerError.failedToOverwriteExifLocation()
-        }
-
-        let metadata = NSMutableDictionary(dictionary: rawMetadata)
-
-        if let location {
-            metadata[kCGImagePropertyGPSDictionary] = location.gpsDictionary
-        } else {
-            metadata.removeObject(forKey: kCGImagePropertyGPSDictionary)
-        }
-
-        guard let destination = CGImageDestinationCreateWithURL(filePath as CFURL, type, 1, nil) else {
-            throw UploadManagerError.failedToOverwriteExifLocation()
-        }
-
-        CGImageDestinationAddImage(destination, imageRef, metadata as CFDictionary)
-        let success = CGImageDestinationFinalize(destination)
-        if !success {
-            throw UploadManagerError.failedToOverwriteExifLocation()
-        }
+        try? FileManager.default.removeItem(at: url)
     }
 }
 
