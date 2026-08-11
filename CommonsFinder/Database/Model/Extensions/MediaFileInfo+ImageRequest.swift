@@ -101,7 +101,23 @@ extension MediaFileInfo {
     }
 }
 
+enum DraftImageSize {
+    case full
+    case resized
+    case thumb
+}
+
 extension MediaFileDraft {
+    func imageRequest(size: DraftImageSize) -> ImageRequest? {
+        switch size {
+        case .full:
+            localFileRequestFull
+        case .resized:
+            localFileRequestResized
+        case .thumb:
+            localFileRequestResizedGridThumb
+        }
+    }
     var localFileRequestFull: ImageRequest? {
         if let fileURL = localFileURL() {
             return .init(url: fileURL, processors: [])
@@ -112,6 +128,14 @@ extension MediaFileDraft {
     var localFileRequestResized: ImageRequest? {
         if let fileURL = localFileURL() {
             let imageResize = ImageProcessors.Resize(size: .init(width: 500, height: 500))
+            return .init(url: fileURL, processors: [imageResize])
+        }
+        return nil
+    }
+
+    var localFileRequestResizedGridThumb: ImageRequest? {
+        if let fileURL = localFileURL() {
+            let imageResize = ImageProcessors.Resize(size: .init(width: 128, height: 128))
             return .init(url: fileURL, processors: [imageResize])
         }
         return nil

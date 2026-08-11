@@ -31,7 +31,7 @@ struct CommonsEndToEndTests {
         let contactInfo = "https://github.com/nylki/CommonsFinder"
 
         let userAgent = "\(executable)/\(appBuild) (\(contactInfo)) \(osNameVersion)"
-        return CommonsAPI.API(config: .default, responseProvider: responseProvider, userAgent: userAgent, referer: "commonsfinder://UnitTests")
+        return CommonsAPI.API(config: .default, responseProvider: responseProvider, tokenProvider: { return "" }, userAgent: userAgent, referer: "commonsfinder://UnitTests")
     }()
     
     @Test("list user uploads", arguments: ["Flickr_upload_bot"])
@@ -196,7 +196,7 @@ struct CommonsEndToEndTests {
     
     @Test("list sub-categories", arguments: ["Physics"])
     func fetchCategoryInfo(category: String) async throws {
-        let info = try await api.fetchCategoryMembers(of: category, sort: .none)
+        let info = try await api.fetchCategoryMembers(of: category, sort: nil)
         
         #expect(info != nil)
         guard let info else { return }

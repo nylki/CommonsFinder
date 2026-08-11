@@ -907,6 +907,13 @@ internal struct ContentLanguageResponse: Decodable, Sendable {
 
 internal struct FileExistenceResponse: Decodable, Sendable {
     let pages: [Item]?
+    let normalized: [Normalized]?
+    
+    struct Normalized: Decodable, Sendable {
+        let fromencoded: Bool
+        let from: String
+        let to: String
+    }
     
     struct Item: Decodable, Sendable {
         let pageid: Int64?

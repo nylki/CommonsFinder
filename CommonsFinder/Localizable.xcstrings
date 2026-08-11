@@ -64,8 +64,11 @@
         }
       }
     },
-    "%lld Parent Categories" : {
-      "extractionState" : "stale",
+    "%lld files" : {
+
+    },
+    "%lld files · %@" : {
+      "comment" : "file count · total combined file size (formatted)",
       "localizations" : {
         "de" : {
           "variations" : {
@@ -73,13 +76,13 @@
               "one" : {
                 "stringUnit" : {
                   "state" : "translated",
-                  "value" : "1 Überkategorie"
+                  "value" : "%1$lld Datei · %2$@"
                 }
               },
               "other" : {
                 "stringUnit" : {
                   "state" : "translated",
-                  "value" : "%lld Überkategorien"
+                  "value" : "%1$lld Dateien · %2$@"
                 }
               }
             }
@@ -91,13 +94,13 @@
               "one" : {
                 "stringUnit" : {
                   "state" : "translated",
-                  "value" : "1 Parent Category"
+                  "value" : "%1$lld file · %2$@"
                 }
               },
               "other" : {
                 "stringUnit" : {
                   "state" : "new",
-                  "value" : "%lld Parent Categories"
+                  "value" : "%1$lld files · %2$@"
                 }
               }
             }
@@ -105,46 +108,37 @@
         }
       }
     },
-    "%lld Subcategories" : {
-      "extractionState" : "stale",
+    "%lld of %lld files imported." : {
       "localizations" : {
         "de" : {
-          "variations" : {
-            "plural" : {
-              "one" : {
-                "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "1 Unterkategorie"
-                }
-              },
-              "other" : {
-                "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "%lld Unterkategorien"
-                }
-              }
-            }
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$lld von %2$lld Dateien importiert."
           }
         },
         "en" : {
-          "variations" : {
-            "plural" : {
-              "one" : {
-                "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "1 Subcategory"
-                }
-              },
-              "other" : {
-                "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "%lld Subcategories"
-                }
-              }
-            }
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$lld of %2$lld files imported."
           }
         }
       }
+    },
+    "%lld/250 characters" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld/250 Zeichen"
+          }
+        }
+      }
+    },
+    "%lld%%" : {
+
+    },
+    "%lld%% completed" : {
+
     },
     "%lld×%lld pixel" : {
       "localizations" : {
@@ -162,16 +156,8 @@
         }
       }
     },
-    "About" : {
-      "extractionState" : "stale",
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Über"
-          }
-        }
-      }
+    "A file with the name \"%@\" already exists on the server." : {
+
     },
     "About this App" : {
       "localizations" : {
@@ -498,12 +484,13 @@
         }
       }
     },
-    "Caption and Description" : {
+    "caption (%@)" : {
+      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Beschreibungen"
+            "value" : "Kurzbeschreibung (%@)"
           }
         }
       }
@@ -566,6 +553,9 @@
           }
         }
       }
+    },
+    "Check file locations" : {
+
     },
     "choose" : {
       "localizations" : {
@@ -660,27 +650,8 @@
     "Commons" : {
       "shouldTranslate" : false
     },
-    "Console" : {
-      "extractionState" : "stale",
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Konsole"
-          }
-        }
-      }
-    },
     "Continue" : {
-      "extractionState" : "stale",
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Weiter"
-          }
-        }
-      }
+
     },
     "Copy" : {
       "localizations" : {
@@ -748,17 +719,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Konnte Bild nicht laden (Das ist ein Bug, bitte reporten :)"
-          }
-        }
-      }
-    },
-    "Creating Account..." : {
-      "extractionState" : "stale",
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Account wird erstellt…"
           }
         }
       }
@@ -865,6 +825,27 @@
         }
       }
     },
+    "Description" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Beschreibung"
+          }
+        }
+      }
+    },
+    "description (%@)" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Beschreibung (%@)"
+          }
+        }
+      }
+    },
     "detailed description (optional)" : {
       "localizations" : {
         "de" : {
@@ -885,16 +866,22 @@
         }
       }
     },
-    "E-Mail Address" : {
+    "Draft" : {
+
+    },
+    "Draft (%lld files)" : {
       "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "E-Mail-Adresse"
+            "value" : "Entwurf (%lld Dateien)"
           }
         }
       }
+    },
+    "duplicate filename" : {
+
     },
     "Edit" : {
       "localizations" : {
@@ -915,6 +902,9 @@
           }
         }
       }
+    },
+    "Edit duplicate names to make them unique, You could add the date, location, event name or a number." : {
+
     },
     "Edit the name to make it unique, You could add the date, location, event name or a number." : {
       "localizations" : {
@@ -942,17 +932,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Du oder jemand anderes hat diese Datei in der Vergangenheit bereits hochgeladen. Die kannst du Entwurf entfernen."
-          }
-        }
-      }
-    },
-    "Email-Code" : {
-      "extractionState" : "stale",
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Email-Code"
           }
         }
       }
@@ -1047,6 +1026,17 @@
         }
       }
     },
+    "filename" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dateiname"
+          }
+        }
+      }
+    },
     "Filename" : {
       "localizations" : {
         "de" : {
@@ -1058,6 +1048,7 @@
       }
     },
     "filenames must be unique on the server" : {
+      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -1067,8 +1058,28 @@
         }
       }
     },
-    "Filter" : {
+    "Files from different days" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dateien von verschiedenen Tagen"
+          }
+        }
+      }
+    },
+    "Files with same filename already exist on the server" : {
 
+    },
+    "Filter" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Filter"
+          }
+        }
+      }
     },
     "Find Files" : {
       "localizations" : {
@@ -1126,6 +1137,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Hilfe"
+          }
+        }
+      }
+    },
+    "Here you can adjust fields for individual files if necessary." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hier kannst du bei Bedarf die Felder für einzelne Dateien anpassen."
           }
         }
       }
@@ -1211,6 +1232,9 @@
           }
         }
       }
+    },
+    "in progress" : {
+
     },
     "In-App Search" : {
       "localizations" : {
@@ -1338,23 +1362,22 @@
         }
       }
     },
-    "Loading captcha..." : {
-      "extractionState" : "stale",
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Lädt Captcha…"
-          }
-        }
-      }
-    },
     "Location" : {
       "localizations" : {
         "de" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Ort"
+          }
+        }
+      }
+    },
+    "Location metadata will be erased from all %lld files before uploading." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Standort-Metadaten werden vor dem Hochladen aus allen %lld Dateien gelöscht."
           }
         }
       }
@@ -1395,39 +1418,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Orte im Gebiet"
-          }
-        }
-      }
-    },
-    "logging in..." : {
-      "extractionState" : "stale",
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Anmeldung läuft…"
-          }
-        }
-      }
-    },
-    "Login" : {
-      "extractionState" : "stale",
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Login"
-          }
-        }
-      }
-    },
-    "Login to Wikimedia Commons" : {
-      "extractionState" : "stale",
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Bei Wikimedia Commons einloggen"
           }
         }
       }
@@ -1502,6 +1492,9 @@
         }
       }
     },
+    "More input required" : {
+
+    },
     "More..." : {
       "localizations" : {
         "de" : {
@@ -1522,35 +1515,12 @@
         }
       }
     },
-    "Multiple files" : {
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "mehrere Dateien"
-          }
-        }
-      }
-    },
     "Nearby Locations" : {
       "localizations" : {
         "de" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Orte in der Nähe"
-          }
-        }
-      }
-    },
-    "Nearby Tags" : {
-      "comment" : "A button that expands a list of nearby tags.",
-      "extractionState" : "stale",
-      "isCommentAutoGenerated" : true,
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Tags in der Nähe"
           }
         }
       }
@@ -1571,17 +1541,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Zeitüberschreitung der Netzwerkverbindung"
-          }
-        }
-      }
-    },
-    "new account" : {
-      "extractionState" : "stale",
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "neuer Account"
           }
         }
       }
@@ -1632,17 +1591,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Keine Kategorien gefunden"
-          }
-        }
-      }
-    },
-    "No files added" : {
-      "extractionState" : "stale",
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Keine Dateien hinzugefügt"
           }
         }
       }
@@ -1901,72 +1849,6 @@
         }
       }
     },
-    "Password" : {
-      "extractionState" : "stale",
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Passwort"
-          }
-        }
-      }
-    },
-    "Password is Empty" : {
-      "extractionState" : "stale",
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Passwort ist leer"
-          }
-        }
-      }
-    },
-    "Password is too common and therefore considered insecure (found in the list of common passwords)" : {
-      "extractionState" : "stale",
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Passwort ist zu gewöhnlich und wird daher als unsicher eingestuft (wurde in der Liste häufiger Passwörter gefunden)"
-          }
-        }
-      }
-    },
-    "Password is too long" : {
-      "extractionState" : "stale",
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Passwort ist zu lang"
-          }
-        }
-      }
-    },
-    "Password is too short" : {
-      "extractionState" : "stale",
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Passwort ist zu kurz"
-          }
-        }
-      }
-    },
-    "Password must not contains you choosen username" : {
-      "extractionState" : "stale",
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Passwort darf nicht den Benutzernamen enthalten"
-          }
-        }
-      }
-    },
     "Photo" : {
       "localizations" : {
         "de" : {
@@ -1976,6 +1858,9 @@
           }
         }
       }
+    },
+    "Please check the filenames in your draft and make sure that each has a different, unique name." : {
+
     },
     "Please choose a descriptive and meaningful filename." : {
       "localizations" : {
@@ -2027,38 +1912,8 @@
         }
       }
     },
-    "Please enter a code from your two-factor authentication application to continue." : {
-      "extractionState" : "stale",
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Bitte gib einen Code aus deiner Zwei-Faktor-App (2FA) um fortzufahren."
-          }
-        }
-      }
-    },
-    "Please enter the one-time verification code sent by email to continue." : {
-      "extractionState" : "stale",
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Bitte gib zur Verifizierung den Code ein, der dir eben per Mail gesendet wurde."
-          }
-        }
-      }
-    },
-    "Please enter the text seen above" : {
-      "extractionState" : "stale",
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Bitte obigen Text eingeben"
-          }
-        }
-      }
+    "Please provide a caption or description for your files. Individual captions can be adjusted in the next step." : {
+
     },
     "Please provide a caption or description." : {
       "localizations" : {
@@ -2086,6 +1941,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Bitte entferne die zusätzlichen Leerzeichen aus dem Dateinamen."
+          }
+        }
+      }
+    },
+    "Preparing..." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vorbereiten…"
           }
         }
       }
@@ -2162,45 +2027,12 @@
         }
       }
     },
-    "Register" : {
-      "extractionState" : "stale",
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Registrieren"
-          }
-        }
-      }
-    },
-    "Register at Wikimedia Commons" : {
-      "extractionState" : "stale",
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Bei Wikimedia Commons registrieren"
-          }
-        }
-      }
-    },
     "Related Categories" : {
       "localizations" : {
         "de" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Verwandte Kategorien"
-          }
-        }
-      }
-    },
-    "Relevance" : {
-      "extractionState" : "stale",
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Relevanz"
           }
         }
       }
@@ -2245,6 +2077,9 @@
         }
       }
     },
+    "Retry all %lld failed files" : {
+
+    },
     "Retry and continue the upload when you have a stable internet connection." : {
       "localizations" : {
         "de" : {
@@ -2261,6 +2096,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Upload erneut versuchen"
+          }
+        }
+      }
+    },
+    "Review your files before uploading" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Überprüfe deine Dateien vor dem Upload"
           }
         }
       }
@@ -2418,6 +2263,37 @@
         }
       }
     },
+    "show errors" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fehler anzeigen"
+          }
+        }
+      }
+    },
+    "Show File List" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dateiliste anzeigen"
+          }
+        }
+      }
+    },
+    "Show file list with filenames" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dateiliste mit Dateinamen anzeigen"
+          }
+        }
+      }
+    },
     "show less…" : {
       "localizations" : {
         "de" : {
@@ -2477,6 +2353,23 @@
           }
         }
       }
+    },
+    "Some files were created on different days. Consider double-checking them and be mindful when adding captions and categories." : {
+
+    },
+    "Some files were created on different days. Perhaps double-check them and be mindful when chosing captions and categories." : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ein paar Dateien wurden an verschiedenen Tagen erstellt. Schau sie dir am besten noch mal an und achte darauf, wenn du Beschriftungen und Kategorien anlegst."
+          }
+        }
+      }
+    },
+    "Some of the files were created more than %@ apart from each other. Consider double-checking them and be mindful when adding captions and categories." : {
+
     },
     "some rights reserved – attribution and sharing alike required" : {
       "localizations" : {
@@ -2621,16 +2514,14 @@
         }
       }
     },
-    "The email-address is not valid." : {
-      "extractionState" : "stale",
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Die E-Mail-Adresse ist nicht gültig"
-          }
-        }
-      }
+    "The file must be converted to a supported format before uploading." : {
+
+    },
+    "The file type is not supported." : {
+
+    },
+    "The filename \"%@\" is duplicated." : {
+
     },
     "the filename already exists" : {
       "localizations" : {
@@ -2732,45 +2623,12 @@
         }
       }
     },
-    "The Password is invalid" : {
-      "extractionState" : "stale",
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Das Passwort ist nicht gültig"
-          }
-        }
-      }
-    },
     "The server appears to be currently down or experiencing maintenance issues, try again later to resume the upload." : {
       "localizations" : {
         "de" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Der Server scheint derzeit nicht erreichbar zu sein oder Wartungsprobleme zu haben. Versuche es später noch einmal den Upload fortzusetzen."
-          }
-        }
-      }
-    },
-    "The text was not correct, please try again." : {
-      "extractionState" : "stale",
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Der Text war nicht korrekt, bitte probier es nochmal."
-          }
-        }
-      }
-    },
-    "The Username is already taken" : {
-      "extractionState" : "stale",
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Der Benutzername ist bereits vergeben"
           }
         }
       }
@@ -2815,34 +2673,22 @@
         }
       }
     },
-    "Two-factor token or recovery code" : {
-      "extractionState" : "stale",
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Zwei-Faktor-Code oder Wiederherstellungscode"
-          }
-        }
-      }
-    },
-    "Unfortunately, wikimedia commons does not have an audio alternative available.\nPlease contact the site administrators for assistance if this is unexpectedly preventing you from making legitimate posts at the Commons:Help desk. If you are giving a correct answer that is not being accepted, please provide details of the problem." : {
-      "extractionState" : "stale",
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Leider existiert stellt Wikimedia Commons keine Audio-Alternative bereit. Falls du Hilfe beim Registrieren brauchst und das Captcha nicht ausfüllen kannst, kontaktiere bitte einen Adminstrator für Unterstützung im Commons:Help desk. Sofern du korrekte Captcha-Texte eingibst, sie aber nicht akzeptiert werden, stelle bitte Details zum Problem bereit."
-          }
-        }
-      }
-    },
     "Unknown error, please make a screenshot and report this issue if you see this." : {
       "localizations" : {
         "de" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Unbekannter Fehler, bitte mach einen Screenshot und melde dieses Problem. Danke!"
+          }
+        }
+      }
+    },
+    "untitled Draft" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "unbenannter Entwurf"
           }
         }
       }
@@ -2876,6 +2722,12 @@
           }
         }
       }
+    },
+    "Upload Status" : {
+
+    },
+    "upload succesful" : {
+
     },
     "uploaded %@ ago" : {
       "localizations" : {
@@ -2943,39 +2795,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Nutzer-Authentifizierung erforderlich"
-          }
-        }
-      }
-    },
-    "Username" : {
-      "extractionState" : "stale",
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Benutzername"
-          }
-        }
-      }
-    },
-    "Username contain characters that cannot be used. Do not use an email address as username." : {
-      "extractionState" : "stale",
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Benutzername enthält Zeichen die nicht verwendet werden können. Keine E-Mail-Adresse als Benutzername nehmen."
-          }
-        }
-      }
-    },
-    "validating..." : {
-      "extractionState" : "stale",
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "überprüfe..."
           }
         }
       }
@@ -3060,17 +2879,6 @@
         }
       }
     },
-    "with existing account" : {
-      "extractionState" : "stale",
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "mit bestehenden Account"
-          }
-        }
-      }
-    },
     "You may attempt to retry the upload, edit the draft or delete the draft." : {
       "localizations" : {
         "de" : {
@@ -3110,6 +2918,9 @@
           }
         }
       }
+    },
+    "You must choose the license under which you want to publish the files. Individual file licenses can be adjusted in the next step." : {
+
     },
     "You reached the end of %lld files!" : {
       "localizations" : {
@@ -3160,6 +2971,9 @@
           }
         }
       }
+    },
+    "You should add atleast one category or depicted item in the Tags-section. Individual categories can be adjusted in the next step." : {
+
     },
     "You will find a history of your previously viewed categories here." : {
       "comment" : "A description displayed when no recently viewed categories are found.",

@@ -12,7 +12,7 @@ import os.log
 // see API sandbox:
 // https://commons.wikimedia.org/wiki/Special:ApiSandbox#action=query&format=json&meta=wbcontentlanguages&formatversion=2&wbclcontext=term&wbclprop=code%7Cautonym%7Cname
 
-typealias LanguageDictionary = [String: CommonsFinder.WikimediaLanguage]
+typealias LanguageDictionary = [String: WikimediaLanguage]
 
 enum WikimediaLanguageStoreError: Error {
     case failedToConstructFilePath
@@ -231,7 +231,7 @@ enum WikimediaLanguageStoreError: Error {
     }
 }
 
-extension CommonsFinder.WikimediaLanguage {
+extension WikimediaLanguage {
     fileprivate init(apiValue: CommonsAPI.WikimediaLanguage) {
         self = .init(
             code: apiValue.code,

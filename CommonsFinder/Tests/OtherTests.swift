@@ -15,7 +15,6 @@ import Testing
     (125, 120..<170, 0..<1, 0.1),
 ])
 func testRangeInterpolation(v: Double, from: Range<Double>, to: Range<Double>, expected: Double) {
-
     #expect(v.interpolate(from: from, to: to) == expected)
 }
 
