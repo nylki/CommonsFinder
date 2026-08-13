@@ -101,7 +101,7 @@ enum NameValidationError: LocalizedError, Codable, Hashable, Equatable {
         case .alreadyExists:
             String(localized: "Edit the name to make it unique, You could add the date, location, event name or a number.")
         case .duplicatedNameInMultiFileDraft:
-            String(localized: "Edit duplicate names to make them unique, You could add the date, location, event name or a number.")
+            String(localized: "Edit duplicate names to make them unique. You could add the date, location, event name or a number.")
         case .disallowed:
             String(localized: "Choose a different name.")
         case .invalid:

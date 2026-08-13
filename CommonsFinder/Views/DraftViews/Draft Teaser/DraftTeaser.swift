@@ -41,7 +41,12 @@ struct DraftTeaser: View {
     private func continueUpload() {
         isShowingErrorSheet = false
         if let activeUser = account.activeUser {
-            try? appDatabase.updateDraft(id: draft.id, withPublishingError: nil)
+            do {
+                try appDatabase.updateDraft(id: draft.id, withPublishingError: nil)
+            } catch {
+                logger.error("Failed to reset draft publishing errors when continueing upload.")
+            }
+
             uploadManager.upload(draft, username: activeUser.username)
         }
     }

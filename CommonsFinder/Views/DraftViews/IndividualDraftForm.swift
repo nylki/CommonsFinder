@@ -189,7 +189,7 @@ struct IndividualDraftForm: View {
                     model.draft.captionWithDesc.remove(atOffsets: set)
                 }
 
-                Menu("Add", systemImage: "plus") {
+                Menu(enumeratedDescs.count == 0 ? "Add" : "Add Language", systemImage: "plus") {
                     Text("Choose language")
                     InputLanguageButtons(
                         disabledLanguages: disabledLanguages,

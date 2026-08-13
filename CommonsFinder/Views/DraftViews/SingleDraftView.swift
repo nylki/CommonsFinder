@@ -167,7 +167,7 @@ struct SingleDraftView: View {
                                 focus = .license
                             case .missingTags:
                                 focus = .tags
-                            case .validationError(let nameValidationError):
+                            case .validationError(_):
                                 focus = .filename
                             case .failedToValidate: break
                             case .none: break

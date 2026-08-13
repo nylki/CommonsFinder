@@ -65,7 +65,7 @@ struct ImportFilesModifer: ViewModifier {
             .photosPicker(
                 isPresented: isPhotosPickerPresented,
                 selection: photosPickerSelection,
-                maxSelectionCount: 50,
+                maxSelectionCount: 10,
                 matching: .any(of: [.images]),
                 // `.compatible` is what converts images to jpeg files
                 preferredItemEncoding: .compatible,
@@ -99,7 +99,7 @@ struct ImportFilesModifer: ViewModifier {
             .onChange(of: importModel?.importStatus) {
                 guard let importModel, importModel.importStatus == .finished else { return }
                 let fileCount = importModel.importedItems.count
-                if fileCount == 1, var fileItem = importModel.importedItems.values.first {
+                if fileCount == 1, let fileItem = importModel.importedItems.values.first {
                     do {
                         let newDraft = try MediaFileDraft(
                             fileItem,
@@ -111,7 +111,6 @@ struct ImportFilesModifer: ViewModifier {
                         logger.error("Failed to create draft \(error)")
                     }
                 } else if fileCount > 1 {
-                    let multiDraft = MultiDraft(newDraftOptions: importModel.newDraftOptions)
                     let subDrafts: [MediaFileDraft] = importModel.importedItems.values.compactMap { fileItem in
                         do {
                             return try .init(

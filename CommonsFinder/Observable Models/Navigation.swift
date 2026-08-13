@@ -163,7 +163,7 @@ enum NavigationStackItem: Hashable, CustomStringConvertible {
             "User:\(username)"
         case .recentlyViewedMedia, .bookmarkedMedia, .recentlyViewedCategories, .bookmarkedCategories:
             ""
-        case .relatedCategories(let item, let type):
+        case .relatedCategories(let item, _):
             if let commonsCategory = item.base.commonsCategory {
                 "Category:\(commonsCategory)"
             } else {

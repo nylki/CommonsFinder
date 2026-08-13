@@ -78,7 +78,7 @@ final class AccountModel {
         recurringSyncTask = nil
         activeUser = nil
         try appDatabase.deleteLogoutRelatedItems()
-        try await Networking.shared.logoutAndClearKeychain()
+        await Networking.shared.logoutAndClearKeychain()
     }
 
 
