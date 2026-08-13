@@ -428,13 +428,13 @@ private struct NavHeader: View {
             } label: {
                 HStack {
                     Text("\(categoryCount) categories")
-                        .underline(color: .category)
+                        .underline(color: .categoryTagPicker)
                         .bold()
                         .contentTransition(.numericText(value: Double(categoryCount)))
 
                     if categoryCount >= 1 {
                         Image(systemName: "checkmark.circle.fill")
-                            .foregroundStyle(.category)
+                            .foregroundStyle(.categoryTagPicker)
                             .transition(.scale)
                     }
                 }
@@ -450,13 +450,13 @@ private struct NavHeader: View {
             } label: {
                 HStack {
                     Text("\(depictCount) depicted concepts")
-                        .underline(color: .depict)
+                        .underline(color: .depictTagPicker)
                         .bold()
                         .contentTransition(.numericText(value: Double(depictCount)))
 
                     if depictCount >= 1 {
                         Image(systemName: "checkmark.circle.fill")
-                            .foregroundStyle(.depict)
+                            .foregroundStyle(.depictTagPicker)
                             .transition(.scale)
                     }
                 }

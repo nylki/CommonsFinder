@@ -46,17 +46,23 @@ struct CategoryTeaserContent: View {
             VStack {
                 Spacer()
 
-                VStack(alignment: .leading) {
+                VStack(alignment: .leading, spacing: 4) {
                     if let label {
                         Text(label)
+                            .foregroundStyle(hasBackgroundImage ? .white : .primary)
+                            .fontWeight(.medium)
                     }
                     if let description = categoryInfo.base.description {
                         Text(description)
-                            .font(.caption)
+                            .font(.footnote)
+                            .foregroundStyle(
+                                hasBackgroundImage ? AnyShapeStyle(Color.white.opacity(0.85)) : AnyShapeStyle(Color.secondaryAccentTinted)
+                            )
+                            .lineLimit(2)
                             .allowsTightening(true)
                     }
                 }
-                .foregroundStyle(hasBackgroundImage ? .white : .primary)
+                .compositingGroup()
                 .shadow(color: hasBackgroundImage ? .black : .clear, radius: 2)
                 .shadow(color: hasBackgroundImage ? .black.opacity(0.7) : .clear, radius: 7)
 
@@ -68,12 +74,13 @@ struct CategoryTeaserContent: View {
         .padding()
         .background {
             CategoryTeaserBackground(category: categoryInfo.base)
-
         }
         .geometryGroup()
         .compositingGroup()
     }
+
 }
+
 
 struct CategoryTeaserButtonStyle: ButtonStyle {
     func makeBody(configuration: Configuration) -> some View {

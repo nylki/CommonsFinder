@@ -11,7 +11,7 @@ import GRDB
 
 nonisolated struct Category: Identifiable, Equatable, Hashable, Sendable, Codable {
     typealias LanguageCode = String
-    // todo used Tagged!?
+    // TODO: used Tagged!?
     typealias WikidataID = String
 
     /// NOTE: `id` is a Database SQL id, prefer the `wikidataId` or `commonsCategory` for API requests!

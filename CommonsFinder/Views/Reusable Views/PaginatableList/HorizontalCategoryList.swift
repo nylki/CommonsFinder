@@ -61,7 +61,6 @@ struct HorizontalCategoryList: View {
         .animation(.default, value: model.status)
         .animation(.default, value: model.rawCount)
         .compositingGroup()
-        .shadow(color: .black.opacity(0.1), radius: 10)
     }
 }
 
