@@ -69,7 +69,7 @@ struct TagList: View {
                 if possibleUsages.contains(.category) {
                     let isPicked = usages.contains(.category)
                     Image(systemName: "tag.circle.fill")
-                        .foregroundStyle(.white, isPicked ? .category : .gray)
+                        .foregroundStyle(.white, isPicked ? .categoryTagPicker : .gray)
                         .symbolEffect(.bounce, value: isPicked)
                         .opacity(isPicked ? 1 : 0.1)
 
@@ -78,7 +78,7 @@ struct TagList: View {
                 if possibleUsages.contains(.depict) {
                     let isPicked = usages.contains(.depict)
                     Image(systemName: "eye.circle.fill")
-                        .foregroundStyle(.white, isPicked ? .depict : .gray)
+                        .foregroundStyle(.white, isPicked ? .depictTagPicker : .gray)
                         .symbolEffect(.bounce, value: isPicked)
                         .opacity(isPicked ? 1 : 0.1)
                 }
