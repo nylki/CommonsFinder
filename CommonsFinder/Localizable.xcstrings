@@ -280,6 +280,16 @@
         }
       }
     },
+    "Add Language" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sprache hinzufügen"
+          }
+        }
+      }
+    },
     "Add Language..." : {
       "localizations" : {
         "de" : {
