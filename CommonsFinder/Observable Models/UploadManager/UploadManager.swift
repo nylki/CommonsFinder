@@ -356,9 +356,9 @@ class UploadManager {
             performUploadWithBGTask(id: id, startStep: startStep)
         } else {
             switch id {
-            case .singleDraft(let iD):
+            case .singleDraft(_):
                 performSingleUploadImpl(id: id, startStep: startStep)
-            case .multiDraft(let multiDraftID):
+            case .multiDraft(_):
                 performMultiUploadImpl(id: id)
             }
         }

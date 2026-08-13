@@ -130,7 +130,7 @@ public struct FileUploadResponse: Decodable, Sendable {
             case .exists:
                 "exists"
             case .existsNormalized(let normalizedName):
-                "exists-\(normalizedName)"
+                "exists-\(normalizedName ?? "")"
             case .wasDeleted:
                 "wasDeleted"
             case .duplicate:

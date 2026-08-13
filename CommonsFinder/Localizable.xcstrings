@@ -65,7 +65,14 @@
       }
     },
     "%lld files" : {
-
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld Dateien"
+          }
+        }
+      }
     },
     "%lld files · %@" : {
       "comment" : "file count · total combined file size (formatted)",
@@ -138,7 +145,14 @@
 
     },
     "%lld%% completed" : {
-
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld%% abgeschlossen"
+          }
+        }
+      }
     },
     "%lld×%lld pixel" : {
       "localizations" : {
@@ -157,7 +171,14 @@
       }
     },
     "A file with the name \"%@\" already exists on the server." : {
-
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Eine Datei mit dem Namen \"%@\" existiert bereits auf dem Server."
+          }
+        }
+      }
     },
     "About this App" : {
       "localizations" : {
@@ -484,17 +505,6 @@
         }
       }
     },
-    "caption (%@)" : {
-      "extractionState" : "stale",
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Kurzbeschreibung (%@)"
-          }
-        }
-      }
-    },
     "Captions" : {
       "localizations" : {
         "de" : {
@@ -555,7 +565,14 @@
       }
     },
     "Check file locations" : {
-
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Überprüfe Datei-Standorte"
+          }
+        }
+      }
     },
     "choose" : {
       "localizations" : {
@@ -651,7 +668,14 @@
       "shouldTranslate" : false
     },
     "Continue" : {
-
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Weiter"
+          }
+        }
+      }
     },
     "Copy" : {
       "localizations" : {
@@ -835,17 +859,6 @@
         }
       }
     },
-    "description (%@)" : {
-      "extractionState" : "stale",
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Beschreibung (%@)"
-          }
-        }
-      }
-    },
     "detailed description (optional)" : {
       "localizations" : {
         "de" : {
@@ -867,21 +880,24 @@
       }
     },
     "Draft" : {
-
-    },
-    "Draft (%lld files)" : {
-      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Entwurf (%lld Dateien)"
+            "value" : "Entwurf"
           }
         }
       }
     },
     "duplicate filename" : {
-
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "doppelter Dateiname"
+          }
+        }
+      }
     },
     "Edit" : {
       "localizations" : {
@@ -903,8 +919,15 @@
         }
       }
     },
-    "Edit duplicate names to make them unique, You could add the date, location, event name or a number." : {
-
+    "Edit duplicate names to make them unique. You could add the date, location, event name or a number." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Editiere doppelte Namen um sie einzigartig zu machen. Du kannst z.B. das Datum,  den Ort, ggf. Veranstaltungsnamen oder eine Number anfügen."
+          }
+        }
+      }
     },
     "Edit the name to make it unique, You could add the date, location, event name or a number." : {
       "localizations" : {
@@ -1026,34 +1049,12 @@
         }
       }
     },
-    "filename" : {
-      "extractionState" : "stale",
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Dateiname"
-          }
-        }
-      }
-    },
     "Filename" : {
       "localizations" : {
         "de" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Dateiname"
-          }
-        }
-      }
-    },
-    "filenames must be unique on the server" : {
-      "extractionState" : "stale",
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Dateinamen müssen auf dem Server einzigartig sein"
           }
         }
       }
@@ -1069,7 +1070,14 @@
       }
     },
     "Files with same filename already exist on the server" : {
-
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dateien mit identischem Dateinamen existieren bereits auf dem Server."
+          }
+        }
+      }
     },
     "Filter" : {
       "localizations" : {
@@ -1234,7 +1242,14 @@
       }
     },
     "in progress" : {
-
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "wird bearbeitet"
+          }
+        }
+      }
     },
     "In-App Search" : {
       "localizations" : {
@@ -1493,7 +1508,14 @@
       }
     },
     "More input required" : {
-
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Weitere Eingaben erforderlich"
+          }
+        }
+      }
     },
     "More..." : {
       "localizations" : {
@@ -1860,7 +1882,14 @@
       }
     },
     "Please check the filenames in your draft and make sure that each has a different, unique name." : {
-
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bitte überprüfe die Dateinamen in deinem Entwurf und stelle sicher, dass jede Datei einen anderen und einzigartigen Namen hat."
+          }
+        }
+      }
     },
     "Please choose a descriptive and meaningful filename." : {
       "localizations" : {
@@ -1913,7 +1942,14 @@
       }
     },
     "Please provide a caption or description for your files. Individual captions can be adjusted in the next step." : {
-
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bitte füge eine Kurzbeschreibung für deine Dateien hinzu. Einzelne Beschreibungstext können im nächsten Schritt noch pro Datei angepasst werden. "
+          }
+        }
+      }
     },
     "Please provide a caption or description." : {
       "localizations" : {
@@ -2078,7 +2114,14 @@
       }
     },
     "Retry all %lld failed files" : {
-
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wiederhole alle %lld fehlgeschlagenen Dateien"
+          }
+        }
+      }
     },
     "Retry and continue the upload when you have a stable internet connection." : {
       "localizations" : {
@@ -2273,17 +2316,6 @@
         }
       }
     },
-    "Show File List" : {
-      "extractionState" : "stale",
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Dateiliste anzeigen"
-          }
-        }
-      }
-    },
     "Show file list with filenames" : {
       "localizations" : {
         "de" : {
@@ -2355,10 +2387,6 @@
       }
     },
     "Some files were created on different days. Consider double-checking them and be mindful when adding captions and categories." : {
-
-    },
-    "Some files were created on different days. Perhaps double-check them and be mindful when chosing captions and categories." : {
-      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -2369,7 +2397,14 @@
       }
     },
     "Some of the files were created more than %@ apart from each other. Consider double-checking them and be mindful when adding captions and categories." : {
-
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Einige der Dateien wurden mehr als %@ voneinander entfernt erstellt. Überprüfe sie bzw. denke daran, sobald du Beschreibungstexte und Kategorien anlegst."
+          }
+        }
+      }
     },
     "some rights reserved – attribution and sharing alike required" : {
       "localizations" : {
@@ -2515,13 +2550,34 @@
       }
     },
     "The file must be converted to a supported format before uploading." : {
-
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Die Datei muss vor dem Upload in ein unterstütztes Format konvertiert werden"
+          }
+        }
+      }
     },
     "The file type is not supported." : {
-
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Der Dateityp wird nicht unterstützt"
+          }
+        }
+      }
     },
     "The filename \"%@\" is duplicated." : {
-
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Der Dateiname \"%@\" ist doppelt bzw. existiert bereits."
+          }
+        }
+      }
     },
     "the filename already exists" : {
       "localizations" : {
@@ -2724,10 +2780,24 @@
       }
     },
     "Upload Status" : {
-
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Upload-Status"
+          }
+        }
+      }
     },
     "upload succesful" : {
-
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Upload erfolgreich"
+          }
+        }
+      }
     },
     "uploaded %@ ago" : {
       "localizations" : {
@@ -2920,7 +2990,14 @@
       }
     },
     "You must choose the license under which you want to publish the files. Individual file licenses can be adjusted in the next step." : {
-
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Du must die Lizenz auswählen unter der du die Dateien veröffentlichen möchtest. Lizenzen einzelner Dateien können noch im nächsten Schritt angepasst werden."
+          }
+        }
+      }
     },
     "You reached the end of %lld files!" : {
       "localizations" : {
@@ -2973,7 +3050,14 @@
       }
     },
     "You should add atleast one category or depicted item in the Tags-section. Individual categories can be adjusted in the next step." : {
-
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Du solltest mindestens eine Kategorie oder Motiv hinzufügen. Kategorien einzelner Dateien können im nächsten Schritt noch angepasst werden."
+          }
+        }
+      }
     },
     "You will find a history of your previously viewed categories here." : {
       "comment" : "A description displayed when no recently viewed categories are found.",
