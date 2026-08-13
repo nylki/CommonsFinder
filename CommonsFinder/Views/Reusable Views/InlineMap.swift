@@ -188,6 +188,9 @@ struct InlineMap: View {
     @ViewBuilder
     private var mapMenuItems: some View {
         Button("Show on Map", systemImage: "map", action: showOnMap)
+
+        Divider()
+
         Button("Look Around", systemImage: "binoculars", action: openLookAround)
             .task {
                 logger.debug("Look Around scene fetching for \(label)...")
@@ -196,8 +199,6 @@ struct InlineMap: View {
                 logger.debug("Look Around scene fetched for \(label): \(lookAroundScene == nil ? "false" : "true")")
             }
             .disabled(lookAroundScene == nil)
-
-        Divider()
 
         Button("Open in Maps", systemImage: "arrow.up.forward.app", action: openInMapApp)
 
@@ -217,6 +218,6 @@ struct InlineMap: View {
 }
 
 
-#Preview {
+#Preview(traits: .previewEnvironment) {
     InlineMap(coordinate: .init(latitude: .init(48.8588), longitude: .init(2.2945)), item: nil)
 }
