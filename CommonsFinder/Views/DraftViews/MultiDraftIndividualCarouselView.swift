@@ -221,7 +221,7 @@ struct MultiDraftIndividualCarouselView: View {
                     isShowingDeleteDialog = true
                 }
                 .confirmationDialog(
-                    "Are you sure you want to delete the Draft?",
+                    "MULTIDRAFT DELETION CONFIRMATION FILECOUNT \(model.subDraftModels.count)",
                     isPresented: $isShowingDeleteDialog,
                     titleVisibility: .visible
                 ) {

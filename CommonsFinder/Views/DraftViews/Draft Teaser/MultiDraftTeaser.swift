@@ -160,12 +160,12 @@ struct MultiDraftTeaser: View {
                 .padding()
             }
         )
-        .confirmationDialog("Are you sure you want to delete the Draft?", isPresented: $isShowingDeleteDialog, titleVisibility: .visible) {
+        .confirmationDialog("MULTIDRAFT DELETION CONFIRMATION FILECOUNT \(multiDraftInfo.drafts.count)", isPresented: $isShowingDeleteDialog, titleVisibility: .visible) {
             Button("Delete", systemImage: "trash", role: .destructive) {
                 do {
                     try appDatabase.delete(multiDraftInfo)
                 } catch {
-                    logger.error("Failed to delete drafts \(error)")
+                    logger.error("Failed to delete draft \(error)")
                 }
             }
 

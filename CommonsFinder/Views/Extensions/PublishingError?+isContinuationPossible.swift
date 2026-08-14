@@ -1,5 +1,5 @@
 //
-//  PublishingError?+isContinuationPossible.swift
+//  PublishingError?+isRetryPossible.swift
 //  CommonsFinder
 //
 //  Created by Tom on 29.07.26.
@@ -9,7 +9,7 @@ import CommonsAPI
 import Foundation
 
 extension MediaFileDraft.PublishingError? {
-    var isContinuationPossible: Bool {
+    var isRetryPossible: Bool {
         switch self {
         case .twoFactorCodeRequired, .emailCodeRequired:
             // TODO: remove these cases, not used with OAuth2

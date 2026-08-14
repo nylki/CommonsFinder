@@ -68,12 +68,25 @@ private struct PublishingErrorDetailsSheet: View {
 
     @Environment(UploadManager.self) private var uploadManager
 
-    private var isContinuationPossible: Bool {
-        error.isContinuationPossible
+    private var isRetryPossible: Bool {
+        error.isRetryPossible
     }
 
     private var isEditingPossible: Bool {
-        publishingStatus.isEditingPossible
+        switch publishingStatus {
+        case .uploading(_):
+            true
+        case .uploaded(_):
+            true
+        case .unstashingFile(_):
+            true
+        case .creatingWikidataClaims:
+            false
+        case .published:
+            false
+        case nil:
+            true
+        }
     }
 
     @Environment(\.dismiss) private var dismiss
@@ -123,42 +136,11 @@ private struct PublishingErrorDetailsSheet: View {
         VStack {
             GroupBox {
                 HStack {
-                    switch error {
-                    case .appQuitOrCrash:
-                        Text("The app was closed or crashed while uploading.")
-                    case .uploadWarnings(let warnings):
-                        ForEach(warnings) { warning in
-                            Text(warning.localizedStringResource)
-                                .padding(.bottom)
-                        }
-                    case .urlError(let urlErrorCode, let errorDescription):
-                        let errorCode = URLError.Code(rawValue: urlErrorCode)
-
-                        switch errorCode {
-                        case .networkConnectionLost: Text("Network connection lost")
-                        case .badServerResponse: Text("Bad server response")
-                        case .notConnectedToInternet: Text("not connected To the Internet")
-                        case .dataLengthExceedsMaximum: Text("Data-length exceeds maximum")
-                        case .secureConnectionFailed: Text("Secure connection failed")
-                        case .timedOut: Text("Network Connection timed out")
-                        case .dnsLookupFailed: Text("DNS Lookup Failed")
-                        case .userAuthenticationRequired: Text("User authentication required")
-                        default: Text(errorDescription)
-                        }
-
-                    case .error(let errorDescription, _):
-
-                        Text(errorDescription ?? "Unknown Error")
-                            .padding(.bottom, 5)
-                    case .emailCodeRequired, .twoFactorCodeRequired:
-                        Text(
-                            "Authentication failed: 2-factor code required"
-                        )
-                    case .none:
+                    if let errorDescription = error?.errorDescription {
+                        Text(errorDescription)
+                    } else {
                         Text("There may have been a problem during upload, but no details can be display. Please report this as a Bug in the app, thanks!")
-
                     }
-
                     Spacer(minLength: 0)
                 }
                 .monospaced()
@@ -229,7 +211,7 @@ private struct PublishingErrorDetailsSheet: View {
         if uploadManager.isVerifyingErrorDrafts {
             ProgressView().progressViewStyle(.circular)
         } else {
-            if isContinuationPossible {
+            if isRetryPossible {
                 Button(action: onContinueUpload) {
                     HStack {
                         Image(systemName: "arrow.trianglehead.2.clockwise.rotate.90")

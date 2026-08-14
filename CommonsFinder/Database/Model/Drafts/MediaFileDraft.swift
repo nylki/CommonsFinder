@@ -79,7 +79,7 @@ nonisolated
     /// the assigned `multiDraftIndex` is used for stable filename generation (adding 01, 02, ... , 99 suffix) and ordering
     var multiDraftIndex: Int?
 
-    enum PublishingError: Equatable, Sendable, CustomStringConvertible, Codable, Hashable {
+    enum PublishingError: Equatable, Sendable, Codable, Hashable, CustomDebugStringConvertible {
         case twoFactorCodeRequired
         case emailCodeRequired
         case uploadWarnings([FileUploadResponse.Warning])
@@ -87,7 +87,7 @@ nonisolated
         case error(errorDescription: String?, recoverySuggestion: String?)
         case appQuitOrCrash
 
-        var description: String {
+        var debugDescription: String {
             switch self {
             case .twoFactorCodeRequired:
                 "twoFactorCodeRequired"
@@ -105,7 +105,7 @@ nonisolated
         }
 
         static func == (lhs: PublishingError, rhs: PublishingError) -> Bool {
-            lhs.description == rhs.description
+            lhs.debugDescription == rhs.debugDescription
         }
     }
 

@@ -41,18 +41,16 @@ private struct MultiDraftStatusSheetModifier: ViewModifier {
 
     func body(content: Content) -> some View {
         content.sheet(isPresented: $isPresented) {
-            NavigationStack {
-                if let id {
-                    MultiDraftStatusViewWrapper(
-                        id: id,
-                        onEditDraft: onEditDraft,
-                        onDeleteDraft: onDeleteDraft,
-                        onContinueUpload: onContinueUpload
-                    )
-                    .id(id)
-                }
+            if let id {
+                MultiDraftStatusViewWrapper(
+                    id: id,
+                    onEditDraft: onEditDraft,
+                    onDeleteDraft: onDeleteDraft,
+                    onContinueUpload: onContinueUpload
+                )
+                .id(id)
+                .presentationDetents([.medium, .large])
             }
-            .presentationDetents([.medium, .large])
         }
     }
 }
@@ -114,13 +112,24 @@ private struct MultiDraftStatusView: View {
         multiDraftInfo.drafts.count(where: { $0.publishingError != nil })
     }
 
-
-    private var isContinuationPossible: Bool {
-        multiDraftInfo.drafts.allSatisfy(\.publishingError.isContinuationPossible)
+    private var isRetryPossible: Bool {
+        isUploadFinished && multiDraftInfo.drafts.allSatisfy(\.publishingError.isRetryPossible)
     }
 
     private var isUploadFinished: Bool {
         multiDraftInfo.multiDraft.publishingState?.isFinished ?? false
+    }
+
+    private var isEditPossible: Bool {
+        // editing is only possible if all non-published drafts have not yet been unstashed (so are not public yet).
+        guard isUploadFinished else { return false }
+
+        let unpublishedItems = multiDraftInfo.drafts
+            .filter { $0.publishingState != .published }
+
+        return unpublishedItems.allSatisfy {
+            $0.publishingState != .creatingWikidataClaims
+        }
     }
 
     var body: some View {
@@ -141,9 +150,15 @@ private struct MultiDraftStatusView: View {
                         bottomToolbarButton
                     }
 
-                    ToolbarItem {
-                        Menu("More…", systemImage: "ellipsis") {
-                            Button("Edit Draft", systemImage: "square.and.pencil", action: onEditDraft)
+                    if isEditPossible {
+                        ToolbarItem {
+                            Menu("More…", systemImage: "ellipsis") {
+                                Button("Edit Draft", systemImage: "square.and.pencil", action: onEditDraft)
+                                Button("Delete Draft", systemImage: "trash", role: .destructive, action: onDeleteDraft)
+                            }
+                        }
+                    } else {
+                        ToolbarItem {
                             Button("Delete Draft", systemImage: "trash", role: .destructive, action: onDeleteDraft)
                         }
                     }
@@ -164,11 +179,11 @@ private struct MultiDraftStatusView: View {
     private var bottomToolbarButton: some View {
         if uploadManager.isVerifyingErrorDrafts {
             ProgressView().progressViewStyle(.circular)
-        } else if isContinuationPossible {
+        } else if isRetryPossible {
             Button(action: onContinueUpload) {
                 HStack {
                     Image(systemName: "arrow.trianglehead.2.clockwise.rotate.90")
-                    Text("Retry all \(failedCount) failed files")
+                    Text("Retry failed uploads", comment: "shown in bottom toolbar. should be concise (no multiline text).")
                 }
                 .padding()
             }
@@ -187,26 +202,30 @@ private struct MultiDraftStatusView: View {
 
 
 private struct StatusListItem: View {
-
     let draft: MediaFileDraft
-    @State private var isShowingIndividualErrorSheet = false
+
+    //    @State private var isShowingIndividualErrorSheet = false
 
     var body: some View {
-        Button {
-            isShowingIndividualErrorSheet = true
-        } label: {
-            label
-        }
-        .buttonStyle(.plain)
-        .animation(.default, value: draft)
-        .publishingErrorDetailsSheet(
-            draft.publishingState,
-            draft.publishingError,
-            isPresented: $isShowingIndividualErrorSheet,
-            onEditDraft: {},
-            onDeleteDraft: {},
-            onContinueUpload: {}
-        )
+        label
+
+        // Kept: for potential future usage to show more details for a file error.
+
+        //        Button {
+        //            isShowingIndividualErrorSheet = true
+        //        } label: {
+        //            label
+        //        }
+        //        .buttonStyle(.plain)
+        //        .animation(.default, value: draft)
+        //        .publishingErrorDetailsSheet(
+        //            draft.publishingState,
+        //            draft.publishingError,
+        //            isPresented: $isShowingIndividualErrorSheet,
+        //            onEditDraft: {},
+        //            onDeleteDraft: {},
+        //            onContinueUpload: {}
+        //        )
     }
 
 
@@ -226,8 +245,8 @@ private struct StatusListItem: View {
     @ViewBuilder
     private var statusText: some View {
         HStack {
-            if let error = draft.publishingError {
-                Text(error.description)
+            if let errorDescription = draft.publishingError?.errorDescription {
+                Text(errorDescription)
                 Spacer(minLength: 0)
                 Image(systemName: "exclamationmark.circle.fill")
                     .resizable()

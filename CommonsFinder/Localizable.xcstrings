@@ -1547,6 +1547,22 @@
         }
       }
     },
+    "MULTIDRAFT DELETION CONFIRMATION FILECOUNT %lld" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Entwurf (%lld Dateien) wirklich löschen?"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Are you sure you want to delete the draft (%lld files)?"
+          }
+        }
+      }
+    },
     "Nearby Locations" : {
       "localizations" : {
         "de" : {
@@ -2123,22 +2139,23 @@
         }
       }
     },
-    "Retry all %lld failed files" : {
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Wiederhole alle %lld fehlgeschlagenen Dateien"
-          }
-        }
-      }
-    },
     "Retry and continue the upload when you have a stable internet connection." : {
       "localizations" : {
         "de" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Upload erneut versuchen und fortsetzen sobald eine stabile Internetverbindung besteht"
+          }
+        }
+      }
+    },
+    "Retry failed uploads" : {
+      "comment" : "shown in bottom toolbar. should be concise (no multiline text).",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "fehlgeschlagene Uploads Wiederholen"
           }
         }
       }
@@ -2734,7 +2751,7 @@
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "thumbnail"
+            "value" : "Vorschaubild"
           }
         }
       }

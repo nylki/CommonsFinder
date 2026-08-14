@@ -276,7 +276,7 @@
 				"Views/Extensions/MediaFile+localizedDisplayCaption.swift",
 				"Views/Extensions/MediaFileDraftModel+ImageRequest.swift",
 				"Views/Extensions/PublishingError?+isContinuationPossible.swift",
-				"Views/Extensions/PublishingState?+isEditingPossible.swift",
+				"Views/Extensions/PublishingError+localizedDescription.swift",
 				"Views/Extensions/UserDefaults+accessors.swift",
 				Views/FileDetailView/FileDetailView.swift,
 				Views/FileDetailView/FileGroupBoxStyle.swift,

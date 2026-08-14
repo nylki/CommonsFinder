@@ -101,19 +101,12 @@ struct MultiDraftCombinedView: View {
         // so for now until this behaviour is fixed by Apple
         // this is a fullScreenCover (but TODO: consider using a push navigation here)
         .fullScreenCover(isPresented: $isShowingTagsPicker) {
-            // FIXME: support multi-draft centroid
-
             TagPicker(
                 initialTags: model.multiDraft.tags,
                 analysisInput: analysisInput,
                 onEditedTags: { model.multiDraft.tags = $0 },
             )
-
         }
-        //        .sheet(isPresented: $isTimezonePickerShowing) {
-        //            TimezonePicker(selectedTimezone: $model.multiDraft.timezone)
-        //                .presentationDetents([.medium, .large])
-        //        }
         .onAppear {
             if model.multiDraft.captionWithDesc.isEmpty {
                 focus = .caption
@@ -143,11 +136,15 @@ struct MultiDraftCombinedView: View {
                 model.generateFilename()
             }
         }
-        //        .onDisappear {
-        //            if draftExistsInDB, model.multiDraft.publishingState == nil {
-        //                saveChanges()
-        //            }
-        //        }
+        .onDisappear {
+            if model.draftExistsInDB, model.multiDraft.publishingState == nil {
+                do {
+                    try model.saveEditingChanges(appDatabase: appDatabase)
+                } catch {
+                    logger.error("Failed to save editing changes")
+                }
+            }
+        }
         .task(id: model.multiDraft.name) {
             do {
                 try await model.validateFilenameImpl()
@@ -619,7 +616,7 @@ struct MultiDraftCombinedView: View {
                     isShowingDeleteDialog = true
                 }
                 .confirmationDialog(
-                    "Are you sure you want to delete the Draft?",
+                    "MULTIDRAFT DELETION CONFIRMATION FILECOUNT \(model.subDraftModels.count)",
                     isPresented: $isShowingDeleteDialog,
                     titleVisibility: .visible
                 ) {
