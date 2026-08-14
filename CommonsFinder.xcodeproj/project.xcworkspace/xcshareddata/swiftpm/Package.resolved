@@ -69,8 +69,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/nylki/Nuke",
       "state" : {
-        "branch" : "alternative-sliding-time-window-rate-limiter",
-        "revision" : "7bc94d64f3089de653ecadedd8d6e7ffa21805a2"
+        "branch" : "main",
+        "revision" : "d76471f342ba0f32a2b93e8afe055a0e87a20a69"
       }
     },
     {
