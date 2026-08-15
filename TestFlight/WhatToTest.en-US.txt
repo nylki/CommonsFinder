@@ -1,5 +1,13 @@
-CommonsFinder now uses the newer and more secure OAuth 2 for authentication with Wikimedia.
-Therefore, a new login dialog will appear the next time you open the app.
+Multi-File Upload
 
-Additionally, all Wikimedia languages are now available for image descriptions (uploading/editing).
-The input languages can be adjusted in a new settings option.
+You can now upload multiple images at once without having to re-enter descriptions and categories.
+The process has two steps. First, you can assign descriptions, categories, etc. that apply to all files. In the second step, each file can be edited individually to adjust descriptions and other details.
+
+
+Fixes and Improvements
+
+- Design updates for category tiles
+
+- The full image description (wikitext) is no longer duplicated if the short description is identical
+
+- Upload dialog: Tapping the map now opens an enlarged map view
