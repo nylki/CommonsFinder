@@ -249,7 +249,7 @@ struct MultiDraftCombinedView: View {
                     model.multiDraft.captionWithDesc.remove(atOffsets: set)
                 }
 
-                Menu("Add", systemImage: "plus") {
+                Menu(enumeratedDescs.count == 0 ? "Add" : "Add Language", systemImage: "plus") {
                     Text("Choose language")
                     InputLanguageButtons(disabledLanguages: disabledLanguages, onSelect: { addLanguage(code: $0.code) })
                 }

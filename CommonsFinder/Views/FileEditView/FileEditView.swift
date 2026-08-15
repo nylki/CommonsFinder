@@ -224,7 +224,7 @@ struct FileEditView: View {
                     model?.captions.remove(atOffsets: set)
                 }
 
-                Menu("Add", systemImage: "plus") {
+                Menu(enumeratedCaptions.count == 0 ? "Add" : "Add Language", systemImage: "plus") {
                     Text("Choose language")
                     InputLanguageButtons(
                         disabledLanguages: addedLanguages,
