@@ -49,6 +49,21 @@ struct FileDetailView: View {
         "\(mediaFileInfo.mediaFile.categories.hashValue)-\(mediaFileInfo.mediaFile.statements.hashValue)"
     }
 
+    private var caption: String? {
+        mediaFileInfo.mediaFile.localizedDisplayCaption
+    }
+
+    private var fullDescription: AttributedString? {
+        mediaFileInfo.mediaFile.attributedStringDescription
+    }
+
+    private var isFullDescriptionDifferentFromCaption: Bool {
+        guard let fullDescription, let caption else {
+            return false
+        }
+        // perf note: this is fast enough, no need to cache it.
+        return String(fullDescription.characters).trimmingCharacters(in: .whitespaces) != caption
+    }
 
     private func saveFileToLastViewed() {
         do {
@@ -246,7 +261,7 @@ struct FileDetailView: View {
     private var detailsView: some View {
         VStack(alignment: .leading) {
             VStack(alignment: .leading) {
-                if let caption = mediaFileInfo.mediaFile.localizedDisplayCaption {
+                if let caption {
                     Text(caption)
                         .font(.title3)
                         .bold()
@@ -257,7 +272,8 @@ struct FileDetailView: View {
                 }
             }
 
-            if let fullDescription = mediaFileInfo.mediaFile.attributedStringDescription {
+
+            if let fullDescription, isFullDescriptionDifferentFromCaption {
                 ViewThatFits(in: .vertical) {
                     if !isDescriptionExpanded {
                         Text(fullDescription)

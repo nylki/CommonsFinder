@@ -51,7 +51,6 @@ extension AttributedString {
             }
 
             attributedString.foregroundColor = .primary
-
             return attributedString
         } catch {
             return nil
