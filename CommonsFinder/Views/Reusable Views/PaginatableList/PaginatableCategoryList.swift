@@ -18,7 +18,7 @@ struct PaginatableCategoryList: View {
             status: status,
             paginationRequest: paginationRequest,
             canPrewarmItem: { item in }
-        ) { item, _ in
+        ) { item, _, _ in
             CategoryTeaser(categoryInfo: item)
                 .frame(height: 185)
         }

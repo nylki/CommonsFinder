@@ -51,8 +51,6 @@ struct HorizontalWikiItemListSection: View {
         }
         .scrollTargetBehavior(.viewAligned)
         .animation(.default, value: items)
-        .compositingGroup()
-        .shadow(color: .black.opacity(0.15), radius: 10)
     }
 }
 

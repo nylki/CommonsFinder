@@ -20,6 +20,15 @@ extension MediaFile {
         }
     }
 
+    /// returns the localized version of the file full description, parsed as AttributedString
+    /// values are cached.
+    var attributedStringDescription: AttributedString? {
+        let preferredLanguage = Locale.current.wikiLanguageCodeIdentifier
+        let languageString = fullDescriptions.first { $0.languageCode == preferredLanguage } ?? fullDescriptions.first { $0.languageCode == "en" }
+        guard let localizedDescription = languageString?.string else { return nil }
+
+        return AttributedStringCache.shared[localizedDescription]
+    }
 
     /// either returns the localized caption, the localized description as String (converted as plaintext from its AttributedString version) and if neither exists, the displayName is returned
     var bestShortTitle: String {

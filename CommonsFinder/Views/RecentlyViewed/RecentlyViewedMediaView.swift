@@ -16,6 +16,7 @@ struct RecentlyViewedMediaView: View {
     @State private var order: SearchOrder = .newest
     @State private var searchText = ""
     @State private var isSearchPresented = false
+    @State private var containerWidth = 0.0
 
     @Environment(\.appDatabase) private var appDatabase
 
@@ -32,8 +33,11 @@ struct RecentlyViewedMediaView: View {
             } else {
                 LazyVStack(spacing: 20) {
                     ForEach(mediaFileInfos) { mediaFileInfo in
-                        MediaFileListItem(mediaFileInfo: mediaFileInfo)
+                        MediaFileListItem(mediaFileInfo: mediaFileInfo, containerWidth: containerWidth)
                     }
+                }
+                .onGeometryChange(for: CGFloat.self, of: { $0.size.width }) { newValue in
+                    containerWidth = newValue
                 }
                 .compositingGroup()
                 .scenePadding()

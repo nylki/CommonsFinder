@@ -1,5 +1,5 @@
 //
-//  DraftSheetModifer.swift
+//  ImportFilesModifer.swift
 //  CommonsFinder
 //
 //  Created by Tom Brewe on 08.10.24.
@@ -12,12 +12,10 @@ import PhotosUI
 import SwiftUI
 import os.log
 
-struct DraftSheetModifer: ViewModifier {
+struct ImportFilesModifer: ViewModifier {
     @Binding var importModel: FileImportModel?
 
-    @State private var draftedFileModels: [MediaFileDraftModel]?
-
-
+    @Environment(Navigation.self) private var navigation
     @Environment(\.appDatabase) private var appDatabase
     @Environment(\.dismiss) private var dismiss
 
@@ -64,26 +62,12 @@ struct DraftSheetModifer: ViewModifier {
 
     func body(content: Content) -> some View {
         content
-            .sheet(item: $draftedFileModels, onDismiss: { importModel = nil }) { draftedFileModels in
-
-                NavigationStack {
-                    if draftedFileModels.count == 1, let draftedFileModel = draftedFileModels.first {
-                        SingleImageDraftView(model: draftedFileModel)
-                    } else if draftedFileModels.count > 1 {
-                        Color.red.overlay {
-                            Text("Multiple files")
-                        }
-                    }
-
-                }
-            }
             .photosPicker(
                 isPresented: isPhotosPickerPresented,
                 selection: photosPickerSelection,
-                // NOTE: For now only allow 1 image until
-                // multi-upload is refined.
-                maxSelectionCount: 1,
+                maxSelectionCount: 10,
                 matching: .any(of: [.images]),
+                // `.compatible` is what converts images to jpeg files
                 preferredItemEncoding: .compatible,
                 photoLibrary: .shared()
             )
@@ -114,18 +98,48 @@ struct DraftSheetModifer: ViewModifier {
             }
             .onChange(of: importModel?.importStatus) {
                 guard let importModel, importModel.importStatus == .finished else { return }
-                let fileCount = importModel.editedDrafts.count
-                if fileCount == 1, let newDraftModel = importModel.editedDrafts.values.first {
-                    draftedFileModels = [newDraftModel]
+                let fileCount = importModel.importedItems.count
+                if fileCount == 1, let fileItem = importModel.importedItems.values.first {
+                    do {
+                        let newDraft = try MediaFileDraft(
+                            fileItem,
+                            isPartOfMultiDraft: false,
+                            newDraftOptions: importModel.newDraftOptions
+                        )
+                        navigation.editDraft(draft: newDraft)
+                    } catch {
+                        logger.error("Failed to create draft \(error)")
+                    }
                 } else if fileCount > 1 {
-                    draftedFileModels = Array(importModel.editedDrafts.values)
+                    let subDrafts: [MediaFileDraft] = importModel.importedItems.values.compactMap { fileItem in
+                        do {
+                            return try .init(
+                                fileItem,
+                                isPartOfMultiDraft: true,
+                                newDraftOptions: nil
+                            )
+                        } catch {
+                            logger.error("Failed to create draft \(error)")
+                            return nil
+                        }
+                    }
+                    let info = MultiDraftInfo(
+                        multiDraft: .init(newDraftOptions: importModel.newDraftOptions),
+                        drafts: subDrafts
+                    )
+                    navigation.editMultipleDrafts(multiDraftInfo: info)
                 }
-
             }
+            .modifier(
+                FileImportProgressOverlayModifier(
+                    options: importModel?.fileImporterOverlayOptions,
+                    onCancel: { importModel?.onFileImportCancel() }
+                ))
+
     }
 }
 
-extension [MediaFileDraftModel]: @retroactive Identifiable {
+extension [SingleDraftModel]: @retroactive Identifiable {
     public var id: String {
         self.reduce("") { partialResult, next in
             partialResult + next.id

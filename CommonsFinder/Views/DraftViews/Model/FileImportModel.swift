@@ -17,10 +17,8 @@ enum DraftError: Error {
     case filenameExistsAlready(name: String)
 }
 
-
-/// DraftModel models a drafting session where the user can add & remove files and also edit their metadata
 @Observable class FileImportModel: Identifiable {
-    private var photoImportTask: Task<Void, Error>?
+    private var importTask: Task<Void, Error>?
     let newDraftOptions: NewDraftOptions?
 
     var isPhotosPickerPresented = false
@@ -30,13 +28,37 @@ enum DraftError: Error {
     let id: UUID
 
     enum ImportStatus: Equatable {
-        case importing
+        case importing(importedFiles: Int, totalFilesToImport: Int?)
         case finished
+
+        var isImporting: Bool {
+            switch self {
+            case .importing(let importedFiles, let totalFilesToImport):
+                if let totalFilesToImport {
+                    importedFiles < totalFilesToImport
+                } else {
+                    true
+                }
+            case .finished:
+                false
+            }
+        }
     }
     var importStatus: ImportStatus?
 
-    /// The currently centered file in the scrollView that is being edited
-    var selectedID: MediaFileDraftModel.ID?
+    var fileImporterOverlayOptions: FileImportProgressOverlayModifier.Options? {
+        switch importStatus {
+        case .importing(let importedFiles, let totalFilesToImport):
+            if let totalFilesToImport, totalFilesToImport > 1 {
+                // for single files the import should fast enough to show an overlay
+                .init(value: importedFiles, total: totalFilesToImport)
+            } else {
+                nil
+            }
+        case .finished, nil:
+            nil
+        }
+    }
 
     var photosPickerSelection: [PhotosPickerItem] = [] {
         didSet {
@@ -44,24 +66,10 @@ enum DraftError: Error {
         }
     }
 
-    var editedDrafts: OrderedDictionary<MediaFileDraftModel.ID, MediaFileDraftModel>
-    var selectedDraft: MediaFileDraftModel? {
-        if let selectedID {
-            editedDrafts[selectedID]
-        } else {
-            nil
-        }
-    }
-
-    var fileCount: Int {
-        photosPickerSelection.count + editedDrafts.count
-    }
-
-    //    var draftsExistInDB: Bool = false
-
+    var importedItems: OrderedDictionary<FileItem.ID, FileItem>
 
     init(newDraftOptions: NewDraftOptions?) {
-        self.id = .init()
+        id = .init()
 
         switch newDraftOptions?.source {
         case .mediaLibrary: isPhotosPickerPresented = true
@@ -71,39 +79,14 @@ enum DraftError: Error {
         }
 
         self.newDraftOptions = newDraftOptions
-        self.importStatus = nil
-
-        editedDrafts = .init()
-    }
-
-    convenience init(existingDrafts: [MediaFileDraft], newDraftOptions: NewDraftOptions? = nil) {
-        self.init(newDraftOptions: newDraftOptions)
-        importStatus = .finished
-
-        for existingDraft in existingDrafts {
-            let model = MediaFileDraftModel(existingDraft: existingDraft)
-            editedDrafts[model.id] = model
-        }
-        if !existingDrafts.isEmpty {
-            // Check if drafts are known to the DB
-            // TODO: maybe init from ID in the first place?
-            //            do {
-            //                draftsExistInDB = try appDatabase.reader.read {
-            //                    try existingDrafts.count
-            //                        == MediaFileDraft
-            //                        .filter(ids: existingDrafts.map(\.id))
-            //                        .fetchCount($0)
-            //                }
-            //            } catch {
-            //                logger.error("Failed to check if drafts exist in DB \(error)")
-            //            }
-        }
+        importStatus = nil
+        importedItems = .init()
     }
 
     func handleNewPhotoItemSelection(oldValue: [PhotosPickerItem], currentValue: [PhotosPickerItem]) {
-        importStatus = .importing
+        importStatus = .importing(importedFiles: 0, totalFilesToImport: nil)
 
-        photoImportTask?.cancel()
+        importTask?.cancel()
         let itemIDs = Set(currentValue.compactMap(\.itemIdentifier))
         let oldItemIDs = Set(oldValue.compactMap(\.itemIdentifier))
         let addedItemIDs = itemIDs.subtracting(oldItemIDs)
@@ -111,10 +94,10 @@ enum DraftError: Error {
         // remove all previously imported items that are not in the selection anymore
 
         removedItemIDs.forEach { id in
-            editedDrafts.removeValue(forKey: id)
+            importedItems.removeValue(forKey: id)
         }
 
-        photoImportTask = Task<Void, Error> {
+        importTask = Task<Void, Error> {
             let photoItems = currentValue.filter {
                 if let itemIdentifier = $0.itemIdentifier {
                     addedItemIDs.contains(itemIdentifier)
@@ -123,13 +106,23 @@ enum DraftError: Error {
                 }
             }
 
+            let totalFilesToImport = photoItems.count
+            importStatus = .importing(
+                importedFiles: 0,
+                totalFilesToImport: totalFilesToImport
+            )
+
             // import data for all new files
             for photoItem in photoItems {
+                try Task.checkCancellation()
                 do {
                     let fileItem = try await FileItem.init(photoPickerItem: photoItem)
                     try Task.checkCancellation()
-                    let draft = try MediaFileDraftModel(fileItem: fileItem, newDraftOptions: newDraftOptions)
-                    editedDrafts[draft.id] = draft
+                    importedItems[fileItem.id] = fileItem
+                    importStatus = .importing(
+                        importedFiles: importedItems.count,
+                        totalFilesToImport: totalFilesToImport
+                    )
                 } catch {
                     logger.error("Failed to create fileItem of photo \(photoItem.itemIdentifier ?? ""): \(error)")
                 }
@@ -139,16 +132,16 @@ enum DraftError: Error {
     }
 
     func handleFileImport(result: Result<[URL], Error>) {
-        importStatus = .importing
-
         switch result {
         case .success(let fileURLs):
-            Task<Void, Error> {
+            importStatus = .importing(importedFiles: 0, totalFilesToImport: fileURLs.count)
+            importTask = Task<Void, Error> {
                 for url in fileURLs {
+                    try Task.checkCancellation()
                     do {
                         let fileItem = try await loadFileItem(url: url)
-                        let newDraft = try MediaFileDraftModel(fileItem: fileItem, newDraftOptions: newDraftOptions)
-                        editedDrafts[newDraft.id] = newDraft
+                        importedItems[fileItem.id] = fileItem
+                        importStatus = .importing(importedFiles: importedItems.count, totalFilesToImport: fileURLs.count)
                     } catch {
                         logger.error("Failed to import file. \(error)")
                     }
@@ -162,8 +155,9 @@ enum DraftError: Error {
     }
 
     func handleCameraImage(_ uiImage: UIImage, metadata: NSDictionary) throws {
-        importStatus = .importing
-        Task {
+        importStatus = .importing(importedFiles: 0, totalFilesToImport: 1)
+
+        importTask = Task<Void, Error> {
             var cameraLocation: CLLocation?
 
             do {
@@ -183,12 +177,16 @@ enum DraftError: Error {
 
 
             let fileItem = try FileItem.init(uiImage: uiImage, metadata: metadata, location: cameraLocation)
-            let newDraft = try MediaFileDraftModel(fileItem: fileItem, newDraftOptions: newDraftOptions)
-
-            editedDrafts[newDraft.id] = newDraft
+            importedItems[fileItem.id] = fileItem
             importStatus = .finished
         }
 
+    }
+
+    func onFileImportCancel() {
+        importTask?.cancel()
+        importedItems = .init()
+        importStatus = .none
     }
 
     private func loadFileItem(url: URL) async throws -> FileItem {

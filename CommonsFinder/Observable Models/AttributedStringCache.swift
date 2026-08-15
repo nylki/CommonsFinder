@@ -15,11 +15,11 @@
 
 import Foundation
 import ObservableLRUCache
+import SwiftSoup
+import SwiftUI
 import os.log
 
 @Observable final class AttributedStringCache {
-
-    // The key is explicitly generic as it could be a Q-item or P-item ID
     private var cache: ObservableLRUCache<String, AttributedString> = .init(countLimit: 250)
 
     @ObservationIgnored
@@ -53,10 +53,10 @@ import os.log
         }
     }
 
-    @concurrent func generateAttributedStrings(from strings: some Collection<String>) async -> [(String, AttributedString)] {
+    @concurrent private func generateAttributedStrings(from strings: some Collection<String>) async -> [(String, AttributedString)] {
         var result: [(String, AttributedString)] = []
         for string in strings {
-            let attributedString = await AttributedString(htmlOrString: string)
+            let attributedString = AttributedString.parse(htmlOrString: string) ?? .init()
             result.append((string, attributedString))
         }
         return result

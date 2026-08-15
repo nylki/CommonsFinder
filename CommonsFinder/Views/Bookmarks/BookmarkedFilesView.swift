@@ -20,6 +20,8 @@ struct BookmarkedFilesView: View {
 
     @Environment(\.appDatabase) private var appDatabase
 
+    @State private var containerWidth = 0.0
+
     var body: some View {
 
         ScrollView(.vertical) {
@@ -30,8 +32,11 @@ struct BookmarkedFilesView: View {
             } else {
                 LazyVStack(spacing: 20) {
                     ForEach(mediaFileInfos) { mediaFileInfo in
-                        MediaFileListItem(mediaFileInfo: mediaFileInfo)
+                        MediaFileListItem(mediaFileInfo: mediaFileInfo, containerWidth: containerWidth)
                     }
+                }
+                .onGeometryChange(for: CGFloat.self, of: { $0.size.width }) { newValue in
+                    containerWidth = newValue
                 }
                 .compositingGroup()
                 .scenePadding()

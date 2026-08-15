@@ -422,6 +422,7 @@ struct CategoryView: View {
                             NavigationLink(value: NavigationStackItem.relatedCategories(item, .sub)) {
                                 Label("Show Subcategories", systemImage: "arrow.down")
                             }
+                            .disabled(subCategoryModel?.isEmpty == true)
                         }
                     }
 

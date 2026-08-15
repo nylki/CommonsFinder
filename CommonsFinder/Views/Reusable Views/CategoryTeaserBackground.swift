@@ -37,38 +37,27 @@ struct CategoryTeaserBackground: View {
             .clipShape(.containerRelative)
         } else {
             fallbackBackground
-                .overlay {
-                    let stops: [Gradient.Stop] =
-                        switch colorScheme {
-                        case .light:
-                            [
-                                .init(color: .accent.opacity(0.2), location: 0),
-                                .init(color: .accent.opacity(0.25), location: 0.2),
-                                .init(color: .accent.opacity(0.5), location: 0.35),
-                                .init(color: .accent.opacity(1), location: 0.5),
-                                .init(color: .accent.opacity(1), location: 1),
-                            ]
-                        case .dark:
-                            [
-                                .init(color: .accent.opacity(0.15), location: 0),
-                                .init(color: .accent.opacity(0.15), location: 0.2),
-                                .init(color: .accent.opacity(0.2), location: 0.35),
-                                .init(color: .accent.opacity(0.4), location: 0.5),
-                                .init(color: .accent.opacity(1), location: 1),
-                            ]
-                        @unknown default:
-                            fatalError()
-                        }
-
-                    ContainerRelativeShape()
-                        .stroke(LinearGradient(stops: stops, startPoint: .top, endPoint: .bottom), lineWidth: 3)
+                .overlay(alignment: .topTrailing) {
+                    categoryIcon
                 }
-                .background(colorScheme == .light ? .white : .black)
-                .compositingGroup()
-                .drawingGroup()
         }
     }
 
+
+    @ViewBuilder
+    private var categoryIcon: some View {
+        iconForCategory(category)
+            .font(.system(size: 63))
+            .foregroundStyle(.accent.opacity(0.2))
+            .padding([.trailing, .top], 20)
+    }
+
+
+    private func iconForCategory(_ category: Category) -> Image {
+        // TODO: pick a fitting icon depending on wikidata info
+        // or category name (eg. category.commonsCategory?.localizedStandardContains("streets in")
+        return Image(systemName: "tag")
+    }
 
     @ViewBuilder
     private var fallbackBackground: some View {
@@ -76,23 +65,19 @@ struct CategoryTeaserBackground: View {
         case .light:
             LinearGradient(
                 stops: [
-                    .init(color: .accent.opacity(0.01), location: 0),
-                    .init(color: .accent.opacity(0.05), location: 0.2),
-                    .init(color: .accent.opacity(0.3), location: 0.45),
-                    .init(color: .accent.opacity(0.85), location: 0.85),
-                    .init(color: .accent.opacity(1), location: 1),
-                ], startPoint: .top, endPoint: .bottom)
-
-
+                    .init(color: Color(red: 0.929, green: 0.949, blue: 0.937), location: 0),
+                    .init(color: Color(red: 0.886, green: 0.922, blue: 0.898), location: 0.45),
+                    .init(color: Color(red: 0.726, green: 0.827, blue: 0.773), location: 1),
+                ], startPoint: .top, endPoint: .bottom
+            )
         case .dark:
             LinearGradient(
                 stops: [
-                    .init(color: .accent.opacity(0.1), location: 0),
-                    .init(color: .accent.opacity(0.15), location: 0.45),
-                    .init(color: .accent.opacity(0.4), location: 0.75),
-                    .init(color: .accent.opacity(1), location: 1),
-                ], startPoint: .top, endPoint: .bottom)
-
+                    .init(color: Color(red: 0.118, green: 0.231, blue: 0.180), location: 0),
+                    .init(color: Color(red: 0.106, green: 0.200, blue: 0.165), location: 0.45),
+                    .init(color: Color(red: 0.078, green: 0.140, blue: 0.110), location: 1),
+                ], startPoint: .top, endPoint: .bottom
+            )
         @unknown default:
             fatalError()
         }
@@ -102,10 +87,11 @@ struct CategoryTeaserBackground: View {
 #Preview {
     VStack {
         CategoryTeaserBackground(category: .earth)
-        CategoryTeaserBackground(category: .earthNoImage).frame(height: 70)
+            .clipShape(.rect(cornerRadius: 32))
         CategoryTeaserBackground(category: .earthNoImage)
+            .clipShape(.rect(cornerRadius: 32))
     }
     .padding()
-    .containerShape(.rect(cornerRadius: 32))
+
 
 }

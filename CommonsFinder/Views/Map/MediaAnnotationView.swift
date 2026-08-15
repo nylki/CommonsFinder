@@ -53,7 +53,6 @@ struct MediaAnnotationView: View {
             try? await Task.sleep(for: .milliseconds(25))
             isVisible = true
         }
-
     }
 
 }

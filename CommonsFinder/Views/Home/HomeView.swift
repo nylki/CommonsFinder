@@ -7,6 +7,7 @@
 
 import GRDBQuery
 import Nuke
+import NukeUI
 import SwiftUI
 import TipKit
 
@@ -14,7 +15,8 @@ struct HomeView: View {
     @Environment(Navigation.self) private var navigation
     @Environment(AccountModel.self) private var account
 
-    @Query(AllDraftsRequest()) private var drafts
+    @Query(AllSingleDraftsRequest()) private var drafts
+    @Query(AllMultiDraftsRequest()) private var multiDrafts
     @Query(AllRecentlyViewedMediaFileRequest(order: .desc, searchText: "")) private var recentlyViewedFiles
     @Query(AllBookmarksFileRequest(order: .desc, searchText: "")) private var bookmarkedFiles
     @Query(AllRecentlyViewedWikiItemsRequest()) private var recentlyViewedWikiItems
@@ -27,8 +29,8 @@ struct HomeView: View {
                 TipView(HomeTip())
                     .padding()
 
-                if !drafts.isEmpty {
-                    DraftsSection(drafts: drafts)
+                if !drafts.isEmpty || !multiDrafts.isEmpty {
+                    DraftsSection(drafts: drafts, multiDrafts: multiDrafts)
                         .transition(.blurReplace)
                 }
 
@@ -81,6 +83,7 @@ struct HomeView: View {
         }
         .frame(minWidth: 0, maxWidth: .infinity, minHeight: 0, maxHeight: .infinity)
         .animation(.default, value: drafts)
+        .animation(.default, value: multiDrafts)
         .animation(.default, value: recentlyViewedFiles)
         .animation(.default, value: account.activeUser)
         .toolbar {

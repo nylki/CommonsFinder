@@ -7,7 +7,7 @@
 
 import Foundation
 
-extension UserDefaults {
+nonisolated extension UserDefaults {
     var defaultPublishingLicense: DraftMediaLicense? {
         if let rawValue = string(forKey: "defaultPublishingLicense") {
             DraftMediaLicense(rawValue: rawValue)

@@ -1,5 +1,5 @@
 {
-  "originHash" : "6df43d7409cb0d1ec0f40bed5feba2b19c396c778eb3b7baab11dd40e27fca96",
+  "originHash" : "d0aca9afa317c1ecbd132b05391f8ffcb982f97104c424e83d69607fe09cc2ce",
   "pins" : [
     {
       "identity" : "frameup",
@@ -69,8 +69,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/nylki/Nuke",
       "state" : {
-        "branch" : "alternative-sliding-time-window-rate-limiter",
-        "revision" : "7bc94d64f3089de653ecadedd8d6e7ffa21805a2"
+        "branch" : "main",
+        "revision" : "d76471f342ba0f32a2b93e8afe055a0e87a20a69"
       }
     },
     {
@@ -148,10 +148,10 @@
     {
       "identity" : "swiftsoup",
       "kind" : "remoteSourceControl",
-      "location" : "https://github.com/scinfu/SwiftSoup.git",
+      "location" : "https://github.com/scinfu/SwiftSoup",
       "state" : {
-        "revision" : "6c7915e16f729857aec3e99068c361e58a00ed68",
-        "version" : "2.13.4"
+        "revision" : "8d6ad267714cac3ae747cefdd21f7a6665006e1f",
+        "version" : "2.13.7"
       }
     }
   ],

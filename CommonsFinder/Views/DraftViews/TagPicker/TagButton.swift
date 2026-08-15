@@ -42,7 +42,7 @@ struct TagButton: View {
                         Toggle(isOn: $tag.tagItem.pickedUsages[contains: .category]) {
                             Text("Category")
                         }
-                        .tint(.category)
+                        .tint(.categoryTagPicker)
                     }
                 }
 
@@ -50,7 +50,7 @@ struct TagButton: View {
                     Toggle(isOn: $tag.tagItem.pickedUsages[contains: .depict]) {
                         Text("Depicted")
                     }
-                    .tint(.depict)
+                    .tint(.depictTagPicker)
                 }
             }
             .padding()

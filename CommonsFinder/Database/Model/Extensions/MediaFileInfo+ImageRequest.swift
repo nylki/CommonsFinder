@@ -39,7 +39,7 @@ extension MediaFileInfo {
 
         if let thumbURL = mediaFile.thumbURL {
             let imageResize = ImageProcessors.Resize(size: .init(width: max, height: max))
-            var urlRequest = URLRequest(url: thumbURL, cachePolicy: .returnCacheDataElseLoad)
+            let urlRequest = URLRequest(url: thumbURL, cachePolicy: .returnCacheDataElseLoad)
             return .init(urlRequest: urlRequest, processors: [imageResize])
         }
         return nil
@@ -63,7 +63,7 @@ extension MediaFileInfo {
         let w = min(max, mediaFile.width ?? max)
         if let resizedURL = try? mediaFile.url.resizedCommonsImageURL(maxWidth: w) {
             let imageResize = ImageProcessors.Resize(size: .init(width: w, height: w))
-            var urlRequest = URLRequest(url: resizedURL, cachePolicy: .returnCacheDataElseLoad)
+            let urlRequest = URLRequest(url: resizedURL, cachePolicy: .returnCacheDataElseLoad)
             return .init(urlRequest: urlRequest, processors: [imageResize])
         }
         return nil
@@ -75,7 +75,7 @@ extension MediaFileInfo {
         let w = min(max, mediaFile.width ?? max)
         if let resizedURL = try? mediaFile.url.resizedCommonsImageURL(maxWidth: w) {
             let imageResize = ImageProcessors.Resize(size: .init(width: w, height: w))
-            var urlRequest = URLRequest(url: resizedURL, cachePolicy: .returnCacheDataElseLoad)
+            let urlRequest = URLRequest(url: resizedURL, cachePolicy: .returnCacheDataElseLoad)
             return .init(urlRequest: urlRequest, processors: [imageResize])
         }
         return nil
@@ -83,7 +83,7 @@ extension MediaFileInfo {
 
     func originalImageRequest(cachePolicy: URLRequest.CachePolicy = .returnCacheDataElseLoad) -> ImageRequest {
 
-        var urlRequest = URLRequest(url: mediaFile.url, cachePolicy: cachePolicy)
+        let urlRequest = URLRequest(url: mediaFile.url, cachePolicy: cachePolicy)
         return .init(urlRequest: urlRequest, processors: [])
     }
 
@@ -101,7 +101,23 @@ extension MediaFileInfo {
     }
 }
 
+enum DraftImageSize {
+    case full
+    case resized
+    case thumb
+}
+
 extension MediaFileDraft {
+    func imageRequest(size: DraftImageSize) -> ImageRequest? {
+        switch size {
+        case .full:
+            localFileRequestFull
+        case .resized:
+            localFileRequestResized
+        case .thumb:
+            localFileRequestResizedGridThumb
+        }
+    }
     var localFileRequestFull: ImageRequest? {
         if let fileURL = localFileURL() {
             return .init(url: fileURL, processors: [])
@@ -112,6 +128,14 @@ extension MediaFileDraft {
     var localFileRequestResized: ImageRequest? {
         if let fileURL = localFileURL() {
             let imageResize = ImageProcessors.Resize(size: .init(width: 500, height: 500))
+            return .init(url: fileURL, processors: [imageResize])
+        }
+        return nil
+    }
+
+    var localFileRequestResizedGridThumb: ImageRequest? {
+        if let fileURL = localFileURL() {
+            let imageResize = ImageProcessors.Resize(size: .init(width: 128, height: 128))
             return .init(url: fileURL, processors: [imageResize])
         }
         return nil

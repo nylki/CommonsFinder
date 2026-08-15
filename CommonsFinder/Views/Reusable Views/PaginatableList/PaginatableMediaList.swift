@@ -15,6 +15,8 @@ struct PaginatableMediaList: View {
 
     private let imagePrefetcher = ImagePrefetcher()
 
+    @State private var containerWidth = 500.0
+
     private func prewarmItem(_ item: MediaFileInfo) {
         if let imageRequest = item.thumbRequest {
             imagePrefetcher.startPrefetching(with: [imageRequest])
@@ -27,13 +29,15 @@ struct PaginatableMediaList: View {
             status: status,
             paginationRequest: paginationRequest,
             canPrewarmItem: prewarmItem
-        ) { item, itemOrNeighborVisible in
+        ) { item, paddedContainerWidth, itemOrNeighborVisible in
             let isImageLoadingAllowed = itemOrNeighborVisible || items.first == item
 
             MediaFileListItem(
                 mediaFileInfo: item,
+                containerWidth: paddedContainerWidth,
                 isImageLoadingAllowed: isImageLoadingAllowed
             )
+            .frame(width: paddedContainerWidth)
         }
     }
 }

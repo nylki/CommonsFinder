@@ -15,13 +15,6 @@ struct LicensePicker: View {
 
     @Environment(\.dismiss) private var dismiss
 
-    // TODO: show licensing tutorial image
-    // with some interaction:
-
-    //                Image(.licenseTutorial)
-    //                    .resizable()
-    //                    .scaledToFit()
-
     var body: some View {
         NavigationStack {
             VStack(alignment: .leading, spacing: 20) {
@@ -37,8 +30,6 @@ struct LicensePicker: View {
             }
             .compositingGroup()
             .scenePadding()
-
-            //            .shadow(radius: 200)
             .navigationTitle("Choose a License")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
@@ -54,7 +45,6 @@ struct LicensePicker: View {
             }
             .frame(minHeight: 0, maxHeight: .infinity)
             .background(Color(.secondarySystemBackground))
-
         }
         .presentationDetents([.large])
     }

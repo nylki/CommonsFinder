@@ -6,6 +6,7 @@
 //
 
 import CommonsAPI
+import CoreLocation
 import FrameUp
 import OrderedCollections
 import SwiftUI
@@ -172,9 +173,9 @@ struct TagPicker: View {
             guard let analysisInput else { return }
             fileAnalysis.startAnalyzingIfNeeded(analysisInput)
         }
-        .onChange(of: fileAnalysis.status(for: analysisInput), initial: true) {
+        .onChange(of: fileAnalysis.status(for: analysisInput), initial: true) { _, newValue in
             guard suggestedTags.isEmpty else { return }
-            if let result = fileAnalysis.status(for: analysisInput)?.result {
+            if let result = newValue?.result {
                 initSuggestedTags(fromCategories: result.nearbyCategories)
             }
         }
@@ -367,23 +368,12 @@ struct TagPicker: View {
 }
 
 extension TagPicker {
-    init(initialTags: [TagItem], draft: MediaFileDraft, onEditedTags: @escaping ([TagItem]) -> Void) {
+    init(initialTags: [TagItem], analysisInput: FileAnalysis.Input?, onEditedTags: @escaping ([TagItem]) -> Void) {
         self.initialTags = initialTags
-        self.analysisInput = .draft(draft)
+        self.analysisInput = analysisInput
         self.onEditedTags = onEditedTags
     }
 
-    init(initialTags: [TagItem], mediaFile: MediaFile, onEditedTags: @escaping ([TagItem]) -> Void) {
-        self.initialTags = initialTags
-        self.analysisInput = .mediaFile(mediaFile)
-        self.onEditedTags = onEditedTags
-    }
-
-    init(initialTags: [TagItem], onEditedTags: @escaping ([TagItem]) -> Void) {
-        self.initialTags = initialTags
-        self.analysisInput = .none
-        self.onEditedTags = onEditedTags
-    }
 }
 
 struct SafeAreaBarFallback<C: View>: ViewModifier {
@@ -438,13 +428,13 @@ private struct NavHeader: View {
             } label: {
                 HStack {
                     Text("\(categoryCount) categories")
-                        .underline(color: .category)
+                        .underline(color: .categoryTagPicker)
                         .bold()
                         .contentTransition(.numericText(value: Double(categoryCount)))
 
                     if categoryCount >= 1 {
                         Image(systemName: "checkmark.circle.fill")
-                            .foregroundStyle(.category)
+                            .foregroundStyle(.categoryTagPicker)
                             .transition(.scale)
                     }
                 }
@@ -460,13 +450,13 @@ private struct NavHeader: View {
             } label: {
                 HStack {
                     Text("\(depictCount) depicted concepts")
-                        .underline(color: .depict)
+                        .underline(color: .depictTagPicker)
                         .bold()
                         .contentTransition(.numericText(value: Double(depictCount)))
 
                     if depictCount >= 1 {
                         Image(systemName: "checkmark.circle.fill")
-                            .foregroundStyle(.depict)
+                            .foregroundStyle(.depictTagPicker)
                             .transition(.scale)
                     }
                 }
@@ -480,7 +470,7 @@ private struct NavHeader: View {
 
 
 #Preview(traits: .previewEnvironment) {
-    TagPicker(initialTags: [.init(.randomItem(id: "test"), pickedUsages: [.category, .depict])]) { pickedTags in
+    TagPicker(initialTags: [.init(.randomItem(id: "test"), pickedUsages: [.category, .depict])], analysisInput: nil) { pickedTags in
         print(pickedTags)
     }
 }

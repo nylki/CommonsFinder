@@ -13,8 +13,8 @@ import os.log
 extension View {
     @ViewBuilder
     func publishingErrorDetailsSheet(
-        _ publishingStatus: PublishingState?,
-        _ error: PublishingError?,
+        _ publishingStatus: MediaFileDraft.PublishingState?,
+        _ error: MediaFileDraft.PublishingError?,
         isPresented: Binding<Bool>,
         onEditDraft: @escaping () -> Void,
         onDeleteDraft: @escaping () -> Void,
@@ -34,8 +34,8 @@ extension View {
 }
 
 private struct PublishingErrorDetailsSheetModifier: ViewModifier {
-    let publishingStatus: PublishingState?
-    let error: PublishingError?
+    let publishingStatus: MediaFileDraft.PublishingState?
+    let error: MediaFileDraft.PublishingError?
     @Binding var isPresented: Bool
     let onEditDraft: () -> Void
     let onDeleteDraft: () -> Void
@@ -59,8 +59,8 @@ private struct PublishingErrorDetailsSheetModifier: ViewModifier {
 }
 
 private struct PublishingErrorDetailsSheet: View {
-    let publishingStatus: PublishingState?
-    let error: PublishingError?
+    let publishingStatus: MediaFileDraft.PublishingState?
+    let error: MediaFileDraft.PublishingError?
 
     let onEditDraft: () -> Void
     let onDeleteDraft: () -> Void
@@ -68,29 +68,12 @@ private struct PublishingErrorDetailsSheet: View {
 
     @Environment(UploadManager.self) private var uploadManager
 
-    private var isContinuationPossible: Bool {
-        return switch error {
-        case .twoFactorCodeRequired, .emailCodeRequired:
-            true
-        case .uploadWarnings(let warnings):
-            if warnings.contains(.duplicate(name: nil)) || warnings.contains(.duplicateArchive) {
-                false
-            } else {
-                true
-            }
-        case .appQuitOrCrash:
-            true
-        case .urlError(_, _):
-            true
-        case .error(_, _):
-            true
-        case nil:
-            true
-        }
+    private var isRetryPossible: Bool {
+        error.isRetryPossible
     }
 
     private var isEditingPossible: Bool {
-        return switch publishingStatus {
+        switch publishingStatus {
         case .uploading(_):
             true
         case .uploaded(_):
@@ -113,12 +96,12 @@ private struct PublishingErrorDetailsSheet: View {
             ScrollView {
                 detailsList
             }
-            .safeAreaInset(edge: .bottom) {
-                bottomButtons
-            }
             .scenePadding([.horizontal, .top])
             .navigationBarTitle("", displayMode: .inline)
             .toolbar {
+                ToolbarItem(placement: .bottomBar) {
+                    bottomToolbarButton
+                }
                 ToolbarItem(placement: .title) {
                     Text("\(Image(systemName: "square.and.arrow.up.trianglebadge.exclamationmark.fill")) Upload Error")
                         .bold()
@@ -151,63 +134,13 @@ private struct PublishingErrorDetailsSheet: View {
     @ViewBuilder
     private var detailsList: some View {
         VStack {
-            //            GroupBox(label: Label("Last Status", systemImage: "info.circle")) {
-            //                HStack {
-            //                    switch publishingStatus {
-            //                    case .uploading(let fractionCompleted):
-            //                        Text("The data upload was interrupted at \(Int(fractionCompleted * 100))%.")
-            //                    case .uploaded(_), .unstashingFile(_):
-            //                        Text("File was uploaded, but is still **un-published** and also **missing structured metadata**.")
-            //                    case .creatingWikidataClaims:
-            //                        Text("file was uploaded and published. Captions and other structured metadata are not yet created though.")
-            //                    case .published, nil:
-            //                        EmptyView()
-            //                    }
-            //                    Spacer(minLength: 0)
-            //                }
-            //                .padding(5)
-            //
-            //            }
-
-
             GroupBox {
                 HStack {
-                    switch error {
-                    case .appQuitOrCrash:
-                        Text("The app was closed or crashed while uploading.")
-                    case .uploadWarnings(let warnings):
-                        ForEach(warnings) { warning in
-                            Text(warning.localizedStringResource)
-                                .padding(.bottom)
-                        }
-                    case .urlError(let urlErrorCode, let errorDescription):
-                        let errorCode = URLError.Code(rawValue: urlErrorCode)
-
-                        switch errorCode {
-                        case .networkConnectionLost: Text("Network connection lost")
-                        case .badServerResponse: Text("Bad server response")
-                        case .notConnectedToInternet: Text("not connected To the Internet")
-                        case .dataLengthExceedsMaximum: Text("Data-length exceeds maximum")
-                        case .secureConnectionFailed: Text("Secure connection failed")
-                        case .timedOut: Text("Network Connection timed out")
-                        case .dnsLookupFailed: Text("DNS Lookup Failed")
-                        case .userAuthenticationRequired: Text("User authentication required")
-                        default: Text(errorDescription)
-                        }
-
-                    case .error(let errorDescription, _):
-
-                        Text(errorDescription ?? "Unknown Error")
-                            .padding(.bottom, 5)
-                    case .emailCodeRequired, .twoFactorCodeRequired:
-                        Text(
-                            "Authentication failed: 2-factor code required"
-                        )
-                    case .none:
+                    if let errorDescription = error?.errorDescription {
+                        Text(errorDescription)
+                    } else {
                         Text("There may have been a problem during upload, but no details can be display. Please report this as a Bug in the app, thanks!")
-
                     }
-
                     Spacer(minLength: 0)
                 }
                 .monospaced()
@@ -274,26 +207,26 @@ private struct PublishingErrorDetailsSheet: View {
     }
 
     @ViewBuilder
-    private var bottomButtons: some View {
+    private var bottomToolbarButton: some View {
         if uploadManager.isVerifyingErrorDrafts {
             ProgressView().progressViewStyle(.circular)
         } else {
-            if isContinuationPossible {
+            if isRetryPossible {
                 Button(action: onContinueUpload) {
-                    Label(
-                        publishingStatus == .creatingWikidataClaims ? "Finish Details" : "Retry Upload",
-                        systemImage: "arrow.trianglehead.2.clockwise.rotate.90"
-                    )
-                    .frame(minWidth: 0, maxWidth: .infinity)
-                    .padding(10)
+                    HStack {
+                        Image(systemName: "arrow.trianglehead.2.clockwise.rotate.90")
+                        Text(publishingStatus == .creatingWikidataClaims ? "Finish Details" : "Retry Upload")
+                    }
+                    .padding()
                 }
-                .glassButtonStyle(prominent: true)
+                //                .glassButtonStyle(prominent: true)
             } else {
                 Button(role: .destructive, action: onDeleteDraft) {
-                    Label("Delete Draft", systemImage: "trash")
-                        .frame(minWidth: 0, maxWidth: .infinity)
-                        .padding(10)
-                        .foregroundStyle(.red)
+                    HStack {
+                        Image(systemName: "trash")
+                        Text("Delete Draft")
+                    }
+                    .foregroundStyle(.red)
                 }
                 .glassButtonStyle()
             }

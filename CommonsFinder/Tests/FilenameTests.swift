@@ -7,6 +7,7 @@
 
 import Foundation
 import Testing
+import UniformTypeIdentifiers
 
 // See: https://commons.wikimedia.org/wiki/Commons:File_naming/en
 // See also: https://commons.wikimedia.org/wiki/MediaWiki:Titleblacklist
@@ -22,15 +23,19 @@ nonisolated private let badFileTitles: [String] = [
 ]
 
 @Test(arguments: badFileTitles)
-func testBadFileSanitization(badFilename: String) {
-
-    switch LocalFileNameValidation.validateFileName(badFilename) {
+func testBadFileSanitization(badTitle: String) {
+    let badFilename = badTitle.appendingFileExtension(conformingTo: .jpeg)
+    switch LocalFileNameValidation.validateFilenameWithSuffix(badFilename) {
     case .success(_): Issue.record("\(badFilename) succeded, but is expected to be bad.")
     case .failure(_): break
     }
 
-    let sanitized = LocalFileNameValidation.sanitizeFileName(badFilename)
-    switch LocalFileNameValidation.validateFileName(sanitized) {
+    let sanitized =
+        LocalFileNameValidation
+        .sanitizeFileName(badTitle)
+        .appendingFileExtension(conformingTo: .jpeg)
+
+    switch LocalFileNameValidation.validateFilenameWithSuffix(sanitized) {
     case .success(_): break
     case .failure(let failure): Issue.record(failure)
     }

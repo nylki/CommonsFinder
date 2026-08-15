@@ -345,6 +345,8 @@ struct DatabaseTests {
                 ]
             ),
         ])
+
+
     func testUpsertWithRedirection(categories: [Category], redirections: [Category.WikidataID: Category.WikidataID]) throws {
         let dbQueue = try DatabaseQueue(configuration: AppDatabase.makeConfiguration())
         let repo = try AppDatabase(dbQueue)
@@ -403,6 +405,44 @@ struct DatabaseTests {
                 )
             }
         }
+    }
+
+    @Test("Creation of MultiDraft with sub-drafts and automatic deletion of sub-drafts on MultiDraft delete (cascade rule)")
+    func testMultiDraftCreationAndDeletion() throws {
+        let dbQueue = try DatabaseQueue(configuration: AppDatabase.makeConfiguration())
+        let repo = try AppDatabase(dbQueue)
+
+        let sampleDrafts: [MediaFileDraft] = [
+            MediaFileDraft.makeRandomDraft(id: "Sub-Draft-A", named: "Sub-Draft-A"),
+            MediaFileDraft.makeRandomDraft(id: "Sub-Draft-B", named: "Sub-Draft-B"),
+            MediaFileDraft.makeRandomDraft(id: "Sub-Draft-C", named: "Sub-Draft-C"),
+            MediaFileDraft.makeRandomDraft(id: "Sub-Draft-D", named: "Sub-Draft-D"),
+            MediaFileDraft.makeRandomDraft(id: "Sub-Draft-E", named: "Sub-Draft-E"),
+        ]
+
+
+        let sampleMultiDraftInfo = try repo.upsertAndFetch(
+            MultiDraftInfo(multiDraft: .init(newDraftOptions: nil), drafts: sampleDrafts)
+        )
+        let multiDraftID = sampleMultiDraftInfo.multiDraft.id
+
+        let inserted = try #require(
+            try repo.fetchMultiDraftInfo(id: multiDraftID),
+            "We expect to get a category back after inserting."
+        )
+        #expect(inserted.drafts.count == sampleDrafts.count)
+
+        let didDelete = try repo.deleteMultiDraft(id: multiDraftID)
+        #expect(didDelete, "We expect that the MultiDraft can be deleted.")
+
+        let fetched = try repo.fetchMultiDraftInfo(id: multiDraftID)
+        #expect(fetched == nil, "We expect not to be able to fetch the MultiDraftInfo after deletion")
+
+
+        let allSubdraftsDeleted = try sampleDrafts.allSatisfy { draft in
+            try repo.draftExists(id: draft.id) == false
+        }
+        #expect(allSubdraftsDeleted, "We expect all sub-drafts to be deleted together with the parent multi-draft via the CASCADE-rule (SQL).")
     }
 }
 

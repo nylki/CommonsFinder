@@ -14,10 +14,13 @@ import UniformTypeIdentifiers
 import os.log
 
 extension MediaFileUploadable {
-    init(_ draft: MediaFileDraft, appWikimediaUsername: String) throws(UploadManagerError) {
-        guard let localFileURL = draft.localFileURL() else {
+    /// when the multiDraft is present, empty fields in the draft will be filled from the multiDraft if they should be missing
+    init(_ draft: MediaFileDraft, multiDraft: MultiDraft? = nil, appWikimediaUsername: String) throws(UploadManagerError) {
+        guard draft.localFileURL() != nil else {
             throw UploadManagerError.fileURLMissing(id: draft.id)
         }
+
+        let uploadFileURL = try draft.preparedUploadFileURL()
 
         // This will be the final filename that **cannot** be renamed later online
         // so we have to make sure it is correct and has the correct file extension.
@@ -28,20 +31,24 @@ extension MediaFileUploadable {
             throw UploadManagerError.finalFilenameMissing
         }
 
-        guard let license = draft.license else {
+        guard let license = draft.license ?? multiDraft?.license else {
             assertionFailure("The license must have been chosen before uploading.")
             throw UploadManagerError.licenseMissing
         }
 
-        guard let source = draft.source else {
+        guard let source = draft.source ?? multiDraft?.source else {
             assertionFailure("The source must have been chosen before uploading.")
             throw UploadManagerError.sourceMissing
         }
 
-        guard let author = draft.author else {
+        guard let author = draft.author ?? multiDraft?.author else {
             assertionFailure("The author must have been set before uploading.")
             throw UploadManagerError.authorMissing
         }
+
+        let mimeType = draft.mimeType
+
+        let locationHandling = draft.locationHandling ?? multiDraft?.locationHandling
 
         // see: https://commons.wikimedia.org/wiki/Template:Information
         let wikitextDate: String = draft.inceptionDate.formatted(.iso8601.year().month().day())
@@ -60,7 +67,14 @@ extension MediaFileUploadable {
         var depictStatements: [WikidataClaim] = []
         var categories: [String] = ["Uploaded with CommonsFinder", "Mobile upload"]
 
-        for tag in draft.tags {
+        let tags: [TagItem] =
+            if draft.tags.isEmpty {
+                multiDraft?.tags ?? []
+            } else {
+                draft.tags
+            }
+
+        for tag in tags {
             lazy var wikidataItemID = tag.baseItem.wikidataItemID
             lazy var commonsCategory = tag.baseItem.commonsCategory
 
@@ -130,7 +144,7 @@ extension MediaFileUploadable {
         let exifData = draft.loadExifData()
         let exifCoordinate = exifData?.coordinate
 
-        switch draft.locationHandling {
+        switch locationHandling {
         case .exifLocation:
             if let exifData, let exifCoordinate {
                 let precision =
@@ -206,29 +220,38 @@ extension MediaFileUploadable {
                 statements.append(.height(height))
             }
 
-            if let fileURL = draft.localFileURL() {
-                if let fileAttributes = try? FileManager.default.attributesOfItem(atPath: fileURL.path()),
-                    let bytes = fileAttributes[.size] as? Int64
-                {
-                    statements.append(.dataSize(bytes))
-                }
+            if let fileAttributes = try? FileManager.default.attributesOfItem(atPath: uploadFileURL.path()),
+                let bytes = fileAttributes[.size] as? Int64
+            {
+                statements.append(.dataSize(bytes))
+            }
 
-                do {
-                    let sha1 = try Insecure.SHA1
-                        .hash(data: Data(contentsOf: fileURL))
-                        .map { String(format: "%02hhx", $0) }
-                        .joined()
+            do {
+                let sha1 = try Insecure.SHA1
+                    .hash(data: Data(contentsOf: uploadFileURL))
+                    .map { String(format: "%02hhx", $0) }
+                    .joined()
 
-                    statements.append(.sha1Checksum(sha1))
-                } catch {
-                    throw .failedToReadFileData
-                }
+                statements.append(.sha1Checksum(sha1))
+            } catch {
+                throw .failedToReadFileData
             }
         }
 
-        statements.append(.mimeType(draft.mimeType))
+        statements.append(.mimeType(mimeType))
 
-        let nonEmptyDescriptions: [(languageCode: LanguageCode, string: String)] = draft.captionWithDesc.compactMap {
+        let captionWithDesc =
+            if draft.captionWithDesc.isEmpty || draft.captionWithDesc.allSatisfy({ $0.caption.isEmpty && $0.fullDescription.isEmpty }) {
+                multiDraft?.captionWithDesc ?? []
+            } else {
+                draft.captionWithDesc
+            }
+
+        let captions: [LanguageString] = captionWithDesc.map {
+            .init($0.caption, languageCode: $0.languageCode)
+        }
+
+        let nonEmptyDescriptions: [(languageCode: LanguageCode, string: String)] = captionWithDesc.compactMap {
             $0.fullDescription.isEmpty ? nil : ($0.languageCode, $0.fullDescription)
         }
         var wikitextDescriptions: String = ""
@@ -240,7 +263,7 @@ extension MediaFileUploadable {
                 }
                 .joined(separator: "\n")
 
-            wikitextDescriptions = "|description=\(formattedWikitextDescriptions)"
+            wikitextDescriptions = formattedWikitextDescriptions
         }
 
         let wikitextCategories =
@@ -257,7 +280,7 @@ extension MediaFileUploadable {
         let wikiText = """
             =={{int:filedesc}}==
             {{Information
-            \(wikitextDescriptions)
+            |description=\(wikitextDescriptions)
             |date={{ISOdate|\(wikitextDate)}}
             |source=\(wikitextSource)
             |author=\(wikitextAuthor)
@@ -274,16 +297,11 @@ extension MediaFileUploadable {
             \(testUploadString)
             """
 
-
-        let captions: [LanguageString] = draft.captionWithDesc.map {
-            .init($0.caption, languageCode: $0.languageCode)
-        }
-
         self.init(
             id: draft.id,
-            fileURL: localFileURL,
+            fileURL: uploadFileURL,
             filename: finalFileName,
-            mimetype: draft.mimeType,
+            mimetype: mimeType,
             claims: statements,
             captions: captions,
             wikitext: wikiText

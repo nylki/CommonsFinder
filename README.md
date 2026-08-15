@@ -65,7 +65,6 @@ Those above have priority, but there are many more things planned. Here is a rou
 - visible qualifiers for depict items etc.
 - privacy features: eg. support face and number plate detection, to allow the user to blur face and number plates without using an external image editor
 - investigate how to allow users to contribute to recurring events and contests like "wiki loves earth" without manually editing wikitext (if thats possible)
-- explore if OAuth is feasible. It would be great, because log-in would be easier when the user already has the credentials stored in the keychain for the wikimedia domains. Technically, it should be possible but there is conflicting information regarding security, eg. if it's ok to use inside an app or if it should only be used in hosted applications. This topic needs more investigation and communication with other people from the Wikimedia Foundation
 - audio file support, video support, 3d-files?
 
 At some point I'd also love to see an iPadOS and MacOS adaptation. This should not be too difficult, since the UI-code is mainly SwiftUI and should be relatively straight-forward to port and adapt to other Apple platforms in the future.

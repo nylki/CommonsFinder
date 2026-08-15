@@ -140,7 +140,7 @@ struct FileEditView: View {
         .fullScreenCover(isPresented: $isShowingTagsPicker) {
             TagPicker(
                 initialTags: model?.tags ?? resolvedTags,
-                mediaFile: mediaFileInfo.mediaFile,
+                analysisInput: .mediaFile(mediaFileInfo.mediaFile),
                 onEditedTags: {
                     model?.tags = $0
                 }

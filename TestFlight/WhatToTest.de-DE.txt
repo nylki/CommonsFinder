@@ -1,5 +1,13 @@
-CommonsFinder benutzt jetzt das neuere und sicherere OAuth 2 zum authentizifieren mit Wikimedia.
-Beim nächsten öffnen wird sich daher ein neuer Login-Dialog öffnen.
-″
-Außerdem sind nun alle Wikimedia-Sprachen für Bildbeschr″eibungen (Hochladen/Editieren) möglich.
-Die Eingabesprachen können in den Einstellungen angepasst werden.
+Multi-File-Upload
+
+Du kannst jetzt mehrere Bilder in einem Rutsch hochladen ohne Beschreibungen und Kategorien von neu eingeben zu müssen.
+Der Prozess ist zweistufig. Am Anfang können Beschreibung, Kategorien etc. vergeben werden, die für alle Dateien gelten sollen. Im zweiten Schritt kann jede  Datei einzeln nochmal bearbeitet und etwa Beschreibungen angepasst werden.
+
+
+Fixes und Verbesserungen
+
+- Design-Anpassungen der Kategorie-Kacheln
+
+- Die volle Bildbeschreibung (wikitext) wird jetzt nicht gedoppelt, wenn die Kurzbeschreibung identisch ist
+
+- Upload-Dialog: Ein tippen auf die Karte öffnet nun eine vergrößerte Kartenansicht
