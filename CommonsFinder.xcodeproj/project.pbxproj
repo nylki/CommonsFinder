@@ -226,6 +226,7 @@
 				Utilities/GeoPlacemarkCache.swift,
 				Utilities/GeoVectorMath.swift,
 				Utilities/Logging.swift,
+				Utilities/Maintenance.swift,
 				Utilities/MediaDownloading.swift,
 				Utilities/ValidationUtils.swift,
 				Utilities/zippedFlatMap.swift,
