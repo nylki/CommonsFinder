@@ -13,7 +13,7 @@ import os.log
 
 /// Provides data access functions to the API or DB
 //  To be refined with more DB-first searches and fetchDate comparisons. (like `fetchCombinedTagsFromDatabaseOrAPI`)
-enum DataAccess {
+nonisolated enum DataAccess {
     static func refreshMediaFileFromNetwork(id: MediaFile.ID, appDatabase: AppDatabase) async {
         do {
             guard
@@ -290,7 +290,6 @@ enum DataAccess {
             .compactMap(\.mainItem?.id)
 
         let commonsCategories = mediaFiles.flatMap(\.categories)
-
 
         let result = try await DataAccess.fetchCombinedCategoriesFromDatabaseOrAPI(
             wikidataIDs: depictWikdataIDs,

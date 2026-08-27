@@ -110,7 +110,7 @@ struct FileDetailView: View {
                 isPresented: $isShowingFullscreenImage
             )
             .sheet(isPresented: $isShowingEditSheet) {
-                FileEditView(mediaFileInfo: mediaFileInfo, resolvedTags: resolvedTags)
+                FileEditView(id: mediaFileInfo.id)
             }
             .alert("Failed to Publish", isPresented: $isShowingEditingError, presenting: editingError) { _ in
                 Button("OK", role: .cancel) {}

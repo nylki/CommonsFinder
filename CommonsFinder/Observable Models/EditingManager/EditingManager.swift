@@ -159,12 +159,7 @@ import os.log
                     )
                 }
                 status[id] = .finishedAndPerformingRefresh
-                let refreshed = try await Networking.shared.api.fetchFullFileMetadata(.pageids([mediaFile.id])).first
-
-                if let refreshed {
-                    let refreshedMediaFile = MediaFile(apiFileMetadata: refreshed)
-                    try appDatabase.upsert([refreshedMediaFile])
-                }
+                await DataAccess.refreshMediaFileFromNetwork(id: mediaFile.id, appDatabase: appDatabase)
                 status[id] = nil
 
             } catch {

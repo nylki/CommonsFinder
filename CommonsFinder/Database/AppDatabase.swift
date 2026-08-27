@@ -341,7 +341,7 @@ extension AppDatabase {
 
 // MARK: - MediaFile Writes
 
-extension AppDatabase {
+nonisolated extension AppDatabase {
     /// Inserts a media file and returns the inserted media file.
     @discardableResult
     func insert(_ imageModel: MediaFile) throws -> MediaFile {
@@ -476,7 +476,7 @@ extension AppDatabase {
 }
 
 // MARK: - Category Writes
-extension AppDatabase {
+nonisolated extension AppDatabase {
     @discardableResult
     func upsert(_ item: Category) throws -> Category? {
         try upsert([item]).first
