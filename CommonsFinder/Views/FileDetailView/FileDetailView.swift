@@ -59,7 +59,7 @@ struct FileDetailView: View {
 
     private var isFullDescriptionDifferentFromCaption: Bool {
         guard let fullDescription, let caption else {
-            return false
+            return true
         }
         // perf note: this is fast enough, no need to cache it.
         return String(fullDescription.characters).trimmingCharacters(in: .whitespaces) != caption
