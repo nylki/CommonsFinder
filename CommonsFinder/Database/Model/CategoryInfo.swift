@@ -8,7 +8,7 @@
 import Foundation
 import GRDB
 
-struct CategoryInfo: FetchableRecord, Equatable, Hashable, Codable {
+nonisolated struct CategoryInfo: FetchableRecord, Equatable, Hashable, Codable {
     var base: Category
     var itemInteraction: ItemInteraction?
 
@@ -34,14 +34,8 @@ struct CategoryInfo: FetchableRecord, Equatable, Hashable, Codable {
     }
 }
 
-extension CategoryInfo: Identifiable {
-    // NOTE: The base wikidataItem _must_ have atleast one of wikidataId or commonsCategory
-    // as defined in the DB constraint (see database.swift), so it should always be safe to assume
-    // that it is identifiable by one of them.
-    // However we cannot make the base-item itself identifiable as that would be problematic for several reason
-    // mainly not being sure if the item is already persisted with its auto-incremented id.
-    // see: https://github.com/groue/GRDB.swift/issues/1435#issuecomment-1740857712).
-    var id: String { (base.wikidataId ?? base.commonsCategory)! }
+nonisolated extension CategoryInfo: Identifiable {
+    var id: String { base.composedID }
 }
 
 extension CategoryInfo {

@@ -8,11 +8,31 @@
 import CoreLocation
 import Foundation
 import ImageIO
+import LRUCache
 import os.log
 
 enum ExifExtractionError: Error {
     case failedToReadExif
 }
+
+nonisolated struct ExifCache {
+    private let cache: LRUCache<URL, ExifData> = .init(countLimit: 20, clearsOnMemoryPressure: true)
+
+    static let shared: ExifCache = .init()
+
+    func data(for url: URL?) -> ExifData? {
+        guard let url else { return nil }
+        if let exifData = cache.value(forKey: url) {
+            return exifData
+        } else {
+            let exifData = try? ExifData(url: url)
+            cache.setValue(exifData, forKey: url)
+            return exifData
+        }
+    }
+
+}
+
 
 // Adapted from https://gist.github.com/lukebrandonfarrell/961a6dbc8367f0ac9cabc89b0052d1fe
 nonisolated struct ExifData: Codable, Equatable, Hashable {

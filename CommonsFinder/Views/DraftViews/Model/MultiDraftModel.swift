@@ -203,7 +203,7 @@ enum MultiDraftModelError: Error {
     lazy var exifData: [MediaFileDraft.ID: ExifData] = {
         var result: [MediaFileDraft.ID: ExifData] = [:]
         for subDraftModel in subDraftModels.values {
-            if let exifData = subDraftModel.draft.loadExifData() {
+            if let exifData = subDraftModel.draft.loadCachedExifData() {
                 result[subDraftModel.id] = exifData
             }
         }

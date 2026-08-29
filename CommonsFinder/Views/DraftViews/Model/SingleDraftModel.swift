@@ -28,7 +28,7 @@ enum SingleDraftModelError: Error {
 
     @ObservationIgnored
     lazy var exifData: ExifData? = {
-        draft.loadExifData()
+        draft.loadCachedExifData()
     }()
 
     /// Use an already fully initialized draft

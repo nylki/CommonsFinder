@@ -5,6 +5,7 @@
 //  Created by Tom Brewe on 11.07.25.
 //
 
+import CoreLocation
 import Foundation
 
 struct ImageAnalysisResult: Equatable, Hashable, CustomDebugStringConvertible {

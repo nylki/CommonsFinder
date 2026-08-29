@@ -479,14 +479,14 @@ extension AppDatabase {
 nonisolated extension AppDatabase {
     @discardableResult
     func upsert(_ item: Category) throws -> Category? {
-        try upsert([item]).first
+        try upsertAndFetchOrdered([item]).first
     }
 
     /// inserts or updates all Categories while retaining any `itemInteractionID` if it already is set, and returns the inserted media files.
     /// Optionally also creates redirect items (as returned from the API), expecting the format [fromWikidataID:toWikidataID] in the same transaction.
 
     @discardableResult
-    func upsert(_ items: [Category], handleRedirections redirectItems: [Category.WikidataID: Category.WikidataID]? = nil) throws -> [Category] {
+    func upsertAndFetchOrdered(_ items: [Category], handleRedirections redirectItems: [Category.WikidataID: Category.WikidataID]? = nil) throws -> [Category] {
 
         try dbWriter.write { db in
             let resultIDs = items.compactMap { item in
@@ -646,7 +646,9 @@ nonisolated extension AppDatabase {
                 }
             }
 
-            return try Category.fetchAll(db, ids: resultIDs)
+            let fetched = try Category.fetchAll(db, ids: resultIDs)
+            let byID = Dictionary(fetched.map { ($0.id, $0) }, uniquingKeysWith: { first, _ in first })
+            return resultIDs.compactMap { byID[$0] }
         }
     }
 
@@ -1041,6 +1043,16 @@ nonisolated extension AppDatabase {
             resolveRedirections: resolveRedirections
         )
         .first
+    }
+
+    func fetchCategoryInfos(ids: [Int64]) throws -> [CategoryInfo] {
+        try dbWriter.read { db in
+            try Category
+                .filter(ids: ids)
+                .including(optional: Category.itemInteraction)
+                .asRequest(of: CategoryInfo.self)
+                .fetchAll(db)
+        }
     }
 
     func fetchCategoryInfos(commonsCategories: [String]) throws -> [CategoryInfo] {

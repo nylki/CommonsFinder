@@ -153,9 +153,9 @@ nonisolated
     extension MediaFileDraft
 {
     /// exifData is created lazily and is not saved into the DB
-    nonisolated func loadExifData() -> ExifData? {
+    nonisolated func loadCachedExifData() -> ExifData? {
         if let url = self.localFileURL() {
-            try? ExifData(url: url)
+            ExifCache.shared.data(for: url)
         } else {
             nil
         }
@@ -343,7 +343,7 @@ nonisolated extension MediaFileDraft {
 
 
         // Read EXIF-Data and update relevant values
-        if let exifData = loadExifData() {
+        if let exifData = loadCachedExifData() {
             if !isPartOfMultiDraft {
                 locationHandling = .exifLocation
             }

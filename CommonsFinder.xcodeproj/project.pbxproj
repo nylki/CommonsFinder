@@ -22,6 +22,7 @@
 		E26D503C2DA5A75F00621D1C /* CommonsAPI in Frameworks */ = {isa = PBXBuildFile; productRef = E26D503B2DA5A75F00621D1C /* CommonsAPI */; };
 		E26ED9932FFC11680089B9C9 /* SwiftSoup in Frameworks */ = {isa = PBXBuildFile; productRef = E26ED9922FFC11680089B9C9 /* SwiftSoup */; };
 		E26ED9952FFC11680089B9C9 /* SwiftSoupProfile in Frameworks */ = {isa = PBXBuildFile; productRef = E26ED9942FFC11680089B9C9 /* SwiftSoupProfile */; };
+		E274D66030430F9F00624C95 /* LRUCache in Frameworks */ = {isa = PBXBuildFile; productRef = E274D65F30430F9F00624C95 /* LRUCache */; };
 		E28B17662CB03CBB00D6FEA0 /* GRDBQuery in Frameworks */ = {isa = PBXBuildFile; productRef = E28B17652CB03CBB00D6FEA0 /* GRDBQuery */; };
 		E290323A2D9EA52000A0CD8F /* Pulse in Frameworks */ = {isa = PBXBuildFile; productRef = E29032392D9EA52000A0CD8F /* Pulse */; settings = {ATTRIBUTES = (Required, ); }; };
 		E290323C2D9EA52000A0CD8F /* PulseUI in Frameworks */ = {isa = PBXBuildFile; productRef = E290323B2D9EA52000A0CD8F /* PulseUI */; settings = {ATTRIBUTES = (Required, ); }; };
@@ -450,6 +451,7 @@
 				E28B17662CB03CBB00D6FEA0 /* GRDBQuery in Frameworks */,
 				E26AF871302F909600A7F612 /* Nuke in Frameworks */,
 				E24D3BFD2CF3ACDC003484CC /* FrameUp in Frameworks */,
+				E274D66030430F9F00624C95 /* LRUCache in Frameworks */,
 				E2549B232CBD6886005DFE14 /* AsyncAlgorithms in Frameworks */,
 				E2390F982EBCC7250013F0FC /* ObservableLRUCache in Frameworks */,
 				E26ED9932FFC11680089B9C9 /* SwiftSoup in Frameworks */,
@@ -586,6 +588,7 @@
 				E26ED9942FFC11680089B9C9 /* SwiftSoupProfile */,
 				E26AF870302F909600A7F612 /* Nuke */,
 				E26AF872302F909600A7F612 /* NukeUI */,
+				E274D65F30430F9F00624C95 /* LRUCache */,
 			);
 			productName = CommonsFinder;
 			productReference = E2839FE72CA2DD900053C312 /* CommonsFinder.app */;
@@ -661,6 +664,7 @@
 				E2BA76302FCEDAA90027717A /* XCRemoteSwiftPackageReference "OAuthenticator" */,
 				E26ED9912FFC11680089B9C9 /* XCRemoteSwiftPackageReference "SwiftSoup" */,
 				E26AF86F302F909600A7F612 /* XCRemoteSwiftPackageReference "Nuke" */,
+				E274D65E30430F9F00624C95 /* XCRemoteSwiftPackageReference "LRUCache" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = E2839FE82CA2DD900053C312 /* Products */;
@@ -1206,6 +1210,14 @@
 				version = 2.13.7;
 			};
 		};
+		E274D65E30430F9F00624C95 /* XCRemoteSwiftPackageReference "LRUCache" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/nicklockwood/LRUCache";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 1.3.0;
+			};
+		};
 		E29032382D9EA52000A0CD8F /* XCRemoteSwiftPackageReference "Pulse" */ = {
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/kean/Pulse";
@@ -1337,6 +1349,11 @@
 			isa = XCSwiftPackageProductDependency;
 			package = E26ED9912FFC11680089B9C9 /* XCRemoteSwiftPackageReference "SwiftSoup" */;
 			productName = SwiftSoupProfile;
+		};
+		E274D65F30430F9F00624C95 /* LRUCache */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = E274D65E30430F9F00624C95 /* XCRemoteSwiftPackageReference "LRUCache" */;
+			productName = LRUCache;
 		};
 		E28B17652CB03CBB00D6FEA0 /* GRDBQuery */ = {
 			isa = XCSwiftPackageProductDependency;

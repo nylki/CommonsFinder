@@ -69,7 +69,7 @@ nonisolated struct Category: Identifiable, Equatable, Hashable, Sendable, Codabl
     }
 
     /// Initialize with non-optional commonsCategory
-    init(
+    nonisolated init(
         commonsCategory: String, wikidataId: String? = nil, redirectsToWikidataID: String? = nil, preferredLanguageAtFetchDate: LanguageCode = "en", fetchDate: Date = .now, label: String? = nil,
         description: String? = nil,
         aliases: [String] = [],
@@ -91,6 +91,16 @@ nonisolated struct Category: Identifiable, Equatable, Hashable, Sendable, Codabl
 }
 
 nonisolated extension Category {
+
+    // NOTE: The base wikidataItem _must_ have atleast one of wikidataId or commonsCategory
+    // as defined in the DB constraint (see database.swift), so it should always be safe to assume
+    // that it is identifiable by one of them.
+    // However we cannot make the base-item itself identifiable as that would be problematic for several reason
+    // mainly not being sure if the item is already persisted with its auto-incremented id.
+    // see: https://github.com/groue/GRDB.swift/issues/1435#issuecomment-1740857712).
+    /// ID that is either the wikidataID, otherwise the raw commonsCategory
+    var composedID: String { (wikidataId ?? commonsCategory)! }
+
     var wikidataURL: URL? {
         if let wikidataId {
             URL(string: "https://www.wikidata.org/wiki/\(wikidataId)")
@@ -135,7 +145,6 @@ nonisolated extension Category: FetchableRecord, MutablePersistableRecord {
     var itemInteraction: QueryInterfaceRequest<ItemInteraction> {
         request(for: Self.itemInteraction)
     }
-
 }
 
 nonisolated extension Category {
