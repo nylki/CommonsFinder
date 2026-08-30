@@ -67,11 +67,7 @@ struct FileEditView: View {
 
                 })
         } else {
-            .init(
-                get: { "" },
-                set: { string in
-                    // noop
-                })
+            .init(get: { "" }, set: { _ in })
         }
     }
 
@@ -123,8 +119,6 @@ struct FileEditView: View {
     @ViewBuilder
     private var main: some View {
         Form {
-            //            Text("isLoading: \(isLoadingSuggestedTags ? "true" : "false")")
-            //            Text("Suggested: \(nearbyCategories?.count ?? -1)")
             if let model {
                 MediaFileImageButton(mediaFileInfo: model.referenceMediaFileInfo, isShowingFullscreenImage: $isShowingFullscreenImage)
                     .containerRelativeFrame(.horizontal)
@@ -135,17 +129,17 @@ struct FileEditView: View {
                     .font(.caption)
                     .monospaced()
                     .textSelection(.enabled)
+
+
+                captionSection(captions: model.captions)
+                tagsSection(tags: model.tags)
+
+            } else {
+                VStack {
+                    Text("Loading newest file version...")
+                    ProgressView()
+                }
             }
-
-
-            if let captions = model?.captions {
-                captionSection(captions: captions)
-            }
-            if let tags = model?.tags {
-                tagsSection(tags: tags)
-            }
-
-
         }
         .disabled(isRefreshing)
         .overlay {
