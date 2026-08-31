@@ -280,10 +280,13 @@ nonisolated final class AppDatabase: Sendable {
                 // make locationHandling optional (for subdrafts of multidrafts)
                 t.drop(column: "locationHandling")
                 t.add(column: "locationHandling", .jsonText)
-
-
             }
+        }
 
+        migrator.registerMigration("add revid to mediaFile") { db in
+            try db.alter(table: "mediaFile") { t in
+                t.add(column: "revid", .integer)
+            }
         }
 
         return migrator
@@ -409,10 +412,17 @@ nonisolated extension AppDatabase {
 }
 
 // MARK: - MediaFileInfo Writes
-extension AppDatabase {
+nonisolated extension AppDatabase {
     /// creates a new DB entry if needed
     func updateLastViewed(_ mediaFileInfo: MediaFileInfo) throws -> MediaFileInfo {
         try updateInteractionImpl(mediaFileInfo, lastViewed: .now, incrementViewCount: true)
+    }
+
+    func updateLastFetchedToNow(_ id: MediaFile.ID) throws {
+        try dbWriter.write { db in
+            var mediaFile = try MediaFile.find(db, id: id)
+            try mediaFile.updateChanges(db) { $0.fetchDate = .now }
+        }
     }
 
     /// creates a new DB entry if needed

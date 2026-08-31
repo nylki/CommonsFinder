@@ -1048,6 +1048,26 @@ LIMIT \(limit)
         return result[filename]
     }
     
+    public func fetchMostRecentRevid(pageID: String) async throws -> Int? {
+        let query: Parameters = [
+            "action": "query",
+            "format": "json",
+            "prop": "revisions",
+            "rvslots": "main",
+            "rvprop": "ids",
+            "rvlimit": "1",
+            "pageids": pageID,
+            "formatversion": "2",
+            "curtimestamp": "1"
+        ]
+        
+        let request = try GET(url: commonsEndpoint, query: query)
+        let (data, response) = try await response(for: request)
+        let parsedResponse = try parse(QueryResponse<PageRevisionsResponse>.self, from: data, response: response)
+        
+        return parsedResponse.query?.pages.first?.revisions?.first?.revid
+    }
+    
     /// Check if a media file already exists by filename, returns [filename: FilenameExistsResult]
     public func checkIfFilesExists(filenames: [String]) async throws -> [String: FilenameExistsResult] {
         let titles = filenames.map { "File:" + $0 }

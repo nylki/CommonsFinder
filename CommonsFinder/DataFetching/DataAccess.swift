@@ -18,6 +18,28 @@ typealias ScoredCategoryInfo = (score: Double, categoryInfo: CategoryInfo)
 /// Provides data access functions to the API or DB
 //  To be refined with more DB-first searches and fetchDate comparisons. (like `fetchCombinedTagsFromDatabaseOrAPI`)
 nonisolated enum DataAccess {
+
+    static func refreshMediaFileIfNeeded(_ mediaFile: MediaFile, maxAge: TimeInterval = 0, appDatabase: AppDatabase) async {
+        let timeIntervalSinceLastFetchDate = Date.now.timeIntervalSince(mediaFile.fetchDate)
+
+        guard timeIntervalSinceLastFetchDate > maxAge else { return }
+
+        do {
+            let isMediaFileUpToDate = try await Self.isMediaFileUpToDate(mediaFile)
+
+            if isMediaFileUpToDate {
+                // consider the media file to have been fetched now since the revid is idential
+                try appDatabase.updateLastFetchedToNow(mediaFile.id)
+            } else {
+                // NOTE: changes from refresh will propagate into the DB observation further above.
+                await DataAccess.refreshMediaFileFromNetwork(id: mediaFile.id, appDatabase: appDatabase)
+            }
+        } catch {
+            logger.error("failed to refreshMediaFileIfNeeded \(mediaFile.name), \(error)")
+            return
+        }
+    }
+
     static func refreshMediaFileFromNetwork(id: MediaFile.ID, appDatabase: AppDatabase) async {
         do {
             guard
@@ -296,7 +318,7 @@ nonisolated enum DataAccess {
         let commonsCategories = mediaFiles.flatMap(\.categories)
 
 
-        let result = try await DataAccess.fetchCombinedCategoriesFromDatabaseOrAPI(
+        let result = try await fetchCombinedCategoriesFromDatabaseOrAPI(
             wikidataIDs: depictWikdataIDs,
             commonsCategories: commonsCategories,
             forceNetworkRefresh: forceNetworkRefresh,
@@ -340,7 +362,7 @@ nonisolated enum DataAccess {
         // TODO: would be easier if fetchCombinedCategoriesFromDatabaseOrAPI already returned [CategoryInfo] instead of Category.
         // but not super trivial due to other dependencies of `CategoryFetchResult`
         let fetchResult =
-            try await DataAccess.fetchCombinedCategoriesFromDatabaseOrAPI(
+            try await fetchCombinedCategoriesFromDatabaseOrAPI(
                 wikidataIDs: searchItems.map(\.id),
                 commonsCategories: searchCategories,
                 forceNetworkRefresh: false,
@@ -385,6 +407,12 @@ nonisolated enum DataAccess {
         }
 
         return result
+    }
+
+    private static func isMediaFileUpToDate(_ mediaFile: MediaFile) async throws -> Bool {
+        guard let revid = mediaFile.revid else { return false }
+        let mostRecentRevid = try await Networking.shared.api.fetchMostRecentRevid(pageID: mediaFile.pageID)
+        return revid == mostRecentRevid
     }
 }
 

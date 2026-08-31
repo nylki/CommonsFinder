@@ -14,6 +14,7 @@ nonisolated extension MediaFile {
         let date: Date = .init(timeIntervalSince1970: 3600 * Double(UInt.random(in: 1..<1234)))
         return MediaFile.init(
             id: id + String(Int64.random(in: 0..<Int64.max)),
+            revid: Int.random(in: 100000...Int.max),
             name: id,
             url: imageType.url,
             descriptionURL: imageType.url,

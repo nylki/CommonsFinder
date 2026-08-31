@@ -24,6 +24,9 @@ nonisolated
     /// pageID
     var id: String
 
+    /// the revision ID of this version of the file
+    var revid: Int?
+
     /// username of uploader
     var username: String
 
@@ -67,6 +70,7 @@ nonisolated
 
     init(
         id: String,
+        revid: Int? = nil,
         name: String,
         url: URL,
         descriptionURL: URL,
@@ -104,6 +108,7 @@ nonisolated
         }
 
         self.id = id
+        self.revid = revid
         self.url = url
         self.descriptionURL = descriptionURL
         self.thumbURL = thumbURL
@@ -131,6 +136,7 @@ nonisolated extension MediaFile: Codable, FetchableRecord, MutablePersistableRec
     // Define database columns from CodingKeys
     nonisolated enum Columns {
         static let id = Column(CodingKeys.id)
+        static let revid = Column(CodingKeys.revid)
         static let itemInteractionID = Column(CodingKeys.itemInteractionID)
         static let username = Column(CodingKeys.username)
         static let name = Column(CodingKeys.name)
