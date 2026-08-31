@@ -357,7 +357,7 @@ struct DatabaseTests {
             "At the start, we expect the db to be empty for a clean test."
         )
 
-        let upsertedCategories = try repo.upsert(categories, handleRedirections: redirections)
+        let upsertedCategories = try repo.upsertAndFetchOrdered(categories, handleRedirections: redirections)
         #expect(upsertedCategories.count == categories.count)
 
         let fetchedItemsWithResolvedRedirects = try repo.fetchCategoryInfos(wikidataIDs: wikidataIDs, resolveRedirections: true)

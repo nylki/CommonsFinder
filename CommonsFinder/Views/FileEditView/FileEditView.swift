@@ -72,15 +72,11 @@ struct FileEditView: View {
     }
 
     func refreshIfNeeded() async throws {
-        guard let model else { return }
+        guard let model, !model.hasBeenEdited else { return }
         isRefreshing = true
-        let timeIntervalSinceLastFetchDate = Date.now.timeIntervalSince(model.referenceMediaFileInfo.mediaFile.fetchDate)
-        print("timeIntervalSinceLastFetchDate B: \(timeIntervalSinceLastFetchDate)")
-        if timeIntervalSinceLastFetchDate > (10) {
-            let id = model.referenceMediaFileInfo.id
-            await DataAccess.refreshMediaFileFromNetwork(id: id, appDatabase: appDatabase)
-        }
-        isRefreshing = false
+        defer { isRefreshing = false }
+
+        await DataAccess.refreshMediaFileIfNeeded(model.referenceMediaFileInfo.mediaFile, maxAge: 5, appDatabase: appDatabase)
     }
 
 
@@ -105,9 +101,15 @@ struct FileEditView: View {
                 for try await updatedMediaFileInfo in observation.values(in: appDatabase.reader) {
                     guard let updatedMediaFileInfo else { continue }
                     try Task.checkCancellation()
-                    let tags = try await DataAccess.resolveTags(of: [updatedMediaFileInfo.mediaFile], appDatabase: appDatabase)
-                    model = .init(with: updatedMediaFileInfo, resolvedTags: tags)
-                    try await refreshIfNeeded()
+
+                    do {
+                        let tags = try await DataAccess.resolveTags(of: [updatedMediaFileInfo.mediaFile], appDatabase: appDatabase)
+                        model = .init(with: updatedMediaFileInfo, resolvedTags: tags)
+                        try await refreshIfNeeded()
+                    } catch {
+                        // FIXME: show error in UI
+                        logger.error("edit: failed to refresh media file for editing \(error)")
+                    }
                 }
 
             } catch {

@@ -192,7 +192,7 @@ struct FileDetailView: View {
                     logger.error("CAT: Failed to observe MediaFileInfo changes \(error)")
                 }
             }
-            .task(id: mediaFileInfo.mediaFile.fetchDate, priority: .userInitiated) {
+            .task(id: mediaFileInfo.mediaFile.revid, priority: .userInitiated) {
                 isResolvingTags = true
 
                 do {
@@ -213,17 +213,9 @@ struct FileDetailView: View {
                     isResolvingTags = false
                 }
 
-                // After resolving tags, if the file hasn't been refreshed from network in a while (2 minutes)
+                // After resolving tags, if the file hasn't been refreshed from network in a while (1 minutes)
                 // do it now
-
-                let timeIntervalSinceLastFetchDate = Date.now.timeIntervalSince(mediaFileInfo.mediaFile.fetchDate)
-                if timeIntervalSinceLastFetchDate > (2 * 60) {
-                    do {
-                        try await Task.sleep(for: .milliseconds(250))
-                        // NOTE: changes from refresh will propagate into the DB observation further above.
-                        await DataAccess.refreshMediaFileFromNetwork(id: mediaFileInfo.id, appDatabase: appDatabase)
-                    } catch {}
-                }
+                await DataAccess.refreshMediaFileIfNeeded(mediaFileInfo.mediaFile, maxAge: 60, appDatabase: appDatabase)
             }
             .onDisappear {
                 saveFileToLastViewed()
