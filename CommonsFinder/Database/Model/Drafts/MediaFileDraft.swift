@@ -27,6 +27,10 @@ nonisolated
     // UUID-string
     // FIXME: make this an auto-incrementable id
     let id: String
+     
+    /// pending (`pending=true`) drafts are in the process of being imported and have not been pro-actively saved by the user.
+    /// They are not shown in the HomeView UI and can be garbage-collected at app launch together with linked local file url.
+    var pending: Bool
 
     var addedDate: Date
 
@@ -45,9 +49,9 @@ nonisolated
     ///  and can be used for identifying uploaded media and local drafts
     var finalFilename: String
 
-    /// The filename, If the represented media file exists locally on disk
-    /// May be identical to "name", but not guaranteed (eg. drafts)
+    /// The filename, of the media file  located on disk in the app's container
     var localFileName: String
+
     var mimeType: String
 
     var captionWithDesc: [CaptionWithDescription]
@@ -231,6 +235,7 @@ nonisolated
     init(from decoder: any Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
         self.id = try container.decode(String.self, forKey: .id)
+        self.pending = try container.decodeIfPresent(Bool.self, forKey: .id) ?? false
         self.addedDate = try container.decode(Date.self, forKey: .addedDate)
         self.name = try container.decode(String.self, forKey: .name)
         self.selectedFilenameType = try container.decodeIfPresent(FileNameType.self, forKey: .selectedFilenameType) ?? .custom
@@ -293,17 +298,18 @@ extension MediaFileDraft {
 // MARK: - Constructors
 nonisolated extension MediaFileDraft {
 
-    /// creates a new draft from an FileItem by reading its EXIF-Data filling the fields as complete as possible at this stage
-    init(_ fileItem: FileItem, isPartOfMultiDraft: Bool, newDraftOptions: NewDraftOptions?) throws {
+    /// creates a new blank draft with `pending=true`
+    init(isPartOfMultiDraft: Bool, newDraftOptions: NewDraftOptions?) throws {
         id = UUID().uuidString
-
+        pending = true
         addedDate = .now
-        localFileName = fileItem.localFileName
+        localFileName = UUID().uuidString
         finalFilename = ""
         name = ""
         uploadPossibleStatus = nil
         selectedFilenameType = .captionAndDate
-
+        self.mimeType = ""
+        
         if let initialTag = newDraftOptions?.tag {
             tags = [initialTag]
         } else {
@@ -322,13 +328,6 @@ nonisolated extension MediaFileDraft {
             source = .own
             let languageCode = Locale.current.wikiLanguageCodeIdentifier
             captionWithDesc = [.init(languageCode: languageCode)]
-        }
-
-        if let mimeType = fileItem.fileType.preferredMIMEType {
-            self.mimeType = mimeType
-        } else {
-            assertionFailure("We expect the file to have a mime type")
-            throw MediaFileDraftError.failedToReadMimetype
         }
 
         // Sub-drafts of a multi-draft default to `nil` so that their location handling is

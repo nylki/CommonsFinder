@@ -66,7 +66,7 @@ enum DraftError: Error {
         }
     }
 
-    var importedItems: OrderedDictionary<FileItem.ID, FileItem>
+    var importedItems: OrderedDictionary<MediaFileDraft.ID, MediaFileDraft>
 
     init(newDraftOptions: NewDraftOptions?) {
         id = .init()
@@ -116,9 +116,10 @@ enum DraftError: Error {
             for photoItem in photoItems {
                 try Task.checkCancellation()
                 do {
-                    let fileItem = try await FileItem.init(photoPickerItem: photoItem)
+                    
                     try Task.checkCancellation()
-                    importedItems[fileItem.id] = fileItem
+                    let draft = try await MediaFileDraft.cratePending(fromPhotoItem: photoItem, newDraftOptions: newDraftOptions)
+                    importedItems[draft.id] = draft
                     importStatus = .importing(
                         importedFiles: importedItems.count,
                         totalFilesToImport: totalFilesToImport
@@ -139,8 +140,8 @@ enum DraftError: Error {
                 for url in fileURLs {
                     try Task.checkCancellation()
                     do {
-                        let fileItem = try await loadFileItem(url: url)
-                        importedItems[fileItem.id] = fileItem
+                        let draft = try MediaFileDraft.createPending(byMovingFileAtURL: url, newDraftOptions: newDraftOptions)
+                        importedItems[draft.id] = draft
                         importStatus = .importing(importedFiles: importedItems.count, totalFilesToImport: fileURLs.count)
                     } catch {
                         logger.error("Failed to import file. \(error)")
@@ -176,8 +177,13 @@ enum DraftError: Error {
             }
 
 
-            let fileItem = try FileItem.init(uiImage: uiImage, metadata: metadata, location: cameraLocation)
-            importedItems[fileItem.id] = fileItem
+            let draft = try MediaFileDraft.createPending(
+                fromImage: uiImage,
+                metadata: metadata,
+                location: cameraLocation,
+                newDraftOptions: newDraftOptions
+            )
+            importedItems[draft.id] = draft
             importStatus = .finished
         }
 
@@ -192,5 +198,137 @@ enum DraftError: Error {
     private func loadFileItem(url: URL) async throws -> FileItem {
         assert(url.isFileURL, "This function only expects file URLs.")
         return try FileItem(copyingDataFromLocalFile: url)
+    }
+}
+
+extension MediaFileDraft {
+    /// creates a draft`pending:true` that is immediately inserted into th DB
+    static func createPending(byMovingFileAtURL url: URL, newDraftOptions: NewDraftOptions?) throws -> Self {
+        let gotAccess = url.startAccessingSecurityScopedResource()
+        guard gotAccess else { throw FileImportError.fileAccessDenied(url) }
+        defer { url.stopAccessingSecurityScopedResource() }
+        
+        var draft = try MediaFileDraft(isPartOfMultiDraft: false, newDraftOptions: newDraftOptions)
+        
+        guard let outURL = draft.localFileURL() else {
+            throw FileImportError.failedToGetLocalFileURL
+        }
+        
+        let fileExtension = url.pathExtension
+        guard let fileType = UTType(filenameExtension: fileExtension),
+              let preferredMimeType = fileType.preferredMIMEType else {
+            throw FileImportError.unrecognizedFileType(fileExtension)
+        }
+
+        guard FileItem.supportedPhotoMediaTypes.contains(fileType) else {
+            throw FileImportError.unsupportedContentType([fileType])
+        }
+        
+        draft.mimeType = preferredMimeType
+
+        // UPSERT
+
+        try FileManager.default.moveItem(at: url, to: outURL)
+
+
+        
+        return draft
+    }
+    
+    static func cratePending(fromPhotoItem photoPickerItem: PhotosPickerItem, newDraftOptions: NewDraftOptions?) async throws -> Self {
+        var draft = try MediaFileDraft(isPartOfMultiDraft: false, newDraftOptions: newDraftOptions)
+        
+        guard let outURL = draft.localFileURL() else {
+            throw FileImportError.failedToGetLocalFileURL
+        }
+        let fileType = photoPickerItem.supportedContentTypes.first { type in
+            FileItem.supportedPhotoMediaTypes.contains(type)
+        }
+
+        guard let fileType, fileType.preferredFilenameExtension != nil,
+              let preferredMimeType = fileType.preferredMIMEType else {
+            logger.error("Unsupported content type: \(photoPickerItem.supportedContentTypes.debugDescription)")
+            assertionFailure("In the photo picker we expect to always get supported types")
+            throw FileImportError.unsupportedContentType(photoPickerItem.supportedContentTypes)
+        }
+        
+        draft.mimeType = preferredMimeType
+
+        // UPSERT
+        
+        guard let data = try await photoPickerItem.loadTransferable(type: Data.self) else {
+            throw FileImportError.failedToConvertPhotoItemToData
+        }
+        try data.write(
+            to: outURL,
+            options: [.atomic, .completeFileProtection]
+        )
+        
+        return draft
+    }
+    
+    /// creates a draft`pending:true` that is immediately inserted into th DB
+    static func createPending(byCopyingFileAt url: URL, newDraftOptions: NewDraftOptions?) throws -> Self {
+        var draft = try MediaFileDraft(isPartOfMultiDraft: false, newDraftOptions: newDraftOptions)
+        
+        guard let outURL = draft.localFileURL() else {
+            throw FileImportError.failedToGetLocalFileURL
+        }
+        
+        let fileExtension = url.pathExtension
+        guard let fileType = UTType(filenameExtension: fileExtension),
+              let preferredMimeType = fileType.preferredMIMEType else {
+            throw FileImportError.unrecognizedFileType(fileExtension)
+        }
+
+        guard FileItem.supportedPhotoMediaTypes.contains(fileType) else {
+            throw FileImportError.unsupportedContentType([fileType])
+        }
+        
+        draft.mimeType = preferredMimeType
+        
+        // UPSERT
+
+        try FileManager.default.copyItem(at: url, to: outURL)
+        
+        return draft
+    }
+    
+    static func createPending(fromImage uiImage: UIImage, metadata: NSDictionary, location: CLLocation?, newDraftOptions: NewDraftOptions?) throws -> Self {
+        var draft = try MediaFileDraft(isPartOfMultiDraft: false, newDraftOptions: newDraftOptions)
+        
+        guard let outURL = draft.localFileURL() else {
+            throw FileImportError.failedToGetLocalFileURL
+        }
+        
+        guard let data = uiImage.jpegData(compressionQuality: 1),
+            let source = CGImageSourceCreateWithData(data as CFData, nil),
+            let type = CGImageSourceGetType(source),
+            let imageRef = CGImageSourceCreateImageAtIndex(source, 0, nil)
+        else {
+            throw FileImportError.failedToConvertUIImageToData
+        }
+
+//        originalFilename = nil
+//        fileType = .jpeg
+//        localFileName = UUID().uuidString.appendingFileExtension(conformingTo: fileType)
+//        itemIdentifier = nil
+
+        guard let destination = CGImageDestinationCreateWithURL(outURL as CFURL, type, 1, nil) else {
+            throw FileImportError.failedToConvertUIImageToData
+        }
+
+        let metadata = NSMutableDictionary(dictionary: metadata)
+        if let location {
+            metadata[kCGImagePropertyGPSDictionary] = location.gpsDictionary
+        }
+
+        CGImageDestinationAddImage(destination, imageRef, metadata as CFDictionary)
+        let success = CGImageDestinationFinalize(destination)
+        if !success {
+            throw FileImportError.failedToWriteImageWithMetadataToFile
+        }
+        
+        return draft
     }
 }
