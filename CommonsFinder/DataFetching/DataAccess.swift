@@ -484,13 +484,25 @@ nonisolated extension CategoryInfo {
 
     private func calcTextMatchScore(reference: String, candidate: String) -> Double {
         guard candidate.count > 0 else { return 0 }
-        let prefixCount = Double(candidate.localizedLowercase.commonPrefix(with: reference.localizedLowercase).count)
+        let reference = reference.localizedLowercase
+        let candidate = candidate.localizedLowercase
+        let prefixCount = Double(candidate.commonPrefix(with: reference).count)
         let refContainsCandidate = candidate.localizedStandardContains(reference)
 
         let normalizedRef = reference.replacing(.word.inverted, with: " ")
         let normalizedCandidate = candidate.replacing(.word.inverted, with: " ")
-        let refWordsSet = Set(normalizedRef.split(separator: .word.inverted, omittingEmptySubsequences: true).map { $0.localizedLowercase })
-        let candidateWordsSet = Set(normalizedCandidate.split(separator: .whitespace, omittingEmptySubsequences: true).map { $0.localizedLowercase })
+
+        let refWordsSet = Set(
+            normalizedRef
+                .split(separator: .word.inverted, omittingEmptySubsequences: true)
+                .map(\.localizedLowercase)
+        )
+        let candidateWordsSet = Set(
+            normalizedCandidate
+                .split(separator: .whitespace, omittingEmptySubsequences: true)
+                .map(\.localizedLowercase)
+        )
+
         let totalUniqueWords = refWordsSet.union(candidateWordsSet).count
         let sameWordCount = refWordsSet.intersection(candidateWordsSet).count
 
