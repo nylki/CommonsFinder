@@ -34,6 +34,24 @@ import Foundation
                 "\(coordinate.description) \(horizontalError ?? -1) \(bearing ?? 9999)"
             }
         }
+
+        var coordinate: CLLocationCoordinate2D? {
+            switch self {
+            case .draft(let mediaFileDraft):
+                switch mediaFileDraft.locationHandling {
+                case .noLocation, .none:
+                    nil
+                case .exifLocation:
+                    mediaFileDraft.loadCachedExifData()?.coordinate
+                case .userDefinedLocation(let latitude, let longitude, let precision):
+                    .init(latitude: latitude, longitude: longitude)
+                }
+            case .mediaFile(let mediaFile):
+                mediaFile.coordinate
+            case .fileLocation(let cLLocationCoordinate2D, let horizontalError, let bearing):
+                cLLocationCoordinate2D
+            }
+        }
     }
 
     private var cache: [String: Status] = [:]

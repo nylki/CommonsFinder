@@ -7,13 +7,39 @@
 
 import Algorithms
 import CommonsAPI
+import CoreLocation
 import Foundation
 import GRDB
+import RegexBuilder
 import os.log
+
+typealias ScoredCategoryInfo = (score: Double, categoryInfo: CategoryInfo)
 
 /// Provides data access functions to the API or DB
 //  To be refined with more DB-first searches and fetchDate comparisons. (like `fetchCombinedTagsFromDatabaseOrAPI`)
-enum DataAccess {
+nonisolated enum DataAccess {
+
+    static func refreshMediaFileIfNeeded(_ mediaFile: MediaFile, maxAge: TimeInterval = 0, appDatabase: AppDatabase) async {
+        let timeIntervalSinceLastFetchDate = Date.now.timeIntervalSince(mediaFile.fetchDate)
+
+        guard timeIntervalSinceLastFetchDate > maxAge else { return }
+
+        do {
+            let isMediaFileUpToDate = try await Self.isMediaFileUpToDate(mediaFile)
+
+            if isMediaFileUpToDate {
+                // consider the media file to have been fetched now since the revid is idential
+                try appDatabase.updateLastFetchedToNow(mediaFile.id)
+            } else {
+                // NOTE: changes from refresh will propagate into the DB observation further above.
+                await DataAccess.refreshMediaFileFromNetwork(id: mediaFile.id, appDatabase: appDatabase)
+            }
+        } catch {
+            logger.error("failed to refreshMediaFileIfNeeded \(mediaFile.name), \(error)")
+            return
+        }
+    }
+
     static func refreshMediaFileFromNetwork(id: MediaFile.ID, appDatabase: AppDatabase) async {
         do {
             guard
@@ -125,10 +151,10 @@ enum DataAccess {
 
         // NOTE: Some categories are already cached when calling fetchWikidataBackedCategoriesFromAPI
         // but pure commons categories are, not. So to be complete, we upsert all final results here.
-        try appDatabase.upsert(resultCategories)
+        let upserted = try appDatabase.upsertAndFetchOrdered(resultCategories)
 
         return .init(
-            fetchedCategories: resultCategories,
+            fetchedCategories: upserted,
             redirectedIDs: fetchResult?.redirectedIDs ?? [:]
         )
     }
@@ -196,7 +222,7 @@ enum DataAccess {
         )
 
         if shouldCache {
-            let insertedCategories = try appDatabase.upsert(
+            let insertedCategories = try appDatabase.upsertAndFetchOrdered(
                 redirectResult.fetchedCategories,
                 handleRedirections: redirectResult.redirectedIDs
             )
@@ -292,7 +318,7 @@ enum DataAccess {
         let commonsCategories = mediaFiles.flatMap(\.categories)
 
 
-        let result = try await DataAccess.fetchCombinedCategoriesFromDatabaseOrAPI(
+        let result = try await fetchCombinedCategoriesFromDatabaseOrAPI(
             wikidataIDs: depictWikdataIDs,
             commonsCategories: commonsCategories,
             forceNetworkRefresh: forceNetworkRefresh,
@@ -316,5 +342,175 @@ enum DataAccess {
             }
             return .init($0, pickedUsages: picked)
         }
+    }
+
+
+    static func searchCategories(for searchText: String, referenceCoordinate: CLLocationCoordinate2D?, appDatabase: AppDatabase) async throws -> [ScoredCategoryInfo] {
+        let languageCode = Locale.current.language.languageCode?.identifier ?? "en"
+
+        async let wikidataSearchTask = try await Networking.shared.api
+            .searchWikidataItems(term: searchText, languageCode: languageCode)
+        async let categorySearchTask = try await Networking.shared.api
+            .searchCategories(for: searchText, limit: .count(50))
+
+        let (searchItems, searchCategories) = try await (
+            wikidataSearchTask.search,
+            categorySearchTask.items.compactMap { String($0.title.split(separator: "Category:")[0]) }
+        )
+
+
+        // TODO: would be easier if fetchCombinedCategoriesFromDatabaseOrAPI already returned [CategoryInfo] instead of Category.
+        // but not super trivial due to other dependencies of `CategoryFetchResult`
+        let fetchResult =
+            try await fetchCombinedCategoriesFromDatabaseOrAPI(
+                wikidataIDs: searchItems.map(\.id),
+                commonsCategories: searchCategories,
+                forceNetworkRefresh: false,
+                appDatabase: appDatabase
+            )
+
+        let fetchedCategories = fetchResult.fetchedCategories
+
+        assert(fetchedCategories.allSatisfy { $0.id != nil }, "We expect all categories returned from the above method to be cached!")
+
+        // we use the original API return order, to compute the `apiRelevanceScore` to be used in the sortScore function.
+
+        let fetchedIDs = fetchedCategories.compactMap { $0.id }
+        let categoryInfos = try appDatabase.fetchCategoryInfos(ids: fetchedIDs)
+
+        var originalItemScores: [String?: Double] = .init()
+        var originalCategoryScores: [String?: Double] = .init()
+        for (i, category) in searchCategories.enumerated() {
+            originalCategoryScores[category] = 1.0 - (Double(i) / Double(searchCategories.count))
+        }
+        for (i, id) in searchItems.map(\.id).enumerated() {
+            let relevance = 1.0 - (Double(i) / Double(searchItems.count))
+
+            // A searched item may have been merged, in which case the returned
+
+
+            originalItemScores[id] = max(originalItemScores[id] ?? 0, relevance)
+
+            // resolved Categories have a redirected target id. So for good measure
+            // also take potential old/redirect ids into account from the original API result.
+            if let redirectedID = fetchResult.redirectedIDs[id] {
+                originalItemScores[redirectedID] = max(originalItemScores[redirectedID] ?? 0, relevance)
+            }
+        }
+
+        let result: [ScoredCategoryInfo] = categoryInfos.map { categoryInfo in
+            let categoryScore = originalCategoryScores[categoryInfo.base.commonsCategory] ?? 0
+            let itemScore = originalItemScores[categoryInfo.base.wikidataId] ?? 0
+            let apiRelevanceScore = max(categoryScore, itemScore)
+            let score = categoryInfo.sortScore(searchText: searchText, apiRelevanceScore: apiRelevanceScore, referenceCoordinate: referenceCoordinate)
+            return (score, categoryInfo)
+        }
+
+        return result
+    }
+
+    private static func isMediaFileUpToDate(_ mediaFile: MediaFile) async throws -> Bool {
+        guard let revid = mediaFile.revid else { return false }
+        let mostRecentRevid = try await Networking.shared.api.fetchMostRecentRevid(pageID: mediaFile.pageID)
+        return revid == mostRecentRevid
+    }
+}
+
+nonisolated extension CategoryInfo {
+    fileprivate func sortScore(searchText: String, apiRelevanceScore: Double = 0.0, referenceCoordinate: CLLocationCoordinate2D?) -> Double {
+        var bookmarkScore = 0.0
+        var lastViewedScore = 0.0
+        var distScore = 0.0
+        var textMatchScore = 0.0
+
+
+        if isBookmarked {
+            bookmarkScore = 1
+        }
+
+        if let lastViewed {
+            let timeInterval = Date.now.timeIntervalSince(lastViewed)
+            // the shorter the time interval the higher the score.
+            // we are interested in the last 48h.
+            // normalized to 0.01...1,
+            // (not to 0...1, because we if the item was viewed already, its still more relevant than non-viewed categories)
+            lastViewedScore = 1.0 - (timeInterval / (48 * 60 * 60))
+            lastViewedScore = min(1, lastViewedScore)
+            lastViewedScore = max(0.01, lastViewedScore)
+        }
+
+        if let referenceCoordinate, let c = self.base.coordinate {
+            let categoryLocation = CLLocation(latitude: c.latitude, longitude: c.longitude)
+            let referenceLocation = CLLocation(latitude: referenceCoordinate.latitude, longitude: referenceCoordinate.longitude)
+            let dist = categoryLocation.distance(from: referenceLocation)
+
+            // the shorter the distance, the higher the score, don't score-boost too long distances (maxDist)
+            // maxDist is arbitrarily chosen, may need to be adjusted.
+            let maxDist: Double = 10_000
+
+            distScore = 1 - (dist / maxDist)
+            distScore = min(1, distScore)
+            distScore = max(0, distScore)
+
+        }
+
+        let commonsCategory = base.commonsCategory ?? ""
+        let label = base.label ?? ""
+        let desc = base.description ?? ""
+        let commonsCategoryScore = calcTextMatchScore(reference: searchText, candidate: commonsCategory)
+        let labelScore = calcTextMatchScore(reference: searchText, candidate: label)
+        let descScore = calcTextMatchScore(reference: searchText, candidate: desc)
+
+        textMatchScore = max(commonsCategoryScore, labelScore, descScore)
+
+        let score = apiRelevanceScore + bookmarkScore + lastViewedScore + distScore + textMatchScore
+
+        logger.debug(
+            """
+            \n
+            sort score of \(base.commonsCategory ?? base.label ?? base.description ?? "")
+            bookmarkScore: **\(score)**)
+            lastViewedScore: **\(score)**)
+            distScore: **\(score)**)
+            textMatchScore: **\(score)**)
+
+            total score: **\(score)**)
+            \n
+            """
+        )
+
+        return score
+    }
+
+    private func calcTextMatchScore(reference: String, candidate: String) -> Double {
+        guard candidate.count > 0 else { return 0 }
+        let reference = reference.localizedLowercase
+        let candidate = candidate.localizedLowercase
+        let prefixCount = Double(candidate.commonPrefix(with: reference).count)
+        let refContainsCandidate = candidate.localizedStandardContains(reference)
+
+        let normalizedRef = reference.replacing(.word.inverted, with: " ")
+        let normalizedCandidate = candidate.replacing(.word.inverted, with: " ")
+
+        let refWordsSet = Set(
+            normalizedRef
+                .split(separator: .word.inverted, omittingEmptySubsequences: true)
+                .map(\.localizedLowercase)
+        )
+        let candidateWordsSet = Set(
+            normalizedCandidate
+                .split(separator: .whitespace, omittingEmptySubsequences: true)
+                .map(\.localizedLowercase)
+        )
+
+        let totalUniqueWords = refWordsSet.union(candidateWordsSet).count
+        let sameWordCount = refWordsSet.intersection(candidateWordsSet).count
+
+        let matchingWordsScore = Double(sameWordCount) / Double(totalUniqueWords)
+        let prefixScore = prefixCount / Double(candidate.count)
+        let containsScore = refContainsCandidate ? 0.5 : 0
+
+        let totalScore = (matchingWordsScore + prefixScore + containsScore) / 3
+        return totalScore
     }
 }

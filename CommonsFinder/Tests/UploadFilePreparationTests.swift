@@ -54,7 +54,7 @@ struct UploadFilePreparationTests {
         var draft = try createSampleDraft(latitude: 48.137, longitude: 11.575)
 
         defer { cleanup(draft) }
-        #expect(draft.loadExifData()?.coordinate != nil, "the imported file must have a coordinate for this test")
+        #expect(draft.loadCachedExifData()?.coordinate != nil, "the imported file must have a coordinate for this test")
 
         // setting `.noLocation` is expected to remove location EXIF data
         draft.locationHandling = .noLocation
@@ -67,7 +67,7 @@ struct UploadFilePreparationTests {
         )
         #expect(FileManager.default.fileExists(atPath: uploadURL.path()), "file to upload should exist")
 
-        #expect(draft.loadExifData()?.coordinate != nil, "original draft file's EXIF should be unchanged")
+        #expect(draft.loadCachedExifData()?.coordinate != nil, "original draft file's EXIF should be unchanged")
 
         let stagingExif = try? ExifData(url: uploadURL)
         #expect(stagingExif?.coordinate == nil, "staging copy has EXIF location data removed")
@@ -95,7 +95,9 @@ struct UploadFilePreparationTests {
 
     @Test("User-defined location writes the chosen coordinate into the staging copy")
     func userDefinedLocationWritesStaging() throws {
-        var draft = try createSampleDraft(latitude: 10, longitude: 10)
+        let sampleLat = 10.0
+        let sampleLon = 11.0
+        var draft = try createSampleDraft(latitude: sampleLat, longitude: sampleLon)
         defer { cleanup(draft) }
 
         // setting `.locationHandling` with latitude, longitude is expected to only use those values for the wikitext and structured data
@@ -106,9 +108,9 @@ struct UploadFilePreparationTests {
 
         #expect(FileManager.default.fileExists(atPath: uploadURL.path()), "file to upload should exist")
 
-        let originalDraftEXIF = draft.loadExifData()?.coordinate
+        let originalDraftEXIFCoordinate = draft.loadCachedExifData()?.coordinate
         #expect(
-            draft.loadExifData()?.coordinate?.latitude == 10 && draft.loadExifData()?.coordinate?.latitude == 10,
+            originalDraftEXIFCoordinate?.latitude == sampleLat && originalDraftEXIFCoordinate?.longitude == sampleLon,
             "original draft file should be untouched."
         )
 

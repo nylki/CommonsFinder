@@ -314,8 +314,6 @@ public actor API {
             "list": "categorymembers",
             "redirects": "1",
             "prop": "info",
-            "clshow": "!hidden",
-            "cllimit": "max",
             "cmtitle": "Category:\(category)",
             "cmprop": "ids|title",
             "cmtype": "file",
@@ -344,19 +342,19 @@ public actor API {
     }
     
     /// Augment existing partial file info with structured data
-    public func fetchFileMetadata(fileMetadataList: [FileMetadata]) async throws -> [RawFileMetadata] {
-        let structuredData = try await fetchStructuredData(.pageids(fileMetadataList.map(\.id)))
-        var result: [RawFileMetadata] = []
-        
-        for fileMetadata in fileMetadataList {
-            guard let wikiItem = structuredData[fileMetadata.wikidataPageID] else {
-                logger.warning("We expect to find a wikidata entry for each page, \(fileMetadata.id) doesnt have one. Failed upload?")
-                continue
-            }
-            result.append(.init(title: fileMetadata.title, pageid: fileMetadata.pageid, pageData: fileMetadata, structuredData: wikiItem))
-        }
-        return result
-    }
+//    public func fetchFileMetadata(fileMetadataList: [FileMetadata]) async throws -> [RawFileMetadata] {
+//        let structuredData = try await fetchStructuredData(.pageids(fileMetadataList.map(\.id)))
+//        var result: [RawFileMetadata] = []
+//        
+//        for fileMetadata in fileMetadataList {
+//            guard let wikiItem = structuredData[fileMetadata.wikidataPageID] else {
+//                logger.warning("We expect to find a wikidata entry for each page, \(fileMetadata.id) doesnt have one. Failed upload?")
+//                continue
+//            }
+//            result.append(.init(title: fileMetadata.title, pageid: fileMetadata.pageid, pageData: fileMetadata, structuredData: wikiItem))
+//        }
+//        return result
+//    }
     
     /// fetch file info and  structured data to form a RawFileMetadata
     public func fetchFullFileMetadata(_ identifiers: FileIdentifierList) async throws -> [RawFileMetadata] {
@@ -409,8 +407,6 @@ public actor API {
             "iiextmetadatafilter": "ImageDescription|Attribution",
             "iiurlwidth": "500",
             "iiurlheight": "500",
-            "smaxage": "600",
-            "maxage": "600",
             "uselang": "content",
             "format": "json"
         ]
@@ -1030,8 +1026,6 @@ LIMIT \(limit)
             "sites": "commonswiki",
             "exportschema": "0.11",
             "formatversion": "2",
-            "smaxage": "600",
-            "maxage": "600",
             "uselang": "content",
             "format": "json"
         ]
@@ -1052,6 +1046,26 @@ LIMIT \(limit)
     public func checkIfFileExists(filename: String) async throws -> FilenameExistsResult? {
         let result = try await checkIfFilesExists(filenames: [filename])
         return result[filename]
+    }
+    
+    public func fetchMostRecentRevid(pageID: String) async throws -> Int? {
+        let query: Parameters = [
+            "action": "query",
+            "format": "json",
+            "prop": "revisions",
+            "rvslots": "main",
+            "rvprop": "ids",
+            "rvlimit": "1",
+            "pageids": pageID,
+            "formatversion": "2",
+            "curtimestamp": "1"
+        ]
+        
+        let request = try GET(url: commonsEndpoint, query: query)
+        let (data, response) = try await response(for: request)
+        let parsedResponse = try parse(QueryResponse<PageRevisionsResponse>.self, from: data, response: response)
+        
+        return parsedResponse.query?.pages.first?.revisions?.first?.revid
     }
     
     /// Check if a media file already exists by filename, returns [filename: FilenameExistsResult]

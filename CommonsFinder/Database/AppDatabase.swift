@@ -280,10 +280,13 @@ nonisolated final class AppDatabase: Sendable {
                 // make locationHandling optional (for subdrafts of multidrafts)
                 t.drop(column: "locationHandling")
                 t.add(column: "locationHandling", .jsonText)
-
-
             }
+        }
 
+        migrator.registerMigration("add revid to mediaFile") { db in
+            try db.alter(table: "mediaFile") { t in
+                t.add(column: "revid", .integer)
+            }
         }
 
         return migrator
@@ -341,7 +344,7 @@ extension AppDatabase {
 
 // MARK: - MediaFile Writes
 
-extension AppDatabase {
+nonisolated extension AppDatabase {
     /// Inserts a media file and returns the inserted media file.
     @discardableResult
     func insert(_ imageModel: MediaFile) throws -> MediaFile {
@@ -409,10 +412,17 @@ extension AppDatabase {
 }
 
 // MARK: - MediaFileInfo Writes
-extension AppDatabase {
+nonisolated extension AppDatabase {
     /// creates a new DB entry if needed
     func updateLastViewed(_ mediaFileInfo: MediaFileInfo) throws -> MediaFileInfo {
         try updateInteractionImpl(mediaFileInfo, lastViewed: .now, incrementViewCount: true)
+    }
+
+    func updateLastFetchedToNow(_ id: MediaFile.ID) throws {
+        try dbWriter.write { db in
+            var mediaFile = try MediaFile.find(db, id: id)
+            try mediaFile.updateChanges(db) { $0.fetchDate = .now }
+        }
     }
 
     /// creates a new DB entry if needed
@@ -476,17 +486,17 @@ extension AppDatabase {
 }
 
 // MARK: - Category Writes
-extension AppDatabase {
+nonisolated extension AppDatabase {
     @discardableResult
     func upsert(_ item: Category) throws -> Category? {
-        try upsert([item]).first
+        try upsertAndFetchOrdered([item]).first
     }
 
     /// inserts or updates all Categories while retaining any `itemInteractionID` if it already is set, and returns the inserted media files.
     /// Optionally also creates redirect items (as returned from the API), expecting the format [fromWikidataID:toWikidataID] in the same transaction.
 
     @discardableResult
-    func upsert(_ items: [Category], handleRedirections redirectItems: [Category.WikidataID: Category.WikidataID]? = nil) throws -> [Category] {
+    func upsertAndFetchOrdered(_ items: [Category], handleRedirections redirectItems: [Category.WikidataID: Category.WikidataID]? = nil) throws -> [Category] {
 
         try dbWriter.write { db in
             let resultIDs = items.compactMap { item in
@@ -646,7 +656,9 @@ extension AppDatabase {
                 }
             }
 
-            return try Category.fetchAll(db, ids: resultIDs)
+            let fetched = try Category.fetchAll(db, ids: resultIDs)
+            let byID = Dictionary(fetched.map { ($0.id, $0) }, uniquingKeysWith: { first, _ in first })
+            return resultIDs.compactMap { byID[$0] }
         }
     }
 
@@ -1041,6 +1053,16 @@ nonisolated extension AppDatabase {
             resolveRedirections: resolveRedirections
         )
         .first
+    }
+
+    func fetchCategoryInfos(ids: [Int64]) throws -> [CategoryInfo] {
+        try dbWriter.read { db in
+            try Category
+                .filter(ids: ids)
+                .including(optional: Category.itemInteraction)
+                .asRequest(of: CategoryInfo.self)
+                .fetchAll(db)
+        }
     }
 
     func fetchCategoryInfos(commonsCategories: [String]) throws -> [CategoryInfo] {

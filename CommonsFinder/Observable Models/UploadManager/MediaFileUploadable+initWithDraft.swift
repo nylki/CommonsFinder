@@ -141,7 +141,7 @@ extension MediaFileUploadable {
         //  TODO: add timezone when handling time component
         statements.append(.inception(wikidataDate))
 
-        let exifData = draft.loadExifData()
+        let exifData = draft.loadCachedExifData()
         let exifCoordinate = exifData?.coordinate
 
         switch locationHandling {

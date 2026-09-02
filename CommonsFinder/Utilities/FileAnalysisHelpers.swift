@@ -52,7 +52,7 @@ nonisolated enum FileAnalysisHelpers {
 
         guard let fileURL = draft.localFileURL() else { return nil }
         let handler = ImageRequestHandler(fileURL)
-        let exifData = draft.loadExifData()
+        let exifData = draft.loadCachedExifData()
 
         let coordinate: CLLocationCoordinate2D? =
             if case .userDefinedLocation(latitude: let lat, longitude: let lon, _) = draft.locationHandling {
@@ -276,32 +276,35 @@ nonisolated enum FileAnalysisHelpers {
         }
     }
 
-    private static func fetchCategoriesByReverseMapKitGeocoding(coordinate: CLLocationCoordinate2D, appDatabase: AppDatabase) async throws -> [Category] {
+    private static func fetchCategoriesByReverseMapKitGeocoding(coordinate: CLLocationCoordinate2D, appDatabase: AppDatabase) async throws -> [CategoryInfo] {
         let referenceCLLocation = CLLocation(latitude: coordinate.latitude, longitude: coordinate.longitude)
 
         let placemark = try await coordinate.reverseGeocodingRequest()
         // TODO: in iOS 26 only, use MKReverseGeocodingRequest to access .address.shortAddress
         //        async let mapItemRequest = await geocodingRequest?.mapItems.first
 
-        var result: [Category] = []
+        var result: [CategoryInfo] = []
 
         if let placemark {
 
             if let thoroughfare = placemark.thoroughfare, let city = placemark.locality {
                 let shortAddress = "\(thoroughfare), \(city)"
 
-                var streetCategories: [Category] = []
-                streetCategories += try await APIUtils.searchCategories(for: shortAddress, appDatabase: appDatabase)
+                var streetCategories: [ScoredCategoryInfo] = []
+                streetCategories += try await DataAccess.searchCategories(for: shortAddress, referenceCoordinate: coordinate, appDatabase: appDatabase)
 
                 if streetCategories.isEmpty,
                     let street = shortAddress.components(separatedBy: .decimalDigits).first
                 {
-                    streetCategories += try await APIUtils.searchCategories(for: street, appDatabase: appDatabase)
+                    streetCategories += try await DataAccess.searchCategories(for: street, referenceCoordinate: coordinate, appDatabase: appDatabase)
                 }
 
-                streetCategories =
-                    streetCategories.filter {
-                        guard let latitude = $0.latitude, let longitude = $0.longitude else {
+                let sortedStreeCategories =
+                    streetCategories
+                    .filter {
+                        guard let latitude = $0.categoryInfo.base.latitude,
+                            let longitude = $0.categoryInfo.base.longitude
+                        else {
                             return false
                         }
                         let distanceFromReference = CLLocation(latitude: latitude, longitude: longitude)
@@ -309,23 +312,32 @@ nonisolated enum FileAnalysisHelpers {
 
                         return distanceFromReference < 3000
                     }
-                    .sorted(by: { a, b in
-                        sortCategoriesByDistance(to: referenceCLLocation, a: a, b: b)
-                    })
+                    .sorted(by: \.score, .orderedDescending)
+                    .map(\.categoryInfo)
 
-                result.insert(contentsOf: streetCategories.prefix(1), at: 0)
+                result.insert(contentsOf: sortedStreeCategories.prefix(1), at: 0)
             } else if let water = placemark.ocean ?? placemark.inlandWater {
-                let waterCategories = try await APIUtils.searchCategories(for: water, appDatabase: appDatabase)
+                let waterCategories = try await DataAccess.searchCategories(for: water, referenceCoordinate: coordinate, appDatabase: appDatabase)
                     .filter { category in
+                        guard let latitude = category.categoryInfo.base.latitude,
+                            let longitude = category.categoryInfo.base.longitude
+                        else {
+                            return false
+                        }
+                        let distanceFromReference = CLLocation(latitude: latitude, longitude: longitude)
+                            .distance(from: referenceCLLocation)
+
+                        guard distanceFromReference < 100_000 else {
+                            return false
+                        }
+
                         // canal, river, lake, better to do it in the query with broader water filter
-                        Set(["Q12284", "Q4022", "Q23397"]).intersection(category.instances).isEmpty == false
+                        return Set(["Q12284", "Q4022", "Q23397"]).intersection(category.categoryInfo.base.instances).isEmpty == false
                     }
-                    .sorted(by: { a, b in
-                        sortCategoriesByDistance(to: referenceCLLocation, a: a, b: b)
-                    })
+                    .sorted(by: \.score, .orderedDescending)
+                    .map(\.categoryInfo)
 
                 result.insert(contentsOf: waterCategories.prefix(1), at: 0)
-
             }
         }
         return result
@@ -382,7 +394,7 @@ nonisolated enum FileAnalysisHelpers {
                 // and then querying the landmark/street/ocean/etc. via wikimedia APIs and apply some specialized filters
                 // to get categories that may have been missed in the search before.
                 // and
-                let mapKitCategorySuggestions = try await fetchCategoriesByReverseMapKitGeocoding(coordinate: coordinate, appDatabase: appDatabase)
+                let mapKitCategorySuggestions = try await fetchCategoriesByReverseMapKitGeocoding(coordinate: coordinate, appDatabase: appDatabase).map(\.base)
                 finalResult.insert(contentsOf: mapKitCategorySuggestions, at: 0)
             } catch {
                 logger.error("Error fetching mapkit category suggestions \(error)")
@@ -497,5 +509,17 @@ nonisolated extension [Category] {
             return distanceFromReference < maxDistance
         }
 
+    }
+}
+
+nonisolated extension SearchOrder {
+    var apiType: CommonsAPI.API.SearchSort {
+        switch self {
+        case .relevance: .relevance
+        case .newest: .createTimestampDesc
+        case .oldest: .createTimestampAsc
+        case .nameAscending: .titleNaturalAsc
+        case .nameDescending: .titleNaturalDesc
+        }
     }
 }

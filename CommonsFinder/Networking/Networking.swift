@@ -42,11 +42,10 @@ actor Networking {
     private var assumeLoggedInUser = false
 
     #if DEBUG
-        let urlSession: URLSessionProxy
+        private let urlSession: URLSessionProxy
     #else
-        let urlSession: URLSession
+        private let urlSession: URLSession
     #endif
-
 
     private var authenticatedResponseProvider: URLResponseProvider {
         authenticator.responseProvider
@@ -133,8 +132,9 @@ actor Networking {
             name: "app.CommonsFinder.DataCache",
             sizeLimit: 1024 * 1024 * 256
         )
-        ImageCache.shared.costLimit = 1024 * 1024 * 512  // 512 MB
+
         ImageCache.shared.ttl = 60 * 10  // Invalidate images in memory cache after 10 minutes
+        pipelineConfig.imageCache = ImageCache.shared
 
         // configures a rate limiter that complies with the strict server-site rate limiting
         // for non-authenticated clients, which is max 10 requests in a 10s sliding window.

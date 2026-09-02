@@ -8,6 +8,8 @@
 import CommonsAPI
 import CoreLocation
 import FrameUp
+import GeoToolbox
+import MapKit
 import OrderedCollections
 import SwiftUI
 import os.log
@@ -321,13 +323,22 @@ struct TagPicker: View {
             do {
                 try await Task.sleep(for: .milliseconds(300))
                 logger.debug("preferred languages: \(Locale.preferredLanguages)")
-                let searchedCategories = try await APIUtils.searchCategories(for: searchText, appDatabase: appDatabase)
+                let scoredSearchResult =
+                    try await DataAccess
+                    .searchCategories(for: searchText, referenceCoordinate: analysisInput?.coordinate, appDatabase: appDatabase)
+
+
+                let sortedCategories =
+                    scoredSearchResult
+                    .sorted(by: \.score, .orderedDescending)
+                    .map(\.categoryInfo)
+
 
                 let existingTagIDs = Set(tags.map(\.id))
 
                 let filteredSearchedTags: [TagModel] =
-                    searchedCategories.map {
-                        TagModel(tagItem: .init($0))
+                    sortedCategories.map {
+                        TagModel(tagItem: .init($0.base))
                     }
                     .filter { searchTag in
                         !existingTagIDs.contains(searchTag.id)

@@ -37,6 +37,7 @@ nonisolated
 
         self.init(
             id: String(apiFileMetadata.pageData.pageid),
+            revid: apiFileMetadata.pageData.lastrevid,
             name: apiFileMetadata.pageData.title,
             url: imageInfo.url,
             descriptionURL: imageInfo.descriptionurl,

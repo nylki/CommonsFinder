@@ -29,7 +29,7 @@ nonisolated struct ItemInteraction: Equatable, Hashable, Sendable, Identifiable 
 
 }
 
-extension ItemInteraction {
+nonisolated extension ItemInteraction {
     /// returns a new ItemInteraction by merging both interactions by choosen the more recent date's of each,
     /// and adding the viewCount together.
     /// The ID of the self-item will be kept.

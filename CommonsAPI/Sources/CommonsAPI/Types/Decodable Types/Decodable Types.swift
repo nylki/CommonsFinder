@@ -224,8 +224,6 @@ public struct FileUploadResponse: Decodable, Sendable {
             self.filename = try container.decodeIfPresent(String.self, forKey: FileUploadResponse.Upload.CodingKeys.filename)
             self.filekey = try container.decodeIfPresent(String.self, forKey: FileUploadResponse.Upload.CodingKeys.filekey)
             
-
-
             let stringWarningsDict: [String: String]? = try? container.decodeIfPresent([String: String].self, forKey: FileUploadResponse.Upload.CodingKeys.warnings)
             let arrayWarningsDict: [String: [String]]? = try? container.decodeIfPresent([String: [String]].self, forKey: FileUploadResponse.Upload.CodingKeys.warnings)
             if let stringWarningsDict {
@@ -937,6 +935,8 @@ internal struct PageRevisionsResponse: Decodable, Sendable {
         let revisions: [Revision]?
 
         struct Revision: Decodable, Sendable {
+            let revid: Int?
+            let parentid: Int?
             let slots: Slots?
 
             struct Slots: Decodable, Sendable {

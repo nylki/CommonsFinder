@@ -59,7 +59,7 @@ struct FileDetailView: View {
 
     private var isFullDescriptionDifferentFromCaption: Bool {
         guard let fullDescription, let caption else {
-            return false
+            return true
         }
         // perf note: this is fast enough, no need to cache it.
         return String(fullDescription.characters).trimmingCharacters(in: .whitespaces) != caption
@@ -80,6 +80,11 @@ struct FileDetailView: View {
         } catch {
             logger.error("Failed to update bookmark on \(mediaFileInfo.mediaFile.name): \(error)")
         }
+    }
+
+    private func showEditDialog() {
+        saveFileToLastViewed()
+        isShowingEditSheet = true
     }
 
     private var editingStatus: EditingStatus? {
@@ -110,7 +115,7 @@ struct FileDetailView: View {
                 isPresented: $isShowingFullscreenImage
             )
             .sheet(isPresented: $isShowingEditSheet) {
-                FileEditView(mediaFileInfo: mediaFileInfo, resolvedTags: resolvedTags)
+                FileEditView(id: mediaFileInfo.id)
             }
             .alert("Failed to Publish", isPresented: $isShowingEditingError, presenting: editingError) { _ in
                 Button("OK", role: .cancel) {}
@@ -158,10 +163,8 @@ struct FileDetailView: View {
 
                         Divider()
 
-                        Button("Edit", systemImage: "pencil") {
-                            isShowingEditSheet = true
-                        }
-                        .disabled(isEditing || isResolvingTags)
+                        Button("Edit", systemImage: "pencil", action: showEditDialog)
+                            .disabled(isEditing || isResolvingTags)
 
                     } label: {
                         Image(systemName: "ellipsis")
@@ -192,7 +195,7 @@ struct FileDetailView: View {
                     logger.error("CAT: Failed to observe MediaFileInfo changes \(error)")
                 }
             }
-            .task(id: mediaFileInfo.mediaFile.fetchDate, priority: .userInitiated) {
+            .task(id: mediaFileInfo.mediaFile.revid, priority: .userInitiated) {
                 isResolvingTags = true
 
                 do {
@@ -213,17 +216,9 @@ struct FileDetailView: View {
                     isResolvingTags = false
                 }
 
-                // After resolving tags, if the file hasn't been refreshed from network in a while (2 minutes)
+                // After resolving tags, if the file hasn't been refreshed from network in a while (1 minutes)
                 // do it now
-
-                let timeIntervalSinceLastFetchDate = Date.now.timeIntervalSince(mediaFileInfo.mediaFile.fetchDate)
-                if timeIntervalSinceLastFetchDate > (2 * 60) {
-                    do {
-                        try await Task.sleep(for: .milliseconds(250))
-                        // NOTE: changes from refresh will propagate into the DB observation further above.
-                        await DataAccess.refreshMediaFileFromNetwork(id: mediaFileInfo.id, appDatabase: appDatabase)
-                    } catch {}
-                }
+                await DataAccess.refreshMediaFileIfNeeded(mediaFileInfo.mediaFile, maxAge: 60, appDatabase: appDatabase)
             }
             .onDisappear {
                 saveFileToLastViewed()
