@@ -91,7 +91,6 @@ struct FileEditView: View {
             do {
                 let observation = ValueObservation.tracking { db in
                     try MediaFile
-                        //  required, because we update `lastViewed` above.
                         .including(optional: MediaFile.itemInteraction)
                         .filter(id: id)
                         .asRequest(of: MediaFileInfo.self)

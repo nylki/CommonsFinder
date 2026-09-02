@@ -81,6 +81,11 @@ struct FileDetailView: View {
             logger.error("Failed to update bookmark on \(mediaFileInfo.mediaFile.name): \(error)")
         }
     }
+    
+    private func showEditDialog() {
+        saveFileToLastViewed()
+        isShowingEditSheet = true
+    }
 
     private var editingStatus: EditingStatus? {
         editingManager.status[mediaFileInfo.mediaFile.id]
@@ -158,10 +163,8 @@ struct FileDetailView: View {
 
                         Divider()
 
-                        Button("Edit", systemImage: "pencil") {
-                            isShowingEditSheet = true
-                        }
-                        .disabled(isEditing || isResolvingTags)
+                        Button("Edit", systemImage: "pencil", action: showEditDialog)
+                            .disabled(isEditing || isResolvingTags)
 
                     } label: {
                         Image(systemName: "ellipsis")
