@@ -81,7 +81,7 @@ struct FileDetailView: View {
             logger.error("Failed to update bookmark on \(mediaFileInfo.mediaFile.name): \(error)")
         }
     }
-    
+
     private func showEditDialog() {
         saveFileToLastViewed()
         isShowingEditSheet = true

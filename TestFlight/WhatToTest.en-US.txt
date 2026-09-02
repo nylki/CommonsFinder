@@ -1,13 +1,5 @@
-Multi-File Upload
+- fixed an issue where edited files showed stale info
 
-You can now upload multiple images at once without having to re-enter descriptions and categories.
-The process has two steps. First, you can assign descriptions, categories, etc. that apply to all files. In the second step, each file can be edited individually to adjust descriptions and other details.
+- more relevant search results when searching for tags/categories for new uploads
 
-
-Fixes and Improvements
-
-- Design updates for category tiles
-
-- The full image description (wikitext) is no longer duplicated if the short description is identical
-
-- Upload dialog: Tapping the map now opens an enlarged map view
+- some performance improvements
