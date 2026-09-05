@@ -50,11 +50,12 @@ struct FileItem: Equatable, Hashable, Identifiable, Sendable {
             throw FileImportError.unsupportedContentType([fileType])
         }
 
-        localFileName = UUID().uuidString.appendingFileExtension(conformingTo: fileType)
-        itemIdentifier = nil
-
         let gotAccess = originalFileURL.startAccessingSecurityScopedResource()
         guard gotAccess else { throw FileImportError.fileAccessDenied(originalFileURL) }
+        defer { originalFileURL.stopAccessingSecurityScopedResource() }
+
+        localFileName = UUID().uuidString.appendingFileExtension(conformingTo: fileType)
+        itemIdentifier = nil
         originalFilename = originalFileURL.lastPathComponent
 
         self.fileType = fileType
@@ -65,7 +66,6 @@ struct FileItem: Equatable, Hashable, Identifiable, Sendable {
                 to: fileURL
             )
 
-        originalFileURL.stopAccessingSecurityScopedResource()
     }
 
     /// Creates JPG-Data and writes them to a file
@@ -123,10 +123,7 @@ struct FileItem: Equatable, Hashable, Identifiable, Sendable {
         self.itemIdentifier = photoPickerItem.itemIdentifier
         self.localFileName = UUID().uuidString.appendingFileExtension(conformingTo: fileType)
 
-        try data.write(
-            to: fileURL,
-            options: [.atomic, .completeFileProtection]
-        )
+        try data.write(to: fileURL, options: [.atomic])
     }
 
     /// This expects the file to already copied into the local App container, so it just needs to be moved
