@@ -1,5 +1,1 @@
-- fixed an issue where edited files showed stale info
-
-- more relevant search results when searching for tags/categories for new uploads
-
-- some performance improvements
+- fixed a bug during multi-file upload that happened when the screen got locked
