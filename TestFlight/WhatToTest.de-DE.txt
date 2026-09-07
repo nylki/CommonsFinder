@@ -1,5 +1,1 @@
-- Problem behoben bei dem bearbeitete Dateien veraltete Infos anzeigten
- 
-- Relevantere Suchergebnisse bei der Suche von Tags/Kategorien für neue Uploads
- 
-- kleinere Performance-Verbesserungen
+- Fehler beim Hochladen von mehreren Dateien behoben, der auftrat wenn der Bildschirm gesperrt wurde

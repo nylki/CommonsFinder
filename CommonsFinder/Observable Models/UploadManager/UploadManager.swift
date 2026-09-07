@@ -691,7 +691,7 @@ class UploadManager {
 
 extension MediaFileDraft {
     /// Transient directory holding EXIF-adjusted copies prepared for upload.
-    /// These are throwaway files; the pristine original always stays in the Documents directory.
+    /// These are throwaway files; the original always stays in the .documentsDirectory directory.
     static let uploadStagingDirectory = URL.temporaryDirectory.appending(path: "upload-staging")
 
     /// Deterministic staging path, requires calling `preparedUploadFileURL()`
