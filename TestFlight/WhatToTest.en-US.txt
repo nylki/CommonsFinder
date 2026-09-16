@@ -1,1 +1,3 @@
-- fixed a bug during multi-file upload that happened when the screen got locked
+Crash Fix
+ 
+A failed or interrupted upload could cause the app to crash on launch. Thank you for the crash report!

@@ -271,8 +271,7 @@ extension WikidataClaim.Snak.DataValue.WikiDataValueEntityID {
     
     /// Initialize with a Q-ID string, eg. "Q2"
     public init?(stringValue: String) {
-        let split = stringValue.split(separator: "Q")
-        guard let numericID = Int(split[0]) else {
+        guard let numericID = Int(stringValue.trimmingPrefix("Q")) else {
             return nil
         }
         self.init(id: stringValue, entityType: "item", numericID: numericID)

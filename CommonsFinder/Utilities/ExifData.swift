@@ -80,11 +80,17 @@ nonisolated struct ExifData: Codable, Equatable, Hashable {
         }
     }
 
+    enum EXIFSubjectArea: Codable, Equatable, Hashable {
+        case rect(CGRect)
+        case circle(CGPoint, diameter: Double)
+        case point(CGPoint)
+    }
+
     private(set) var dpiWidth: Int?
     private(set) var dpiHeight: Int?
     private(set) var depth: Int?
     private(set) var orientation: Orientation?
-    private(set) var subjectArea: CGRect?
+    private(set) var subjectArea: EXIFSubjectArea?
 
     private(set) var apertureValue: String?
     private(set) var brightnessValue: String?
@@ -241,13 +247,29 @@ nonisolated struct ExifData: Codable, Equatable, Hashable {
             self.lensModel = exifData[kCGImagePropertyExifLensModel] as? String
             self.fNumber = exifData[kCGImagePropertyExifFNumber] as? Double
             self.isoSpeedRatings = exifData[kCGImagePropertyExifISOSpeedRatings] as? [Int]
-            if let subjectArea = exifData[kCGImagePropertyExifSubjectArea] as? [Int] {
-                self.subjectArea = CGRect(
-                    x: subjectArea[0],
-                    y: subjectArea[1],
-                    width: subjectArea[2],
-                    height: subjectArea[3]
-                )
+            if let subjectArea = exifData[kCGImagePropertyExifSubjectArea] as? [Int], subjectArea.count >= 2 {
+                let center = CGPoint(x: subjectArea[0], y: subjectArea[1])
+                switch subjectArea.count {
+                case 2:
+                    self.subjectArea = .point(center)
+                case 3:
+                    self.subjectArea = .circle(center, diameter: Double(subjectArea[2]))
+                case 4:
+                    let size = CGSize(
+                        width: Double(subjectArea[2]),
+                        height: Double(subjectArea[3])
+                    )
+                    let rect = CGRect(
+                        x: center.x - size.width / 2,
+                        y: center.y - size.height / 2,
+                        width: size.width,
+                        height: size.height
+                    )
+
+                    self.subjectArea = .rect(rect)
+                default:
+                    self.subjectArea = nil
+                }
             }
         }
 

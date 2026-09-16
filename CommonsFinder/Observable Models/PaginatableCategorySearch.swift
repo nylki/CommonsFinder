@@ -69,7 +69,7 @@ import os.log
         commonsOffset = result.offset
 
         let categoriesWithoutPrefix = result.items.map {
-            String($0.title.split(separator: "Category:")[0])
+            String($0.title.trimmingPrefix("Category:"))
         }
 
         return (categories: categoriesWithoutPrefix, canContinue: commonsOffset != nil)

@@ -27,6 +27,7 @@ struct MultiDraftIndividualCarouselView: View {
     @State private var isInteractingWithScrollView = false
     @State private var selectedDraftID: MediaFileDraft.ID?
     @State private var zoomableImageReference: ZoomableImageReference?
+    @State private var skipSaveOnDismiss = false
 
     private var selectedDraftModel: SingleDraftModel? {
         if let selectedDraftID {
@@ -44,6 +45,14 @@ struct MultiDraftIndividualCarouselView: View {
                 IndividualDraftForm(model: selectedDraftModel, withImage: false)
                     .id(selectedDraftID)
                     .transition(.blurReplace)
+                    .onDisappear {
+                        guard !skipSaveOnDismiss, model.draftExistsInDB else { return }
+                        do {
+                            try selectedDraftModel.saveEditingChanges(appDatabase: appDatabase)
+                        } catch {
+                            logger.error("Failed to save all drafts \(error)")
+                        }
+                    }
             }
             Spacer(minLength: 0)
         }
@@ -81,7 +90,7 @@ struct MultiDraftIndividualCarouselView: View {
                     // TODO: surface error to use?
                     logger.error("Failed to start upload")
                 }
-                dismiss()
+                dismissWithoutSaving()
             }
 
             Button("Cancel", role: .cancel) {
@@ -257,6 +266,11 @@ struct MultiDraftIndividualCarouselView: View {
         } catch {
             logger.error("Failed to delete drafts \(error)")
         }
+    }
+
+    private func dismissWithoutSaving() {
+        skipSaveOnDismiss = true
+        dismiss()
     }
 }
 

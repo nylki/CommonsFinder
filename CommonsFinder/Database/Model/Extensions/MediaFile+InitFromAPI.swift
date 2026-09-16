@@ -23,7 +23,7 @@ nonisolated
         let mimeType = UTType(filenameExtension: imageInfo.url.pathExtension)?.preferredMIMEType
 
         let categories: [String] = apiFileMetadata.pageData.categories.map {
-            String($0.title.split(separator: "Category:")[0])
+            String($0.title.trimmingPrefix("Category:"))
         }
 
         let fullDescription: [LanguageString] =

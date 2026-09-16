@@ -41,6 +41,7 @@ struct SingleDraftView: View {
     @State private var isShowingUploadDisabledAlert = false
     @State private var isShowingTagsPicker = false
     @State private var isShowingCategoryPicker = false
+    @State private var skipSaveOnDismiss = false
 
     private var draftExistsInDB: Bool {
         do {
@@ -61,6 +62,14 @@ struct SingleDraftView: View {
     var body: some View {
         IndividualDraftForm(model: model, withImage: true)
             .toolbar { toolbarContent }
+            .onDisappear {
+                guard !skipSaveOnDismiss, draftExistsInDB else { return }
+                do {
+                    try model.saveEditingChanges(appDatabase: appDatabase)
+                } catch {
+                    logger.error("Failed to save all drafts \(error)")
+                }
+            }
     }
 
     private func saveChangesAndDismiss() {
@@ -69,6 +78,11 @@ struct SingleDraftView: View {
         } catch {
             logger.error("Failed to save all drafts \(error)")
         }
+        dismiss()
+    }
+
+    private func dismissWithoutSaving() {
+        skipSaveOnDismiss = true
         dismiss()
     }
 
@@ -141,7 +155,7 @@ struct SingleDraftView: View {
                             logger.error("Failed to save all drafts \(error)")
                         }
                         uploadManager.upload(model.draft, username: username)
-                        dismiss()
+                        dismissWithoutSaving()
                     }
 
                     Button("Cancel", role: .cancel) {

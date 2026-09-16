@@ -908,7 +908,7 @@ internal struct FileExistenceResponse: Decodable, Sendable {
     let normalized: [Normalized]?
     
     struct Normalized: Decodable, Sendable {
-        let fromencoded: Bool
+        let fromencoded: Bool?
         let from: String
         let to: String
     }
