@@ -93,13 +93,23 @@ nonisolated struct Category: Identifiable, Equatable, Hashable, Sendable, Codabl
 nonisolated extension Category {
 
     // NOTE: The base wikidataItem _must_ have atleast one of wikidataId or commonsCategory
-    // as defined in the DB constraint (see database.swift), so it should always be safe to assume
-    // that it is identifiable by one of them.
+    // as the initializers can only be called with either or both (see database.swift), so it should always be safe to assume that it is identifiable by one of them.
     // However we cannot make the base-item itself identifiable as that would be problematic for several reason
     // mainly not being sure if the item is already persisted with its auto-incremented id.
     // see: https://github.com/groue/GRDB.swift/issues/1435#issuecomment-1740857712).
     /// ID that is either the wikidataID, otherwise the raw commonsCategory
-    var composedID: String { (wikidataId ?? commonsCategory)! }
+    var composedID: String {
+        if let wikidataId {
+            return wikidataId
+        } else if let commonsCategory {
+            return commonsCategory
+        } else if let id {
+            return "row:\(id)"
+        } else {
+            assertionFailure("Cannot construct composedID, this should always be possible")
+            return "undefined"
+        }
+    }
 
     var wikidataURL: URL? {
         if let wikidataId {

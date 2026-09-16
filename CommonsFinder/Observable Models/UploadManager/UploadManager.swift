@@ -107,11 +107,15 @@ class UploadManager {
                         let result = try await Networking.shared.api.checkIfFileExists(filename: draft.finalFilename)
                         switch result {
                         case .exists:
+                            // unstashing has finished, since the backend confirmed
+                            // the file exists. So the next logic publishing step is creating
+                            // the structured data.
                             try setPublishingState(for: draft.id, to: .creatingWikidataClaims, verificationRequired: false)
                         case .doesNotExist:
                             try setPublishingState(for: draft.id, to: .unstashingFile(filekey: filekey), verificationRequired: false)
                         case .invalidFilename:
                             try setPublishingState(for: draft.id, to: .unstashingFile(filekey: filekey), verificationRequired: false)
+                            try setPublishingError(for: draft.id, error: .uploadWarnings([.badfilename]))
                         case .none:
                             assertionFailure()
                         }

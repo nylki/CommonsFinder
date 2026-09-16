@@ -32,7 +32,7 @@ struct WikidataEndToEndTests {
 
         let userAgent = "\(executable)/\(appBuild) (\(contactInfo)) \(osNameVersion)"
     
-        return CommonsAPI.API(config: .default, responseProvider: responseProvider, userAgent: userAgent, referer: "commonsfinder://UnitTests")
+        return CommonsAPI.API(config: .default, responseProvider: responseProvider, tokenProvider: { return "" }, userAgent: userAgent, referer: "commonsfinder://UnitTests")
     }()
     
     @Test("Searching Q-Items", arguments: [("tree", "en"), ("Baum", "de")])

@@ -292,10 +292,10 @@ public actor API {
         assert(rawSubCategories.allSatisfy { $0.ns == .category }, "We expect all items to be (sub)-categories")
         
         let subCategories: [String] = rawSubCategories.compactMap {
-            String($0.title.split(separator: "Category:")[0])
+            String($0.title.trimmingPrefix("Category:"))
         }
         let parentCategories: [String] = rawParentCategories.compactMap {
-            String($0.title.split(separator: "Category:")[0])
+            String($0.title.trimmingPrefix("Category:"))
         }
         
         assert(rawSubCategories.count == subCategories.count, "We expect all categories to have the \"Category:\" prefix")
@@ -1094,11 +1094,23 @@ LIMIT \(limit)
                 continue
             }
             
-            var fromTitle = parsedResponse.query?.normalized?.first { normalizedResult in
-                normalizedResult.to == title
-            }?.from ?? title
             
-            fromTitle = String(fromTitle.split(separator: "File:")[0])
+            let normalizedEntry = parsedResponse.query?.normalized?.first { normalizedResult in
+                normalizedResult.to == title
+            }
+            
+            var fromTitle =
+                if let normalizedEntry {
+                    if normalizedEntry.fromencoded == true {
+                        normalizedEntry.from.removingPercentEncoding ?? normalizedEntry.from
+                    } else {
+                        normalizedEntry.from
+                    }
+                } else {
+                    title
+                }
+            
+            fromTitle = String(fromTitle.trimmingPrefix("File:"))
             
             if page.invalid == true {
                 result[fromTitle] = .invalidFilename

@@ -1,1 +1,4 @@
-- Fehler beim Hochladen von mehreren Dateien behoben, der auftrat wenn der Bildschirm gesperrt wurde
+Crash-Fix
+
+Ein fehlerhafter bzw. unterbrochener Upload konnte einen harten Crash der App erzeugen, der beim erneuten
+öffnen der App auftritt. Vielen Dank für den Crashreport!

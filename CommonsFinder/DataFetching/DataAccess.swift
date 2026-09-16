@@ -355,7 +355,7 @@ nonisolated enum DataAccess {
 
         let (searchItems, searchCategories) = try await (
             wikidataSearchTask.search,
-            categorySearchTask.items.compactMap { String($0.title.split(separator: "Category:")[0]) }
+            categorySearchTask.items.compactMap { String($0.title.trimmingPrefix("Category:")) }
         )
 
 

@@ -221,6 +221,9 @@ struct CommonsEndToEndTests {
 //    }
 
     @Test("check if file exists", arguments: [
+        // this one will be normalized, has an extra space:
+        (filename: "", expected: FilenameExistsResult.invalidFilename),
+        (filename: "006 Toco toucan in Encontro das Águas State Park Photo by  Giles Laurent.jpg", expected: FilenameExistsResult.exists),
         (filename: "The_Earth_seen_from_Apollo_17.jpg", expected: FilenameExistsResult.exists),
         (filename: "This_file_should_not_exist_12345.jpg", expected: FilenameExistsResult.doesNotExist),
         (filename: "[invalid<>].jpg", expected: FilenameExistsResult.invalidFilename),
