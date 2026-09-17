@@ -201,10 +201,14 @@ enum FileImportError: Error {
                 logger.info("Cannot get camera location")
             }
 
+            let metadata = NSMutableDictionary(dictionary: metadata)
+            if let cameraLocation {
+                metadata[kCGImagePropertyGPSDictionary] = cameraLocation.gpsDictionary
+            }
+
             let draft = try MediaFileDraft.create(
                 fromImage: uiImage,
                 metadata: metadata,
-                location: cameraLocation,
                 newDraftOptions: newDraftOptions,
                 isPartOfMultiDraft: false
             )
@@ -220,11 +224,7 @@ enum FileImportError: Error {
     }
 }
 
-// MARK: - Importing media files into new drafts
-//
-// Each factory writes the imported file to the new draft's `localFileURL()` inside the Documents directory.
-// The draft itself is not stored in the database here; that only happens when the user saves it.
-// Files of drafts that never get saved are removed by `Maintenance` at the next app launch.
+
 extension MediaFileDraft {
     static let supportedPhotoMediaTypes: [UTType] = [.webP, .png, .jpeg, .gif]
 
@@ -284,7 +284,6 @@ extension MediaFileDraft {
     static func create(
         fromImage uiImage: UIImage,
         metadata: NSDictionary,
-        location: CLLocation?,
         newDraftOptions: NewDraftOptions?,
         isPartOfMultiDraft: Bool
     ) throws -> Self {
@@ -295,8 +294,8 @@ extension MediaFileDraft {
         else {
             throw FileImportError.failedToConvertUIImageToData
         }
+        let exifData = ExifData(metadata: metadata)
 
-        let exifData = try ExifData(data: data)
         var draft = try MediaFileDraft(
             isPartOfMultiDraft: isPartOfMultiDraft,
             newDraftOptions: newDraftOptions,
@@ -312,11 +311,6 @@ extension MediaFileDraft {
 
         guard let destination = CGImageDestinationCreateWithURL(outURL as CFURL, type, 1, nil) else {
             throw FileImportError.failedToConvertUIImageToData
-        }
-
-        let metadata = NSMutableDictionary(dictionary: metadata)
-        if let location {
-            metadata[kCGImagePropertyGPSDictionary] = location.gpsDictionary
         }
 
         CGImageDestinationAddImage(destination, imageRef, metadata as CFDictionary)

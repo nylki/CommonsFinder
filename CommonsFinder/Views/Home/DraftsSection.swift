@@ -69,7 +69,7 @@ struct DraftsSection: View {
     }
     .shadow(radius: 30)
     .task {
-        _ = try? appDatabase.deleteAllDrafts()
+        _ = try? appDatabase.deleteAllDraftsForDebugging()
         _ = try? appDatabase.upsert(
             .makeRandomDraft(id: "1", uploadPossibleStatus: .uploadPossible)
         )
@@ -90,7 +90,7 @@ struct DraftsSection: View {
     }
     .shadow(radius: 30)
     .task {
-        _ = try? appDatabase.deleteAllDrafts()
+        _ = try? appDatabase.deleteAllDraftsForDebugging()
         _ = try? appDatabase.upsert(
             .makeRandomDraft(id: "7", uploadPossibleStatus: .uploadPossible))
 
@@ -112,7 +112,7 @@ struct DraftsSection: View {
     }
     .shadow(radius: 30)
     .task {
-        _ = try? appDatabase.deleteAllDrafts()
+        _ = try? appDatabase.deleteAllDraftsForDebugging()
         _ = try? appDatabase.upsert(
             .makeRandomDraft(
                 id: "9",

@@ -903,7 +903,8 @@ extension AppDatabase {
     //    }
     //
 
-    func deleteAllDrafts() throws -> Int {
+    /// should only be used when preparing previews and tests
+    func deleteAllDraftsForDebugging() throws -> Int {
         try dbWriter.write(MediaFileDraft.deleteAll)
     }
 
