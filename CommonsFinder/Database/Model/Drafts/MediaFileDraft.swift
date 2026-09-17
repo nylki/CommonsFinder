@@ -45,9 +45,9 @@ nonisolated
     ///  and can be used for identifying uploaded media and local drafts
     var finalFilename: String
 
-    /// The filename, If the represented media file exists locally on disk
-    /// May be identical to "name", but not guaranteed (eg. drafts)
+    /// The filename, of the media file  located on disk in the app's container
     var localFileName: String
+
     var mimeType: String
 
     var captionWithDesc: [CaptionWithDescription]
@@ -207,6 +207,7 @@ nonisolated
         static let addedDate = Column(CodingKeys.addedDate)
         static let name = Column(CodingKeys.name)
         static let uploadDisabledReason = Column(CodingKeys.uploadPossibleStatus)
+        static let localFileName = Column(CodingKeys.localFileName)
         static let finalFilename = Column(CodingKeys.finalFilename)
         static let selectedFilenameType = Column(CodingKeys.selectedFilenameType)
         static let publishingState = Column(CodingKeys.publishingState)
@@ -268,7 +269,8 @@ nonisolated
 nonisolated extension MediaFileDraft {
     /// Returns the location of the local file (of the image, video, etc.)
     func localFileURL() -> URL? {
-        URL.documentsDirectory.appending(path: localFileName)
+        guard !localFileName.isEmpty else { return nil }
+        return URL.documentsDirectory.appending(path: localFileName)
     }
 
     var displayName: String {
@@ -293,16 +295,20 @@ extension MediaFileDraft {
 // MARK: - Constructors
 nonisolated extension MediaFileDraft {
 
-    /// creates a new draft from an FileItem by reading its EXIF-Data filling the fields as complete as possible at this stage
-    init(_ fileItem: FileItem, isPartOfMultiDraft: Bool, newDraftOptions: NewDraftOptions?) throws {
+    /// Creates a new draft for a media file that is about to be imported.
+    ///
+    /// The draft gets a fresh, unique `localFileName`; the caller is responsible for writing
+    /// the file to `localFileURL()` (see the `MediaFileDraft.create(...)` factories in FileImportModel.swift).
+    init(isPartOfMultiDraft: Bool, newDraftOptions: NewDraftOptions?, fileSize: Int64?, fileType: UTType, exifData: ExifData?) throws {
         id = UUID().uuidString
-
         addedDate = .now
-        localFileName = fileItem.localFileName
+
+        localFileName = UUID().uuidString.appendingFileExtension(conformingTo: fileType)
         finalFilename = ""
         name = ""
         uploadPossibleStatus = nil
         selectedFilenameType = .captionAndDate
+        self.mimeType = ""
 
         if let initialTag = newDraftOptions?.tag {
             tags = [initialTag]
@@ -324,13 +330,6 @@ nonisolated extension MediaFileDraft {
             captionWithDesc = [.init(languageCode: languageCode)]
         }
 
-        if let mimeType = fileItem.fileType.preferredMIMEType {
-            self.mimeType = mimeType
-        } else {
-            assertionFailure("We expect the file to have a mime type")
-            throw MediaFileDraftError.failedToReadMimetype
-        }
-
         // Sub-drafts of a multi-draft default to `nil` so that their location handling is
         // inherited from the parent MultiDraft (see MediaFileUploadable+initWithDraft).
         // Single drafts default to `.noLocation` and may switch to `.exifLocation` below.
@@ -343,7 +342,7 @@ nonisolated extension MediaFileDraft {
 
 
         // Read EXIF-Data and update relevant values
-        if let exifData = loadCachedExifData() {
+        if let exifData {
             if !isPartOfMultiDraft {
                 locationHandling = .exifLocation
             }
@@ -362,12 +361,7 @@ nonisolated extension MediaFileDraft {
             height = exifData.normalizedHeight
         }
 
-        if let fileURL = localFileURL(),
-            let fileAttributes = try? FileManager.default.attributesOfItem(atPath: fileURL.path()),
-            let bytes = fileAttributes[.size] as? Int64
-        {
-            size = bytes
-        }
+        size = fileSize
     }
 }
 

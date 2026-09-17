@@ -19,7 +19,8 @@ struct UploadFilePreparationTests {
         // remove any dangling draft and staging files before running each test
         let stagingFiles: [URL]? = try? FileManager.default.contentsOfDirectory(
             at: MediaFileDraft.uploadStagingDirectory,
-            includingPropertiesForKeys: nil
+            includingPropertiesForKeys: nil,
+            options: .skipsSubdirectoryDescendants
         )
 
         guard let stagingFiles else { return }
@@ -38,8 +39,14 @@ struct UploadFilePreparationTests {
         }
 
         let location = CLLocation(latitude: latitude, longitude: longitude)
-        let fileItem = try FileItem(uiImage: image, metadata: NSDictionary(), location: location)
-        return try MediaFileDraft(fileItem, isPartOfMultiDraft: false, newDraftOptions: nil)
+
+        return try MediaFileDraft.create(
+            fromImage: image,
+            metadata: .init(),
+            location: location,
+            newDraftOptions: nil,
+            isPartOfMultiDraft: false
+        )
     }
 
     private func cleanup(_ draft: MediaFileDraft) {

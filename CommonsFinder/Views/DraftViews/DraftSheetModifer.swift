@@ -66,6 +66,7 @@ struct ImportFilesModifer: ViewModifier {
                 isPresented: isPhotosPickerPresented,
                 selection: photosPickerSelection,
                 maxSelectionCount: 10,
+                selectionBehavior: .ordered,
                 matching: .any(of: [.images]),
                 // `.compatible` is what converts images to jpeg files
                 preferredItemEncoding: .compatible,
@@ -76,7 +77,7 @@ struct ImportFilesModifer: ViewModifier {
                 // https://commons.wikimedia.org/wiki/Commons:File_types
                 allowedContentTypes: [
                     //                    .mp3, .wav, .midi,
-                    .svg, .png, .webP, .gif, .jpeg,
+                    .png, .webP, .gif, .jpeg,
                     //                    .mpeg,
                     //                    .pdf,
                     //                    .geoJSON,
@@ -97,37 +98,21 @@ struct ImportFilesModifer: ViewModifier {
                 .ignoresSafeArea(.container)
             }
             .onChange(of: importModel?.importStatus) {
-                guard let importModel, importModel.importStatus == .finished else { return }
-                let fileCount = importModel.importedItems.count
-                if fileCount == 1, let fileItem = importModel.importedItems.values.first {
-                    do {
-                        let newDraft = try MediaFileDraft(
-                            fileItem,
-                            isPartOfMultiDraft: false,
-                            newDraftOptions: importModel.newDraftOptions
-                        )
-                        navigation.editDraft(draft: newDraft)
-                    } catch {
-                        logger.error("Failed to create draft \(error)")
+                guard let importStatus = importModel?.importStatus else { return }
+
+                switch importStatus {
+                case .importing:
+                    return
+                case .finished(let result):
+                    switch result {
+                    case .single(let draft):
+                        navigation.editDraft(draft: draft)
+                    case .multi(let multiDraftInfo):
+                        navigation.editMultipleDrafts(multiDraftInfo: multiDraftInfo)
+                    case .empty:
+                        // TODO: maybe show an error dialog that import failed
+                        break
                     }
-                } else if fileCount > 1 {
-                    let subDrafts: [MediaFileDraft] = importModel.importedItems.values.compactMap { fileItem in
-                        do {
-                            return try .init(
-                                fileItem,
-                                isPartOfMultiDraft: true,
-                                newDraftOptions: nil
-                            )
-                        } catch {
-                            logger.error("Failed to create draft \(error)")
-                            return nil
-                        }
-                    }
-                    let info = MultiDraftInfo(
-                        multiDraft: .init(newDraftOptions: importModel.newDraftOptions),
-                        drafts: subDrafts
-                    )
-                    navigation.editMultipleDrafts(multiDraftInfo: info)
                 }
             }
             .modifier(
@@ -135,7 +120,6 @@ struct ImportFilesModifer: ViewModifier {
                     options: importModel?.fileImporterOverlayOptions,
                     onCancel: { importModel?.onFileImportCancel() }
                 ))
-
     }
 }
 

@@ -1555,7 +1555,6 @@ LIMIT \(limit)
             summaryString = "Edited labels (\( labels.map(\.languageCode).joined(separator: ", ")))"
         } else {
             summaryString = "Edited labels or structured data statements"
-            assertionFailure()
         }
 
         let form: Parameters = [
