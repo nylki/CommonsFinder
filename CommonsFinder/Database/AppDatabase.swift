@@ -777,10 +777,12 @@ extension AppDatabase {
     }
     func delete(_ multiDraftInfo: MultiDraftInfo) throws {
         let id = multiDraftInfo.multiDraft.id
-        try dbWriter.write { db in
-
+        let subDrafts = try dbWriter.write { db in
+            let subDrafts = try fetchSubDrafts(of: id, db)
             _ = try multiDraftInfo.multiDraft.delete(db)
+            return subDrafts
         }
+        Self.removeLocalFiles(of: subDrafts)
 
         #if DEBUG
             let subDraftCountAfterDelete = try dbWriter.write { db in
@@ -807,19 +809,29 @@ extension AppDatabase {
     }
 
     func delete(_ multiDraft: MultiDraft) throws {
-        try dbWriter.write { db in
+        let subDrafts = try dbWriter.write { db in
+            let subDrafts = try fetchSubDrafts(of: multiDraft.id, db)
             _ = try multiDraft.delete(db)
+            return subDrafts
         }
+        Self.removeLocalFiles(of: subDrafts)
     }
 
 
     func deleteMultiDraft(id: MultiDraft.ID) throws -> Bool {
-        try dbWriter.write { db in
-            try MultiDraft.deleteOne(db, id: id)
+        let (didDelete, subDrafts) = try dbWriter.write { db in
+            let subDrafts = try fetchSubDrafts(of: id, db)
+            let didDelete = try MultiDraft.deleteOne(db, id: id)
+            return (didDelete, subDrafts)
         }
+        Self.removeLocalFiles(of: subDrafts)
+        return didDelete
     }
 
-
+    private func fetchSubDrafts(of multiDraftID: MultiDraft.ID, _ db: Database) throws -> [MediaFileDraft] {
+        guard let multiDraftID else { return [] }
+        return try MediaFileDraft.filter { $0.multiDraftId == multiDraftID }.fetchAll(db)
+    }
 }
 
 // MARK: - MediaFileDraft Writes
@@ -870,6 +882,7 @@ extension AppDatabase {
         try dbWriter.write { db in
             _ = try draft.delete(db)
         }
+        Self.removeLocalFiles(of: [draft])
     }
 
     func delete(_ drafts: [MediaFileDraft]) throws {
@@ -877,6 +890,7 @@ extension AppDatabase {
         try dbWriter.write { [ids] db in
             _ = try MediaFileDraft.deleteAll(db, ids: ids)
         }
+        Self.removeLocalFiles(of: drafts)
     }
 
     /// Deletes all files by finalFilename, returns the number of deleted files
@@ -888,14 +902,34 @@ extension AppDatabase {
     //        }
     //    }
     //
+
     func deleteAllDrafts() throws -> Int {
         try dbWriter.write(MediaFileDraft.deleteAll)
     }
 
     func deleteDrafts(ids: [MediaFileDraft.ID]) throws -> Int {
-        try dbWriter.write { db in
-            try MediaFileDraft
-                .deleteAll(db, ids: ids)
+        let deletedDrafts = try dbWriter.write { db in
+            let drafts = try MediaFileDraft.fetchAll(db, ids: ids)
+            _ = try MediaFileDraft.deleteAll(db, ids: ids)
+            return drafts
+        }
+        Self.removeLocalFiles(of: deletedDrafts)
+        return deletedDrafts.count
+    }
+}
+
+// MARK: - Draft local files
+extension AppDatabase {
+    /// Removes the local files of drafts, to be used in conjunction with draft deletion.
+    fileprivate static func removeLocalFiles(of drafts: [MediaFileDraft]) {
+        let fileManager = FileManager.default
+        for draft in drafts {
+            guard let url = draft.localFileURL(), fileManager.fileExists(atPath: url.path()) else { continue }
+            do {
+                try fileManager.removeItem(at: url)
+            } catch {
+                logger.warning("Failed to remove local file of deleted draft \(draft.id): \(error)")
+            }
         }
     }
 }

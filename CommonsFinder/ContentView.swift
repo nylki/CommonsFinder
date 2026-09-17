@@ -125,14 +125,19 @@ struct ContentView: View {
                 navigation.selectedTab = .home
                 do {
                     if fileURLs.count == 1, let fileURL = fileURLs.first {
-                        let fileItem = try FileItem(movingLocalFileFromPath: fileURL)
-                        let draft = try MediaFileDraft(fileItem, isPartOfMultiDraft: false, newDraftOptions: nil)
+                        let draft = try MediaFileDraft.create(
+                            byMovingFileAt: fileURL,
+                            newDraftOptions: nil,
+                            isPartOfMultiDraft: false
+                        )
                         navigation.editDraft(draft: draft)
                     } else {
-                        let drafts: [MediaFileDraft] = try fileURLs.compactMap { temporaryPath in
-                            let fileItem = try FileItem(movingLocalFileFromPath: temporaryPath)
-                            let draft = try MediaFileDraft(fileItem, isPartOfMultiDraft: true, newDraftOptions: nil)
-                            return draft
+                        let drafts: [MediaFileDraft] = try fileURLs.compactMap { fileURL in
+                            try MediaFileDraft.create(
+                                byMovingFileAt: fileURL,
+                                newDraftOptions: nil,
+                                isPartOfMultiDraft: true
+                            )
                         }
                         navigation.editMultipleDrafts(multiDraftInfo: .init(multiDraft: .init(newDraftOptions: nil), drafts: drafts))
                     }

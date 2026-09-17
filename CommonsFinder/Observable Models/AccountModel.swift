@@ -147,36 +147,6 @@ final class AccountModel {
             }
         }
     }
-    /// Looks for Drafts that are already known as MediaFile (thus have been uploaded) and removes them
-    func cleanupOldDrafts() throws {
-        guard let username = activeUser?.username else {
-            logger.warning("Tried to removeUploadedDrafts, but no user logged in.")
-            return
-        }
-        var existingDraftIDsPerFilename: [String: MediaFileDraft.ID] = [:]
-        let currentDrafts = try appDatabase.fetchAllDrafts()
-
-        for draft in currentDrafts {
-            existingDraftIDsPerFilename[draft.finalFilename] = draft.id
-        }
-
-        let filenamesToRemove =
-            try appDatabase
-            .fetchAllFiles(byUsername: username, withNames: currentDrafts.map(\.name))
-            .map(\.name)
-            .filter { !$0.isEmpty }
-
-        let draftIDsToRemove = filenamesToRemove.compactMap { filename in
-            existingDraftIDsPerFilename[filename]
-        }
-
-        guard !draftIDsToRemove.isEmpty else { return }
-
-        let deletedFileCount = try appDatabase.deleteDrafts(ids: draftIDsToRemove)
-        if deletedFileCount != 0 {
-            logger.info("Deleted \(deletedFileCount) drafts that have been uploaded.")
-        }
-    }
 
     /// fetches the most recent 50 user images and upserts them into DB
     private func fetchMostRecentUploads(end: Date? = nil) async throws {
