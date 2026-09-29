@@ -469,7 +469,12 @@ nonisolated enum FileAnalysisHelpers {
             let distanceScore = 1 - distance.interpolate(from: minDist..<maxDist, to: 0.0..<1.0)
             let score: Double
 
-            switch method {
+            var usedMethod = method
+            if let horizontalError, horizontalError > 50 {
+                usedMethod = .lowDistance
+            }
+
+            switch usedMethod {
             case .lowDistance:
                 score = distanceScore
             case .lowDistanceHighArea:
@@ -477,23 +482,28 @@ nonisolated enum FileAnalysisHelpers {
                 let areaScore = areaSqm.interpolate(from: minArea..<maxArea, to: 0.0..<1.0)
                 score = (distanceScore + areaScore) / 2
             case .lowDistanceLowBearingDifference:
-                guard let referenceBearing else { return ($0, 0) }
-                let angle = GeoVectorMath.calculateAngleBetween(
-                    cameraLocation: referenceLocation.coordinate,
-                    cameraBearing: referenceBearing,
-                    targetLocation: categoryCoordinate
-                )
-                
                 var angleScore: Double
-                if let horizontalError, horizontalError > 50 {
-                    angleScore = 0
-                } else {
+                if let horizontalError, distance < (horizontalError * 2) {
+                    /// close position with a relative high horizontal error are bound to be highly inacurate
+                    /// and the score cannot be reliably used. Such a camera position is, in a sense, in the circle of angular inaccuracy around the
+                    /// target item.
+                    /// However, to neither punish/nor overly benefit angleScores with a high uncertainty in regards
+                    /// to other items, use 0.5 in such a case.
+                    angleScore = 0.5
+                } else if let referenceBearing {
+                    let angle = GeoVectorMath.calculateAngleBetween(
+                        cameraLocation: referenceLocation.coordinate,
+                        cameraBearing: referenceBearing,
+                        targetLocation: categoryCoordinate
+                    )
                     angleScore = 1 - angle.interpolate(from: minAngle..<maxAngle, to: 0.0..<1.0)
                     // NOTE: distance-based score is the more important measure for this score
                     // and angleScore should only be an additional guide, so only take it 50% into account.
                     angleScore *= 0.5
+                } else {
+                    return ($0, score: distanceScore)
                 }
-                
+
                 score = (distanceScore + angleScore) / 2
             }
             return ($0, score: score)
