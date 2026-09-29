@@ -42,3 +42,11 @@ func testZippedFlatMap() {
     let emptyArray: [Double] = []
     #expect(zippedFlatMap(emptyArray, emptyArray) == [])
 }
+
+@Test("file url generation", arguments: ["Dülmen, Kirchspiel, ehem. Sondermunitionslager Visbeck, Bunker der US Army -- 2020 -- 8388.jpg"])
+func testFileUrlGeneration(filename: String) throws {
+    let originalURL = try URL.originalCommonsImageURL(filename: filename)
+    let resizedURL = try URL.experimentalResizedCommonsImageURL(filename: filename, maxWidth: 500)
+    print(originalURL)
+    print(resizedURL)
+}

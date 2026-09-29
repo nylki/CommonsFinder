@@ -42,7 +42,7 @@ enum WikimediaLanguageStoreError: Error {
         guard let downloadedLanguagesPath else { return [] }
 
         do {
-            let paths = try FileManager.default.contentsOfDirectory(at: downloadedLanguagesPath, includingPropertiesForKeys: nil)
+            let paths = try FileManager.default.contentsOfDirectory(at: downloadedLanguagesPath, includingPropertiesForKeys: nil, options: .skipsSubdirectoryDescendants)
             return paths
         } catch {
             logger.error("Failed to list contents of downloaded languages directory \(error)")
@@ -89,7 +89,7 @@ enum WikimediaLanguageStoreError: Error {
 
     private static func deleteDownloadedLanguages() {
         guard let downloadedLanguagesPath,
-            let existingLanguageFiles = try? FileManager.default.contentsOfDirectory(at: downloadedLanguagesPath, includingPropertiesForKeys: nil)
+            let existingLanguageFiles = try? FileManager.default.contentsOfDirectory(at: downloadedLanguagesPath, includingPropertiesForKeys: nil, options: .skipsSubdirectoryDescendants)
         else {
             return
         }

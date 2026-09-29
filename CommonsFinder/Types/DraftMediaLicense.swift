@@ -15,10 +15,14 @@ import SwiftUI
 // handled separately and a bit differently, see `MediaFileLicense`.
 
 enum DraftMediaLicense: String, Codable, Hashable, Equatable, CaseIterable, RawRepresentable {
+    // IMPORTANT: raw values are persisted (DB + UserDefaults).
+    /// CC0 1.0
+    case CC0_1_0 = "CC0"
+    /// CC BY 4.0
+    case CC_BY_4_0 = "CC_BY"
+    /// CC BY-SA 4.0
+    case CC_BY_SA_4_0 = "CC_BY_SA"
     //    case CC_PUBLIC_DOMAIN
-    case CC0
-    case CC_BY
-    case CC_BY_SA
 }
 
 extension DraftMediaLicense {
@@ -26,11 +30,11 @@ extension DraftMediaLicense {
         switch self {
         //        case .CC_PUBLIC_DOMAIN:
         //            "Public domain"
-        case .CC0:
+        case .CC0_1_0:
             "Zero Public Domain, \"No Rights Reserved\""
-        case .CC_BY:
+        case .CC_BY_4_0:
             "Attribution"
-        case .CC_BY_SA:
+        case .CC_BY_SA_4_0:
             "Attribution-ShareAlike"
         }
     }
@@ -39,12 +43,12 @@ extension DraftMediaLicense {
         switch self {
         //        case .CC_PUBLIC_DOMAIN:
         //            "CC Public Domain Mark 1.0"
-        case .CC0:
-            "CC0"
-        case .CC_BY:
-            "CC BY"
-        case .CC_BY_SA:
-            "CC BY-SA"
+        case .CC0_1_0:
+            "CC0 1.0"
+        case .CC_BY_4_0:
+            "CC BY 4.0"
+        case .CC_BY_SA_4_0:
+            "CC BY-SA 4.0"
         }
     }
 
@@ -56,22 +60,22 @@ extension DraftMediaLicense {
         switch self {
         //        case .CC_PUBLIC_DOMAIN:
         //            "cc-pd"
-        case .CC0:
+        case .CC0_1_0:
             "cc0"
-        case .CC_BY:
+        case .CC_BY_4_0:
             "cc-by-4.0"
-        case .CC_BY_SA:
+        case .CC_BY_SA_4_0:
             "cc-by-sa-4.0"
         }
     }
 
     var explanation: LocalizedStringResource {
         switch self {
-        case .CC0:
+        case .CC0_1_0:
             "no rights reserved – public domain or waiver if the PD release is invalidated"
-        case .CC_BY:
+        case .CC_BY_4_0:
             "some rights reserved – attribution required"
-        case .CC_BY_SA:
+        case .CC_BY_SA_4_0:
             "some rights reserved – attribution and sharing alike required"
         }
     }

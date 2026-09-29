@@ -86,39 +86,43 @@ struct HomeView: View {
         .animation(.default, value: multiDrafts)
         .animation(.default, value: recentlyViewedFiles)
         .animation(.default, value: account.activeUser)
-        .toolbar {
-            ToolbarItem(placement: .primaryAction) {
-                NavigationLink(value: NavigationStackItem.settings) {
-                    Label("Settings", systemImage: "person.crop.circle.fill")
-                }
-            }
-            ToolbarItem(placement: .topBarTrailing) {
-                Menu("Add Image", systemImage: "plus") {
-
-                    Button {
-                        navigation.openNewDraft(options: .init(source: .mediaLibrary))
-                    } label: {
-                        Label("Add from Photos", systemImage: "photo.badge.plus")
-                    }
-
-                    Button {
-                        navigation.openNewDraft(options: .init(source: .camera))
-                    } label: {
-                        Label("Take new Photo", systemImage: "camera")
-                    }
-
-                    Button {
-                        navigation.openNewDraft(options: .init(source: .files))
-                    } label: {
-                        Label("Add from Files", systemImage: "folder")
-                    }
-                }
-            }
-        }
+        .toolbar { toolbar }
         .navigationTitle("Home")
         .navigationBarTitleDisplayMode(.inline)
         //        .toolbar(removing: .title)
     }
+
+    @ToolbarContentBuilder
+    private var toolbar: some ToolbarContent {
+        ToolbarItem(placement: .primaryAction) {
+            NavigationLink(value: NavigationStackItem.settings) {
+                Label("Settings", systemImage: "person.crop.circle.fill")
+            }
+        }
+        ToolbarItem(placement: .topBarTrailing) {
+            Menu("Add Image", systemImage: "plus") {
+
+                Button {
+                    navigation.openNewDraft(options: .init(source: .mediaLibrary))
+                } label: {
+                    Label("Add from Photos", systemImage: "photo.badge.plus")
+                }
+
+                Button {
+                    navigation.openNewDraft(options: .init(source: .camera))
+                } label: {
+                    Label("Take new Photo", systemImage: "camera")
+                }
+
+                Button {
+                    navigation.openNewDraft(options: .init(source: .files))
+                } label: {
+                    Label("Add from Files", systemImage: "folder")
+                }
+            }
+        }
+    }
+
 }
 
 

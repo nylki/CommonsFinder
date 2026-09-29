@@ -204,17 +204,7 @@ nonisolated struct ExifData: Codable, Equatable, Hashable {
         try self.init(data: data)
     }
 
-
-    private init(cfData: CFData) throws {
-        let options = [kCGImageSourceShouldCache as String: kCFBooleanFalse]
-        guard let imgSrc = CGImageSourceCreateWithData(cfData, options as CFDictionary),
-            let rawMetadata = CGImageSourceCopyPropertiesAtIndex(imgSrc, 0, options as CFDictionary)
-        else {
-            throw ExifExtractionError.failedToReadExif
-        }
-
-        let metadata = rawMetadata as NSDictionary
-
+    init(metadata: NSDictionary) {
         self.colorModel = metadata[kCGImagePropertyColorModel] as? String
         self.pixelWidth = metadata[kCGImagePropertyPixelWidth] as? Int
         self.pixelHeight = metadata[kCGImagePropertyPixelHeight] as? Int
@@ -235,6 +225,11 @@ nonisolated struct ExifData: Codable, Equatable, Hashable {
         }
 
         if let exifData = metadata[kCGImagePropertyExifDictionary] as? NSDictionary {
+            if self.pixelWidth == nil || self.pixelHeight == nil {
+                self.pixelWidth = exifData[kCGImagePropertyExifPixelXDimension] as? Int
+                self.pixelHeight = exifData[kCGImagePropertyExifPixelYDimension] as? Int
+            }
+
             self.apertureValue = exifData[kCGImagePropertyExifApertureValue] as? String
             self.brightnessValue = exifData[kCGImagePropertyExifBrightnessValue] as? String
             self.dateTimeDigitized = exifData[kCGImagePropertyExifDateTimeDigitized] as? String
@@ -316,5 +311,18 @@ nonisolated struct ExifData: Codable, Equatable, Hashable {
             }
             self.speed = gpsData[kCGImagePropertyGPSSpeed] as? Double
         }
+    }
+
+
+    private init(cfData: CFData) throws {
+        let options = [kCGImageSourceShouldCache as String: kCFBooleanFalse]
+        guard let imgSrc = CGImageSourceCreateWithData(cfData, options as CFDictionary),
+            let rawMetadata = CGImageSourceCopyPropertiesAtIndex(imgSrc, 0, options as CFDictionary)
+        else {
+            throw ExifExtractionError.failedToReadExif
+        }
+
+        let metadata = rawMetadata as NSDictionary
+        self.init(metadata: metadata)
     }
 }

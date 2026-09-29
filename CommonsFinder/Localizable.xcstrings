@@ -558,11 +558,20 @@
     "CC BY" : {
       "shouldTranslate" : false
     },
+    "CC BY 4.0" : {
+
+    },
     "CC BY-SA" : {
       "shouldTranslate" : false
     },
+    "CC BY-SA 4.0" : {
+
+    },
     "CC0" : {
       "shouldTranslate" : false
+    },
+    "CC0 1.0" : {
+
     },
     "Certain characters are reserved due to technical reasons and cannot be used for file names" : {
       "localizations" : {
@@ -2451,7 +2460,7 @@
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Einige Rechte vorbehalten – Namensnennung und erforderlich"
+            "value" : "Einige Rechte vorbehalten – Namensnennung erforderlich"
           }
         }
       }

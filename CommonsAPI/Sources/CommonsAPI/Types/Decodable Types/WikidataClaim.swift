@@ -34,7 +34,19 @@ public struct WikidataClaim: Codable, Hashable, Equatable, Sendable {
         case statement
         // TODO: could this be something else than statement?
     }
-    public enum Rank: String, Codable, Sendable {
+    public enum Rank: String, Codable, Sendable, Comparable {
+        public static func < (lhs: borrowing WikidataClaim.Rank, rhs: borrowing WikidataClaim.Rank) -> Bool {
+            lhs.intValue < rhs.intValue
+        }
+        
+        private var intValue: Int {
+            switch self {
+                case .normal: 0
+                case .preferred: 1
+                case .deprecated: -1
+            }
+        }
+        
         case normal
         case preferred
         case deprecated
@@ -115,12 +127,11 @@ public struct WikidataClaim: Codable, Hashable, Equatable, Sendable {
             }
             
 
-            
             /// the Q-Item ID (or can there be other types?)
             public struct WikiDataValueEntityID: Codable, Sendable, Equatable, Hashable {
                 public let id: String // eg. Q50423863
                 public let entityType: String
-                public let numericID: Int // eg. 50423863
+                public let numericID: Int? // eg. 50423863
                 
                 enum CodingKeys: String, CodingKey {
                     case id
@@ -191,6 +202,17 @@ public struct WikidataClaim: Codable, Hashable, Equatable, Sendable {
                     try container.encode("monolingualtext", forKey: .type)
                 }
             }
+        }
+    }
+}
+
+
+extension WikidataClaim.Snak.DataValue {
+    /// return the raw string value, if the DataValue is of case .string
+    var stringValue: String? {
+        switch self {
+        case .string(let string): string
+        default: nil
         }
     }
 }
@@ -268,13 +290,15 @@ extension WikidataClaim.Snak.DataValue.WikiDataValueEntityID {
     public static func Q(_ numericID: Int) -> Self {
         Self(id: "Q\(numericID)", entityType: "item", numericID: numericID)
     }
+    public static func Q(_ id: String) -> Self {
+        let numericID = Int(id.trimmingPrefix("Q"))
+        return Self(id: id, entityType: "item", numericID: numericID)
+    }
     
     /// Initialize with a Q-ID string, eg. "Q2"
-    public init?(stringValue: String) {
-        guard let numericID = Int(stringValue.trimmingPrefix("Q")) else {
-            return nil
-        }
-        self.init(id: stringValue, entityType: "item", numericID: numericID)
+    public init(stringValue: String, entityType: String) {
+        let numericID = Int(stringValue.trimmingPrefix(.word))
+        self.init(id: stringValue, entityType: entityType, numericID: numericID)
     }
 }
 
@@ -286,7 +310,7 @@ extension WikidataClaim.Snak.DataValue.Quantity {
                 assertionFailure("a unit is expected to always be a url of a Q-item. this one: \(unit)")
                 return nil
             }
-            return .init(stringValue: id)
+            return .init(stringValue: id, entityType: "item")
         } else {
             return nil
         }
@@ -359,6 +383,11 @@ private struct AnyCodingKey: CodingKey {
     }
 }
 extension WikidataClaim.Snak.DataValue.WikiDataValueEntityID {
+    
+    /// Q4167836
+    /// http://www.wikidata.org/entity/Q4167836
+    public static var wikimediaCategory: Self { .Q(4167836) }
+    
     /// Q1
     /// http://www.wikidata.org/entity/Q1
     public static var universe: Self { .Q(1) }
@@ -409,18 +438,52 @@ extension WikidataClaim.Snak.DataValue.WikiDataValueEntityID {
      /// http://www.wikidata.org/entity/Q13414952
      public static var sha1: Self { .Q(13414952) }
      
-     
-     
+}
+
+public extension [WikidataProp: [WikidataClaim]] {
+    func rankedClaims(_ property: WikidataProp) -> [WikidataClaim] {
+        self[property]?.sorted(using: KeyPathComparator(\.rank, order: .reverse)) ?? []
+    }
+    
+    var imageName: String? {
+        rankedClaims(.imageName).first?.mainsnak.datavalue?.stringValue
+    }
+    
+    var instances: [WikidataItemID] {
+        rankedClaims(.instanceOf).compactMap(\.mainItem)
+    }
+    
+    var coordinateLocation: WikidataSnakValue.Coordinate? {
+        if let match = rankedClaims(.coordinateLocation).first,
+           case .globecoordinate(let coordinate) = match.mainsnak.datavalue  {
+            coordinate
+        } else {
+            nil
+        }
+    }
 }
 
 // most used props on commons: https://commons.wikimedia.org/wiki/Commons:Structured_data/Properties_table
 // all available props: http://www.wikidata.org/wiki/Wikidata:Database_reports/List_of_properties/all
 public extension WikidataProp {
+    
+    /// P301
+    /// http://www.wikidata.org/entity/P301
+    static var categoriesMainTopic: Self { .init(intValue: 301) }
+    
+    /// P18
+    /// http://www.wikidata.org/entity/P18
+    static var imageName: Self { .init(intValue: 18) }
+    
+    /// P373
+    /// http://www.wikidata.org/entity/P373
+    static var commonsCategory: Self { .init(intValue: 373) }
+    
     /// P180
     /// http://www.wikidata.org/entity/P180
     static var depicts: Self { .init(intValue: 180) }
     
-    /// P180
+    /// P571
     /// http://www.wikidata.org/entity/P571
     static var inception: Self { .init(intValue: 571) }
     
@@ -435,6 +498,10 @@ public extension WikidataProp {
     /// P1259
     /// http://www.wikidata.org/entity/P1259
     static var coordinatesOfViewpoint: Self { .init(intValue: 1259) }
+    
+    /// P625
+    /// http://www.wikidata.org/entity/P625
+    static var coordinateLocation: Self { .init(intValue: 625) }
     
     /// P7787
     /// http://www.wikidata.org/entity/P7787
@@ -484,6 +551,10 @@ public extension WikidataProp {
     /// http://www.wikidata.org/entity/P2048
     static var height: Self { .init(intValue: 2048) }
     
+    /// P2046
+    /// http://www.wikidata.org/entity/P2046
+    static var area: Self { .init(intValue: 2046) }
+    
     /// P4092
     /// http://www.wikidata.org/entity/P4092
     static var checksum: Self { .init(intValue: 4092) }
@@ -519,7 +590,10 @@ extension WikidataClaim {
             Snak(
                 snaktype: "value",
                 property: property,
-                datavalue: .wikibaseEntityID(.Q(item.numericID))
+                datavalue: .wikibaseEntityID(.init(
+                    stringValue: item.id,
+                    entityType: item.entityType)
+                )
             )
         } else {
             Snak(
@@ -713,7 +787,7 @@ extension WikidataClaim {
     
     
     public var mainProp: WikidataProp { mainsnak.property }
-    
+    public var isWikimediaCategory: Bool { mainProp == .instanceOf && mainItem == .wikimediaCategory }
     public var isDepicts: Bool { mainProp == .depicts }
     public var isLicense: Bool { mainProp == .license }
     public var isCopyrightStatus: Bool { mainProp == .copyrightStatus }

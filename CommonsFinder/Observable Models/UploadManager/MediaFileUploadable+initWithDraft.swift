@@ -92,9 +92,9 @@ extension MediaFileUploadable {
 
             // Depending on the specific license, decide what the copyright status is
             switch draft.license {
-            case .CC0:
+            case .CC0_1_0:
                 statements.append(.copyrightStatus(.copyrightedDedicatedToThePublicDomainByCopyrightHolder))
-            case .CC_BY, .CC_BY_SA:
+            case .CC_BY_4_0, .CC_BY_SA_4_0:
                 statements.append(.copyrightStatus(.copyrighted))
             default:
                 statements.append(.copyrightStatus(.copyrighted))
@@ -312,7 +312,7 @@ extension MediaFileUploadable {
 extension Category {
     var wikidataItemID: WikidataItemID? {
         if let wikidataId {
-            .init(stringValue: wikidataId)
+            WikidataItemID.Q(wikidataId)
         } else {
             nil
         }

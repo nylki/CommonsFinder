@@ -519,9 +519,10 @@ struct CategoryView: View {
                         sort: .relevance,
                         searchTargets: .commons
                     )
-                    async let itemsTask = Networking.shared.api.findWikidataItemsForCategories(
-                        [commonsCategory],
-                        languageCode: locale.wikiLanguageCodeIdentifier
+                    async let itemsTask = Networking.shared.api.findWikidataItems(
+                        categories: [commonsCategory],
+                        ids: [],
+                        language: locale.wikiLanguageCodeIdentifier
                     )
                     let (loadedSubCategoryModel, apiItems) = try await (categoryTask, itemsTask)
 

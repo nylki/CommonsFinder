@@ -31,6 +31,7 @@ struct CommonsFinderApp: App {
     private let mapModel: MapModel
     private let fileAnalysis: FileAnalysis
     private let wikimediaLanguageStore: WikimediaLanguageStore
+    private let maintenance = Maintenance(sessionStartDate: .now)
 
     init() {
         postInstallMaintenance()
@@ -119,20 +120,16 @@ struct CommonsFinderApp: App {
                         logger.error("Error initializing TipKit \(error.localizedDescription)")
                     }
 
-                    postLaunchMaintenance()
+                    await postLaunchMaintenance()
                 }
         }
 
     }
 
-    private func postLaunchMaintenance() {
-        //        do {
-        //            try account.cleanupOldDrafts()
-        //        } catch {
-        //            logger.error("Failed postLaunchMaintenance cleanupOldDrafts! \(error)")
-        //        }
-
-        uploadManager.runPostLaunchOperations()
+    @concurrent
+    private func postLaunchMaintenance() async {
+        await uploadManager.runPostLaunchOperations()
+        await maintenance.performMaintenanceAtAppLaunch(appDatabase: appDatabase)
     }
 }
 

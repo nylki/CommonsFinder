@@ -70,7 +70,7 @@ nonisolated extension MediaFileDraft {
                 .init(.init(commonsCategory: "Lorem Ipsum"), pickedUsages: [.category]),
                 .init(.earth, pickedUsages: [.depict]),
             ],
-            license: DraftMediaLicense.CC0,
+            license: DraftMediaLicense.CC0_1_0,
             author: .appUser,
             source: .own
         )

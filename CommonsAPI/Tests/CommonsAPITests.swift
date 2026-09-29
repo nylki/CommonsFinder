@@ -75,25 +75,9 @@ struct CommonsEndToEndTests {
     
     @Test("get wikidata statements", arguments: ["File:The Earth seen from Apollo 17.jpg"])
     func fetchStructuredDataForMedia(title: String) async throws {
-        let statements = try await api.fetchStructuredData(.titles([title]))
+        let statements = try await api.fetchMediaFileStructuredData(.titles([title]))
         print(statements)
         #expect(!statements.isEmpty, "We expect to get results for this search term")
-    }
-    
-    @Test("get label and description for Q-Item",
-          arguments: [
-            (["Q1", "Q2"], ["en", "de"]),
-            (["Q42"], ["en", "de-formal"]),
-            (["Q4321"], ["vo"]),
-        ]
-    )
-    
-    func fetchWikidataLabels(ids: [String], languages: [String]) async throws {
-        let entities = try await api.fetchWikidataEntities(ids: ids, preferredLanguages: languages)
-        print(entities)
-        #expect(!entities.isEmpty)
-        let responseIDs = entities.keys
-        #expect(Set(ids) == Set(responseIDs), "We expect to get all (and only) translations for the given ids")
     }
     
 //    @Test("uploading files",
