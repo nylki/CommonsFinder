@@ -26,6 +26,7 @@ struct AllMultiDraftsRequest: ValueObservationQueryable {
                 .fetchAll(db)
         } catch {
             logger.error("Failed to fetch all multiDrafts from db \(error)!")
+            assertionFailure("Failed to decode multiDrafts, migration issue?: \(error)")
             return []
         }
     }
@@ -44,6 +45,7 @@ struct AllSingleDraftsRequest: ValueObservationQueryable {
                 .fetchAll(db)
         } catch {
             logger.error("Failed to fetch all draft files from db \(error)!")
+            assertionFailure("Failed to decode drafts, migration issue?: \(error)")
             return []
         }
     }
