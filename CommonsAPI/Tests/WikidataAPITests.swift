@@ -49,7 +49,7 @@ struct WikidataEndToEndTests {
     
     @Test("Find Common Categories for  Q-Items", arguments: [["Q1", "Q2", "Q3", "Q42"]])
     func findCommonCategories(ids: [String]) async throws {
-        let result = try await api.findCategoriesForWikidataItems(ids, languageCode: "en")
+        let result = try await api.findWikidataItems(categories: [], ids: ids, language: "en")
         for item in result {
             print("\(item.id): \(item.commonsCategory ?? "-") \(item.label ?? "-") \(item.description ?? "-")")
         }
@@ -63,18 +63,19 @@ struct WikidataEndToEndTests {
         ]
     )
     func findItemIDsForCommonCategories(categories: [String]) async throws {
-        let result = try await api.findWikidataItemsForCategories(categories, languageCode: "en")
+        let result = try await api.findWikidataItems(categories: categories, ids: [], language: "en")
         for item in result {
             print("\(item.id): \(item.commonsCategory ?? "-") \(item.label ?? "-") \(item.description ?? "-")")
         }
         #expect(!result.isEmpty, "We expect to find Q-items for those commons categories.")
+        #expect(result.allSatisfy { categories.contains($0.commonsCategory ?? "") })
     }
     
     @Test("fetch wikidata items by id", arguments:
             [["Q1"], ["Q1", "Q2", "Q42"]], ["en", "de"]
     )
     func fetchGenericWikidataItem(ids: [String], languageCode: String) async throws {
-        let result = try await api.fetchGenericWikidataItems(itemIDs: ids, languageCode: languageCode)
+        let result = try await api.findWikidataItems(categories: [], ids: ids, language: "en")
         #expect(result.count == ids.count)
         let resultIDs = Set(result.map(\.id))
         #expect(resultIDs == Set(ids))

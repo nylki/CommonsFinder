@@ -119,7 +119,7 @@ import os.log
                     let depictsToRemove = existingDepictSet.subtracting(selectedDepictSet)
 
                     for itemId in depictsToAdd {
-                        guard let wikidataItem = WikidataItemID(stringValue: itemId) else { continue }
+                        let wikidataItem = WikidataItemID.Q(itemId)
                         try await Networking.shared.api.createClaim(
                             entityId: entityId,
                             property: .depicts,

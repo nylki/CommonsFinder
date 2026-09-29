@@ -312,7 +312,7 @@ extension MediaFileUploadable {
 extension Category {
     var wikidataItemID: WikidataItemID? {
         if let wikidataId {
-            .init(stringValue: wikidataId)
+            WikidataItemID.Q(wikidataId)
         } else {
             nil
         }

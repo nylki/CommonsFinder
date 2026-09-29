@@ -556,7 +556,7 @@ public struct GenericWikidataItem: Sendable, Hashable, Equatable, Identifiable, 
         }
     }
     
-    public let image: URL?
+    public let imageName: String?
 }
 
 
@@ -574,7 +574,7 @@ extension GenericWikidataItem {
             latitude: nil,
             longitude: nil,
             area: nil,
-            image: URL(string: "http://commons.wikimedia.org/wiki/Special:FilePath/Cityscape%20Berlin.jpg")!
+            imageName: "Potsdamer Platz, Berlin, 160606, ako (1).jpg"
         )
     }
 }
@@ -603,6 +603,7 @@ extension GenericWikidataItem {
             instances = instancesString.components(separatedBy: ",")
         }
         
+        let imageName: String? = sparqlItem.image?.value.lastPathComponent
         
         self.init(
             commonsCategory: sparqlItem.commonsCategory?.value,
@@ -619,7 +620,39 @@ extension GenericWikidataItem {
             latitude: sparqlItem.location?.value.coordinate.latitude,
             longitude: sparqlItem.location?.value.coordinate.longitude,
             area: area,
-            image: sparqlItem.image?.value
+            imageName: imageName
+        )
+    }
+    
+    init(_ entity: WikidataEntity, language: String) {
+        let requestedID: String
+        let redirectID: String?
+        
+        if let redirects = entity.redirects {
+            // logger.info("Redirect:  Found an item that redirects to another one (eg. after a merge)")
+            // NOTE: we cannot use the returned entity ID as the main-ID because that one already
+            // contains the resolved ID
+            requestedID = redirects.from
+            redirectID = redirects.to
+        } else {
+            requestedID = entity.id
+            redirectID = nil
+        }
+        
+        let commonsCategory: String? = entity.claims[.commonsCategory]?.first?.mainsnak.datavalue?.stringValue
+        
+        self = GenericWikidataItem(
+            commonsCategory: commonsCategory,
+            id: requestedID,
+            redirectsToId: redirectID,
+            label: entity.labels.values.first,
+            description: entity.descriptions.values.first,
+            labelLanguage: language,
+            instances: entity.claims.instances.map(\.id),
+            latitude: entity.claims.coordinateLocation?.latitude,
+            longitude: entity.claims.coordinateLocation?.longitude,
+            area: nil,
+            imageName: entity.claims.imageName
         )
     }
 }
@@ -652,6 +685,7 @@ private func convertBulkyTranslations(_ bulkyTranslations: [String: LanguageValu
     return .init(uniqueKeysWithValues: keyValuePairs)
 }
 
+
 public struct WikidataFileEntity: Sendable, Identifiable, Decodable {
     public let id: String
     public let pageid: UInt64?
@@ -664,6 +698,7 @@ public struct WikidataFileEntity: Sendable, Identifiable, Decodable {
     
     /// aka "claims"
     public let statements: [WikidataProp: [WikidataClaim]]
+
     
     enum CodingKeys: CodingKey {
         case id
@@ -705,12 +740,52 @@ public struct WikidataFileEntity: Sendable, Identifiable, Decodable {
 }
 
 public typealias LanguageCode = String
+
+public enum WikidataEntityResult: Sendable, Decodable {
+    case missing
+    case entity(WikidataEntity)
+    
+    enum CodingKeys: CodingKey {
+        case missing
+    }
+    
+    public init(from decoder: any Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        
+        let isMissing = try container.decodeIfPresent(String.self, forKey: .missing) != nil
+        if isMissing {
+            self = .missing
+        } else {
+            let entity = try WikidataEntity(from: decoder)
+            self = .entity(entity)
+        }
+    }
+}
+
+/// used for wbgetentities
+internal struct EntitiesResponse: Decodable, Sendable {
+    typealias WikidataID = String
+    private let entities: [WikidataID: WikidataEntityResult]
+    
+    var existingEntities: [WikidataEntity] {
+        entities.values.compactMap { result in
+            switch result {
+            case .missing:
+                nil
+            case .entity(let wikidataEntity):
+                wikidataEntity
+            }
+        }
+    }
+}
+
 public struct WikidataEntity: Sendable, Decodable, Identifiable {
     public let id: String
     public let type: String?
     public let redirects: RedirectsContainer?
     public let labels: [LanguageCode: String]
     public let descriptions: [LanguageCode: String]
+    public let claims: [WikidataProp: [WikidataClaim]]
     
     public struct RedirectsContainer: Decodable, Sendable {
         let from: String
@@ -723,6 +798,7 @@ public struct WikidataEntity: Sendable, Decodable, Identifiable {
         case redirects
         case labels
         case descriptions
+        case claims
     }
     
 
@@ -748,8 +824,10 @@ public struct WikidataEntity: Sendable, Decodable, Identifiable {
         } else {
             self.descriptions = [:]
         }
+        
+        let claims = try? container.decodeIfPresent([WikidataProp : [WikidataClaim]]?.self, forKey: .claims) ?? [:]
+        self.claims = claims ?? [:]
     }
-    
 }
 
 extension UserContributionListItem: Identifiable {
@@ -1009,7 +1087,7 @@ internal struct CategoryMembersListResponse: Decodable, Sendable {
             
             var wikidataItem: WikidataItemID? {
                 if let wikibase_item {
-                    WikidataItemID(stringValue: wikibase_item)
+                    WikidataItemID.Q(wikibase_item)
                 } else {
                     nil
                 }
@@ -1026,12 +1104,6 @@ internal struct UserContributionListResponse: Decodable, Sendable {
 // query: action=wbgetentities?titles=File:test.jpg|...
 internal struct FileEntitiesResponse: Decodable, Sendable {
     let entities: [String: WikidataFileEntity]
-}
-
-// query: action=wbgetentities?ids=P180|Q5432|...
-internal struct EntitiesResponse: Decodable, Sendable {
-    typealias WikidataID = String
-    let entities: [WikidataID: WikidataEntity]
 }
 
 internal struct UserContributionListItem: Decodable, Sendable {
@@ -1363,5 +1435,27 @@ extension UsernamePasswordValidation {
             assertionFailure("We should be able to parse this with some message")
             self = .unknownInvalidation
         }
+    }
+}
+
+enum WikibaseIdentifier: Hashable, Equatable {
+    case commonsCategory(String)
+    /// q-id
+    case wikibaseID(String)
+    
+    var commonsCategory: String? {
+        if case .commonsCategory(let string) = self { string } else { nil }
+    }
+    var wikibaseID: String? {
+        if case .wikibaseID(let string) = self { string } else { nil }
+    }
+}
+
+extension [WikibaseIdentifier] {
+    var commonsCategories: [String] {
+        self.compactMap { $0.commonsCategory }
+    }
+    var wikibaseIDs: [String] {
+        self.compactMap { $0.wikibaseID }
     }
 }
