@@ -1,4 +1,13 @@
-Crash-Fix
+Dieses Update optimiert u.A. Netzwerkanfragen und Kategorien und andere Metadaten von Bildern sollten nun
+wesentlich schneller und ohne längere Verzögerungen laden.
 
-Ein fehlerhafter bzw. unterbrochener Upload konnte einen harten Crash der App erzeugen, der beim erneuten
-öffnen der App auftritt. Vielen Dank für den Crashreport!
+Weitere Verbesserungen:
+
+- nicht mehr benötigte Bilddateien werden nun nach Uploads sowie dem Löschen von Entwürfen korrekt aufgeräumt
+
+- Die Lizenzauswahl zeigt nun auch die Version der CC-Lizenzen an ("CC BY 4.0" anstatt nur "CC BY")
+
+- Vorgeschlagene Kategorien/Orte die sehr dicht an Kamerastandort sind, werden nun sinnvoller einsortiert bzw. ge-ranked. Zuvor sind mitunter sehr relevante Kategorien
+  erst weiter unten angezeigt worden. (Details im git-commit ;)
+
+
