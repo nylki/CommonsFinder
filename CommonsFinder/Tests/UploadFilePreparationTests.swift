@@ -39,11 +39,12 @@ struct UploadFilePreparationTests {
         }
 
         let location = CLLocation(latitude: latitude, longitude: longitude)
+        let metadata = NSMutableDictionary()
+        metadata[kCGImagePropertyGPSDictionary] = location.gpsDictionary
 
         return try MediaFileDraft.create(
             fromImage: image,
-            metadata: .init(),
-            location: location,
+            metadata: metadata,
             newDraftOptions: nil,
             isPartOfMultiDraft: false
         )

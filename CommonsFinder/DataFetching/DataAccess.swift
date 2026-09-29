@@ -111,7 +111,7 @@ nonisolated enum DataAccess {
         if !missingIDs.isEmpty || !missingCommonsCategories.isEmpty {
             fetchResult = try await fetchWikidataBackedCategoriesFromAPI(
                 wikidataIDs: Array(missingIDs),
-                commonsCategories: commonsCategories,
+                commonsCategories: Array(missingCommonsCategories),
                 shouldCache: true,
                 appDatabase: appDatabase
             )
@@ -175,40 +175,19 @@ nonisolated enum DataAccess {
 
         let languageCode = Locale.current.wikiLanguageCodeIdentifier
 
-
-        // TODO: parallelize with taskGroup?
-
-
-        async let resolvedWikiItemsTask = Networking.shared.api
-            .fetchGenericWikidataItems(itemIDs: wikidataIDs, languageCode: languageCode)
-
-        /// categories often have associated wikidataItems( & vice-versa, see above), resolve wiki items for the found categories:
-        async let resolvedCategoryItemsTask = Networking.shared.api
-            .findWikidataItemsForCategories(commonsCategories, languageCode: languageCode)
-
-        let (resolvedWikiItems, resolvedCategoryItems) = try await (resolvedWikiItemsTask, resolvedCategoryItemsTask)
-
-        let combinedWikidataItems = (resolvedWikiItems + resolvedCategoryItems).uniqued(on: \.id)
-
-        let labelsAndRedirects = try await fetchWikidataLabelsAndRedirects(
-            wikidataIDs: combinedWikidataItems.map(\.id),
-            languageCode: languageCode
-        )
+        let fetchedWikidataItems = try await Networking.shared.api
+            .findWikidataItems(categories: commonsCategories, ids: wikidataIDs, language: languageCode)
+            .uniqued(on: \.id)
 
         // Since both API endpoints/task return different subsets of data
         // we merge the fields here
-        let mergedItems: [Category] = combinedWikidataItems.compactMap { apiItem in
+        let categoryItems: [Category] = fetchedWikidataItems.compactMap { apiItem in
             /// If we encounter a redirect, initialize an empty Category that only has a redirect ID
             /// so that it can be resolved separately
-            if let redirectID = labelsAndRedirects[apiItem.id]?.redirectsToId {
-                return .init(wikidataID: apiItem.id, redirectsTo: redirectID)
+            if let redirectID = apiItem.redirectsToId {
+                Category(wikidataID: apiItem.id, redirectsTo: redirectID)
             } else {
-                var item = Category(apiItem: apiItem)
-                if let actionAPIResult = labelsAndRedirects[apiItem.id] {
-                    item.label = actionAPIResult.label ?? item.label
-                    item.description = actionAPIResult.description ?? item.description
-                }
-                return item
+                Category(apiItem: apiItem)
             }
         }
 
@@ -216,7 +195,7 @@ nonisolated enum DataAccess {
         /// We still save the barebone redirect-Categories
         /// to be able to get the redirected item quickly, without always fetching from network.
         let redirectResult = try await resolveRedirectionsFromAPI(
-            consume mergedItems,
+            consume categoryItems,
             shouldCache: shouldCache,
             appDatabase: appDatabase
         )
@@ -231,30 +210,6 @@ nonisolated enum DataAccess {
         } else {
             return redirectResult
         }
-    }
-
-    private static func fetchWikidataLabelsAndRedirects(wikidataIDs: [String], languageCode: LanguageCode) async throws -> [String: GenericWikidataItem] {
-        let apiFetchLimit = 50
-        let chunkedIDs = wikidataIDs.chunks(ofCount: apiFetchLimit)
-        var result: [String: GenericWikidataItem] = [:]
-
-        for ids in chunkedIDs {
-            do {
-                let ids = Array(ids)
-                let fetchedResult = try await Networking.shared.api
-                    .fetchWikidataEntities(ids: ids, preferredLanguages: [languageCode])
-
-                result.merge(fetchedResult) { current, new in
-                    if current == new {
-                        assertionFailure("Duplicates from api")
-                    }
-                    return current
-                }
-
-            }
-        }
-
-        return result
     }
 
     /// For all argument items that contain a redirection, fetch the item that should be redirected from the network
@@ -469,10 +424,11 @@ nonisolated extension CategoryInfo {
             """
             \n
             sort score of \(base.commonsCategory ?? base.label ?? base.description ?? "")
-            bookmarkScore: **\(score)**)
-            lastViewedScore: **\(score)**)
-            distScore: **\(score)**)
-            textMatchScore: **\(score)**)
+            apiRelevanceScore: **\(apiRelevanceScore)**)
+            bookmarkScore: **\(bookmarkScore)**)
+            lastViewedScore: **\(lastViewedScore)**)
+            distScore: **\(distScore)**)
+            textMatchScore: **\(textMatchScore)**)
 
             total score: **\(score)**)
             \n

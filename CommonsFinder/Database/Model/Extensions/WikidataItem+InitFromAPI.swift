@@ -10,6 +10,11 @@ import Foundation
 
 nonisolated extension Category {
     init(apiItem: GenericWikidataItem) {
+        var imageURL: URL?
+        if let imageName = apiItem.imageName {
+            imageURL = try? .originalCommonsImageURL(filename: imageName)
+        }
+
         self.init(
             wikidataId: apiItem.id,
             commonsCategory: apiItem.commonsCategory,
@@ -22,7 +27,7 @@ nonisolated extension Category {
             latitude: apiItem.latitude,
             longitude: apiItem.longitude,
             areaSqm: apiItem.area,
-            image: apiItem.image
+            image: imageURL
         )
     }
 

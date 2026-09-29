@@ -383,6 +383,7 @@ nonisolated enum FileAnalysisHelpers {
             of: searchResult,
             referenceLocation: refLoc,
             referenceBearing: bearing,
+            horizontalError: horizontalError,
             method: scoreMethod
         )
 
@@ -414,6 +415,7 @@ nonisolated enum FileAnalysisHelpers {
         of categories: [Category],
         referenceLocation: CLLocation,
         referenceBearing: CLLocationDegrees?,
+        horizontalError: CLLocationDistance?,
         method: ScoreCalculationMethod
     ) -> [(Category, score: Double)] {
         var minDist = Double.greatestFiniteMagnitude
@@ -481,9 +483,18 @@ nonisolated enum FileAnalysisHelpers {
                     cameraBearing: referenceBearing,
                     targetLocation: categoryCoordinate
                 )
-                let angleScore = 1 - angle.interpolate(from: minAngle..<maxAngle, to: 0.0..<1.0)
+                
+                var angleScore: Double
+                if let horizontalError, horizontalError > 50 {
+                    angleScore = 0
+                } else {
+                    angleScore = 1 - angle.interpolate(from: minAngle..<maxAngle, to: 0.0..<1.0)
+                    // NOTE: distance-based score is the more important measure for this score
+                    // and angleScore should only be an additional guide, so only take it 50% into account.
+                    angleScore *= 0.5
+                }
+                
                 score = (distanceScore + angleScore) / 2
-
             }
             return ($0, score: score)
         }

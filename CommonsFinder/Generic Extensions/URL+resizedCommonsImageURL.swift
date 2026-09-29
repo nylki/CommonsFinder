@@ -15,6 +15,7 @@ enum ResizeCommonsImageURLError: Error {
     case unknownImageURL(URL)
     case invalidConstructedURL(String)
     case urlDecodingError
+    case invalidNormalizedFilename(original: String)
 }
 
 nonisolated
@@ -45,24 +46,51 @@ nonisolated
         return thumbURL
     }
 
+    static func originalCommonsImageURL(filename: String) throws -> URL {
+        let normalizedFilename = filename.replacing(.whitespace, with: "_")
+        let hashParts = try generateHashParts(normalizedFilename: normalizedFilename)
+        guard let encodedFilename = normalizedFilename.addingPercentEncoding(withAllowedCharacters: .urlPathAllowed) else {
+            throw ResizeCommonsImageURLError.invalidNormalizedFilename(original: filename)
+        }
+        // Base is unknown, assume "commons"
+        let base = "commons"
+        let urlString = "https://upload.wikimedia.org/wikipedia/\(base)/\(hashParts.0)/\(hashParts.1)/\(encodedFilename)"
+        guard let url = URL(string: urlString) else {
+            throw ResizeCommonsImageURLError.invalidConstructedURL(urlString)
+        }
+        return url
+    }
+
     /// This function returns a commons image URL from a filename, assuming the known usage of the MD5 prefixes.
     /// NOTE: MARKED AS EXPERIMENTAL
     static func experimentalResizedCommonsImageURL(filename: String, maxWidth: UInt) throws -> URL {
         let normalizedFilename = filename.replacing(.whitespace, with: "_")
-        guard let data = normalizedFilename.data(using: .utf8) else {
-            throw ResizeCommonsImageURLError.urlDecodingError
+        let hashParts = try generateHashParts(normalizedFilename: normalizedFilename)
+        guard let encodedFilename = normalizedFilename.addingPercentEncoding(withAllowedCharacters: .urlPathAllowed) else {
+            throw ResizeCommonsImageURLError.invalidNormalizedFilename(original: filename)
         }
-        let hash = Insecure.MD5.hash(data: data).map { String(format: "%02hhx", $0) }.joined()
-        let hashA = hash.prefix(1)
-        let hashB = hash.prefix(2)
-        let hashAndTitle = "\(hashA)/\(hashB)/\(normalizedFilename)"
-
         // Base is unknown, assume "commons"
         let base = "commons"
-        let urlString = "https://upload.wikimedia.org/wikipedia/\(base)/thumb/\(hashAndTitle)/\(maxWidth)px-\(normalizedFilename)"
+        let urlString = "https://upload.wikimedia.org/wikipedia/\(base)/thumb/\(hashParts.0)/\(hashParts.1)/\(normalizedFilename)/\(maxWidth)px-\(encodedFilename)"
         guard let thumbURL = URL(string: urlString) else {
             throw ResizeCommonsImageURLError.invalidConstructedURL(urlString)
         }
         return thumbURL
+    }
+
+    /// returns `hashA/hashB/normalizedFilename` to be used when constructing a URL
+    private static func generateHashParts(normalizedFilename: String) throws -> (String, String) {
+        guard let data = normalizedFilename.data(using: .utf8) else {
+            throw ResizeCommonsImageURLError.urlDecodingError
+        }
+
+        let hash = Insecure.MD5
+            .hash(data: data)
+            .map { String(format: "%02hhx", $0) }
+            .joined()
+
+        let a = String(hash.prefix(1))
+        let b = String(hash.prefix(2))
+        return (a, b)
     }
 }
