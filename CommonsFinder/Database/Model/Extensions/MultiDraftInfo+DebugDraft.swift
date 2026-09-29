@@ -27,7 +27,7 @@ extension MultiDraftInfo {
             nameSuffix: .numbering,
             captionWithDesc: [.init(caption: "Lorem Caption", languageCode: "en")],
             tags: [.init(.earth)],
-            license: .CC0,
+            license: .CC0_1_0,
             author: .appUser,
             source: .own,
             selectedFilenameType: .captionAndDate,
