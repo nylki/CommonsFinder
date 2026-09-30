@@ -34,12 +34,6 @@ nonisolated extension User {
     }
 }
 
-enum LoginSuccess {
-    case loggedIn(User)
-    case twoFactorCodeRequired
-    case emailCodeRequired
-}
-
 // AccountModel is designed to be lean. It only holds basic profile data (username, profile image, preferences?)
 // It also explicity **should not store information about uploads**. That should be stored inside the DB
 // and  dynamically queried in views via GRDB @Query so as little memory.

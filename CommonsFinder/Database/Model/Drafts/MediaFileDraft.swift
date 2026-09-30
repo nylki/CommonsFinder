@@ -364,7 +364,3 @@ nonisolated extension MediaFileDraft {
         size = fileSize
     }
 }
-
-enum MediaFileDraftError: Error {
-    case failedToReadMimetype
-}

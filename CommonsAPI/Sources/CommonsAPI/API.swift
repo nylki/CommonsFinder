@@ -27,7 +27,6 @@ public typealias OAuthTokenProvider = @Sendable () async throws -> String
 public actor API {
     private let logger = Logger(subsystem: "CommonsFinder", category: "CommonsAPI")
     
-    private let commonsHomepage = URL(string: "https://commons.wikimedia.org")!
     private let commonsEndpoint = URL(string: "https://commons.wikimedia.org/w/api.php")!
     private let wikidataEndpoint = URL(string: "https://www.wikidata.org/w/api.php")!
     private let profileEndpoint = URL(string: "https://commons.wikimedia.org/w/rest.php/oauth2/resource/profile")!
@@ -98,7 +97,7 @@ public actor API {
 
     // MARK: - Tokens
 
-    private func fetchToken(type: TokenType, includeAuthmanagerInfo: Bool = false) async throws -> TokenAuthManagerInfo {
+    private func fetchToken(type: TokenType) async throws -> TokenAuthManagerInfo {
         var query: Parameters = [
             "format": "json",
             "curtimestamp": "1",
@@ -106,19 +105,7 @@ public actor API {
             "type": type.description
         ]
 
-        if includeAuthmanagerInfo {
-            query["meta"] = "tokens|authmanagerinfo"
-            switch type {
-            case .login:
-                query["amirequestsfor"] = "login"
-            case .createAccount:
-                query["amirequestsfor"] = "create"
-            case .csrf:
-                assertionFailure("Requesting auth manager info when fetching CSRF token is unexpected.")
-            }
-        } else {
-            query["meta"] = "tokens"
-        }
+        query["meta"] = "tokens"
 
         let request = try GET(url: commonsEndpoint, query: query)
         let (data, response) = try await response(for: request, requiresAuthentication: true)
@@ -144,22 +131,7 @@ public actor API {
             throw CommonAPIError.tokenTooShort(type)
         }
 
-        let captchaRequest = value.query?.authmanagerinfo?.requests.first(where: { $0.id == "CaptchaAuthenticationRequest" })
-        let captchaID = captchaRequest?.fields?["captchaId"]?.value
-        var captchaURL: URL?
-        if let captchaPath = captchaRequest?.fields?["captchaInfo"]?.value {
-            captchaURL = URL(string: commonsHomepage.absoluteString.appending(captchaPath))
-        }
-
-        return TokenAuthManagerInfo(token: fetchedToken, type: type, captchaID: captchaID, captchaURL: captchaURL)
-    }
-
-    
-    public func fetchCreateAccountInfo() async throws -> TokenAuthManagerInfo {
-        try await fetchToken(
-            type: .createAccount,
-            includeAuthmanagerInfo: true
-        )
+        return TokenAuthManagerInfo(token: fetchedToken, type: type)
     }
     
     public func fetchCSRFToken() async throws -> String {
@@ -308,54 +280,6 @@ public actor API {
         )
     }
     
-    public func listCategoryImagesRaw(of category: String, continueString: String? = nil, limit: ListLimit = .max) async throws -> CategoryImageListResponse {
-        var query: Parameters = [
-            "action": "query",
-            "list": "categorymembers",
-            "redirects": "1",
-            "prop": "info",
-            "cmtitle": "Category:\(category)",
-            "cmprop": "ids|title",
-            "cmtype": "file",
-            "smaxage": "600",
-            "maxage": "600",
-            "uselang": "content",
-            "cmnamespace": String(MediawikiNamespace.file.rawValue),
-            "cmlimit": limit.apiString,
-            "format": "json",
-            "formatversion": "2",
-            "curtimestamp": "1"
-        ]
-        
-        if let continueString {
-            query["cmcontinue"] = continueString
-        }
-        
-        let request = try GET(url: commonsEndpoint, query: query)
-        let (data, response) = try await response(for: request)
-        let value = try parse(QueryResponse<CategoryMembersListResponse>.self, from: data, response: response)
-        
-        return .init(
-            continueString: value.continue?.cmcontinue,
-            files: value.query?.categorymembers ?? []
-        )
-    }
-    
-    /// Augment existing partial file info with structured data
-//    public func fetchFileMetadata(fileMetadataList: [FileMetadata]) async throws -> [RawFileMetadata] {
-//        let structuredData = try await fetchStructuredData(.pageids(fileMetadataList.map(\.id)))
-//        var result: [RawFileMetadata] = []
-//        
-//        for fileMetadata in fileMetadataList {
-//            guard let wikiItem = structuredData[fileMetadata.wikidataPageID] else {
-//                logger.warning("We expect to find a wikidata entry for each page, \(fileMetadata.id) doesnt have one. Failed upload?")
-//                continue
-//            }
-//            result.append(.init(title: fileMetadata.title, pageid: fileMetadata.pageid, pageData: fileMetadata, structuredData: wikiItem))
-//        }
-//        return result
-//    }
-    
     /// fetch file info and  structured data to form a RawFileMetadata
     public func fetchFullFileMetadata(_ identifiers: FileIdentifierList) async throws -> [RawFileMetadata] {
         
@@ -431,12 +355,6 @@ public actor API {
         let value = try parse(QueryResponse<FileMetadataListResponse>.self, from: data, response: response)
         let pages = value.query?.pages ?? []
         return pages
-    }
-    
-    
-    public struct FileSearchQueryResponse: Sendable {
-        public let items: [FileMetadata]
-        public let offset: Int?
     }
     
     public struct GenericSearchQueryResponse: Sendable {
@@ -1052,23 +970,6 @@ LIMIT \(limit)
         }
     }
     
-//    func getDepictCount() {
-//"""
-//SELECT ?label ?description (COUNT(*) AS ?fileCount) WHERE {
-//  VALUES ?item { wd:Q1765611 wd:Q64 wd:Q183 }  # Replace with your list of Q-items
-//  ?file wdt:P180 ?item .  # Find files where P180 (depicts) is the given item
-//  SERVICE wikibase:label {
-//    bd:serviceParam wikibase:language "en".
-//    ?item rdfs:label ?label;
-//    schema:description ?description.
-//}
-//}
-//GROUP BY ?item ?itemLabel
-//ORDER BY DESC(?fileCount)
-//"""
-//    }
-    
-    
     
     /// action: opensearch
     /// smaxage=30&maxage=30
@@ -1262,42 +1163,6 @@ LIMIT \(limit)
             throw CommonsAPIDecodingError.needsImplementation("\(String(data: data, encoding: .utf8) ?? "")")
         }
     }
-
-//    /// Returns the labels for Wikidata ids, which can be either WikidataProperties ("P180" etc.) or WikidataEntityIds ("Q1" etc.)
-//    /// for each id a dictionary is returned with language code keys.
-//    /// eg.: ["P180":  ["en": "depicted"]]
-//    public typealias LanguageCode = String
-//    public func fetchWikidataEntities(ids: [String], preferredLanguages: [String]) async throws ->  [String: GenericWikidataItem] {
-//        guard !preferredLanguages.isEmpty, let preferredLanguage = preferredLanguages.first else {
-//            assertionFailure()
-//            throw CommonAPIError.missingLanguageCodes
-//        }
-//        
-//        let query: Parameters = [
-//            "action": "wbgetentities",
-//            "curtimestamp": "1",
-//            "props": "labels|descriptions|info",
-//            "languages": preferredLanguages.joined(separator: "|"),
-//            /// languagefallback will return fitting translations even if the preferredLanguage doesn't perfectly match so that there is
-//            /// always some label proper
-//            "languagefallback": "1",
-//            "ids": ids.joined(separator: "|"),
-//            "formatversion": "2",
-//            "smaxage": "600",
-//            "maxage": "600",
-//            "uselang": "content",
-//            "format": "json"
-//        ]
-//        
-//        let request = try GET(url: wikidataEndpoint, query: query)
-//        let (data, response) = try await response(for: request)
-//        let responseValue = try parse(EntitiesResponse.self, from: data, response: response)
-//        
-//        let result: [String: GenericWikidataItem] = responseValue.entities.mapValues { entity in
-//            GenericWikidataItem(entity, language: preferredLanguage)
-//        }
-//        return result
-//    }
     
     
     public enum PublishingStep: Equatable, Sendable {

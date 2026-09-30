@@ -18,10 +18,6 @@ enum URLResponseProviderError: Error {
     case missingResponseComponents
 }
 
-enum NetworkingError: Error {
-    case couldNotFindOAuthClientIdInEnvironment
-}
-
 actor Networking {
     static let shared: Networking = .init()
 

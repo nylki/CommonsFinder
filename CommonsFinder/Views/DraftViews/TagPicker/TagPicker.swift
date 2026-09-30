@@ -330,7 +330,7 @@ struct TagPicker: View {
 
                 let sortedCategories =
                     scoredSearchResult
-                    .sorted(by: \.score, .orderedDescending)
+                    .sorted(using: KeyPathComparator(\.score, order: .reverse))
                     .map(\.categoryInfo)
 
 

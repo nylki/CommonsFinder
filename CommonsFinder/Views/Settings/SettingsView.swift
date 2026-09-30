@@ -149,16 +149,6 @@ struct SettingsView: View {
     }
 }
 
-struct AuthButtonStyle: ButtonStyle {
-    func makeBody(configuration: Configuration) -> some View {
-        configuration.label
-            .padding()
-            .background(.quaternary, in: .rect(cornerRadius: 16))
-            .opacity(configuration.isPressed ? 0.5 : 1)
-    }
-}
-
-
 #Preview("Not Logged In", traits: .previewEnvironment) {
     SettingsView()
 }

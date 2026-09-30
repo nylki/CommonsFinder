@@ -6,7 +6,6 @@
 //
 
 import CommonsAPI
-import FrameUp
 import GRDB
 import GeoToolbox
 import Nuke

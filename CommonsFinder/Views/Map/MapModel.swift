@@ -5,7 +5,6 @@
 //  Created by Tom Brewe on 28.02.25.
 //
 
-import AsyncAlgorithms
 import CommonsAPI
 import CoreLocation
 import H3kit
@@ -342,36 +341,36 @@ enum MapError: Error {
         }
     }
 
-    func stopFollowingUserLocation() {
-        locationTrack?.cancel()
-        locationTrack = nil
-    }
+    //    func stopFollowingUserLocation() {
+    //        locationTrack?.cancel()
+    //        locationTrack = nil
+    //    }
 
-    func followUserLocation() {
-        locationTrack?.cancel()
-        locationTrack = Task<Void, Never> {
-            let currentCamera = position.camera
-            do {
-                for try await locationUpdate in CLLocationUpdate.liveUpdates(.otherNavigation) {
-                    try Task.checkCancellation()
-                    guard let location = locationUpdate.location else { continue }
-
-                    position = .camera(
-                        .init(
-                            centerCoordinate: location.coordinate,
-                            distance: currentCamera?.distance ?? region?.diagonalMeters ?? 1000,
-                            heading: currentCamera?.heading ?? 0,
-                            pitch: currentCamera?.pitch ?? 0
-                        ))
-
-                }
-            } catch is CancellationError {
-                logger.debug("Location updates cancelled.")
-            } catch {
-                logger.error("stopped receiving live updates \(error)")
-            }
-        }
-    }
+    //    func followUserLocation() {
+    //        locationTrack?.cancel()
+    //        locationTrack = Task<Void, Never> {
+    //            let currentCamera = position.camera
+    //            do {
+    //                for try await locationUpdate in CLLocationUpdate.liveUpdates(.otherNavigation) {
+    //                    try Task.checkCancellation()
+    //                    guard let location = locationUpdate.location else { continue }
+    //
+    //                    position = .camera(
+    //                        .init(
+    //                            centerCoordinate: location.coordinate,
+    //                            distance: currentCamera?.distance ?? region?.diagonalMeters ?? 1000,
+    //                            heading: currentCamera?.heading ?? 0,
+    //                            pitch: currentCamera?.pitch ?? 0
+    //                        ))
+    //
+    //                }
+    //            } catch is CancellationError {
+    //                logger.debug("Location updates cancelled.")
+    //            } catch {
+    //                logger.error("stopped receiving live updates \(error)")
+    //            }
+    //        }
+    //    }
 
     func refreshPlaces(context: MapCameraUpdateContext) {
         let region = context.region

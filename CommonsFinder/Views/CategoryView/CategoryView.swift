@@ -8,15 +8,9 @@
 
 import CommonsAPI
 import CoreLocation
-import FrameUp
 import GRDB
 import SwiftUI
 import os.log
-
-private enum MediaTab {
-    case category
-    case depictions
-}
 
 struct CategoryView: View {
     private let initialItem: CategoryInfo

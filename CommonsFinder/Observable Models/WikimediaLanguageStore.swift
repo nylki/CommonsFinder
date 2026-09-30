@@ -215,7 +215,7 @@ enum WikimediaLanguageStoreError: Error {
                 }
             }
 
-        return matchingLanguages.sorted(by: \.code, .orderedAscending)
+        return matchingLanguages.sorted(using: KeyPathComparator(\.code, order: .forward))
     }
 
     /// based on system settings in iOS

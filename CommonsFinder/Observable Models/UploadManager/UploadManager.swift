@@ -802,20 +802,3 @@ enum UploadManagerError: Error {
     case failedToReadFileData
     case failedToOverwriteExifLocation(Error? = nil)
 }
-
-//extension API.PublishingStep {
-//    init(publishingState: PublishingStepState) {
-//        switch publishingState {
-//        case .uploading(_):
-//            self = .uploadData
-//        case .uploaded(let filekey):
-//            self = .unstash(filekey: filekey)
-//        case .creatingWikidataClaims:
-//            self =  .createStructuredData
-//        case .unstashingFile(let filekey):
-//            self =  .unstash(filekey: filekey)
-//        case .published:
-//            break
-//        }
-//    }
-//}

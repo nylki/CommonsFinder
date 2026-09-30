@@ -14,7 +14,6 @@
 		E24D3BFD2CF3ACDC003484CC /* FrameUp in Frameworks */ = {isa = PBXBuildFile; productRef = E24D3BFC2CF3ACDC003484CC /* FrameUp */; };
 		E252BF862EC09ABF00467A7C /* H3kit in Frameworks */ = {isa = PBXBuildFile; productRef = E20A8A5D2D75F1D200EA79C5 /* H3kit */; };
 		E252D5592D50DFF0002056B3 /* CommonsFinderShareExtension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = E252D54F2D50DFF0002056B3 /* CommonsFinderShareExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
-		E2549B232CBD6886005DFE14 /* AsyncAlgorithms in Frameworks */ = {isa = PBXBuildFile; productRef = E2549B222CBD6886005DFE14 /* AsyncAlgorithms */; };
 		E2549B262CBD68B9005DFE14 /* Algorithms in Frameworks */ = {isa = PBXBuildFile; productRef = E2549B252CBD68B9005DFE14 /* Algorithms */; };
 		E2549B2D2CBD69C7005DFE14 /* OrderedCollections in Frameworks */ = {isa = PBXBuildFile; productRef = E2549B2C2CBD69C7005DFE14 /* OrderedCollections */; };
 		E26AF871302F909600A7F612 /* Nuke in Frameworks */ = {isa = PBXBuildFile; productRef = E26AF870302F909600A7F612 /* Nuke */; };
@@ -166,11 +165,9 @@
 				"Generic Extensions/Locale+languageCode.swift",
 				"Generic Extensions/MKCoordinateRegion+extras.swift",
 				"Generic Extensions/ProcessInfo+isRunnungInPreview.swift",
-				"Generic Extensions/Sequence+sortedByKeyPath.swift",
 				"Generic Extensions/String+CapitalizedFirstLetter.swift",
 				"Generic Extensions/String+FileExtension.swift",
 				"Generic Extensions/String+truncated.swift",
-				"Generic Extensions/Uint64+Identifiable.swift",
 				"Generic Extensions/URL+resizedCommonsImageURL.swift",
 				"Generic Extensions/URL+staticUrls.swift",
 				"Networking/Keychain+Helpers.swift",
@@ -183,7 +180,6 @@
 				"Observable Models/EditingManager/EditingStatus.swift",
 				"Observable Models/EditingManager/PublishHelpers.swift",
 				"Observable Models/FileAnalysis.swift",
-				"Observable Models/LocationManager.swift",
 				"Observable Models/Navigation.swift",
 				"Observable Models/PaginatableCategories.swift",
 				"Observable Models/PaginatableCategorySearch.swift",
@@ -211,9 +207,7 @@
 				Types/ImageAnalysisResult.swift,
 				Types/NameValidationError.swift,
 				Types/NewDraftOptions.swift,
-				Types/OptionBarState.swift,
 				Types/RelatedCategoriesType.swift,
-				Types/ScrollState.swift,
 				Types/TagItem.swift,
 				Types/UploadPossibleStatus.swift,
 				Types/WikidataStatement.swift,
@@ -223,7 +217,6 @@
 				Utilities/ExifData.swift,
 				Utilities/FileAnalysisHelpers.swift,
 				Utilities/FilenameUtils.swift,
-				Utilities/GeoPlacemarkCache.swift,
 				Utilities/GeoVectorMath.swift,
 				Utilities/Logging.swift,
 				Utilities/Maintenance.swift,
@@ -267,7 +260,6 @@
 				Views/DraftViews/SingleDraftView.swift,
 				Views/DraftViews/TagPicker/TagButton.swift,
 				Views/DraftViews/TagPicker/TagLabel.swift,
-				Views/DraftViews/TagPicker/TagModel.swift,
 				Views/DraftViews/TagPicker/TagPicker.swift,
 				Views/DraftViews/TagPicker/TagPickerModel.swift,
 				Views/DraftViews/TimezonePicker.swift,
@@ -452,7 +444,6 @@
 				E26AF871302F909600A7F612 /* Nuke in Frameworks */,
 				E24D3BFD2CF3ACDC003484CC /* FrameUp in Frameworks */,
 				E274D66030430F9F00624C95 /* LRUCache in Frameworks */,
-				E2549B232CBD6886005DFE14 /* AsyncAlgorithms in Frameworks */,
 				E2390F982EBCC7250013F0FC /* ObservableLRUCache in Frameworks */,
 				E26ED9932FFC11680089B9C9 /* SwiftSoup in Frameworks */,
 			);
@@ -568,7 +559,6 @@
 				E28B17652CB03CBB00D6FEA0 /* GRDBQuery */,
 				E25278722CB03FAF00D00640 /* GRDB */,
 				E25278752CB03FBB00D00640 /* GRDBQuery */,
-				E2549B222CBD6886005DFE14 /* AsyncAlgorithms */,
 				E2549B252CBD68B9005DFE14 /* Algorithms */,
 				E2549B2C2CBD69C7005DFE14 /* OrderedCollections */,
 				E2F1B9D42CD006C700410991 /* GRDB */,
@@ -650,7 +640,6 @@
 			minimizedProjectReferenceProxies = 1;
 			packageReferences = (
 				E2F19BC42CA43C6400E19DCD /* XCRemoteSwiftPackageReference "swift-security" */,
-				E2549B212CBD6886005DFE14 /* XCRemoteSwiftPackageReference "swift-async-algorithms" */,
 				E2549B242CBD68B9005DFE14 /* XCRemoteSwiftPackageReference "swift-algorithms" */,
 				E2549B272CBD69C7005DFE14 /* XCRemoteSwiftPackageReference "swift-collections" */,
 				E2F1B9D32CD006C700410991 /* XCRemoteSwiftPackageReference "GRDB.swift" */,
@@ -1170,14 +1159,6 @@
 				version = 0.9.10;
 			};
 		};
-		E2549B212CBD6886005DFE14 /* XCRemoteSwiftPackageReference "swift-async-algorithms" */ = {
-			isa = XCRemoteSwiftPackageReference;
-			repositoryURL = "https://github.com/apple/swift-async-algorithms.git";
-			requirement = {
-				branch = 1.1.3;
-				kind = branch;
-			};
-		};
 		E2549B242CBD68B9005DFE14 /* XCRemoteSwiftPackageReference "swift-algorithms" */ = {
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/apple/swift-algorithms.git";
@@ -1310,11 +1291,6 @@
 		E25278752CB03FBB00D00640 /* GRDBQuery */ = {
 			isa = XCSwiftPackageProductDependency;
 			productName = GRDBQuery;
-		};
-		E2549B222CBD6886005DFE14 /* AsyncAlgorithms */ = {
-			isa = XCSwiftPackageProductDependency;
-			package = E2549B212CBD6886005DFE14 /* XCRemoteSwiftPackageReference "swift-async-algorithms" */;
-			productName = AsyncAlgorithms;
 		};
 		E2549B252CBD68B9005DFE14 /* Algorithms */ = {
 			isa = XCSwiftPackageProductDependency;
