@@ -52,7 +52,7 @@ struct MapUserLocateButtonCustom: View {
                 .animation(.default, value: currentPosition)
         }
         .labelStyle(.iconOnly)
-        .glassButtonStyle()
+        .buttonStyle(.glass)
 
 
     }

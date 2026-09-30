@@ -28,12 +28,8 @@ nonisolated extension Locale.LanguageCode {
 
 nonisolated extension Locale.LanguageCode {
     static var preferredLanguageCodes: [Self] {
-        if #available(iOS 26, *) {
-            Locale.preferredLocales.compactMap { locale in
-                locale.language.languageCode ?? Self.languageCodeFromRegionLanguageCode(locale.identifier)
-            }
-        } else {
-            Locale.preferredLanguages.compactMap(Self.languageCodeFromRegionLanguageCode)
+        Locale.preferredLocales.compactMap { locale in
+            locale.language.languageCode ?? Self.languageCodeFromRegionLanguageCode(locale.identifier)
         }
     }
 

@@ -69,7 +69,7 @@ struct DraftTeaser: View {
                                 Button("Edit", systemImage: "square.and.pencil", action: editDraft)
                             }
                         }
-                        .glassButtonStyle()
+                        .buttonStyle(.glass)
                         .padding()
                     }
                     .blur(radius: isPublishingCurrently ? 20 : 0)
@@ -199,7 +199,7 @@ struct DraftTeaser: View {
         }
         .transition(.blurReplace.animation(.bouncy))
         .foregroundStyle(.primary)
-        .glassButtonStyle()
+        .buttonStyle(.glass)
     }
 }
 

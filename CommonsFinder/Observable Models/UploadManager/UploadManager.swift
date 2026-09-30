@@ -355,21 +355,8 @@ class UploadManager {
     }
 
     // TODO: !!!!! reconsider "startStep" usage
-    func performUpload(_ id: DraftIDType, startStep: API.PublishingStep = .uploadData) {
-        if #available(iOS 26.0, *) {
-            performUploadWithBGTask(id: id, startStep: startStep)
-        } else {
-            switch id {
-            case .singleDraft(_):
-                performSingleUploadImpl(id: id, startStep: startStep)
-            case .multiDraft(_):
-                performMultiUploadImpl(id: id)
-            }
-        }
-    }
 
-    @available(iOS 26.0, *)
-    private func performUploadWithBGTask(id: DraftIDType, startStep: API.PublishingStep = .uploadData) {
+    func performUpload(_ id: DraftIDType, startStep: API.PublishingStep = .uploadData) {
         let bgTaskScheduler = BGTaskScheduler.shared
         let bgTaskIdentifier = "app.CommonsFinder.upload.\(id)"
 
@@ -437,7 +424,7 @@ class UploadManager {
         let uploadProgressCount = 100
         let postUploadProgressCount = 15
 
-        if #available(iOS 26.0, *), let bgTask = bgTask as? BGContinuedProcessingTask {
+        if let bgTask = bgTask as? BGContinuedProcessingTask {
             bgTask.progress.totalUnitCount = Int64(uploadProgressCount + postUploadProgressCount)
             bgTask.progress.completedUnitCount = 0
         }
@@ -462,7 +449,7 @@ class UploadManager {
                 switch status {
                 case .uploadingFile(let progress):
                     _ = try? setPublishingState(for: uploadable.id, to: .uploading(progress.fractionCompleted))
-                    if #available(iOS 26.0, *), let bgTask = bgTask as? BGContinuedProcessingTask {
+                    if let bgTask = bgTask as? BGContinuedProcessingTask {
                         let percentCompleted = Int64(progress.fractionCompleted * 100)
                         bgTask.updateTitle(
                             bgTask.title,
@@ -476,25 +463,21 @@ class UploadManager {
                 case .unstashingFile(let filekey):
                     _ = try? setPublishingState(for: uploadable.id, to: .unstashingFile(filekey: filekey), verificationRequired: true)
 
-                    if #available(iOS 26.0, *),
-                        let bgTask = bgTask as? BGContinuedProcessingTask
-                    {
+                    if let bgTask = bgTask as? BGContinuedProcessingTask {
                         bgTask.progress.completedUnitCount += 5
                         bgTask.updateTitle(bgTask.title, subtitle: "unstashing the file...")
                     }
 
                 case .creatingWikidataClaims:
                     _ = try? setPublishingState(for: uploadable.id, to: .creatingWikidataClaims, verificationRequired: true)
-                    if #available(iOS 26.0, *), let bgTask = bgTask as? BGContinuedProcessingTask {
+                    if let bgTask = bgTask as? BGContinuedProcessingTask {
                         bgTask.progress.completedUnitCount += 5
                         bgTask.updateTitle(bgTask.title, subtitle: "creating metadata...")
                     }
 
                 case .published:
                     _ = try? setPublishingState(for: uploadable.id, to: .published)
-                    if #available(iOS 26.0, *),
-                        let bgTask = bgTask as? BGContinuedProcessingTask
-                    {
+                    if let bgTask = bgTask as? BGContinuedProcessingTask {
                         bgTask.progress.completedUnitCount = bgTask.progress.totalUnitCount
                         bgTask.updateTitle("upload finished", subtitle: "file was published")
                         bgTask.setTaskCompleted(success: true)
@@ -503,27 +486,19 @@ class UploadManager {
                     cleanupDraftAfterPublished(ids: [uploadable.id])
 
                 case .uploadWarnings(let warnings):
-                    if #available(iOS 26.0, *) {
-                        bgTask?.setTaskCompleted(success: false)
-                    }
+                    bgTask?.setTaskCompleted(success: false)
                     _ = try? setPublishingError(for: uploadable.id, error: .uploadWarnings(warnings))
                 case .urlError(let urlError):
-                    if #available(iOS 26.0, *) {
-                        bgTask?.setTaskCompleted(success: false)
-                    }
+                    bgTask?.setTaskCompleted(success: false)
                     _ = try? setPublishingError(for: uploadable.id, error: .urlError(urlErrorCode: urlError.errorCode, errorDescription: String(describing: urlError)))
                 case .unspecifiedError(let error):
                     _ = try? setPublishingError(for: uploadable.id, error: .error(errorDescription: String(describing: error), recoverySuggestion: nil))
-                    if #available(iOS 26.0, *) {
-                        bgTask?.setTaskCompleted(success: false)
-                    }
+                    bgTask?.setTaskCompleted(success: false)
                 case .fileKeyMissingAfterUpload:
                     _ = try? setPublishingError(
                         for: uploadable.id,
                         error: .error(errorDescription: "The required \"filekey\" was missing after the upload. This indicates bad response data from the server.", recoverySuggestion: ""))
-                    if #available(iOS 26.0, *) {
-                        bgTask?.setTaskCompleted(success: false)
-                    }
+                    bgTask?.setTaskCompleted(success: false)
                 }
             }
         }
@@ -550,7 +525,7 @@ class UploadManager {
             try? setPublishingState(for: uploadable.id, to: nil)
         }
 
-        if #available(iOS 26.0, *), let bgTask = bgTask as? BGContinuedProcessingTask {
+        if let bgTask = bgTask as? BGContinuedProcessingTask {
             bgTask.progress.totalUnitCount = 100
             bgTask.progress.completedUnitCount = 0
         }
@@ -583,7 +558,7 @@ class UploadManager {
                         return
                     }
 
-                    if #available(iOS 26.0, *), let bgTask = bgTask as? BGContinuedProcessingTask {
+                    if let bgTask = bgTask as? BGContinuedProcessingTask {
                         bgTask.updateTitle(
                             bgTask.title,
                             subtitle: "\(publishingState.completedCount + 1) of \(publishingState.totalCount)"
@@ -627,14 +602,14 @@ class UploadManager {
                     }
 
                     try? setPublishingState(for: multiDraftID, updatedState: publishingState)
-                    if #available(iOS 26.0, *), let bgTask = bgTask as? BGContinuedProcessingTask {
+                    if let bgTask = bgTask as? BGContinuedProcessingTask {
                         bgTask.progress.completedUnitCount = Int64(publishingState.overallProgress * 100)
                     }
                 }
             }
 
 
-            if #available(iOS 26.0, *), let bgTask = bgTask as? BGContinuedProcessingTask {
+            if let bgTask = bgTask as? BGContinuedProcessingTask {
                 bgTask.progress.completedUnitCount = Int64(publishingState.overallProgress * 100)
             }
 

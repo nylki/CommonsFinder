@@ -158,14 +158,14 @@ struct FileEditView: View {
 
             ToolbarItem(placement: .confirmationAction) {
                 if let model, model.hasBeenEdited {
-                    Button(role: .fallbackConfirm) {
+                    Button(role: .confirm) {
                         isShowingSaveConfirmationDialog = true
                     } label: {
                         Label("Save Changes", systemImage: "checkmark")
                     }
                     .confirmationDialog("Publish changes?", isPresented: $isShowingSaveConfirmationDialog, titleVisibility: .visible) {
                         Button("Cancel", systemImage: "xmark", role: .cancel) {}
-                        Button("Publish", systemImage: "checkmark", role: .fallbackConfirm, action: publishChangesAndDismiss)
+                        Button("Publish", systemImage: "checkmark", role: .confirm, action: publishChangesAndDismiss)
                     }
                 }
             }

@@ -46,7 +46,7 @@ extension MediaFile {
     private var preferredCaption: LanguageString? {
         var caption: LanguageString? = captions.first(where: { $0.languageCode == Locale.current.wikiLanguageCodeIdentifier })
 
-        if caption == nil, #available(iOS 26.0, *) {
+        if caption == nil {
             caption = captions.first(where: {
                 Locale.preferredLocales.contains(.init(languageCode: .init($0.languageCode)))
             })

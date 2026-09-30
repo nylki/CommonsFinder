@@ -98,7 +98,7 @@ struct SingleDraftView: View {
     @ToolbarContentBuilder
     private var toolbarContent: some ToolbarContent {
         ToolbarItem(placement: .navigation) {
-            Button("Close", systemImage: "xmark", role: .fallbackClose) {
+            Button("Close", systemImage: "xmark", role: .close) {
                 if draftExistsInDB {
                     saveChangesAndDismiss()
                     dismiss()
@@ -112,7 +112,7 @@ struct SingleDraftView: View {
                 isPresented: $isShowingCloseConfirmationDialog,
                 titleVisibility: .visible
             ) {
-                Button("Save Draft", systemImage: "square.and.arrow.down", role: .fallbackConfirm) {
+                Button("Save Draft", systemImage: "square.and.arrow.down", role: .confirm) {
                     saveChangesAndDismiss()
                 }
                 Button("Delete Draft", systemImage: "trash", role: .destructive) {
@@ -147,7 +147,7 @@ struct SingleDraftView: View {
                     Label("Upload", systemImage: "arrow.up")
                 }
                 .confirmationDialog("Start upload to Wikimedia Commons now?", isPresented: $isShowingUploadDialog, titleVisibility: .visible) {
-                    Button("Upload", systemImage: "square.and.arrow.up", role: .fallbackConfirm) {
+                    Button("Upload", systemImage: "square.and.arrow.up", role: .confirm) {
                         do {
                             try model.saveEditingChanges(appDatabase: appDatabase)
                         } catch {
