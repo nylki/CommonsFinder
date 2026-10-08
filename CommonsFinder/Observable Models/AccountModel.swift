@@ -122,20 +122,19 @@ final class AccountModel {
 
         var lastSyncDate = UserDefaults.standard.object(forKey: "lastSyncDate") as? Date
 
-        if let date = lastSyncDate {
-            if Date.now.timeIntervalSince(date) < 1 {
+        if let lastSyncDate {
+            if Date.now.timeIntervalSince(lastSyncDate) < 1 {
                 logger.info("Prevent syncing user data, as it was performed less than a second ago.")
                 return
             }
-            // if we have a last sync date, go 1s into the past, just in case
-            lastSyncDate = date.addingTimeInterval(-1)
         }
 
         recurringSyncTask = Task<Void, Never> {
             defer { recurringSyncTask = nil }
             do {
+                let newSyncDate = Date.now - 1
                 try await fetchMostRecentUploads(end: lastSyncDate)
-                UserDefaults.standard.set(lastSyncDate, forKey: "lastSyncDate")
+                UserDefaults.standard.set(newSyncDate, forKey: "lastSyncDate")
             } catch {
                 logger.error("sync task failed: \(error)")
             }
