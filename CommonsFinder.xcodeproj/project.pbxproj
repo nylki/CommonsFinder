@@ -260,6 +260,7 @@
 				Views/DraftViews/SingleDraftView.swift,
 				Views/DraftViews/TagPicker/TagButton.swift,
 				Views/DraftViews/TagPicker/TagLabel.swift,
+				Views/DraftViews/TagPicker/TagModel.swift,
 				Views/DraftViews/TagPicker/TagPicker.swift,
 				Views/DraftViews/TagPicker/TagPickerModel.swift,
 				Views/DraftViews/TimezonePicker.swift,
