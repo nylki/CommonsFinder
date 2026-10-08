@@ -897,7 +897,6 @@ public struct MediaFileUploadable: Identifiable, Hashable, Equatable, Sendable, 
 /// A generic query response when `action: query`
 internal struct QueryResponse<T: Decodable&Sendable>: Decodable, Sendable {
 //    var batchcomplete: Bool|String
-    let curtimestamp: Date
     let query: T?
     let `continue`: Continue?
     
@@ -1113,7 +1112,6 @@ internal struct UserContributionListItem: Decodable, Sendable {
 internal struct AuthManagerOrTokensResponse: Decodable {
     /// tokens that where requested
     let tokens: Tokens?
-    let authmanagerinfo: AuthManagerInfo?
     
     struct Tokens: Decodable {
         /// the CSFR (Cross-Site Request Forgery) token that must be used to all future requests.
@@ -1121,61 +1119,7 @@ internal struct AuthManagerOrTokensResponse: Decodable {
         var logintoken: String?
         var createaccounttoken: String?
     }
-    
-    struct AuthManagerInfo: Decodable {
-        struct Request: Decodable {
-            let id: String
-            let fields: [String: Field]?
-            
-            struct Field: Decodable {
-                let type: String?
-                let value: String?
-                let label: String?
-                let help: String?
-            }
-        }
-        
-        
-        let requests: [Request]
-    }
 }
-
-// MARK: Login
-
-public struct LoginResponse: Sendable, Decodable {
-    public let status: AuthStatus
-    public let message: String?
-    public let messagecode: String?
-    public let requests: [Request]?
-    
-    
-    public struct Request: Sendable, Decodable {
-        public let id: String
-        public let account: String
-        public let provider: String
-        public let required: String
-        // let fields: [String: any JSON / String]
-    }
-}
-
-public enum AuthStatus: String, Decodable, Sendable {
-    /// PASS: the operation succeded
-    case pass = "PASS"
-    /// FAIL: the operation failed
-    case fail = "FAIL"
-    /// UI: requires additional input from user, ie. 2-factor.
-    /// From the API docs: present the new fields to the user and obtain their submission. Then post to this module with logincontinue and the relevant fields set
-    case ui = "UI"
-    /// REDIRECT: direct the user to the redirecttarget and wait for the return to loginreturnurl. Then post again with `logincontinue` param and any fields passed to the return URL, and repeat the login.
-    /// see: https://commons.wikimedia.org/w/api.php?action=help&modules=clientlogin
-    case redirect = "REDIRECT"
-    /// RESTART: the authentication worked but we don't have a linked user account. You might treat this as `ui` or as `fail`.
-    case restart = "RESTART"
-    
-    public var description: String { rawValue }
-}
-
-// MARK: Create Account (Register / Signup)
 
 ///action:titleblacklist
 internal struct ValidateFilenameResponse: Sendable, Decodable {

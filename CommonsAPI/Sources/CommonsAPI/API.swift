@@ -100,7 +100,6 @@ public actor API {
     private func fetchToken(type: TokenType) async throws -> TokenAuthManagerInfo {
         var query: Parameters = [
             "format": "json",
-            "curtimestamp": "1",
             "action": "query",
             "type": type.description
         ]
@@ -144,7 +143,6 @@ public actor API {
     private func listUserContribs(of username: String, limit: ListLimit) async throws -> [UserContributionListItem] {
         let query: Parameters = [
             "action": "query",
-            "curtimestamp": "1",
             "list": "usercontribs",
             "ucuser": username,
             // new -> new contributions aka uploads
@@ -176,7 +174,6 @@ public actor API {
     ) async throws -> UserImagesListResponse {
         var query: Parameters = [
             "action": "query",
-            "curtimestamp": "1",
             "list": "allimages",
             "aiuser": username,
             "aidir": direction.rawValue,
@@ -234,7 +231,6 @@ public actor API {
             "uselang": "content",
             "clshow": "!hidden",
             "format": "json",
-            "curtimestamp": "1"
         ]
         
         if let sort {
@@ -319,7 +315,6 @@ public actor API {
     internal func fetchImageMetadata(_ identifiers: FileIdentifierList) async throws -> [FileMetadata] {
         var query: Parameters = [
             "action": "query",
-            "curtimestamp": "1",
             "prop": "imageinfo|categories|info",
             "exportschema": "0.11",
             "formatversion": "2",
@@ -404,7 +399,6 @@ public actor API {
             "maxage": "600",
             "exportschema": "0.11",
             "formatversion": "2",
-            "curtimestamp": "1",
             "uselang": "content",
             "format": "json"
         ]
@@ -466,7 +460,6 @@ public actor API {
             "maxage": "600",
             "exportschema": "0.11",
             "formatversion": "2",
-            "curtimestamp": "1",
             "format": "json"
         ]
         
@@ -501,7 +494,6 @@ public actor API {
             "maxage": "600",
             "exportschema": "0.11",
             "formatversion": "2",
-            "curtimestamp": "1",
             "format": "json"
         ]
         
@@ -533,7 +525,6 @@ public actor API {
             "smaxage": "3600",
             "maxage": "3600",
             "uselang": "content",
-            "curtimestamp": "1"
         ]
         
         if let offset {
@@ -706,7 +697,6 @@ public actor API {
             "languagefallback": "1",
             "maxage": "600",
             "formatversion": "2",
-            "curtimestamp": "1",
             "format": "json"
         ]
         
@@ -979,7 +969,6 @@ LIMIT \(limit)
         
         var query: Parameters = [
             "action": "opensearch",
-            "curtimestamp": "1",
             "search": term,
             "namespace": namespaces.apiString,
             "profile": "engine_autoselect",
@@ -1019,7 +1008,7 @@ LIMIT \(limit)
     }
     
     // see "snak": http://www.wikidata.org/entity/Wikidata:Glossary
-    // https://commons.wikimedia.org/w/api.php?action=wbgetentities&format=json&curtimestamp=1&sites=commonswiki&titles=File%3AThe_Earth_seen_from_Apollo_17.jpg&redirects=yes&props=info%7Clabels%7Cclaims&languages=&sitefilter=&callback=&formatversion=2
+    // https://commons.wikimedia.org/w/api.php?action=wbgetentities&format=json&sites=commonswiki&titles=File%3AThe_Earth_seen_from_Apollo_17.jpg&redirects=yes&props=info%7Clabels%7Cclaims&languages=&sitefilter=&callback=&formatversion=2
     /// Returns a dictionary of entities where the key is the wikibase formatted pageID (string with "M" suffix), eg. "M148014716" for pageID 148014716.
     public func fetchMediaFileStructuredData(_ identifiers: FileIdentifierList) async throws -> [String: WikidataFileEntity] {
         // NOTE: In contrast to Q-Items and Properties (P) where only limited language translations are fetched,
@@ -1027,7 +1016,6 @@ LIMIT \(limit)
         
         var query: Parameters = [
             "action": "wbgetentities",
-            "curtimestamp": "1",
             "sites": "commonswiki",
             "exportschema": "0.11",
             "formatversion": "2",
@@ -1063,7 +1051,6 @@ LIMIT \(limit)
             "rvlimit": "1",
             "pageids": pageID,
             "formatversion": "2",
-            "curtimestamp": "1"
         ]
         
         let request = try GET(url: commonsEndpoint, query: query)
@@ -1081,7 +1068,6 @@ LIMIT \(limit)
             "format": "json",
             "titles": titles.joined(separator: "|"),
             "formatversion": "2",
-            "curtimestamp": "1"
         ]
 
         let request = try GET(url: commonsEndpoint, query: query)
@@ -1143,7 +1129,6 @@ LIMIT \(limit)
             "maxage": "2400",
             "uselang": "content",
             "formatversion": "2",
-            "curtimestamp": "1"
         ]
 
         let request = try GET(url: commonsEndpoint, query: query)
@@ -1291,7 +1276,6 @@ LIMIT \(limit)
     public func fetchPageWikitext(pageID: String) async throws -> String {
         let query: Parameters = [
             "action": "query",
-            "curtimestamp": "1",
             "prop": "revisions",
             "rvprop": "content",
             "rvslots": "main",
@@ -1326,7 +1310,6 @@ LIMIT \(limit)
             "nocreate": "1",
             "format": "json",
             "formatversion": "2",
-            "curtimestamp": "1"
         ]
 
         if let summary, !summary.isEmpty {
@@ -1363,7 +1346,6 @@ LIMIT \(limit)
             "token": token,
             "format": "json",
             "formatversion": "2",
-            "curtimestamp": "1"
         ]
 
         if let summary, !summary.isEmpty {
@@ -1406,7 +1388,6 @@ LIMIT \(limit)
             "token": token,
             "format": "json",
             "formatversion": "2",
-            "curtimestamp": "1"
         ]
 
         if let summary, !summary.isEmpty {
@@ -1435,7 +1416,6 @@ LIMIT \(limit)
             "token": token,
             "format": "json",
             "formatversion": "2",
-            "curtimestamp": "1"
         ]
 
         if let summary, !summary.isEmpty {
@@ -1540,7 +1520,6 @@ LIMIT \(limit)
             "uselang": languageCode,
             "format": "json",
             "formatversion": "2",
-            "curtimestamp": "1"
         ]
         
         let request = try GET(url: commonsEndpoint, query: query)
