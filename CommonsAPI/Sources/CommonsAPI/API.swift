@@ -316,7 +316,6 @@ public actor API {
         var query: Parameters = [
             "action": "query",
             "prop": "imageinfo|categories|info",
-            "exportschema": "0.11",
             "formatversion": "2",
             "clshow": "!hidden",
             "cllimit": "max",
@@ -330,19 +329,18 @@ public actor API {
             "format": "json"
         ]
         
+        let maxCount = 50
+        
+        if identifiers.items.count > maxCount {
+            assertionFailure("Trying to fetch metadata for \(identifiers.items.count) files. However only \(maxCount) are supported at one time. Will be limited to \(maxCount). Please chunk them before calling the API.")
+        }
+        
+        let limitedIdentifierItems = identifiers.items.prefix(maxCount)
         switch identifiers {
-        case .titles(var titles):
-            if titles.count > 50 {
-                logger.warning("Trying to fetch metadata for \(titles.count) titles. However only 50 are supported at one time. Will be limited to 10.")
-                titles = Array(titles.prefix(50))
-            }
-            query["titles"] = titles.joined(separator: "|")
-        case .pageids(var pageIDs):
-            if pageIDs.count > 50 {
-                logger.warning("Trying to fetch metadata for \(pageIDs.count) titles. However only 50 are supported at one time. Will be limited to 10.")
-                pageIDs = Array(pageIDs.prefix(50))
-            }
-            query["pageids"] = pageIDs.joined(separator: "|")
+        case .titles:
+            query["titles"] = limitedIdentifierItems.joined(separator: "|")
+        case .pageids:
+            query["pageids"] = limitedIdentifierItems.joined(separator: "|")
         }
         
         let request = try GET(url: commonsEndpoint, query: query)
@@ -397,7 +395,6 @@ public actor API {
             "srprop": "timestamp",
             "smaxage": "600",
             "maxage": "600",
-            "exportschema": "0.11",
             "formatversion": "2",
             "uselang": "content",
             "format": "json"
@@ -458,7 +455,6 @@ public actor API {
             "uselang": "content",
             "smaxage": "600",
             "maxage": "600",
-            "exportschema": "0.11",
             "formatversion": "2",
             "format": "json"
         ]
@@ -492,7 +488,6 @@ public actor API {
             "gsnamespace": String(MediawikiNamespace.file.rawValue),
             "gslimit": "max",
             "maxage": "600",
-            "exportschema": "0.11",
             "formatversion": "2",
             "format": "json"
         ]
@@ -537,140 +532,17 @@ public actor API {
         return resultValue
     }
     
-    // NOTE: the following SPARQL-Query based fetches
-    // are kept for future reference, may be deleted after some time unused.
-    
-//    public func OLDfetchGenericWikidataItems(itemIDs: [String], languageCode: LanguageCode) async throws -> [GenericWikidataItem] {
-//        let preferredLanguages = ([languageCode] + getPreferredSystemLanguages()).uniqued().joined(separator: ",")
-//        let ids = itemIDs.reduce("") { partialResult, qItem in
-//            partialResult + " wd:\(qItem)"
-//        }
-//        let sparqlQuery = """
-//SELECT
-//(STRAFTER(STR(?item), "entity/") AS ?id)
-//?commonsCategory
-//?label
-//?image
-//?area
-//?location
-//(GROUP_CONCAT(DISTINCT STRAFTER(STR(?instance), "entity/"); separator=",") AS ?instances)
-//?description
-//WHERE {
-//    VALUES ?item { \(ids) }  # Q-items
-//    OPTIONAL { ?item wdt:P18 ?image. }
-//    OPTIONAL { ?item wdt:P31 ?instance. }
-//    OPTIONAL { ?item wdt:P625 ?location. }
-//    OPTIONAL { ?item wdt:P373 ?commonsCategory. }
-//    OPTIONAL {
-//        ?item p:P2046/psn:P2046 [ # area, normalised (psn retrieves the normaized value, psv the original one)
-//            wikibase:quantityAmount ?area;
-//            wikibase:quantityUnit ?areaUnit;
-//        ]
-//    }
-//    SERVICE wikibase:label {
-//        bd:serviceParam wikibase:language "\(preferredLanguages),[AUTO_LANGUAGE],mul,en,de,fr,es,it,nl".
-//        ?item rdfs:label ?label;
-//        schema:description ?description.
-//    }
-//}
-//GROUP BY ?item ?commonsCategory ?area ?location ?label ?image ?description
-//"""
-//        
-//        let query: Parameters = [
-//            "query": sparqlQuery,
-//            "format": "json"
-//        ]
-//        
-//        let request = try GET(url: wikidataSparqlEndpoint, query: query)
-//        let (data, response) = try await response(for: request)
-//        let resultValue = try parse(SPARQLResponse<SparqlGenericWikidataItem>.self, from: data, response: response)
-//        
-//        let groupedResult = resultValue.results.bindings.map {
-//            GenericWikidataItem($0, language: languageCode)
-//        }.grouped(by: \.id)
-//        
-//        /// restore the original order
-//        let orderedResult: [GenericWikidataItem] = itemIDs.compactMap { id in
-//            guard !id.isEmpty else { return nil }
-//            return groupedResult[id]?.first
-//        }
-//        
-//        return orderedResult
-//    }
-    
-    
-//    /// Given a list of Q-Items ["Q42", "Q1"] etc. returns their commons categories if they are linked with both P910 (http://www.wikidata.org/entity/Property:P910)
-//    /// and P373 (http://www.wikidata.org/entity/Property:P373)
-//    // eg: https://query.wikidata.org/sparql?query=%20%20SELECT%20%3Fitem%20%3FitemLabel%20%3FcommonsCategory%20%3FcommonsCategoryLabel%20WHERE%20%7B%0A%20%20%20%20VALUES%20%3Fitem%20%7Bwd%3AQ2%20wd%3AQ5%20wd%3AQ42%20%20%7D%20%20%23%20Replace%20these%20with%20your%20Q-items%0A%20%20%20%20%3Fitem%20wdt%3AP910%20%3FcommonsCategory%20.%20%20%20%20%23%20P910%20links%20to%20the%20main%20category%0A%20%20%20%20%3FcommonsCategory%20wdt%3AP373%20%3FcommonsName%20.%20%23%20Filter%20to%20ensure%20it%20has%20a%20Commons%20category%0A%20%20%7D%0A%0A&format=json
-//    public func oldFindCategoriesForWikidataItems(_ itemIDs: [String], languageCode: String) async throws -> [GenericWikidataItem] {
-//        guard !itemIDs.isEmpty else { return [] }
-//        
-//        let preferredLanguages = ([languageCode] + getPreferredSystemLanguages()).uniqued().joined(separator: ",")
-//        let ids = itemIDs.reduce("") { partialResult, qItem in
-//            partialResult + " wd:\(qItem)"
-//        }
-//        let sparqlQuery = """
-//SELECT
-//(STRAFTER(STR(?item), "entity/") AS ?id)
-//?commonsCategory
-//?label
-//?image
-//?area
-//?location
-//(GROUP_CONCAT(DISTINCT STRAFTER(STR(?instance), "entity/"); separator=",") AS ?instances)
-//?description
-//WHERE {
-//    VALUES ?item { \(ids) }  # Q-items
-//    OPTIONAL { ?item wdt:P18 ?image. }
-//    OPTIONAL { ?item wdt:P31 ?instance. }
-//    OPTIONAL { ?item wdt:P625 ?location. }
-//    OPTIONAL { ?item wdt:P373 ?commonsCategory. }
-//    OPTIONAL {
-//        ?item p:P2046/psn:P2046 [ # area, normalised (psn retrieves the normaized value, psv the original one)
-//            wikibase:quantityAmount ?area;
-//            wikibase:quantityUnit ?areaUnit;
-//        ]
-//    }
-//    SERVICE wikibase:label {
-//        bd:serviceParam wikibase:language "\(preferredLanguages),[AUTO_LANGUAGE],mul,en,de,fr,es,it,nl".
-//        ?item rdfs:label ?label;
-//        schema:description ?description.
-//    }
-//}
-//GROUP BY ?item ?commonsCategory ?area ?location ?label ?image ?description
-//"""
-//        
-//        let query: Parameters = [
-//            "query": sparqlQuery,
-//            "format": "json"
-//        ]
-//        
-//        let request = try GET(url: wikidataSparqlEndpoint, query: query)
-//        let (data, response) = try await response(for: request)
-//        let resultValue = try parse(SPARQLResponse<SparqlGenericWikidataItem>.self, from: data, response: response)
-//        
-//        let formattedResult: [GenericWikidataItem] = resultValue.results.bindings.map {
-//            GenericWikidataItem($0, language: languageCode)
-//        }
-//        return formattedResult
-//    }
-    
-    
     /// automatically chunks fetches if 50+ identifiers
     private func fetchWikibaseEntities(_ identifiers: [WikibaseIdentifier], languages: [String]) async throws -> [WikidataEntity] {
         let maxCount = 50
-        if identifiers.count <= maxCount {
-            return try await fetchWikibaseEntitiesImpl(identifiers, languages: languages)
-        } else {
-            let chunkedIdentifiers = identifiers.chunks(ofCount: maxCount)
-            var results: [WikidataEntity] = []
-            for currentIdentifiers in chunkedIdentifiers {
-                let result = try await fetchWikibaseEntitiesImpl(Array(currentIdentifiers), languages: languages)
-                results += result
-            }
-            
-            return results
+        let chunkedIdentifiers = identifiers.chunks(ofCount: maxCount)
+        var results: [WikidataEntity] = []
+        
+        for currentIdentifiers in chunkedIdentifiers {
+            let result = try await fetchWikibaseEntitiesImpl(Array(currentIdentifiers), languages: languages)
+            results += result
         }
+        return results
     }
     
     /// expects a maximum of 50 identifiers
@@ -754,73 +626,6 @@ public actor API {
         }
         return Array(results)
     }
-    
-    
-//    public func findWikidataItemsForCategoriesOld(_ categories: [String], languageCode: String) async throws -> [GenericWikidataItem] {
-//        guard !categories.isEmpty else { return [] }
-//        let preferredLanguages = ([languageCode] + getPreferredSystemLanguages()).uniqued().joined(separator: ",")
-//        let categoriesString = categories
-//            .map {
-//                let quotationMarksEscapedString = $0.replacing("\"", with: "\\\"")
-//                return "\"\(quotationMarksEscapedString)\""
-//            }
-//            .joined(separator: " ")
-//        
-//        // Find wikidata items that have matchign P373 (Commons Category
-//        // but We filter out instances of meta-items (ie. Q4167836) that,
-//        // eg. only return "Berlin Q64, but not Wikimedia-Kategorie:Berlin Q4579913,
-//        let sparqlQuery = """
-//SELECT
-//(STRAFTER(STR(?item), "entity/") AS ?id)
-//?commonsCategory
-//?label
-//?image
-//?area
-//?location
-//(GROUP_CONCAT(DISTINCT STRAFTER(STR(?instance), "entity/"); separator=",") AS ?instances)
-//?description
-//WHERE {
-//    VALUES ?commonsCategory { \(categoriesString) } ?item wdt:P373 ?commonsCategory.
-//    FILTER(NOT EXISTS { ?item (wdt:P31/(wdt:P279*)) wd:Q4167836. })
-//    OPTIONAL { ?item wdt:P18 ?image. }
-//    OPTIONAL { ?item wdt:P31 ?instance. }
-//    OPTIONAL { ?item wdt:P625 ?location. }
-//    OPTIONAL { ?item wdt:P373 ?commonsCategory. }
-//    OPTIONAL {
-//        ?item p:P2046/psn:P2046 [ # area, normalised (psn retrieves the normaized value, psv the original one)
-//            wikibase:quantityAmount ?area;
-//            wikibase:quantityUnit ?areaUnit;
-//        ]
-//    }
-//    SERVICE wikibase:label {
-//        bd:serviceParam wikibase:language "\(preferredLanguages),[AUTO_LANGUAGE],mul,en,de,fr,es,it,nl".
-//        ?item rdfs:label ?label;
-//        schema:description ?description.
-//    }
-//}
-//GROUP BY ?item ?commonsCategory ?area ?location ?label ?image ?description
-//"""
-//        
-//        let query: Parameters = [
-//            "query": sparqlQuery,
-//            "format": "json"
-//        ]
-//        
-//        let request = try GET(url: wikidataSparqlEndpoint, query: query)
-//        let (data, response) = try await response(for: request)
-//        let resultValue = try parse(SPARQLResponse<SparqlGenericWikidataItem>.self, from: data, response: response)
-//        
-//        let groupedResult = resultValue.results.bindings.map {
-//            GenericWikidataItem($0, language: languageCode)
-//        }.grouped(by: \.commonsCategory)
-//        
-//        /// restore the original order
-//        let orderedResult: [GenericWikidataItem] = categories.compactMap { commonsCategory in
-//            guard !commonsCategory.isEmpty else { return nil }
-//            return groupedResult[commonsCategory]?.first
-//        }
-//        return orderedResult
-//    }
     
     // NOTE: see "radius_query_for_upload_wizard.rq" for similar query in android commons project
     public func getWikidataItemsAroundCoordinate(_ coordinate: CLLocationCoordinate2D, kilometerRadius: Double, limit: Int = 10000, minArea: Double? = nil, languageCode: LanguageCode) async throws -> [GenericWikidataItem] {
@@ -1017,7 +822,6 @@ LIMIT \(limit)
         var query: Parameters = [
             "action": "wbgetentities",
             "sites": "commonswiki",
-            "exportschema": "0.11",
             "formatversion": "2",
             "uselang": "content",
             "format": "json"
@@ -1530,15 +1334,6 @@ LIMIT \(limit)
 }
 
 internal extension [MediawikiNamespace] {
-    /// returns the pipe-joined string: [.file, .main] -> "file|main"
-    var apiString: String {
-        self
-            .map { String($0.rawValue) }
-            .joined(separator: "|")
-    }
-}
-
-internal extension [RevisionTag] {
     /// returns the pipe-joined string: [.file, .main] -> "file|main"
     var apiString: String {
         self

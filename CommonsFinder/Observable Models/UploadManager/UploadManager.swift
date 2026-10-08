@@ -122,16 +122,13 @@ class UploadManager {
                     case .creatingWikidataClaims:
                         // The file is expected to be un-stashed and therefore public, we have to check if the wikidata items have already been created.
 
-                        let fileMetadata = try await Networking.shared.api.fetchFullFileMetadata(FileIdentifierList.titles(["File:\(draft.finalFilename)"])).first
+                        let structuredData = try await Networking.shared.api.fetchMediaFileStructuredData(.titles(["File:\(draft.finalFilename)"])).first
+                        let isMissingStructuredData = structuredData == nil || structuredData?.value.missing == true
 
-                        if let fileMetadata {
-                            if fileMetadata.structuredData.statements.isEmpty {
-                                try setPublishingState(for: draft.id, to: .creatingWikidataClaims, verificationRequired: false)
-                            } else {
-                                try setPublishingState(for: draft.id, to: .published, verificationRequired: false)
-                            }
-                        } else {
+                        if isMissingStructuredData {
                             try setPublishingState(for: draft.id, to: .creatingWikidataClaims, verificationRequired: false)
+                        } else {
+                            try setPublishingState(for: draft.id, to: .published, verificationRequired: false)
                         }
 
                     case .published:

@@ -44,10 +44,6 @@ struct FileDetailView: View {
     @State private var resolvedTags: [TagItem] = []
     @State private var isShowingEditingError = false
 
-    private var tagsHashID: String {
-        "\(mediaFileInfo.mediaFile.categories.hashValue)-\(mediaFileInfo.mediaFile.statements.hashValue)"
-    }
-
     private var caption: String? {
         mediaFileInfo.mediaFile.localizedDisplayCaption
     }
