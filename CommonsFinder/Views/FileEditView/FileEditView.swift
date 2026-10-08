@@ -90,11 +90,7 @@ struct FileEditView: View {
         .task(id: id) {
             do {
                 let observation = ValueObservation.tracking { db in
-                    try MediaFile
-                        .including(optional: MediaFile.itemInteraction)
-                        .filter(id: id)
-                        .asRequest(of: MediaFileInfo.self)
-                        .fetchOne(db)
+                    try MediaFileInfo.fetchOne(db, id: id)
                 }
 
                 for try await updatedMediaFileInfo in observation.values(in: appDatabase.reader) {

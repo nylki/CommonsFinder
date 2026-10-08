@@ -59,11 +59,10 @@ struct AllUploadsRequest: ValueObservationQueryable {
     func fetch(_ db: Database) throws -> [MediaFileInfo] {
         do {
             let allFiles =
-                try MediaFile
+                try MediaFileInfo
+                .all()
                 .filter(MediaFile.Columns.username == username)
                 .order(MediaFile.Columns.uploadDate.desc)
-                .including(optional: MediaFile.itemInteraction)
-                .asRequest(of: MediaFileInfo.self)
                 .fetchAll(db)
 
             return allFiles
@@ -80,11 +79,7 @@ struct MediaFilesByIDRequest: ValueObservationQueryable {
     static var defaultValue: [MediaFileInfo] { [] }
 
     func fetch(_ db: Database) throws -> [MediaFileInfo] {
-        try MediaFile
-            .filter(ids: ids)
-            .including(optional: MediaFile.itemInteraction)
-            .asRequest(of: MediaFileInfo.self)
-            .fetchAll(db)
+        try MediaFileInfo.fetchAll(db: db, ids: ids)
     }
 }
 

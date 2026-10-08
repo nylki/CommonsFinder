@@ -120,13 +120,11 @@ final class AccountModel {
             return
         }
 
-        var lastSyncDate = UserDefaults.standard.object(forKey: "lastSyncDate") as? Date
+        let lastSyncDate = UserDefaults.standard.object(forKey: "lastSyncDate") as? Date
 
-        if let lastSyncDate {
-            if Date.now.timeIntervalSince(lastSyncDate) < 1 {
-                logger.info("Prevent syncing user data, as it was performed less than a second ago.")
-                return
-            }
+        if let lastSyncDate, Date.now.timeIntervalSince(lastSyncDate) < 1 {
+            logger.info("Prevent syncing user data, as it was performed less than a second ago.")
+            return
         }
 
         recurringSyncTask = Task<Void, Never> {

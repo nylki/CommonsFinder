@@ -13,7 +13,6 @@ import os.log
 enum DatabaseError: Error {
     case assertionFailed
     case failedToFetchAfterUpdate
-    case failedToCreateOrFetchItemInteraction
     case itemInteractionEmptyID
     case itemNotFound
 }
@@ -949,21 +948,13 @@ nonisolated extension AppDatabase {
 
     nonisolated func fetchMediaFileInfo(id: String) throws -> MediaFileInfo? {
         try dbWriter.read { db in
-            try MediaFile
-                .filter(id: id)
-                .including(optional: MediaFile.itemInteraction)
-                .asRequest(of: MediaFileInfo.self)
-                .fetchOne(db)
+            try MediaFileInfo.fetchOne(db, id: id)
         }
     }
 
     func fetchMediaFileInfos(ids: [String]) throws -> [MediaFileInfo] {
         try dbWriter.read { db in
-            try MediaFile
-                .filter(ids: ids)
-                .including(optional: MediaFile.itemInteraction)
-                .asRequest(of: MediaFileInfo.self)
-                .fetchAll(db)
+            try MediaFileInfo.fetchAll(db: db, ids: ids)
         }
     }
 
@@ -1131,15 +1122,6 @@ nonisolated extension AppDatabase {
         }
     }
 }
-nonisolated extension MediaFileInfo {
-    static func fetchAll(ids: [String], db: Database) throws -> [Self] {
-        try MediaFile
-            .filter(ids: ids)
-            .including(optional: MediaFile.itemInteraction)
-            .asRequest(of: MediaFileInfo.self)
-            .fetchAll(db)
-    }
-}
 
 nonisolated extension MultiDraftInfo {
     static func all() -> QueryInterfaceRequest<MultiDraftInfo> {
@@ -1159,8 +1141,32 @@ nonisolated extension MultiDraftInfo {
     static func fetchOne(_ db: Database, id: MultiDraft.ID) throws -> Self? {
         try filter(id: id).fetchOne(db)
     }
-
 }
+
+nonisolated extension MediaFileInfo {
+    static func all() -> QueryInterfaceRequest<MediaFileInfo> {
+        MediaFile
+            .including(optional: MediaFile.itemInteraction)
+            .asRequest(of: MediaFileInfo.self)
+    }
+
+    static func filter(id: MediaFile.ID) -> QueryInterfaceRequest<MediaFileInfo> {
+        all().filter(key: id)
+    }
+
+    static func filter(ids: [MediaFile.ID]) -> QueryInterfaceRequest<MediaFileInfo> {
+        all().filter(ids: ids)
+    }
+
+    static func fetchOne(_ db: Database, id: MediaFile.ID) throws -> Self? {
+        try filter(id: id).fetchOne(db)
+    }
+
+    static func fetchAll(db: Database, ids: [String]) throws -> [Self] {
+        try filter(ids: ids).fetchAll(db)
+    }
+}
+
 
 nonisolated extension CategoryInfo {
     /// takes redirections into account

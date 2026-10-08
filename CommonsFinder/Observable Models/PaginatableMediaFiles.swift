@@ -117,7 +117,7 @@ private enum PaginationFileIdentifierType {
                 let ids = mediaFileInfos.map(\.id)
 
                 let observation = ValueObservation.tracking { db in
-                    try MediaFileInfo.fetchAll(ids: ids, db: db)
+                    try MediaFileInfo.fetchAll(db: db, ids: ids)
                 }
 
                 for try await mediaFilesFromDB in observation.values(in: appDatabase.reader) {
