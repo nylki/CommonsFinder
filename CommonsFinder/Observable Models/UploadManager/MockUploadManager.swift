@@ -135,7 +135,6 @@ final class MockUploadManager: UploadManager {
             }
         }
     }
-
     override func performUpload(_ id: DraftIDType, startStep: API.PublishingStep = .uploadData) {
         print("perform simulated upload")
         switch uploadMockSimulation {

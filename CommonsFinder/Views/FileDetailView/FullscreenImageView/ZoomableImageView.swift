@@ -281,7 +281,7 @@ struct ZoomableImageView: View {
                                 .frame(width: 26, height: 34)
                         }
                         .labelStyle(.iconOnly)
-                        .glassButtonStyle()
+                        .buttonStyle(.glass)
                         .transition(.blurReplace)
                         .padding(.horizontal)
                     }
@@ -303,7 +303,7 @@ struct ZoomableImageView: View {
                             .frame(height: 34)
                             .frame(minWidth: 26)
                     }
-                    .glassButtonStyle()
+                    .buttonStyle(.glass)
                     .padding(.horizontal)
                     .transition(.asymmetric(insertion: .opacity, removal: removalTransition))
                 }

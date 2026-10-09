@@ -121,7 +121,7 @@ struct TagPicker: View {
                 }
                 if hasUserMadeChanges {
                     ToolbarItem(placement: .confirmationAction) {
-                        Button(role: .fallbackConfirm, action: accept) {
+                        Button(role: .confirm, action: accept) {
                             Label("Accept", systemImage: "checkmark")
                         }
                     }
@@ -254,7 +254,7 @@ struct TagPicker: View {
                     }
                     .labelStyle(.iconOnly)
                     .buttonBorderShape(.circle)
-                    .glassButtonStyle()
+                    .buttonStyle(.glass)
                 }
             }
             if fileAnalysis.status(for: analysisInput) == .analyzing {
@@ -394,13 +394,7 @@ struct SafeAreaBarFallback<C: View>: ViewModifier {
     var subContent: () -> C
 
     func body(content: Content) -> some View {
-        if #available(iOS 26.0, *) {
-            content
-                .safeAreaBar(edge: edge, content: subContent)
-        } else {
-            content
-                .safeAreaInset(edge: edge, content: subContent)
-        }
+        content.safeAreaBar(edge: edge, content: subContent)
     }
 }
 
@@ -416,19 +410,9 @@ private struct NavHeader: View {
     @Environment(\.dismiss) private var dismiss
 
     var body: some View {
-        if #available(iOS 26.0, *) {
-            header
-                .padding([.horizontal, .top])
-                .padding(.bottom, 10)
-        } else {
-            header
-                .padding([.horizontal, .top])
-                .padding(.bottom, 10)
-                .background(Color(uiColor: .systemBackground))
-                .safeAreaInset(edge: .bottom) {
-                    Divider()
-                }
-        }
+        header
+            .padding([.horizontal, .top])
+            .padding(.bottom, 10)
 
     }
 

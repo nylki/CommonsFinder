@@ -61,10 +61,10 @@ private struct FileImportProgressOverlay: View {
                     .frame(minWidth: 0, maxWidth: .infinity)
                     .padding(.vertical, 5)
             }
-            .glassButtonStyle()
+            .buttonStyle(.glass)
             .padding()
         }
-        .fallbackGlassEffect(in: .rect(cornerRadius: 36, style: .circular))
+        .glassEffect(in: .rect(cornerRadius: 36, style: .circular))
         .geometryGroup()
         .compositingGroup()
         .scenePadding()
@@ -81,7 +81,7 @@ private struct FileImportProgressOverlay: View {
             Button("Sould not be tappable") {
                 print("should not print")
             }
-            .glassButtonStyle()
+            .buttonStyle(.glass)
             Spacer()
         }
         .padding()

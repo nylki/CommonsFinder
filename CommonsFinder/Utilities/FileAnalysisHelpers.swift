@@ -90,23 +90,18 @@ nonisolated enum FileAnalysisHelpers {
     ///    `true` = is probably very low quality or has lens smudges and needs user confirmation before upload
     ///    `false` = is probably a good image to upload
     private static func detectSmudgesAndLowQuality(imageRequestHandler: ImageRequestHandler) async -> Bool {
+        let smudgeRequest = DetectLensSmudgeRequest()
+        let aestheticRequest = CalculateImageAestheticsScoresRequest()
+        do {
+            async let smudgeRequestTask = imageRequestHandler.perform(smudgeRequest)
+            async let aestheticRequestTask = imageRequestHandler.perform(aestheticRequest)
 
-        if #available(iOS 26.0, *) {
-            let smudgeRequest = DetectLensSmudgeRequest()
-            let aestheticRequest = CalculateImageAestheticsScoresRequest()
-            do {
-                async let smudgeRequestTask = imageRequestHandler.perform(smudgeRequest)
-                async let aestheticRequestTask = imageRequestHandler.perform(aestheticRequest)
-
-                let (smudgeObservation, aestheticObservation) = try await (smudgeRequestTask, aestheticRequestTask)
-                logger.info("smudged? \(smudgeObservation.confidence)")
-                logger.info("aesthetic score: \(aestheticObservation.overallScore) ((range: -1 awful...1 picture of the day) utility image: \(aestheticObservation.isUtility)")
-                return smudgeObservation.confidence > 0.8 || (!aestheticObservation.isUtility && aestheticObservation.overallScore < -0.7)
-            } catch {
-                logger.error("Failed to perform smudge or aesthetic detection")
-                return false
-            }
-        } else {
+            let (smudgeObservation, aestheticObservation) = try await (smudgeRequestTask, aestheticRequestTask)
+            logger.info("smudged? \(smudgeObservation.confidence)")
+            logger.info("aesthetic score: \(aestheticObservation.overallScore) ((range: -1 awful...1 picture of the day) utility image: \(aestheticObservation.isUtility)")
+            return smudgeObservation.confidence > 0.8 || (!aestheticObservation.isUtility && aestheticObservation.overallScore < -0.7)
+        } catch {
+            logger.error("Failed to perform smudge or aesthetic detection")
             return false
         }
     }

@@ -40,7 +40,7 @@ struct SearchOrderButton<T: CustomLocalizedStringResourceConvertible & Equatable
             .tint(.primary)
             .font(.footnote)
         }
-        .glassButtonStyle()
+        .buttonStyle(.glass)
         .animation(.default, value: searchOrder)
     }
 }

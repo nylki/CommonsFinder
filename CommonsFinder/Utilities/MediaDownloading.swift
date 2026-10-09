@@ -26,9 +26,7 @@ extension MediaFileInfo {
         try await photoLibrary.performChanges {
             let creationRequest = PHAssetCreationRequest.forAsset()
             let options = PHAssetResourceCreationOptions()
-            if #available(iOS 26.0, *),
-                let contentType
-            {
+            if let contentType {
                 options.contentType = contentType
             }
 
