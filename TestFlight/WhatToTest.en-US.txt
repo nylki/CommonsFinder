@@ -1,9 +1,1 @@
-This update optimises network requests. Categories and other image metadata should now load much faster, without long delays.
 
-Further improvements:
-
-- Unneeded image files are now properly cleared up after uploads and when drafts are deleted.
-
-- The licence selector now shows the version of CC licences (e.g. “CC BY 4.0” instead of just “CC BY”).
-
-- Suggested categories and places close to the camera location are now ranked more sensibly. Previously, highly relevant categories sometimes appeared further down the list. (See the git commit for details ;)

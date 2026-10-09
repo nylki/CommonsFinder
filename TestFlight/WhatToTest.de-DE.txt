@@ -1,13 +1,13 @@
-Dieses Update optimiert u.A. Netzwerkanfragen und Kategorien und andere Metadaten von Bildern sollten nun
-wesentlich schneller und ohne längere Verzögerungen laden.
+Verbesserungen & Änderungen
 
-Weitere Verbesserungen:
+- Bilder laden jetzt in der Karte und überall sonst schneller
 
-- nicht mehr benötigte Bilddateien werden nun nach Uploads sowie dem Löschen von Entwürfen korrekt aufgeräumt
+- experimenteller iPad-Support
 
-- Die Lizenzauswahl zeigt nun auch die Version der CC-Lizenzen an ("CC BY 4.0" anstatt nur "CC BY")
-
-- Vorgeschlagene Kategorien/Orte die sehr dicht an Kamerastandort sind, werden nun sinnvoller einsortiert bzw. ge-ranked. Zuvor sind mitunter sehr relevante Kategorien
-  erst weiter unten angezeigt worden. (Details im git-commit ;)
+- kleinere Bugfixes
 
 
+Technische Details (schnelleres Laden von Bildern)
+
+Das clientseitige Rate-Limiting von Bildern konnte entschärft werden, da das Rate-Limiting auf den Servern der Wikimedia Foundation
+verbessert wurde. Für noch mehr Details siehe https://phabricator.wikimedia.org/T413570
