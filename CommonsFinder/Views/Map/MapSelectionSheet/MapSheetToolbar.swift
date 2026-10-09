@@ -42,11 +42,8 @@ struct MapSheetToolbar: ToolbarContent {
     var body: some ToolbarContent {
         ToolbarItem(placement: .topBarLeading) {
             if let model = (model as? MapItemWithSubItems), model.maxCount > 1 {
+                // TODO: on-tap -> jump to start
                 CounterView(current: (model.focusedIdx ?? 0) + 1, max: model.maxCount)
-            } else if #available(iOS 26.0, *) {
-
-            } else {
-                Color.clear.frame(width: 70)
             }
         }
 

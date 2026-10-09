@@ -115,13 +115,11 @@ struct RelatedCategoriesView: View {
             }
         }
 
-        if #available(iOS 26.0, *) {
-            if let commonsCategory = item.base.commonsCategory {
-                ToolbarItem(placement: .subtitle) {
-                    Text(commonsCategory)
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                }
+        if let commonsCategory = item.base.commonsCategory {
+            ToolbarItem(placement: .subtitle) {
+                Text(commonsCategory)
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
             }
         }
 

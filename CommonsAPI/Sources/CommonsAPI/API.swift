@@ -1343,11 +1343,7 @@ internal extension [MediawikiNamespace] {
 }
 
 private func getPreferredSystemLanguages() -> [LanguageCode] {
-    return if #available(iOS 26.0, *) {
-        Locale.preferredLocales.compactMap { locale in
-            locale.language.languageCode?.identifier
-        }
-    } else {
-        Locale.preferredLanguages
+    Locale.preferredLocales.compactMap { locale in
+        locale.language.languageCode?.identifier
     }
 }

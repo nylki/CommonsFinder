@@ -228,7 +228,7 @@ private struct PublishingErrorDetailsSheet: View {
                     }
                     .foregroundStyle(.red)
                 }
-                .glassButtonStyle()
+                .buttonStyle(.glass)
             }
         }
     }
@@ -239,7 +239,7 @@ private struct PublishingErrorDetailsSheet: View {
     Button("show error sheet") {
         isPresented = true
     }
-    .glassButtonStyle()
+    .buttonStyle(.glass)
     .publishingErrorDetailsSheet(
         .uploading(0.4),
         .urlError(urlErrorCode: URLError.Code.badServerResponse.rawValue, errorDescription: "This is just debug error description text, the real one would come from an action request."),
@@ -254,7 +254,7 @@ private struct PublishingErrorDetailsSheet: View {
     Button("show error sheet") {
         isPresented = true
     }
-    .glassButtonStyle()
+    .buttonStyle(.glass)
     .publishingErrorDetailsSheet(
         .uploaded(filekey: "abc"),
         .uploadWarnings([.duplicate(name: nil), .badfilename]),
@@ -271,7 +271,7 @@ private struct PublishingErrorDetailsSheet: View {
     Button("show error sheet") {
         isPresented = true
     }
-    .glassButtonStyle()
+    .buttonStyle(.glass)
     .publishingErrorDetailsSheet(
         .uploaded(filekey: "abc"),
         .uploadWarnings([.duplicate(name: nil)]),
@@ -287,7 +287,7 @@ private struct PublishingErrorDetailsSheet: View {
     Button("show error sheet") {
         isPresented = true
     }
-    .glassButtonStyle()
+    .buttonStyle(.glass)
     .publishingErrorDetailsSheet(
         .uploading(0.0),
         .twoFactorCodeRequired,
@@ -303,7 +303,7 @@ private struct PublishingErrorDetailsSheet: View {
     Button("show error sheet") {
         isPresented = true
     }
-    .glassButtonStyle()
+    .buttonStyle(.glass)
     .publishingErrorDetailsSheet(
         .uploading(0.0),
         .error(errorDescription: PreviewDebugError.httpRequestDenied.localizedDescription, recoverySuggestion: nil),

@@ -50,7 +50,7 @@ struct ResolutionButton: View {
         .compositingGroup()
         .popoverTip(fullImageLoadingTip)
         .confirmationDialog("Load original image", isPresented: $isShowingOriginalLoadConfirmation) {
-            Button("load original image", role: .fallbackConfirm) {
+            Button("load original image", role: .confirm) {
                 FullImageLoadingTip.didLoadFullImageManually.sendDonation()
                 onLoadOriginalImage()
             }

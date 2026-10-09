@@ -14,15 +14,9 @@ nonisolated extension CLLocationCoordinate2D {
             latitude: latitude,
             longitude: longitude
         )
-
-        if #available(iOS 26.0, *) {
-            let reverseRequest = MKReverseGeocodingRequest(location: location)
-            // TODO: replace deprecated CLPlacemeark with MKMapItem? but less controll over water/ocean etc.
-            return try await reverseRequest?.mapItems.first?.placemark
-        } else {
-            // Fallback on earlier versions
-            return try await CLGeocoder().reverseGeocodeLocation(location).first
-        }
+        let reverseRequest = MKReverseGeocodingRequest(location: location)
+        // TODO: replace deprecated CLPlacemeark with MKMapItem? but less control over water/ocean etc.
+        return try await reverseRequest?.mapItems.first?.placemark
     }
 
     func generateHumanReadableString(includeCountry: Bool = true, includeCity: Bool = true) async throws -> String? {

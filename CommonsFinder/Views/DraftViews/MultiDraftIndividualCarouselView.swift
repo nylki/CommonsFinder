@@ -57,9 +57,9 @@ struct MultiDraftIndividualCarouselView: View {
             Spacer(minLength: 0)
         }
         .animation(.default, value: isInteractingWithScrollView)
-        .fallbackSafeAreaBar(edge: .top) { imageScrollView }
+        .safeAreaBar(edge: .top) { imageScrollView }
         .navigationTitle("Draft")
-        .navigationSubtitleFallback(subtitle: Text("\(model.subDraftModels.count) files"))
+        .navigationSubtitle(Text("\(model.subDraftModels.count) files"))
         .navigationBarTitleDisplayMode(.inline)
         .toolbar { toolbarContent }
         .task {
@@ -83,7 +83,7 @@ struct MultiDraftIndividualCarouselView: View {
             Label("Upload", image: "custom.arrow.up.square.stack")
         }
         .confirmationDialog("Start upload to Wikimedia Commons now?", isPresented: $isShowingUploadDialog, titleVisibility: .visible) {
-            Button("Upload", systemImage: "square.and.arrow.up", role: .fallbackConfirm) {
+            Button("Upload", systemImage: "square.and.arrow.up", role: .confirm) {
                 do {
                     try model.startUpload(appDatabase: appDatabase, uploadManager: uploadManager)
                 } catch {
@@ -201,7 +201,7 @@ struct MultiDraftIndividualCarouselView: View {
 
         // FIXME: check if we can dedupe this, as it same buttons as the previous draft view
         ToolbarItem(placement: .navigation) {
-            Button("Close", systemImage: "xmark", role: .fallbackClose) {
+            Button("Close", systemImage: "xmark", role: .close) {
                 if model.draftExistsInDB {
                     saveChangesAndDismiss()
                     dismiss()
@@ -215,7 +215,7 @@ struct MultiDraftIndividualCarouselView: View {
                 isPresented: $isShowingCloseConfirmationDialog,
                 titleVisibility: .visible
             ) {
-                Button("Save Draft", systemImage: "square.and.arrow.down", role: .fallbackConfirm) {
+                Button("Save Draft", systemImage: "square.and.arrow.down", role: .confirm) {
                     saveChangesAndDismiss()
                 }
                 Button("Delete Draft", systemImage: "trash", role: .destructive) {

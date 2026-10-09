@@ -426,7 +426,7 @@ struct MapView: View {
                     .frame(width: 25, height: 33)
             }
         }
-        .glassButtonStyle()
+        .buttonStyle(.glass)
     }
 
     @ViewBuilder
@@ -439,7 +439,7 @@ struct MapView: View {
                 .frame(width: 25, height: 33)
         }
         .labelStyle(.iconOnly)
-        .glassButtonStyle()
+        .buttonStyle(.glass)
     }
 }
 

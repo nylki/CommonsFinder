@@ -85,14 +85,14 @@ struct MultiDraftCombinedView: View {
                 .frame(height: 50)
                 .listRowBackground(Color.clear)
         }
-        .fallbackSafeAreaBar(edge: .top) {
+        .safeAreaBar(edge: .top) {
             if let currentWarningTip = warningTips?.currentTip {
                 TipView(currentWarningTip)
                     .padding()
             }
         }
         .navigationTitle("Draft")
-        .navigationSubtitleFallback(subtitle: Text("\(model.subDraftModels.count) files"))
+        .navigationSubtitle(Text("\(model.subDraftModels.count) files"))
         .navigationBarTitleDisplayMode(.inline)
         .toolbar { toolbarContent }
         .scrollDismissesKeyboard(.interactively)
@@ -587,7 +587,7 @@ struct MultiDraftCombinedView: View {
     @ToolbarContentBuilder
     private var toolbarContent: some ToolbarContent {
         ToolbarItem(placement: .navigation) {
-            Button("Close", systemImage: "xmark", role: .fallbackClose) {
+            Button("Close", systemImage: "xmark", role: .close) {
                 if model.draftExistsInDB {
                     saveChangesAndDismiss()
                     dismiss()
@@ -601,7 +601,7 @@ struct MultiDraftCombinedView: View {
                 isPresented: $isShowingCloseConfirmationDialog,
                 titleVisibility: .visible
             ) {
-                Button("Save Draft", systemImage: "square.and.arrow.down", role: .fallbackConfirm) {
+                Button("Save Draft", systemImage: "square.and.arrow.down", role: .confirm) {
                     saveChangesAndDismiss()
                 }
                 Button("Delete Draft", systemImage: "trash", role: .destructive) {

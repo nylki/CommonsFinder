@@ -122,7 +122,7 @@ struct MultiDraftTeaser: View {
                             Button("Edit", systemImage: "square.and.pencil", action: editDraft)
                         }
                     }
-                    .glassButtonStyle()
+                    .buttonStyle(.glass)
                     .padding()
                 }
                 .overlay {
@@ -317,7 +317,7 @@ struct MultiDraftTeaser: View {
         }
         .transition(.blurReplace.animation(.bouncy))
         .foregroundStyle(.primary)
-        .glassButtonStyle()
+        .buttonStyle(.glass)
     }
 }
 

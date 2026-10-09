@@ -125,7 +125,7 @@
 //                }
 //            }
 //            .scenePadding()
-//            .glassButtonStyle()
+//            .buttonStyle(.glass)
 //            .sensoryFeedback(trigger: photoSaveProgress) { oldValue, newValue in
 //                guard oldValue != newValue else {
 //                    return nil

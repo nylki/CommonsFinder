@@ -179,7 +179,7 @@ struct CategoryView: View {
                     Label("Search", systemImage: "magnifyingglass")
                 }
                 .labelStyle(.iconOnly)
-                .glassButtonStyle()
+                .buttonStyle(.glass)
             }
             Spacer(minLength: 0)
         }
