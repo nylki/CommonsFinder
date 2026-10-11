@@ -418,6 +418,7 @@ extension WikidataClaim.Snak.DataValue.WikiDataValueEntityID {
     public static var PDM_1_0: Self { .Q(7257361) }
     public static var publicDomainLicense: Self { .Q(98592850) }
     public static var CC_BY_4_0: Self { .Q(20007257) }
+    public static var CC_BY: Self { .Q(6905323) }
     public static var CC_BY_3_0: Self { .Q(14947546) }
     public static var CC_BY_IGO_3_0: Self { .Q(26259495) }
     public static var CC_BY_2_5: Self { .Q(18810333) }
