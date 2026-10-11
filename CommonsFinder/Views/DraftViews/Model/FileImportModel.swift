@@ -5,17 +5,11 @@
 //  Created by Tom Brewe on 13.10.24.
 //
 
-import AsyncAlgorithms
 import GRDB
 import OrderedCollections
 import PhotosUI
 import SwiftUI
 import os.log
-
-enum DraftError: Error {
-    case missingFileInformation
-    case filenameExistsAlready(name: String)
-}
 
 enum FileImportError: Error {
     case failedToGetLocalFileURL

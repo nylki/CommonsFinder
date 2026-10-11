@@ -59,21 +59,3 @@ struct TagButton: View {
         }
     }
 }
-
-#Preview("TagButton Animations", traits: .previewEnvironment) {
-    @Previewable @State var interactiveSelection: Set<TagType> = [.category]
-    @Previewable @State var tagModels: [TagModel] = [
-        .init(tagItem: .init(.earth, pickedUsages: [])),
-        .init(tagItem: .init(.testItemNoDesc, pickedUsages: [])),
-        .init(tagItem: .init(.testItemNoLabel, pickedUsages: [])),
-
-    ]
-
-    VStack {
-        ForEach(tagModels, id: \.self) { tag in
-            TagButton(tag: tag) { focused in }
-        }
-    }
-    .buttonStyle(.plain)
-
-}

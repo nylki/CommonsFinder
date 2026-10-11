@@ -8,7 +8,9 @@
 import GRDBQuery
 import SwiftUI
 
-private enum DraftWrapper: Equatable, Identifiable {
+nonisolated
+    private enum DraftWrapper: Equatable, Identifiable
+{
     case single(MediaFileDraft)
     case multi(MultiDraftInfo)
 
@@ -38,7 +40,7 @@ struct DraftsSection: View {
     init(drafts: [MediaFileDraft], multiDrafts: [MultiDraftInfo]) {
         let single = drafts.map { DraftWrapper.single($0) }
         let multi = multiDrafts.map { DraftWrapper.multi($0) }
-        let allSorted = (single + multi).sorted(by: \.addedDate, .orderedDescending)
+        let allSorted = (single + multi).sorted(using: KeyPathComparator(\.addedDate, order: .reverse))
         allDrafts = allSorted
     }
 

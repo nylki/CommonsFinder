@@ -312,7 +312,7 @@ nonisolated enum FileAnalysisHelpers {
 
                         return distanceFromReference < 3000
                     }
-                    .sorted(by: \.score, .orderedDescending)
+                    .sorted(using: KeyPathComparator(\.score, order: .reverse))
                     .map(\.categoryInfo)
 
                 result.insert(contentsOf: sortedStreeCategories.prefix(1), at: 0)
@@ -334,7 +334,7 @@ nonisolated enum FileAnalysisHelpers {
                         // canal, river, lake, better to do it in the query with broader water filter
                         return Set(["Q12284", "Q4022", "Q23397"]).intersection(category.categoryInfo.base.instances).isEmpty == false
                     }
-                    .sorted(by: \.score, .orderedDescending)
+                    .sorted(using: KeyPathComparator(\.score, order: .reverse))
                     .map(\.categoryInfo)
 
                 result.insert(contentsOf: waterCategories.prefix(1), at: 0)
@@ -509,13 +509,8 @@ nonisolated enum FileAnalysisHelpers {
             return ($0, score: score)
         }
 
-        return scoredCategories.sorted(by: \.score, .orderedDescending)
+        return scoredCategories.sorted(using: KeyPathComparator(\.score, order: .reverse))
     }
-}
-
-enum CategoryGeoSuggestionStrategy {
-    case lineOfSight
-    case expandingCircle
 }
 
 nonisolated extension [Category] {

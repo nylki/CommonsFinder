@@ -10,7 +10,6 @@ public nonisolated enum MediaWikiOAuth {
     static let scheme: String = "https"
     static let authorizePath: String = "/w/rest.php/oauth2/authorize"
     static let tokenPath: String = "/w/rest.php/oauth2/access_token"
-    static let profilePath: String = "/w/rest.php/oauth2/resource/profile"
 
     static let grantTypeAuthorizationCode: String = "authorization_code"
     static let grantTypeRefreshToken: String = "refresh_token"
@@ -55,20 +54,6 @@ public nonisolated enum MediaWikiOAuth {
 
         var description: String {
             "Error authenticating via OAuth2 (Wikimedia): \(error), errorDescription: \(errorDescription ?? "-") Hint: \(hint ?? "-")"
-        }
-    }
-
-    struct RefreshTokenRequest: Hashable, Sendable, Codable {
-        public let refresh_token: String
-        public let redirect_uri: String
-        public let grant_type: String
-        public let client_id: String
-
-        public init(refresh_token: String, redirect_uri: String, grant_type: String, client_id: String) {
-            self.refresh_token = refresh_token
-            self.redirect_uri = redirect_uri
-            self.grant_type = grant_type
-            self.client_id = client_id
         }
     }
 

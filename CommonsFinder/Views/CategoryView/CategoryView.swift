@@ -8,15 +8,9 @@
 
 import CommonsAPI
 import CoreLocation
-import FrameUp
 import GRDB
 import SwiftUI
 import os.log
-
-private enum MediaTab {
-    case category
-    case depictions
-}
 
 struct CategoryView: View {
     private let initialItem: CategoryInfo
@@ -446,13 +440,9 @@ struct CategoryView: View {
                 }
 
                 let observation = ValueObservation.tracking { db in
-                    try Category
-                        //  required, because we update `lastViewed` above.
-                        .including(optional: Category.itemInteraction)
-                        .filter(id: existingID)
-                        .asRequest(of: CategoryInfo.self)
-                        .fetchOne(db)
+                    try CategoryInfo.fetchOne(db, id: existingID)
                 }
+
                 for try await updatedCategoryInfo in observation.values(in: appDatabase.reader) {
                     try Task.checkCancellation()
 

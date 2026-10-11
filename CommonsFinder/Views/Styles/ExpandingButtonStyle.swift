@@ -28,42 +28,5 @@ struct ExpandingButtonStyle: ButtonStyle {
                 $0.scaleEffect(configuration.isPressed ? 0.95 : 1)
             }
             .animation(.spring, value: configuration.isPressed)
-
-
     }
-}
-
-struct ExpandingLabelStyle: LabelStyle {
-    func makeBody(configuration: Configuration) -> some View {
-        Label(
-            title: {
-                configuration.title
-            },
-            icon: {
-                configuration.icon
-            }
-        )
-        .frame(minWidth: 0, maxWidth: .infinity)
-    }
-}
-
-#Preview("ExpandingButtonStyle") {
-    VStack {
-        Button(action: { print("Pressed") }) {
-            Label("Press Me", systemImage: "star")
-        }
-
-        Button(action: { print("Pressed") }) {
-            Label("Press Me", systemImage: "star")
-        }
-        .backgroundStyle(Color.green)
-
-        Button(action: { print("Pressed") }) {
-            Label("Press Me", systemImage: "star")
-                .disabled(true)
-        }
-
-    }
-    .padding()
-    .buttonStyle(ExpandingButtonStyle())
 }

@@ -71,11 +71,7 @@ struct CategorySearchTargets: OptionSet {
             do {
                 let categories = categoryInfos.map(\.base)
                 let observation = ValueObservation.tracking { db in
-                    try Category
-                        .filter(basedOn: categories)
-                        .including(optional: Category.itemInteraction)
-                        .asRequest(of: CategoryInfo.self)
-                        .fetchAll(db)
+                    try CategoryInfo.fetchAll(db, basedOn: categories)
                 }
 
                 for try await categoriesFromDB in observation.values(in: appDatabase.reader) {

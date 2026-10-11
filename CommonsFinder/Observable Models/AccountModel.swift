@@ -34,12 +34,6 @@ nonisolated extension User {
     }
 }
 
-enum LoginSuccess {
-    case loggedIn(User)
-    case twoFactorCodeRequired
-    case emailCodeRequired
-}
-
 // AccountModel is designed to be lean. It only holds basic profile data (username, profile image, preferences?)
 // It also explicity **should not store information about uploads**. That should be stored inside the DB
 // and  dynamically queried in views via GRDB @Query so as little memory.
@@ -126,22 +120,19 @@ final class AccountModel {
             return
         }
 
-        var lastSyncDate = UserDefaults.standard.object(forKey: "lastSyncDate") as? Date
+        let lastSyncDate = UserDefaults.standard.object(forKey: "lastSyncDate") as? Date
 
-        if let date = lastSyncDate {
-            if Date.now.timeIntervalSince(date) < 1 {
-                logger.info("Prevent syncing user data, as it was performed less than a second ago.")
-                return
-            }
-            // if we have a last sync date, go 1s into the past, just in case
-            lastSyncDate = date.addingTimeInterval(-1)
+        if let lastSyncDate, Date.now.timeIntervalSince(lastSyncDate) < 1 {
+            logger.info("Prevent syncing user data, as it was performed less than a second ago.")
+            return
         }
 
         recurringSyncTask = Task<Void, Never> {
             defer { recurringSyncTask = nil }
             do {
+                let newSyncDate = Date.now - 1
                 try await fetchMostRecentUploads(end: lastSyncDate)
-                UserDefaults.standard.set(lastSyncDate, forKey: "lastSyncDate")
+                UserDefaults.standard.set(newSyncDate, forKey: "lastSyncDate")
             } catch {
                 logger.error("sync task failed: \(error)")
             }

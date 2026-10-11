@@ -7,7 +7,9 @@
 
 import Foundation
 
-struct WikimediaLanguage: Sendable, Hashable, Equatable, Codable, CustomStringConvertible {
+nonisolated
+    struct WikimediaLanguage: Sendable, Hashable, Equatable, Codable, CustomStringConvertible
+{
     let code: String
     /// the name if the language in its own language
     let autonym: String?

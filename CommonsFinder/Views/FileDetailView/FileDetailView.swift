@@ -6,7 +6,6 @@
 //
 
 import CommonsAPI
-import FrameUp
 import GRDB
 import GeoToolbox
 import Nuke
@@ -44,10 +43,6 @@ struct FileDetailView: View {
     @State private var isResolvingTags = true
     @State private var resolvedTags: [TagItem] = []
     @State private var isShowingEditingError = false
-
-    private var tagsHashID: String {
-        "\(mediaFileInfo.mediaFile.categories.hashValue)-\(mediaFileInfo.mediaFile.statements.hashValue)"
-    }
 
     private var caption: String? {
         mediaFileInfo.mediaFile.localizedDisplayCaption
@@ -179,12 +174,7 @@ struct FileDetailView: View {
                 do {
                     let id = mediaFileInfo.id
                     let observation = ValueObservation.tracking { db in
-                        try MediaFile
-                            //  required, because we update `lastViewed` above.
-                            .including(optional: MediaFile.itemInteraction)
-                            .filter(id: id)
-                            .asRequest(of: MediaFileInfo.self)
-                            .fetchOne(db)
+                        try MediaFileInfo.fetchOne(db, id: id)
                     }
 
                     for try await updatedMediaFileInfo in observation.values(in: appDatabase.reader) {

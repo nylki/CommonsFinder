@@ -172,13 +172,6 @@ nonisolated public final class Lorem {
     // MARK: - Email Addresses & URLs
     // ======================================================= //
 
-    /// Generates an email address.
-    public static var emailAddress: String {
-        let emailDelimiter = emailDelimiters.randomElement()!
-        let emailDomain = emailDomains.randomElement()!
-
-        return "\(firstName)\(emailDelimiter)\(lastName)@\(emailDomain)".lowercased()
-    }
 
     /// Generates a URL.
     public static var url: String {
@@ -186,21 +179,6 @@ nonisolated public final class Lorem {
         let urlDomain = urlDomains.randomElement()!
         return "\(urlScheme)://\(urlDomain)"
     }
-
-    // ======================================================= //
-    // MARK: - Tweets
-    // ======================================================= //
-
-    /// Generates a random tweet which is shorter than 140 characters.
-    public static var shortTweet: String {
-        return _composeTweet(shortTweetMaxLength)
-    }
-
-    /// Generates a random tweet which is shorter than 280 characters.
-    public static var tweet: String {
-        return _composeTweet(tweetMaxLength)
-    }
-
 }
 
 nonisolated extension Lorem {

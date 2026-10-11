@@ -18,10 +18,6 @@ enum URLResponseProviderError: Error {
     case missingResponseComponents
 }
 
-enum NetworkingError: Error {
-    case couldNotFindOAuthClientIdInEnvironment
-}
-
 actor Networking {
     static let shared: Networking = .init()
 
@@ -137,8 +133,8 @@ actor Networking {
         pipelineConfig.imageCache = ImageCache.shared
 
         // configures a rate limiter that complies with the strict server-site rate limiting
-        // for non-authenticated clients, which is max 10 requests in a 10s sliding window.
-        pipelineConfig.rateLimiterConfig = .init(interval: 10, maxRequestCount: 10)
+        // for non-authenticated clients, which is max 50 requests in a 10s sliding window.
+        pipelineConfig.rateLimiterConfig = .init(interval: 10, maxRequestCount: 50)
         let dataLoader = DataLoader(configuration: config)
 
         /// TESTING NOTE: If tests fail in Pulse package, comment out the following block and try again.

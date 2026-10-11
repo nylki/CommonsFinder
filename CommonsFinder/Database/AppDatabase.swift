@@ -13,7 +13,6 @@ import os.log
 enum DatabaseError: Error {
     case assertionFailed
     case failedToFetchAfterUpdate
-    case failedToCreateOrFetchItemInteraction
     case itemInteractionEmptyID
     case itemNotFound
 }
@@ -516,7 +515,7 @@ nonisolated extension AppDatabase {
 
                     let existingCategories =
                         try Category
-                        .filter(basedOn: item)
+                        .filter(basedOn: [item])
                         .fetchAll(db)
 
                     if existingCategories.count < 2 {
@@ -530,12 +529,8 @@ nonisolated extension AppDatabase {
                         return try itemCopy.upsertAndFetch(db).id
                     } else {
                         // We need to merge multiple items (rare edge case)
-                        let existingCategoryInfos: [CategoryInfo] =
-                            try Category
-                            .filter(ids: existingCategories.compactMap(\.id))
-                            .including(optional: Category.itemInteraction)
-                            .asRequest(of: CategoryInfo.self)
-                            .fetchAll(db)
+                        let existingCategoryInfos =
+                            try CategoryInfo.fetchAll(db, ids: existingCategories.compactMap(\.id))
 
                         // We choose a reference item from the currently existing ones in the db,
                         // preferring one that has already an interaction.
@@ -623,8 +618,8 @@ nonisolated extension AppDatabase {
                         redirectsTo: toWikidataID
                     )
 
-                    let existingFromInfo = try CategoryInfo.filter(wikidataID: fromWikidataID).fetchOne(db)
-                    let existingToInfo = try CategoryInfo.filter(wikidataID: toWikidataID).fetchOne(db)
+                    let existingFromInfo = try CategoryInfo.fetchOne(db, wikidataID: fromWikidataID)
+                    let existingToInfo = try CategoryInfo.fetchOne(db, wikidataID: toWikidataID)
 
                     /// creates
                     try redirectingCategory.upsert(db)
@@ -685,16 +680,9 @@ extension AppDatabase {
     private func updateInteractionImpl(_ item: CategoryInfo, isBookmarked: Bool? = nil, lastViewed: Date? = nil, incrementViewCount: Bool = false) throws -> CategoryInfo {
         return try dbWriter.write { db in
 
-            let databaseItem: CategoryInfo? =
-                try Category
-                .filter(basedOn: item.base)
-                .including(optional: Category.itemInteraction)
-                .asRequest(of: CategoryInfo.self)
-                .fetchOne(db)
-
             var workItem: CategoryInfo
 
-            if let databaseItem {
+            if let databaseItem = try CategoryInfo.fetchOne(db, basedOn: item.base) {
                 workItem = databaseItem
             } else {
                 let insertedCategory = try item.base.inserted(db)
@@ -949,21 +937,13 @@ nonisolated extension AppDatabase {
 
     nonisolated func fetchMediaFileInfo(id: String) throws -> MediaFileInfo? {
         try dbWriter.read { db in
-            try MediaFile
-                .filter(id: id)
-                .including(optional: MediaFile.itemInteraction)
-                .asRequest(of: MediaFileInfo.self)
-                .fetchOne(db)
+            try MediaFileInfo.fetchOne(db, id: id)
         }
     }
 
     func fetchMediaFileInfos(ids: [String]) throws -> [MediaFileInfo] {
         try dbWriter.read { db in
-            try MediaFile
-                .filter(ids: ids)
-                .including(optional: MediaFile.itemInteraction)
-                .asRequest(of: MediaFileInfo.self)
-                .fetchAll(db)
+            try MediaFileInfo.fetchAll(db: db, ids: ids)
         }
     }
 
@@ -1074,15 +1054,11 @@ nonisolated extension AppDatabase {
 
     func fetchCategoryInfo(commonsCategory: String) throws -> CategoryInfo? {
         try dbWriter.read { db in
-            try Category
-                .filter(Category.Columns.commonsCategory == commonsCategory)
-                .including(optional: Category.itemInteraction)
-                .asRequest(of: CategoryInfo.self)
-                .fetchOne(db)
+            try CategoryInfo.fetchOne(db, commonsCategory: commonsCategory)
         }
     }
 
-    func fetchCategoryInfo(wikidataID: String, resolveRedirections: Bool = true) throws -> CategoryInfo? {
+    func fetchCategoryInfo(wikidataID: Category.WikidataID, resolveRedirections: Bool = true) throws -> CategoryInfo? {
         try fetchCategoryInfos(
             wikidataIDs: [wikidataID],
             resolveRedirections: resolveRedirections
@@ -1090,23 +1066,15 @@ nonisolated extension AppDatabase {
         .first
     }
 
-    func fetchCategoryInfos(ids: [Int64]) throws -> [CategoryInfo] {
+    func fetchCategoryInfos(ids: [Category.ID]) throws -> [CategoryInfo] {
         try dbWriter.read { db in
-            try Category
-                .filter(ids: ids)
-                .including(optional: Category.itemInteraction)
-                .asRequest(of: CategoryInfo.self)
-                .fetchAll(db)
+            try CategoryInfo.fetchAll(db, ids: ids)
         }
     }
 
     func fetchCategoryInfos(commonsCategories: [String]) throws -> [CategoryInfo] {
         try dbWriter.read { db in
-            try Category
-                .filter(commonsCategories.contains(Category.Columns.commonsCategory))
-                .including(optional: Category.itemInteraction)
-                .asRequest(of: CategoryInfo.self)
-                .fetchAll(db)
+            try CategoryInfo.fetchAll(db, commonsCategories: commonsCategories)
         }
     }
 
@@ -1131,15 +1099,6 @@ nonisolated extension AppDatabase {
         }
     }
 }
-nonisolated extension MediaFileInfo {
-    static func fetchAll(ids: [String], db: Database) throws -> [Self] {
-        try MediaFile
-            .filter(ids: ids)
-            .including(optional: MediaFile.itemInteraction)
-            .asRequest(of: MediaFileInfo.self)
-            .fetchAll(db)
-    }
-}
 
 nonisolated extension MultiDraftInfo {
     static func all() -> QueryInterfaceRequest<MultiDraftInfo> {
@@ -1159,10 +1118,118 @@ nonisolated extension MultiDraftInfo {
     static func fetchOne(_ db: Database, id: MultiDraft.ID) throws -> Self? {
         try filter(id: id).fetchOne(db)
     }
+}
 
+nonisolated extension MediaFileInfo {
+    static func all() -> QueryInterfaceRequest<MediaFileInfo> {
+        MediaFile
+            .including(optional: MediaFile.itemInteraction)
+            .asRequest(of: MediaFileInfo.self)
+    }
+
+    static func filter(id: MediaFile.ID) -> QueryInterfaceRequest<MediaFileInfo> {
+        all().filter(key: id)
+    }
+
+    static func filter(ids: [MediaFile.ID]) -> QueryInterfaceRequest<MediaFileInfo> {
+        all().filter(ids: ids)
+    }
+
+    static func fetchOne(_ db: Database, id: MediaFile.ID) throws -> Self? {
+        try filter(id: id).fetchOne(db)
+    }
+
+    static func fetchAll(db: Database, ids: [String]) throws -> [Self] {
+        try filter(ids: ids).fetchAll(db)
+    }
+}
+
+nonisolated extension Category {
+    fileprivate static func predicate(basedOn categories: [Category]) -> SQLExpression {
+        let ids = categories.compactMap(\.id)
+        let wikidataIDs = categories.compactMap(\.wikidataId)
+        let commonsCategories = categories.compactMap(\.commonsCategory)
+
+        return ids.contains(Category.Columns.id) || wikidataIDs.contains(Category.Columns.wikidataId) || commonsCategories.contains(Category.Columns.commonsCategory)
+    }
+
+    fileprivate static func filter(basedOn categories: [Category]) -> QueryInterfaceRequest<Self> {
+        all().filter(predicate(basedOn: categories))
+    }
+
+    fileprivate static func filter(wikidataID: Category.WikidataID) -> QueryInterfaceRequest<Self> {
+        all().filter(Category.Columns.wikidataId == wikidataID)
+    }
+
+    fileprivate static func filter(wikidataIDs: [Category.WikidataID]) -> QueryInterfaceRequest<Self> {
+        all().filter(wikidataIDs.contains(Category.Columns.wikidataId))
+    }
 }
 
 nonisolated extension CategoryInfo {
+    private static func all() -> QueryInterfaceRequest<Self> {
+        Category
+            .including(optional: Category.itemInteraction)
+            .asRequest(of: CategoryInfo.self)
+    }
+
+    static func filter(id: Category.ID) -> QueryInterfaceRequest<Self> {
+        all().filter(key: id)
+    }
+
+    static func filter(basedOn categories: [Category]) -> QueryInterfaceRequest<Self> {
+        all().filter(Category.predicate(basedOn: categories))
+    }
+
+    static func filter(wikidataID: Category.WikidataID) -> QueryInterfaceRequest<Self> {
+        all().filter(Category.Columns.wikidataId == wikidataID)
+    }
+
+    static func filter(wikidataIDs: [Category.WikidataID]) -> QueryInterfaceRequest<Self> {
+        all().filter(wikidataIDs.contains(Category.Columns.wikidataId))
+    }
+
+    static func filter(commonsCategory: String) -> QueryInterfaceRequest<Self> {
+        all().filter(Category.Columns.commonsCategory == commonsCategory)
+    }
+
+    static func filter(commonsCategories: [String]) -> QueryInterfaceRequest<Self> {
+        all().filter(commonsCategories.contains(Category.Columns.commonsCategory))
+    }
+
+    static func filter(ids: [Category.ID]) -> QueryInterfaceRequest<Self> {
+        all().filter(keys: ids)
+    }
+
+    static func fetchOne(_ db: Database, commonsCategory: String) throws -> Self? {
+        try filter(commonsCategory: commonsCategory).fetchOne(db)
+    }
+
+    static func fetchOne(_ db: Database, wikidataID: Category.WikidataID) throws -> Self? {
+        try filter(wikidataID: wikidataID).fetchOne(db)
+    }
+
+    static func fetchOne(_ db: Database, id: Category.ID) throws -> Self? {
+        try filter(id: id).fetchOne(db)
+    }
+
+    static func fetchOne(_ db: Database, basedOn: Category) throws -> Self? {
+        try filter(basedOn: [basedOn]).fetchOne(db)
+    }
+
+    static func fetchAll(_ db: Database, commonsCategories: [String]) throws -> [Self] {
+        try filter(commonsCategories: commonsCategories).fetchAll(db)
+    }
+
+    static func fetchAll(_ db: Database, ids: [Category.ID]) throws -> [Self] {
+        try filter(ids: ids).fetchAll(db)
+    }
+
+    static func fetchAll(_ db: Database, basedOn: [Category]) throws -> [Self] {
+        try filter(basedOn: basedOn).fetchAll(db)
+    }
+
+
     /// takes redirections into account
     static func fetchAll(_ db: Database, wikidataIDs: [Category.WikidataID], resolveRedirections: Bool) throws -> [Self] {
         let ids: [Category.WikidataID]
@@ -1170,7 +1237,7 @@ nonisolated extension CategoryInfo {
         if resolveRedirections {
             let redirects =
                 try Category
-                .filter(wikidataIDs.contains(Category.Columns.wikidataId))
+                .filter(wikidataIDs: wikidataIDs)
                 .filter { $0.redirectToWikidataId != nil }
                 .fetchAll(db)
                 .grouped(by: \.wikidataId)

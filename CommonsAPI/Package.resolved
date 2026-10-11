@@ -1,5 +1,5 @@
 {
-  "originHash" : "d0aca9afa317c1ecbd132b05391f8ffcb982f97104c424e83d69607fe09cc2ce",
+  "originHash" : "08ee2b7fd77a2ae39f77f9267bd57f9af88a4fbe31d120e0165c4d076f91bfc7",
   "pins" : [
     {
       "identity" : "frameup",
@@ -65,12 +65,21 @@
       }
     },
     {
+      "identity" : "lrucache",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/nicklockwood/LRUCache",
+      "state" : {
+        "revision" : "f0570e943ea4445d258113ba73f50cb2b7e564ac",
+        "version" : "1.3.0"
+      }
+    },
+    {
       "identity" : "nuke",
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/nylki/Nuke",
       "state" : {
-        "branch" : "alternative-sliding-time-window-rate-limiter",
-        "revision" : "7bc94d64f3089de653ecadedd8d6e7ffa21805a2"
+        "branch" : "main",
+        "revision" : "d76471f342ba0f32a2b93e8afe055a0e87a20a69"
       }
     },
     {
@@ -110,15 +119,6 @@
       }
     },
     {
-      "identity" : "swift-async-algorithms",
-      "kind" : "remoteSourceControl",
-      "location" : "https://github.com/apple/swift-async-algorithms.git",
-      "state" : {
-        "branch" : "1.1.3",
-        "revision" : "9d349bcc328ac3c31ce40e746b5882742a0d1272"
-      }
-    },
-    {
       "identity" : "swift-collections",
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/apple/swift-collections.git",
@@ -150,7 +150,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/scinfu/SwiftSoup",
       "state" : {
-        "revision" : "8d6ad267714cac3ae747cefdd21f7a6665006e1f"
+        "revision" : "8d6ad267714cac3ae747cefdd21f7a6665006e1f",
+        "version" : "2.13.7"
       }
     }
   ],

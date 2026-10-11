@@ -244,8 +244,6 @@ public struct FileUploadResponse: Decodable, Sendable {
 public struct TokenAuthManagerInfo: Sendable, Equatable {
     public let token: String
     let type: TokenType
-    public let captchaID: String?
-    public let captchaURL: URL?
 }
 
 /// see: https://www.mediawiki.org/wiki/Help:Namespaces/en#ns-aliases
@@ -276,11 +274,6 @@ enum WikimediaMetadataSource: String, Decodable, Sendable {
     case commonsTemplates = "commons-templates"
     case commonsCategories = "commons-categories"
     case `extension` = "extension"
-}
-
-struct MetadataKeyValue: Decodable, Sendable {
-    public let value: String
-    public let source: WikimediaMetadataSource
 }
 
 public struct QueryListItem: Decodable, Hashable, Equatable, Sendable {
@@ -439,14 +432,6 @@ public struct FileMetadata: Decodable, Sendable, Hashable, Equatable, Identifiab
 
     }
 }
-
-public struct WikidataEntityTranslation: Sendable {
-    public let id: String
-    let languageCode: LanguageCode
-    public let label: String?
-    public let entityDescription: String?
-}
-
 
 public struct WikidataSearchItem: Decodable, Sendable {
     public let id: String
@@ -868,7 +853,8 @@ public struct MediaFileUploadable: Identifiable, Hashable, Equatable, Sendable, 
         captions: [LanguageString],
         wikitext: String
     ) {
-        if filename.fileExtension().isEmpty {
+        let fileExtension = URL(filePath: filename).pathExtension
+        if fileExtension.isEmpty {
             Logger().warning("Filename must include a file extension (eg.: .jpg) otherwise the upload will likely fail with a MediaWiki warning.")
             assertionFailure()
         }
@@ -911,7 +897,6 @@ public struct MediaFileUploadable: Identifiable, Hashable, Equatable, Sendable, 
 /// A generic query response when `action: query`
 internal struct QueryResponse<T: Decodable&Sendable>: Decodable, Sendable {
 //    var batchcomplete: Bool|String
-    let curtimestamp: Date
     let query: T?
     let `continue`: Continue?
     
@@ -1127,216 +1112,12 @@ internal struct UserContributionListItem: Decodable, Sendable {
 internal struct AuthManagerOrTokensResponse: Decodable {
     /// tokens that where requested
     let tokens: Tokens?
-    let authmanagerinfo: AuthManagerInfo?
     
     struct Tokens: Decodable {
         /// the CSFR (Cross-Site Request Forgery) token that must be used to all future requests.
         var csrftoken: String?
         var logintoken: String?
         var createaccounttoken: String?
-    }
-    
-    struct AuthManagerInfo: Decodable {
-        struct Request: Decodable {
-            let id: String
-            let fields: [String: Field]?
-            
-            struct Field: Decodable {
-                let type: String?
-                let value: String?
-                let label: String?
-                let help: String?
-            }
-        }
-        
-        
-        let requests: [Request]
-    }
-}
-
-
-internal struct AuthManagerInfoResponse: Decodable {
-    /// tokens that where requested
-    let authmanagerinfo: AuthManagerInfo
-    
-    struct AuthManagerInfo: Decodable {
-        var canauthenticatenow: String?
-        var cancreateaccounts: String?
-        var canlinkaccounts: String?
-        var haspreservedstate: String?
-        var hasprimarypreservedstate: String?
-        var preservedusername: String?
-    }
-}
-
-// MARK: Login
-
-public struct LoginResponseWrapped: Sendable, Decodable {
-    let clientlogin: LoginResponse
-}
-
-// Could this be the same struct as CreateAccountResponse
-public struct LoginResponse: Sendable, Decodable {
-    public let status: AuthStatus
-    public let message: String?
-    public let messagecode: String?
-    public let requests: [Request]?
-    
-    
-    public struct Request: Sendable, Decodable {
-        public let id: String
-        public let account: String
-        public let provider: String
-        public let required: String
-        // let fields: [String: any JSON / String]
-    }
-}
-
-public enum AuthStatus: String, Decodable, Sendable {
-    /// PASS: the operation succeded
-    case pass = "PASS"
-    /// FAIL: the operation failed
-    case fail = "FAIL"
-    /// UI: requires additional input from user, ie. 2-factor.
-    /// From the API docs: present the new fields to the user and obtain their submission. Then post to this module with logincontinue and the relevant fields set
-    case ui = "UI"
-    /// REDIRECT: direct the user to the redirecttarget and wait for the return to loginreturnurl. Then post again with `logincontinue` param and any fields passed to the return URL, and repeat the login.
-    /// see: https://commons.wikimedia.org/w/api.php?action=help&modules=clientlogin
-    case redirect = "REDIRECT"
-    /// RESTART: the authentication worked but we don't have a linked user account. You might treat this as `ui` or as `fail`.
-    case restart = "RESTART"
-    
-    public var description: String { rawValue }
-}
-
-extension LoginResponseWrapped: CustomDebugStringConvertible {
-    public var debugDescription: String {
-        "status: \(clientlogin.status), message: \(clientlogin.message ?? "-"), messageCode: \(clientlogin.messagecode ?? ""))"
-    }
-}
-
-// MARK: Create Account (Register / Signup)
-
-
-public struct CreateAccountResponseWrapped: Decodable, Sendable {
-    let createaccount: CreateAccountResponse
-}
-
-public struct CreateAccountResponse: Decodable, Sendable {
-    public let status: AuthStatus
-    public let message: String?
-    public let messagecode: MessageCode?
-    
-    /// see: https://www.mediawiki.org/wiki/API:Account_creation#Possible_errors
-    public enum MessageCode: String, Error, Decodable, Sendable {
-        /// Invalid create account token
-        case badtoken
-        
-        /// The token parameter must be set.
-        case notoken
-        
-        /// The following parameter was found in the query string, but must be in the POST body: createtoken.
-        case mustpostparams
-        
-        /// At least one of the parameters "createcontinue" and "createreturnurl" is required.
-        case missingparam
-        
-        /// The supplied credentials could not be used for account creation.
-        case authmanagerCreateNoPrimary = "authmanager-create-no-primary"
-        
-        /// You need to provide a valid email address.
-        case noemailcreate
-        
-        /// The email address cannot be accepted as it appears to have an invalid format.
-        /// Please enter a well-formatted address or empty that field.
-        case invalidemailaddress
-        
-        /// The passwords you entered do not match.
-        case badretype
-        
-        /// Username entered already in use.
-        /// Please choose a different name.
-        case userexists
-        
-        /// Incorrect or missing CAPTCHA.
-        case captchaCreateAccountFail = "captcha-createaccount-fail"
-        
-        /// Visitors to this wiki using your IP address have created num accounts in the last day, which is the maximum allowed in this time period.
-        ///  As a result, visitors using this IP address cannot create any more accounts at the moment.
-        ///  If you are at an event where contributing to Wikimedia projects is the focus, please see Requesting temporary lift of IP cap to help resolve this issue.
-        case accountCreationThrottleHit = "acct_creation_throttle_hit"
-    }
-}
-
-public enum UsernamePasswordValidation: Sendable {
-    case good
-    case passwordTooShort
-    case passwordTooLong
-    case passwordInCommonList
-    case passwordMissing
-    case passwordContainsUsername
-    case passwordInvalid
-    case unknownInvalidation
-    case badUser
-    case userExists
-}
-
-public enum CreateAccountParamValidationError: Error, Sendable {
-    case unknownResponse(String)
-}
-
-public struct ValidityMessage: Sendable, Decodable {
-    let message: String
-    let type: MessageType?
-    let code: Code?
-    
-    // see: https://doc.wikimedia.org/mediawiki-core/REL1_39/php/PasswordPolicyChecks_8php_source.html
-    
-    enum Code: String, Sendable, Decodable {
-        case passwordTooShort = "passwordtooshort"
-        case passwordTooLong = "passwordtoolong"
-        case passwordInCommonList = "passwordincommonlist"
-        /// eg. for "ExamplePassword"
-        case passwordLoginForbidden = "password-login-forbidden"
-        case passwordSubstringUsernameMatch = "password-substring-username-match"
-    }
-    
-    enum MessageType: String, Sendable, Decodable {
-        case error
-        case warning
-    }
-}
-
-internal struct ValidatePasswordResponse: Sendable, Decodable {
-    let validatepassword: Validity?
-    let error: ValidateError?
-    
-    struct ValidateError: Sendable, Decodable {
-        let code: Code
-        let info: String
-        let docref: String
-        
-        enum Code: String, Sendable, Decodable {
-            /// Username entered already in use.
-            case userExists = "userexists"
-            /// The password parameter must be set.
-            case noPassword = "nopassword"
-            /// Invalid value "username" for user parameter user. (eg. should not be an email address)
-            case badUser = "baduser_user"
-        }
-    }
-    
-    struct Validity: Sendable, Decodable {
-        let validity: PasswordValidationStatus
-        let validitymessages: [ValidityMessage]?
-        
-        enum PasswordValidationStatus: String, Sendable, Decodable {
-            /// password is acceptable
-            case good = "Good"
-            /// Password may be used for login but must be changed
-            case change = "Change"
-            case invalid = "Invalid"
-        }
     }
 }
 
@@ -1404,39 +1185,6 @@ public enum FilenameExistsResult: Sendable {
     case invalidFilename
 }
 
-
-extension UsernamePasswordValidation {
-    init(withRawResponse rawResponse: ValidatePasswordResponse) {
-        if let validationError = rawResponse.error {
-            self = switch validationError.code {
-            case .badUser: .badUser
-            case .noPassword: .passwordMissing
-            case .userExists: .userExists
-            }
-        } else if let validationStatus = rawResponse.validatepassword {
-            self = switch validationStatus.validity {
-            case .good: .good
-            case .change:
-                if let message = validationStatus.validitymessages?.first {
-                    switch message.code {
-                    case .passwordInCommonList: .passwordInCommonList
-                    case .passwordLoginForbidden: .passwordInvalid
-                    case .passwordSubstringUsernameMatch: .passwordContainsUsername
-                    case .passwordTooLong: .passwordTooLong
-                    case .passwordTooShort: .passwordTooShort
-                    case .none: .passwordInvalid
-                    }
-                } else {
-                    .passwordInvalid
-                }
-            case .invalid: .passwordInvalid
-            }
-        } else {
-            assertionFailure("We should be able to parse this with some message")
-            self = .unknownInvalidation
-        }
-    }
-}
 
 enum WikibaseIdentifier: Hashable, Equatable {
     case commonsCategory(String)

@@ -78,20 +78,6 @@ import os.log
     var isEditingDraft: SingleDraftModel?
     var isEditingMultipleDrafts: MultiDraftModel?
 
-    enum DraftSheetNavItem: Identifiable, Equatable {
-        case newDraft(NewDraftOptions?)
-        case existing([MediaFileDraft])
-
-        var id: String {
-            switch self {
-            case .newDraft(let options):
-                "newDraft-\(options.hashValue)"
-            case .existing(let drafts):
-                "existing-\(drafts.hashValue)"
-            }
-        }
-    }
-
     enum TabItem: String, Hashable {
         case home
         case map
@@ -204,10 +190,6 @@ extension Navigation {
 
     func viewCategory(_ categoryInfo: CategoryInfo) {
         path[selectedTab]?.append(.wikidataItem(categoryInfo))
-    }
-
-    func viewRelatedCategories(of categoryInfo: CategoryInfo, type: RelatedCategoriesType) {
-        path[selectedTab]?.append(.relatedCategories(categoryInfo, type))
     }
 
     func showOnMap(category: Category, mapModel: MapModel) {

@@ -5,7 +5,6 @@
 //  Created by Tom Brewe on 11.03.25.
 //
 
-import FrameUp
 import NukeUI
 import SwiftUI
 
