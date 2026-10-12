@@ -322,7 +322,8 @@ struct TagPicker: View {
         searchTask = Task<Void, Never> {
             do {
                 try await Task.sleep(for: .milliseconds(300))
-                logger.debug("preferred languages: \(Locale.preferredLanguages)")
+                guard !Task.isCancelled else { return }
+
                 let scoredSearchResult =
                     try await DataAccess
                     .searchCategories(for: searchText, referenceCoordinate: analysisInput?.coordinate, appDatabase: appDatabase)
@@ -344,6 +345,7 @@ struct TagPicker: View {
                         !existingTagIDs.contains(searchTag.id)
                     }
 
+                guard !Task.isCancelled else { return }
                 searchedTags.append(contentsOf: filteredSearchedTags)
                 isSearching = false
             } catch is CancellationError {
