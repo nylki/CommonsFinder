@@ -55,7 +55,7 @@ struct MapStyleSheet: View {
             }
 
         }
-        .presentationDetents([.fraction(0.28)])
+        .presentationDetents([.height(210)])
     }
 }
 

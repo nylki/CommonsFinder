@@ -37,7 +37,6 @@ struct MapView: View {
         guard let id = mapModel.selectedMapItem?.mapSheetFocusedItem.viewID(type: String.self) else {
             return nil
         }
-
         return mapModel.geoClusterTree.items[id]
     }
 
@@ -168,14 +167,7 @@ struct MapView: View {
             }
             .mapControlVisibility(.visible)
             .mapStyle(mapStyle.asMKMapStyle)
-            .overlay(alignment: .trailing) {
-                VStack {
-                    MapUserLocateButtonCustom(mapModel: mapModel)
-                    mapItemsToShowMenu
-                    mapStyleButton
-                }
-                .scenePadding()
-            }
+            .modifier(MapVerticalToolbar(mapModel: mapModel))
             .sheet(
                 item: mapModel.presentedMapSheetBinding,
                 onDismiss: {
@@ -241,7 +233,6 @@ struct MapView: View {
         .navigationTitle("Map")
         .navigationBarTitleDisplayMode(.inline)
         .toolbarVisibility(.hidden, for: .navigationBar)
-        .toolbarVisibility(verticalSizeClass == .compact ? .hidden : .automatic, for: .tabBar)
     }
 
     @MapContentBuilder
@@ -395,6 +386,42 @@ struct MapView: View {
         }
         .annotationTitles(mapModel.selectedMapItem == nil ? .automatic : .hidden)
     }
+}
+
+
+struct MapVerticalToolbar: ViewModifier {
+    let mapModel: MapModel
+
+    @Environment(\.verticalSizeClass) private var verticalSizeClass
+    @Environment(\.tabBarPlacement) private var tabBarPlacement
+    @Environment(\.toolbarVerticalEdgeFallback) private var toolbarVerticalEdge
+
+    func body(content: Content) -> some View {
+        content
+            // use the toolbar when it is vertical, for easier and automatic placement
+            .toolbar {
+                if toolbarVerticalEdge != nil {
+                    ToolbarItemGroup(placement: verticalSizeClass == .compact ? .bottomBar : .bottomBar) {
+                        MapUserLocateButtonCustom(mapModel: mapModel)
+                        mapItemsToShowMenu
+                        mapStyleButton
+                    }
+                }
+            }
+            // otherwise when the toolbar is not vertical, use a view overlay
+            // to place the buttons
+            .overlay(alignment: verticalSizeClass == .compact ? .topTrailing : .trailing) {
+                if toolbarVerticalEdge == nil {
+                    VStack {
+                        MapUserLocateButtonCustom(mapModel: mapModel)
+                        mapItemsToShowMenu
+                        mapStyleButton
+                    }
+                    .glassButtonStyle()
+                    .scenePadding()
+                }
+            }
+    }
 
     private var mapItemsToShowMenu: some View {
         Menu {
@@ -426,6 +453,7 @@ struct MapView: View {
                     .frame(width: 25, height: 33)
             }
         }
+        .labelStyle(.iconOnly)
         .glassButtonStyle()
     }
 
@@ -439,9 +467,9 @@ struct MapView: View {
                 .frame(width: 25, height: 33)
         }
         .labelStyle(.iconOnly)
-        .glassButtonStyle()
     }
 }
+
 
 #Preview(traits: .previewEnvironment) {
     MapView()

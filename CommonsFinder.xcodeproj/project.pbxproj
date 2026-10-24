@@ -266,6 +266,7 @@
 				Views/DraftViews/UploadErrorDetailsSheet.swift,
 				"Views/Extensions/CLLocationCoordinate2D+description.swift",
 				"Views/Extensions/CLLocationManager+isLocationAutorized.swift",
+				"Views/Extensions/EnvironmentValues+Fallbacks.swift",
 				"Views/Extensions/MediaFile+localizedDisplayCaption.swift",
 				"Views/Extensions/MediaFileDraftModel+ImageRequest.swift",
 				"Views/Extensions/PublishingError?+isContinuationPossible.swift",
