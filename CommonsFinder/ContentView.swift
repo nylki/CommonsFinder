@@ -54,6 +54,7 @@ struct ContentView: View {
                 }
             }
         }
+        .tabViewStyle(.sidebarAdaptable)
         .modifier(ImportFilesModifer(importModel: $navigation.fileImportModel))
         .modifier(SingleDraftSheetModifier(draftedFileModel: $navigation.isEditingDraft))
         .modifier(MultiDraftSheetModifier(multiDraftModel: $navigation.isEditingMultipleDrafts))

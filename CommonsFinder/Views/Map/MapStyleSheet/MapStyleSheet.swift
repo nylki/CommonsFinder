@@ -14,7 +14,7 @@ struct MapStyleSheet: View {
 
     var body: some View {
         NavigationStack {
-            VStack {
+
                 let mapPreviewRegion = MKCoordinateRegion(center: .init(latitude: 40.750994, longitude: -73.966921), latitudinalMeters: 300, longitudinalMeters: 300)
                 let map = Map(initialPosition: .region(mapPreviewRegion))
                     .mapControlVisibility(.hidden)
@@ -34,11 +34,11 @@ struct MapStyleSheet: View {
                             }
                             .labelStyle(MapStyleLabelStyle(isSelected: isSelected))
                         }
+                        .padding()
                     }
                 }
 
-                Spacer(minLength: 0)
-            }
+            
             .animation(.default, value: activeStyle)
             .tint(.primary)
             .padding(.bottom)
@@ -55,7 +55,7 @@ struct MapStyleSheet: View {
             }
 
         }
-        .presentationDetents([.height(210)])
+        .presentationDetents([.height(250)])
     }
 }
 
