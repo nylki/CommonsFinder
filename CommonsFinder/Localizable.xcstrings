@@ -300,12 +300,12 @@
         }
       }
     },
-    "Add or edit **categories** and define what the image **depicts**. More specific categories are usually preferred." : {
+    "Add or edit **categories** and define what the image **depicts**. More specific categories are preferred, don't be too broad." : {
       "localizations" : {
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Füge **Kategorien** hinzu und definiere was auf dem Bild abgebildet ist (Motiv). Das macht dein Bild auffindbarer und nützlicher."
+            "value" : "Bearbeite **Kategorien** und definiere was auf dem Bild abgebildet ist (Motiv). Bevorzuge spezifischer Kategorien anstatt zu allgemeine Begriffe wenn möglich."
           }
         }
       }
@@ -535,22 +535,22 @@
         }
       }
     },
-    "Categories & Depicted" : {
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Kategorien & Motive"
-          }
-        }
-      }
-    },
     "Category" : {
       "localizations" : {
         "de" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Kategorie"
+          }
+        }
+      }
+    },
+    "Category & Subject" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kategorie & Motiv"
           }
         }
       }
@@ -2544,16 +2544,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Systemsprachen"
-          }
-        }
-      }
-    },
-    "Tags" : {
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Tags"
           }
         }
       }

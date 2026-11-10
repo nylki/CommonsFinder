@@ -111,7 +111,7 @@ struct TagPicker: View {
                     copySuggestedTags()
                 }
             }
-            .navigationTitle("Categories & Depicted")
+            .navigationTitle("Category & Subject")
             .toolbarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {

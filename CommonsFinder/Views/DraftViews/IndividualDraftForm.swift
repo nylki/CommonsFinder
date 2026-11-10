@@ -344,7 +344,7 @@ struct IndividualDraftForm: View {
             }
             .focused($focus, equals: .tags)
         } header: {
-            Label("Tags", systemImage: "tag")
+            Label("Category & Subject", systemImage: "tag")
         } footer: {
             Text("Add **categories** and define what the image **depicts**. This makes your image discoverable and useful.")
         }

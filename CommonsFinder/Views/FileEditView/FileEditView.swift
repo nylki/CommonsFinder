@@ -212,9 +212,9 @@ struct FileEditView: View {
                 isShowingTagsPicker = true
             }
         } header: {
-            Label("Tags", systemImage: "tag")
+            Label("Category & Subject", systemImage: "tag")
         } footer: {
-            Text("Add or edit **categories** and define what the image **depicts**. More specific categories are usually preferred.")
+            Text("Add or edit **categories** and define what the image **depicts**. More specific categories are preferred, don't be too broad.")
         }
         .disabled(isRefreshing == true)
     }

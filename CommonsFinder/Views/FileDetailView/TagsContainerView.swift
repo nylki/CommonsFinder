@@ -14,7 +14,7 @@ struct TagsContainerView: View {
     let tags: [TagItem]
 
     var body: some View {
-        GroupBox("Tags") {
+        GroupBox("Category & Subject") {
             HFlowLayout(alignment: .leading) {
                 ForEach(tags) { tag in
                     NavigationLink(value: NavigationStackItem.wikidataItem(.init(tag.baseItem))) {

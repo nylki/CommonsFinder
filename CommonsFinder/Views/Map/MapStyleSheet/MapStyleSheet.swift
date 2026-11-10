@@ -15,30 +15,30 @@ struct MapStyleSheet: View {
     var body: some View {
         NavigationStack {
 
-                let mapPreviewRegion = MKCoordinateRegion(center: .init(latitude: 40.750994, longitude: -73.966921), latitudinalMeters: 300, longitudinalMeters: 300)
-                let map = Map(initialPosition: .region(mapPreviewRegion))
-                    .mapControlVisibility(.hidden)
-                    .allowsHitTesting(false)
-                    .frame(width: 110, height: 150)
+            let mapPreviewRegion = MKCoordinateRegion(center: .init(latitude: 40.750994, longitude: -73.966921), latitudinalMeters: 300, longitudinalMeters: 300)
+            let map = Map(initialPosition: .region(mapPreviewRegion))
+                .mapControlVisibility(.hidden)
+                .allowsHitTesting(false)
+                .frame(width: 110, height: 150)
 
-                HStack(spacing: 25) {
-                    ForEach(WrappedMapStyle.allCases) { style in
-                        let isSelected = activeStyle == style
-                        Button {
-                            activeStyle = style
-                        } label: {
-                            Label {
-                                Text(style.labelText)
-                            } icon: {
-                                map.mapStyle(style.asMKMapStyle)
-                            }
-                            .labelStyle(MapStyleLabelStyle(isSelected: isSelected))
+            HStack(spacing: 25) {
+                ForEach(WrappedMapStyle.allCases) { style in
+                    let isSelected = activeStyle == style
+                    Button {
+                        activeStyle = style
+                    } label: {
+                        Label {
+                            Text(style.labelText)
+                        } icon: {
+                            map.mapStyle(style.asMKMapStyle)
                         }
-                        .padding()
+                        .labelStyle(MapStyleLabelStyle(isSelected: isSelected))
                     }
+                    .padding()
                 }
+            }
 
-            
+
             .animation(.default, value: activeStyle)
             .tint(.primary)
             .padding(.bottom)
