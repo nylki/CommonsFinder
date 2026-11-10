@@ -13,7 +13,7 @@ let package = Package(
             targets: ["CommonsAPI"])
     ],
     dependencies: [
-        .package(url: "https://github.com/kean/Pulse", from: .init(5, 1, 4)),
+        .package(url: "https://github.com/kean/Pulse", from: .init(5, 2, 3)),
         .package(url: "https://github.com/apple/swift-algorithms.git", from: .init(1, 2, 1))
     ],
     targets: [

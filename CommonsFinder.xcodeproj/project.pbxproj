@@ -1175,7 +1175,7 @@
 			repositoryURL = "https://github.com/apple/swift-collections.git";
 			requirement = {
 				kind = exactVersion;
-				version = 1.4.1;
+				version = 1.7.5;
 			};
 		};
 		E26AF86F302F909600A7F612 /* XCRemoteSwiftPackageReference "Nuke" */ = {
@@ -1191,7 +1191,7 @@
 			repositoryURL = "https://github.com/scinfu/SwiftSoup";
 			requirement = {
 				kind = exactVersion;
-				version = 2.13.7;
+				version = 2.14.3;
 			};
 		};
 		E274D65E30430F9F00624C95 /* XCRemoteSwiftPackageReference "LRUCache" */ = {
@@ -1207,7 +1207,7 @@
 			repositoryURL = "https://github.com/kean/Pulse";
 			requirement = {
 				kind = exactVersion;
-				version = 5.2.1;
+				version = 5.2.3;
 			};
 		};
 		E290323D2D9EA84700A0CD8F /* XCRemoteSwiftPackageReference "GRDBQuery" */ = {
@@ -1255,7 +1255,7 @@
 			repositoryURL = "https://github.com/groue/GRDB.swift.git";
 			requirement = {
 				kind = exactVersion;
-				version = 7.10.0;
+				version = 7.12.0;
 			};
 		};
 /* End XCRemoteSwiftPackageReference section */
