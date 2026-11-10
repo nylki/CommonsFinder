@@ -29,6 +29,7 @@ struct MultiDraftCombinedView: View {
 
     @State private var filenameSelection: TextSelection?
     @State private var isLicensePickerShowing = false
+    @State private var isAttributionSheetShowing = false
     @State private var isTimezonePickerShowing = false
 
     @State private var isZoomableImageViewerPresented = false
@@ -106,6 +107,17 @@ struct MultiDraftCombinedView: View {
                 analysisInput: analysisInput,
                 onEditedTags: { model.multiDraft.tags = $0 },
             )
+        }
+        .sheet(isPresented: $isAttributionSheetShowing) {
+            AttributionDetailView(
+                initialSource: model.multiDraft.source,
+                initialAuthor: model.multiDraft.author,
+                initialLicense: model.multiDraft.license
+            ) { source, author, license in
+                model.multiDraft.source = source
+                model.multiDraft.author = author
+                model.multiDraft.license = license
+            }
         }
         .onAppear {
             if model.multiDraft.captionWithDesc.isEmpty {
@@ -482,36 +494,10 @@ struct MultiDraftCombinedView: View {
 
     @ViewBuilder
     private var attributionSection: some View {
-        Section("License and Attribution") {
-            HStack {
-                Text("License")
-                Spacer()
-                Button {
-                    isLicensePickerShowing = true
-                } label: {
-                    if let license = model.multiDraft.license {
-                        Text(license.abbreviation)
-                    } else {
-                        Text("choose")
-                    }
-                }
-                .focused($focus, equals: .license)
-
-            }
-            .sheet(isPresented: $isLicensePickerShowing) {
-                LicensePicker(selectedLicense: $model.multiDraft.license, allowsEmptySelection: false)
-            }
-
-
-            HStack {
-                // TODO: extend this, atleast with a helper text
-                // about what is ok to upload and what not.
-
-                Text("Source")
-                Spacer()
-                Text("Own Work")
-            }
-        }
+        AttributionFormSection(
+            draft: model.multiDraft,
+            isAttributionSheetShowing: $isAttributionSheetShowing
+        )
     }
 
     @ViewBuilder

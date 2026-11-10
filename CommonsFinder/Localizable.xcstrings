@@ -9,6 +9,7 @@
       "shouldTranslate" : false
     },
     "%@ (%@)" : {
+      "comment" : "author name with wikimedia username in brackets",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -330,6 +331,9 @@
         }
       }
     },
+    "All media uploaded to Wikimedia Commons are free for anyone to use and share anywhere on internet or off internet. To ensure the work you upload is copyright-free, **please provide the following information**." : {
+
+    },
     "America" : {
       "localizations" : {
         "de" : {
@@ -410,6 +414,9 @@
         }
       }
     },
+    "Attribution & License" : {
+
+    },
     "Attribution-ShareAlike" : {
 
     },
@@ -442,6 +449,9 @@
           }
         }
       }
+    },
+    "Author" : {
+
     },
     "Bad server response" : {
       "localizations" : {
@@ -484,6 +494,9 @@
           }
         }
       }
+    },
+    "cancel" : {
+
     },
     "Cancel" : {
       "localizations" : {
@@ -558,11 +571,23 @@
     "CC BY" : {
       "shouldTranslate" : false
     },
+    "CC BY 2.5" : {
+
+    },
+    "CC BY 3.0" : {
+
+    },
     "CC BY 4.0" : {
 
     },
     "CC BY-SA" : {
       "shouldTranslate" : false
+    },
+    "CC BY-SA 2.5" : {
+
+    },
+    "CC BY-SA 3.0" : {
+
     },
     "CC BY-SA 4.0" : {
 
@@ -685,6 +710,9 @@
     },
     "Commons" : {
       "shouldTranslate" : false
+    },
+    "confirm" : {
+
     },
     "Continue" : {
       "localizations" : {
@@ -898,6 +926,12 @@
         }
       }
     },
+    "Do not upload this file unless you are certain of the license under which it was published." : {
+
+    },
+    "Do you know the license the creator published this work under?" : {
+
+    },
     "Draft" : {
       "localizations" : {
         "de" : {
@@ -977,6 +1011,9 @@
           }
         }
       }
+    },
+    "Enter the name of the original author of these works:" : {
+
     },
     "Error Loading Categories" : {
       "localizations" : {
@@ -1210,6 +1247,9 @@
         }
       }
     },
+    "I don't know" : {
+
+    },
     "If you want to contribute your own photos to Wikimedia Commons, you need an account." : {
       "localizations" : {
         "de" : {
@@ -1330,6 +1370,12 @@
         }
       }
     },
+    "John Doe" : {
+
+    },
+    "Learn more about what is permitted" : {
+
+    },
     "License" : {
       "localizations" : {
         "de" : {
@@ -1341,6 +1387,7 @@
       }
     },
     "License and Attribution" : {
+      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -1349,6 +1396,9 @@
           }
         }
       }
+    },
+    "License template, eg. {{cc-by-2.0}}" : {
+
     },
     "Links" : {
       "localizations" : {
@@ -1518,6 +1568,9 @@
           }
         }
       }
+    },
+    "me" : {
+
     },
     "More" : {
       "localizations" : {
@@ -1789,6 +1842,9 @@
         }
       }
     },
+    "not signed in" : {
+
+    },
     "Ok" : {
       "localizations" : {
         "de" : {
@@ -1879,6 +1935,9 @@
         }
       }
     },
+    "Other license" : {
+
+    },
     "Other License" : {
       "localizations" : {
         "de" : {
@@ -1889,7 +1948,11 @@
         }
       }
     },
+    "Own work" : {
+
+    },
     "Own Work" : {
+      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -2475,6 +2538,9 @@
         }
       }
     },
+    "someone else" : {
+
+    },
     "Sort by" : {
       "localizations" : {
         "de" : {
@@ -2494,6 +2560,9 @@
           }
         }
       }
+    },
+    "source & attribution details" : {
+
     },
     "Standard" : {
       "comment" : "standard map style",
@@ -2768,6 +2837,9 @@
         }
       }
     },
+    "unknown author" : {
+
+    },
     "Unknown error, please make a screenshot and report this issue if you see this." : {
       "localizations" : {
         "de" : {
@@ -2888,6 +2960,9 @@
         }
       }
     },
+    "URL, book or another source" : {
+
+    },
     "User actions" : {
       "localizations" : {
         "de" : {
@@ -2948,6 +3023,9 @@
         }
       }
     },
+    "Were did you find this work?" : {
+
+    },
     "What can you do?" : {
       "localizations" : {
         "de" : {
@@ -2957,6 +3035,12 @@
           }
         }
       }
+    },
+    "What free license do you want to publish your work under?" : {
+
+    },
+    "Who created this work?" : {
+
     },
     "Wiki" : {
       "localizations" : {
@@ -2987,6 +3071,9 @@
           }
         }
       }
+    },
+    "You" : {
+
     },
     "You may attempt to retry the upload, edit the draft or delete the draft." : {
       "localizations" : {

@@ -54,7 +54,7 @@ struct SingleDraftView: View {
         case caption
         case description
         case tags
-        case license
+        case attribution
         case filename
     }
 
@@ -177,7 +177,7 @@ struct SingleDraftView: View {
                             case .missingCaptionOrDescription:
                                 focus = .caption
                             case .missingLicense:
-                                focus = .license
+                                focus = .attribution
                             case .missingTags:
                                 focus = .tags
                             case .validationError(_):
