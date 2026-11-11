@@ -119,6 +119,12 @@ struct MultiDraftIndividualCarouselView: View {
                     Text("Please provide a caption or description.")
                 case .missingLicense:
                     Text("You must choose the license under which you want to publish the file.")
+                case .some(.missingSource):
+                    Text("The source field is empty. Please add the source of the file.")
+                case .some(.emptyCustomLicense):
+                    Text("The custom license field is empty. Please add a valid license.")
+                case .some(.emptyCustomSource):
+                    Text("The source field is empty. Please add the source of the file.")
                 case .missingTags:
                     Text("You should add atleast one category or depicted item in the Tags-section.")
                 case .validationError(let nameValidationError):

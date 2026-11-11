@@ -13,7 +13,27 @@ nonisolated enum DraftSource: Codable, Equatable, Hashable {
     // "Wikidata: *\(id)*"P7482
 
     case own
-    case fileFromTheWeb(URL)
-    // TODO: check correct modelling
-    case book(WikidataItemID, page: Int)
+    /// more specific version than just `own`, especially useful for photographs of paintings, or other artworks
+    case selfPhotographed
+    case otherSource(String)
+
+    var url: URL? {
+        switch self {
+        case .own, .selfPhotographed:
+            nil
+        case .otherSource(let string):
+            if string.starts(with: "http"), let url = URL(string: string) {
+                url
+            } else {
+                nil
+            }
+        }
+    }
+
+    var otherSourceString: String? {
+        switch self {
+        case .otherSource(let string): string
+        default: nil
+        }
+    }
 }

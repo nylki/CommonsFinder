@@ -54,7 +54,7 @@ struct SingleDraftView: View {
         case caption
         case description
         case tags
-        case license
+        case attribution
         case filename
     }
 
@@ -177,13 +177,20 @@ struct SingleDraftView: View {
                             case .missingCaptionOrDescription:
                                 focus = .caption
                             case .missingLicense:
-                                focus = .license
+                                focus = .attribution
                             case .missingTags:
                                 focus = .tags
                             case .validationError(_):
                                 focus = .filename
                             case .failedToValidate: break
                             case .none: break
+
+                            case .missingSource:
+                                focus = .attribution
+                            case .emptyCustomLicense:
+                                focus = .attribution
+                            case .emptyCustomSource:
+                                focus = .attribution
                             }
                         }
                     },
@@ -200,6 +207,12 @@ struct SingleDraftView: View {
                                 Text("You must choose the license under which you want to publish the file.")
                             case .missingTags:
                                 Text("You should add atleast one category or depicted item in the Tags-section.")
+                            case .some(.missingSource):
+                                Text("The source field is empty. Please add the source of the file.")
+                            case .some(.emptyCustomLicense):
+                                Text("The custom license field is empty. Please add a valid license.")
+                            case .some(.emptyCustomSource):
+                                Text("The source field is empty. Please add the source of the file.")
                             case .validationError(let nameValidationError):
                                 if let errorDescription = nameValidationError.errorDescription {
                                     Text(errorDescription)

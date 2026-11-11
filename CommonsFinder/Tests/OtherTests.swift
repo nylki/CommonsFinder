@@ -43,6 +43,24 @@ func testZippedFlatMap() {
     #expect(zippedFlatMap(emptyArray, emptyArray) == [])
 }
 
+@Test(
+    "DraftMediaLicense raw value round trip",
+    arguments: DraftMediaLicense.originalChoices + [.custom(wikitext: "cc-by-3.0-de")]
+)
+func testDraftMediaLicenseRawValue(license: DraftMediaLicense) throws {
+    #expect(DraftMediaLicense(rawValue: license.rawValue) == license)
+    let data = try JSONEncoder().encode(license)
+    #expect(try JSONDecoder().decode(DraftMediaLicense.self, from: data) == license)
+}
+
+@Test func testDraftMediaLicenseLegacyRawValues() {
+    #expect(DraftMediaLicense(rawValue: "CC0") == .CC0_1_0)
+    #expect(DraftMediaLicense(rawValue: "CC_BY") == .CC_BY_4_0)
+    #expect(DraftMediaLicense(rawValue: "CC_BY_SA") == .CC_BY_SA_4_0)
+    #expect(DraftMediaLicense(rawValue: "cc-by-3.0-de") == .custom(wikitext: "cc-by-3.0-de"))
+    #expect(DraftMediaLicense(rawValue: "") == nil)
+}
+
 @Test("file url generation", arguments: ["Dülmen, Kirchspiel, ehem. Sondermunitionslager Visbeck, Bunker der US Army -- 2020 -- 8388.jpg"])
 func testFileUrlGeneration(filename: String) throws {
     let originalURL = try URL.originalCommonsImageURL(filename: filename)

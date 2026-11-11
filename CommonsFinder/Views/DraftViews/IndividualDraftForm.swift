@@ -17,7 +17,7 @@ import UniformTypeIdentifiers
 import os.log
 
 struct IndividualDraftForm: View {
-    @Bindable var model: SingleDraftModel
+    let model: SingleDraftModel
     let withImage: Bool
 
     @Environment(WikimediaLanguageStore.self) private var languageStore
@@ -31,7 +31,7 @@ struct IndividualDraftForm: View {
     @FocusState private var focus: FocusElement?
 
     @State private var filenameSelection: TextSelection?
-    @State private var isLicensePickerShowing = false
+    @State private var isAttributionSheetShowing = false
     @State private var isTimezonePickerShowing = false
     @State private var isZoomableImageViewerPresented = false
     @State private var isFilenameErrorSheetPresented = false
@@ -41,6 +41,7 @@ struct IndividualDraftForm: View {
     @State private var isShowingUploadDisabledAlert = false
     @State private var isShowingTagsPicker = false
     @State private var isShowingCategoryPicker = false
+
 
     private var draftExistsInDB: Bool {
         do {
@@ -54,11 +55,12 @@ struct IndividualDraftForm: View {
         case caption
         case description
         case tags
-        case license
+        case attribution
         case filename
     }
 
     var body: some View {
+        @Bindable var model = model
         Form {
             if withImage {
                 imageView
@@ -92,7 +94,17 @@ struct IndividualDraftForm: View {
             TimezonePicker(selectedTimezone: $model.draft.timezone)
                 .presentationDetents([.medium, .large])
         }
-
+        .sheet(isPresented: $isAttributionSheetShowing) {
+            AttributionDetailView(
+                initialSource: model.draft.source,
+                initialAuthor: model.draft.author,
+                initialLicense: model.draft.license
+            ) { source, author, license in
+                model.draft.source = source
+                model.draft.author = author
+                model.draft.license = license
+            }
+        }
         .onAppear {
             if model.draft.captionWithDesc.isEmpty {
                 focus = .caption
@@ -128,6 +140,8 @@ struct IndividualDraftForm: View {
 
     @ViewBuilder
     private var captionAndDescriptionSection: some View {
+        @Bindable var model = model
+
         Section("Description") {
             let enumeratedDescs = Array(model.draft.captionWithDesc.enumerated())
             let disabledLanguages = model.draft.captionWithDesc.map(\.languageCode)
@@ -222,7 +236,10 @@ struct IndividualDraftForm: View {
     }
 
 
+    @ViewBuilder
     private var filenameSection: some View {
+        @Bindable var model = model
+
         Section {
             HStack {
                 TextField("Filename", text: $model.draft.name, selection: $filenameSelection, axis: .vertical)
@@ -352,6 +369,8 @@ struct IndividualDraftForm: View {
 
     @ViewBuilder
     private var locationSection: some View {
+        @Bindable var model = model
+
         Section {
             VStack(alignment: .leading) {
                 if model.exifData?.coordinate == nil {
@@ -384,36 +403,10 @@ struct IndividualDraftForm: View {
 
     @ViewBuilder
     private var attributionSection: some View {
-        Section("License and Attribution") {
-            HStack {
-                Text("License")
-                Spacer()
-                Button {
-                    isLicensePickerShowing = true
-                } label: {
-                    if let license = model.draft.license {
-                        Text(license.abbreviation)
-                    } else {
-                        Text("choose")
-                    }
-                }
-                .focused($focus, equals: .license)
-
-            }
-            .sheet(isPresented: $isLicensePickerShowing) {
-                LicensePicker(selectedLicense: $model.draft.license, allowsEmptySelection: false)
-            }
-
-
-            HStack {
-                // TODO: extend this, atleast with a helper text
-                // about what is ok to upload and what not.
-
-                Text("Source")
-                Spacer()
-                Text("Own Work")
-            }
-        }
+        AttributionFormSection(
+            draft: model.draft,
+            isAttributionSheetShowing: $isAttributionSheetShowing
+        )
     }
 
     @ViewBuilder
@@ -434,7 +427,10 @@ struct IndividualDraftForm: View {
         )
     }
 
+    @ViewBuilder
     private var dateTimeSection: some View {
+        @Bindable var model = model
+
         Section("Creation Date and Time") {
             DatePicker(
                 "Creation Date",

@@ -18,6 +18,7 @@ struct PopulatedPreviewEnvironment: PreviewModifier {
     private let mapModel: MapModel
     private let fileAnalysis: FileAnalysis
     private let wikimediaLanguageStore: WikimediaLanguageStore
+    private let editingManager: EditingManager
 
     static func makeSharedContext() async throws -> AppDatabase {
         Self.previewDatabase
@@ -32,6 +33,8 @@ struct PopulatedPreviewEnvironment: PreviewModifier {
             appDatabase: Self.previewDatabase,
             withTestUser: .init(username: "DebugTester")
         )
+
+        editingManager = .init(appDatabase: Self.previewDatabase)
 
         mockUploadManager = MockUploadManager(
             mockSimulation: uploadSimulation,
@@ -55,6 +58,7 @@ struct PopulatedPreviewEnvironment: PreviewModifier {
     func body(content: Content, context: AppDatabase) -> some View {
         content
             .appDatabase(context)
+            .environment(editingManager)
             .environment(account)
             .environment(searchModel)
             .environment(navigation)

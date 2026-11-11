@@ -54,9 +54,7 @@ extension MediaFileUploadable {
         let wikitextDate: String = draft.inceptionDate.formatted(.iso8601.year().month().day())
         let wikitextSource: String
         let wikitextAuthor: String
-
-        // TODO: differentiate prefix ("self") if not actually "self" when that is possible in UI
-        let wikitextLicense = "{{self|\(license.wikitext)}}"
+        let wikitextLicense: String
         let wikitextLocation: String
 
         // created WikidataClaims from Draft data (Structured-Data statements)
@@ -89,13 +87,15 @@ extension MediaFileUploadable {
 
         if let wikidataLicenseItem = license.wikidataItem {
             statements.append(.license(wikidataLicenseItem))
-
             // Depending on the specific license, decide what the copyright status is
-            switch draft.license {
+            switch license {
             case .CC0_1_0:
                 statements.append(.copyrightStatus(.copyrightedDedicatedToThePublicDomainByCopyrightHolder))
-            case .CC_BY_4_0, .CC_BY_SA_4_0:
+            case .CC_BY_4_0, .CC_BY_SA_4_0, .CC_BY_3_0, .CC_BY_SA_3_0, .CC_BY_2_5, .CC_BY_SA_2_5:
                 statements.append(.copyrightStatus(.copyrighted))
+            case .custom(let customWikitext):
+                // skip structured data for license in this case and let other wikimedia bots do the parsing as usual
+                break
             default:
                 statements.append(.copyrightStatus(.copyrighted))
             }
@@ -104,32 +104,48 @@ extension MediaFileUploadable {
         switch source {
         case .own:
             statements.append(.source(.originalCreationByUploader))
-            wikitextSource = "{{own}}"
-        case .fileFromTheWeb(let url):
-            statements.append(.source(url.absoluteString))
-            wikitextSource = "\(url.absoluteString)"
-        case .book(let WikidataItemID, let page):
-            // TODO: add page number, low prio
-            statements.append(.source(WikidataItemID))
-            // https://commons.wikimedia.org/wiki/Template:Scan
-            wikitextSource = "{{Self-scanned}}"
+            wikitextSource = "{{Own}}"
+            wikitextLicense = "{{self|\(license.wikitext)}}"
+        case .selfPhotographed:
+            statements.append(.source(.originalCreationByUploader))
+            wikitextSource = "{{Self-photographed}}"
+            wikitextLicense = "{{self|\(license.wikitext)}}"
+        case .otherSource(let string):
+            if !string.isEmpty {
+                if string.starts(with: "http"), let url = URL(string: string) {
+                    statements.append(.source(string))
+                }
+                wikitextSource = "\(string)"
+            } else {
+                wikitextSource = "{{Source missing}}"
+                // TODO: warn user
+            }
+
+            wikitextLicense = "{{\(license.wikitext)}}"
         }
 
         switch author {
+        case .unknown:
+            wikitextAuthor = "{{Unknown author}}"
         case .appUser:
             // TODO: allow customization in settings, also wikidataItem, customize the display name string (2nd param)
             let usernameURL = "https://commons.wikimedia.org/wiki/User:\(appWikimediaUsername)"
             statements.append(.creator(wikimediaUsername: appWikimediaUsername, authorNameString: appWikimediaUsername, url: usernameURL))
             wikitextAuthor = "[[User:\(appWikimediaUsername)|\(appWikimediaUsername)]]"
 
-        case .custom(let name, let wikimediaUsername, let url):
-            statements.append(.creator(wikimediaUsername: wikimediaUsername, authorNameString: name, url: url?.absoluteString))
-            if let wikimediaUsername {
-                wikitextAuthor = "[[User:\(wikimediaUsername)|\(name)]]"
-            } else if let url {
-                wikitextAuthor = "\(name) (\(url))"
+        case .custom(let author):
+            guard !author.name.isEmpty || author.url != nil || author.wikimediaUsername?.isEmpty == false else {
+                wikitextAuthor = "{{Unknown author}}"
+                break
+            }
+
+            statements.append(.creator(wikimediaUsername: author.wikimediaUsername, authorNameString: author.name, url: author.url?.absoluteString))
+            if let wikimediaUsername = author.wikimediaUsername {
+                wikitextAuthor = "[[User:\(wikimediaUsername)|\(author.name)]]"
+            } else if let url = author.url {
+                wikitextAuthor = "\(author.name) (\(url))"
             } else {
-                wikitextAuthor = "\(name)"
+                wikitextAuthor = "\(author.name)"
             }
         case .wikidataId(let wikidataItem):
             // FIXME: correct wikdatatext for wikidata author

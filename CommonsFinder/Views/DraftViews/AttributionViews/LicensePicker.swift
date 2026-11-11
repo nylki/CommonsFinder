@@ -18,7 +18,7 @@ struct LicensePicker: View {
     var body: some View {
         NavigationStack {
             VStack(alignment: .leading, spacing: 20) {
-                ForEach(DraftMediaLicense.allCases, id: \.rawValue) { license in
+                ForEach(DraftMediaLicense.publishingChoices, id: \.rawValue) { license in
                     LicenseButton(license: license, isSelected: license == selectedLicense) {
                         if allowsEmptySelection, selectedLicense == license {
                             selectedLicense = nil
@@ -61,7 +61,9 @@ private struct LicenseButton: View {
             HStack {
                 VStack(alignment: .leading, spacing: 10) {
                     Text(license.shortDescription).bold()
-                    Text(license.explanation)
+                    if let explanation = license.explanation {
+                        Text(explanation)
+                    }
                 }
                 Spacer(minLength: 0)
             }
