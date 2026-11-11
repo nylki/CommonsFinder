@@ -13,9 +13,16 @@ import TipKit
     var customAuthorWikimediaUsername: String = ""
     var customAuthorURL: URL?
     var customSourceString: String = ""
-    var customLicenseString: String = ""
 
     var draftLicense: DraftMediaLicense?
+    var customLicenseString: Binding<String> {
+        .init {
+            self.draftLicense?.customWikitext ?? ""
+        } set: { [self] string in
+            draftLicense = .custom(wikitext: string)
+        }
+    }
+
 
     var draftSource: DraftSource? {
         DraftSource.otherSource(customSourceString)
@@ -52,12 +59,7 @@ import TipKit
                 customAuthorURL = customAuthor.url
             }
 
-            if case .custom(let wikitext) = initialLicense {
-                customLicenseString = wikitext
-                draftLicense = .custom(wikitext: "")
-            } else {
-                draftLicense = initialLicense
-            }
+            draftLicense = initialLicense
         }
     }
 }
@@ -182,7 +184,7 @@ struct AttributionDetailView: View {
                 switch model.draftLicense {
                 case .custom:
                     // TODO: auto-add curly braces (when evaluating)
-                    TextField("License template, eg. {{cc-by-2.0}}", text: $model.customLicenseString)
+                    TextField("License template, eg. {{cc-by-2.0}}", text: model.customLicenseString)
                         .textInputAutocapitalization(.never)
                         .autocorrectionDisabled()
                 case .none:

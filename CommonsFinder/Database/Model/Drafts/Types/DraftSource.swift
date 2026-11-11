@@ -29,4 +29,11 @@ nonisolated enum DraftSource: Codable, Equatable, Hashable {
             }
         }
     }
+
+    var otherSourceString: String? {
+        switch self {
+        case .otherSource(let string): string
+        default: nil
+        }
+    }
 }

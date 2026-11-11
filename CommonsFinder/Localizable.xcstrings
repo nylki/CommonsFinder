@@ -2657,6 +2657,9 @@
         }
       }
     },
+    "The custom license field is empty. Please add a valid license." : {
+
+    },
     "The file must be converted to a supported format before uploading." : {
       "localizations" : {
         "de" : {
@@ -2796,6 +2799,9 @@
           }
         }
       }
+    },
+    "The source field is empty. Please add the source of the file." : {
+
     },
     "There may have been a problem during upload, but no details can be display. Please report this as a Bug in the app, thanks!" : {
       "localizations" : {

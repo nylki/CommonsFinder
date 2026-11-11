@@ -16,13 +16,6 @@ enum SingleDraftModelError: Error {
     case cannotSaveEditsAfterDraftAlreadyPublished
 }
 
-enum DraftBasicSourceType: CaseIterable {
-    case sourceMissing
-    case own
-    case selfPhotographed
-    case otherSource
-}
-
 @Observable final class SingleDraftModel: @preconcurrency Identifiable {
     typealias ID = String
     var id: ID
@@ -33,9 +26,6 @@ enum DraftBasicSourceType: CaseIterable {
 
     private var generateFilenameTask: Task<Void, Never>?
 
-
-    var draftBasicSource: DraftBasicSourceType
-
     @ObservationIgnored
     lazy var exifData: ExifData? = {
         draft.loadCachedExifData()
@@ -45,14 +35,6 @@ enum DraftBasicSourceType: CaseIterable {
     init(existingDraft: MediaFileDraft) {
         id = existingDraft.id
         draft = existingDraft
-        draftBasicSource =
-            switch existingDraft.source {
-            case .own: .own
-            case .selfPhotographed: .selfPhotographed
-            case .otherSource(_): .otherSource
-            //        case .book(let wikidataItemID, let page): .sourceMissing
-            case .none: .sourceMissing
-            }
     }
 
     var choosenCoordinate: CLLocationCoordinate2D? {

@@ -78,7 +78,9 @@ nonisolated enum DraftMediaLicense: Codable, Hashable, Equatable, RawRepresentab
     }
 }
 
-extension DraftMediaLicense {
+nonisolated
+    extension DraftMediaLicense
+{
     var name: LocalizedStringResource {
         switch self {
         //        case .CC_PUBLIC_DOMAIN:
@@ -123,6 +125,13 @@ extension DraftMediaLicense {
 
     var isCustom: Bool {
         if case .custom = self { true } else { false }
+    }
+
+    var customWikitext: String? {
+        switch self {
+        case .custom(let wikitext): wikitext
+        default: nil
+        }
     }
 
     var wikitext: String {

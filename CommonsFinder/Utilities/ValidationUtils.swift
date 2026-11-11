@@ -25,8 +25,14 @@ nonisolated enum DraftValidation {
             .missingCaptionOrDescription
         } else if draft.tags.isEmpty {
             .missingTags
+        } else if draft.source == nil {
+            .missingSource
+        } else if let source = draft.source, case .otherSource(let otherSourceString) = source, otherSourceString.isEmpty {
+            .emptyCustomSource
         } else if draft.license == nil {
             .missingLicense
+        } else if let license = draft.license, license.isCustom, license.customWikitext == nil || license.customWikitext?.isEmpty == true {
+            .emptyCustomLicense
         } else if let nameValidationResult {
             switch nameValidationResult {
             case .failure(let nameValidationError):

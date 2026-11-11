@@ -565,6 +565,12 @@ struct MultiDraftCombinedView: View {
                     Text("There was an error validating the file name.")
                 case nil:
                     Text("Currently checking if you can upload. please wait a short moment...")
+                case .some(.missingSource):
+                    Text("The source field is empty. Please add the source of the file.")
+                case .some(.emptyCustomLicense):
+                    Text("The custom license field is empty. Please add a valid license.")
+                case .some(.emptyCustomSource):
+                    Text("The source field is empty. Please add the source of the file.")
                 }
             })
     }

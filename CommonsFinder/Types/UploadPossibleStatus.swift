@@ -12,6 +12,9 @@ nonisolated enum UploadPossibleStatus: Codable, Equatable, Hashable {
     case uploadPossible
     case missingCaptionOrDescription
     case missingLicense
+    case missingSource
+    case emptyCustomLicense
+    case emptyCustomSource
     case missingTags
     case validationError(NameValidationError)
     case failedToValidate

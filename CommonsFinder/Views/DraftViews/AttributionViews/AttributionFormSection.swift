@@ -41,9 +41,7 @@ struct AttributionFormSection: View {
 
     @ViewBuilder
     private var authorRow: some View {
-        if draft.author != .unknown,
-            draft.author != nil
-        {
+        if draft.author != nil {
             HStack {
                 Text("Author")
                 Spacer(minLength: 0)
