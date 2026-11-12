@@ -57,6 +57,32 @@ nonisolated
     /// attribution string parsed from raw wikitext via extMetadata
     var rawAttribution: String?
 
+
+    /// _not_ the upload date, but the date eg. a photograph was taken.
+    var date: Date?
+
+    /// can be identical to `authorWikimediaUsername`, but not always if user wants to use a different display name to be shown.
+    var authorText: String?
+    var authorWikimediaUsername: String?
+    /// may be a link to the wikimedia user page or other link (eg. flickr)
+    var authorURL: URL?
+    /// usually something like `"<a href=\"//commons.wikimedia.org/wiki/User:SomeUsername\" title=\"User:SomeUsername\">SomeUsername</a>"`
+    /// can be used for display when run first through libsoup
+    var authorHTML: String?
+
+    /// "credit" string parsed from raw wikitext via extMetadata, should be first parsed via libsoup to extra the raw useful string at fetch/DB-insert time
+    /// usually comes from API like: <span class=\"int-own-work\">Self-photographed</span>, should be "Self-photographed"
+    var sourceText: String?
+    // TODO: use tagged type here:
+    var sourceWikidataID: String?
+
+    // TODO: use tagged type here:
+    var licenseWikidataID: String?
+    // the other license values come from the imageInfo query:
+    var license: String?
+    var licenseShortName: String?
+    var licenseURL: String?
+
     var uploadDate: Date
 
     var categories: [String]

@@ -288,6 +288,27 @@ nonisolated final class AppDatabase: Sendable {
             }
         }
 
+        migrator.registerMigration("add more attribution to mediaFile") { db in
+            try db.alter(table: "mediaFile") { t in
+                t.add(column: "date", .datetime)
+                t.add(column: "credit", .text)
+                t.add(column: "authorURL", .text)
+                t.add(column: "authorWikimediaUsername", .text)
+                t.add(column: "authorHTML", .text)
+                t.add(column: "sourceText", .text)
+                t.add(column: "sourceWikidataID", .text)
+                t.add(column: "license", .text)
+                t.add(column: "licenseShortName", .text)
+                t.add(column: "licenseWikidataID", .text)
+                t.add(column: "licenseURL", .text)
+                t.add(column: "usageTerms", .text)
+                t.add(column: "copyrighted", .text)
+                t.add(column: "restrictions", .text)
+                t.add(column: "authorText", .text)
+            }
+        }
+
+
         return migrator
     }
 }

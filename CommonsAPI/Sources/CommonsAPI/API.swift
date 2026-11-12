@@ -322,7 +322,7 @@ public actor API {
             "iilimit": "1",
             "inprop": "protection",
             "iiprop": "url|timestamp|user|dimensions|extmetadata|size",
-            "iiextmetadatafilter": "ImageDescription|Attribution",
+            "iiextmetadatafilter": "ImageDescription|Attribution|Artist|Credit|License|LicenseShortName|LicenseUrl",
             "iiurlwidth": "500",
             "iiurlheight": "500",
             "uselang": "content",
