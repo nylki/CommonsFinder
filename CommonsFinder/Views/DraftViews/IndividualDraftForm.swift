@@ -95,7 +95,7 @@ struct IndividualDraftForm: View {
                 .presentationDetents([.medium, .large])
         }
         .sheet(isPresented: $isAttributionSheetShowing) {
-            AttributionDetailView(
+            AttributionEditingDetailView(
                 initialSource: model.draft.source,
                 initialAuthor: model.draft.author,
                 initialLicense: model.draft.license

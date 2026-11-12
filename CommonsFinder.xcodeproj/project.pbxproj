@@ -233,7 +233,7 @@
 				Views/CategoryView/RelatedCategoryView.swift,
 				Views/ContextMenus/CategoryContextMenu.swift,
 				Views/ContextMenus/MediaFileContextMenu.swift,
-				Views/DraftViews/AttributionViews/AttributionDetailView.swift,
+				Views/DraftViews/AttributionViews/AttributionEditingDetailView.swift,
 				Views/DraftViews/AttributionViews/AttributionFormSection.swift,
 				Views/DraftViews/AttributionViews/LicensePicker.swift,
 				Views/DraftViews/BaseDraftImageView.swift,
@@ -1193,8 +1193,8 @@
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/scinfu/SwiftSoup";
 			requirement = {
-				kind = exactVersion;
-				version = 2.14.3;
+				kind = upToNextMinorVersion;
+				minimumVersion = 2.14.3;
 			};
 		};
 		E274D65E30430F9F00624C95 /* XCRemoteSwiftPackageReference "LRUCache" */ = {
