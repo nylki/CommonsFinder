@@ -275,7 +275,7 @@ extension MediaFileUploadable {
         if !nonEmptyDescriptions.isEmpty {
             let formattedWikitextDescriptions: String =
                 nonEmptyDescriptions.compactMap {
-                    "{{\($0.languageCode)\n|\($0.string)}}"
+                    "{{\($0.languageCode)\n|1=\($0.string)}}"
                 }
                 .joined(separator: "\n")
 
