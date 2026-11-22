@@ -182,9 +182,9 @@ private enum PaginationFileIdentifierType {
                     case .title: .titles(idsToFetch)
                     }
 
-                let fetchedMediaFiles: [MediaFile] = try await Networking.shared.api
-                    .fetchFullFileMetadata(apiIDsToFetch)
-                    .map(MediaFile.init)
+                let languageCode = Locale.current.wikiLanguageCodeIdentifier
+
+                let fetchedMediaFiles = try await DataAccess.fetchMediaFilesFromNetwork(identifiers: apiIDsToFetch, languageCode: languageCode)
 
                 switch fileCachingStrategy {
                 case .saveAll:

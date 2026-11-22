@@ -19,6 +19,88 @@ import UniformTypeIdentifiers
 nonisolated
     struct MediaFile: Equatable, Hashable, Sendable, Identifiable
 {
+
+    struct Author: Equatable, Hashable, Sendable {
+        let text: String?
+        let username: String?
+        /// may be a link to the wikimedia user page or other link (eg. flickr)
+        let url: URL?
+        /// if the author has their own wikidata entry
+        let wikidataID: String?
+    }
+
+
+    //    struct DateTimeOriginal: Equatable, Hashable, Sendable, Codable {
+    //
+    //        /// 11 = day
+    //        /// 10 = month
+    //        /// 9 = year
+    //        /// 8 = decade
+    //        /// 7 = century
+    //        /// 6 = millenium
+    //        let precision: UInt?
+    //
+    //        // This is directly from wikibase, which uses a weird dateTime format
+    //        // for precision >=11 this can be directly used, but for other precisions
+    //        // only parts of the date components (eg. only year) can be used.
+    //        let wikibaseString: String?
+    //
+    //        let calendarWikidataID: String?
+    //        let timezone: Int?
+    //
+    //        init(precision: UInt?, wikibaseString: String?, timezone: Int?, calendarWikidataID: String?) {
+    //            self.precision = precision
+    //            self.wikibaseString = wikibaseString
+    //            self.timezone = timezone
+    //            self.calendarWikidataID = calendarWikidataID
+    //        }
+    ////
+    ////        var preciseDate: Date? {
+    ////            if let wikibaseString, let precision, precision >= 11 {
+    ////                parsedDate
+    ////            } else {
+    ////                nil
+    ////            }
+    ////        }
+    //
+    //        var datecomponents: DateComponents? {
+    //
+    //            let yearRef = Reference(Substring.self)
+    //            let MonthRef = Reference(Substring.self)
+    //            let dayRef = Reference(Substring.self)
+    //
+    //            let dateRegex = Regex {
+    //                Capture(as: yearRef) {
+    //                    Optionally { One(.anyOf("+-")) }
+    //                    OneOrMore(.digit)
+    //                }
+    //                One("-")
+    //                Capture(as: MonthRef) {
+    //                    OneOrMore(.digit)
+    //                }
+    //                One("-")
+    //                Capture(as: dayRef) {
+    //                    OneOrMore(.digit)
+    //                }
+    //                One("T")
+    //            }
+    //
+    //            if let wikibaseString, let match = wikibaseString.firstMatch(of: dateRegex) {
+    //                let year = Int(match[yearRef])
+    //                let month = Int(match[MonthRef])
+    //                let day = Int(match[dayRef])
+    //                return switch precision {
+    //                case 11: .init(year: year, month: month, day: day)
+    //                case 10: .init(year: year, month: month)
+    //                case 9: .init(year: year)
+    //                default: nil
+    //            }
+    //            } else {
+    //                return nil
+    //            }
+    //        }
+    //    }
+
     typealias LanguageCode = String
 
     /// pageID
@@ -54,34 +136,43 @@ nonisolated
 
     /// Unlimited length html description parsed from raw wikitext
     var fullDescriptions: [LanguageString]
-    /// attribution string parsed from raw wikitext via extMetadata
-    var rawAttribution: String?
 
+    var parsedWikitextDateString: String?
+    var dateTimeWikibase: WikiDataValueTime? {
+        // TODO: take qualifiers into account (start, end, circa, etc)
+        statements.filter(\.isInception).compactMap(\.mainsnak.datavalue?.timeValue).first
+    }
 
-    /// _not_ the upload date, but the date eg. a photograph was taken.
-    var date: Date?
-
-    /// can be identical to `authorWikimediaUsername`, but not always if user wants to use a different display name to be shown.
-    var authorText: String?
-    var authorWikimediaUsername: String?
-    /// may be a link to the wikimedia user page or other link (eg. flickr)
-    var authorURL: URL?
-    /// usually something like `"<a href=\"//commons.wikimedia.org/wiki/User:SomeUsername\" title=\"User:SomeUsername\">SomeUsername</a>"`
-    /// can be used for display when run first through libsoup
-    var authorHTML: String?
+    var structuredAuthors: [Author] {
+        statements.filter(\.isCreator)
+            .map { claim in
+                Author(
+                    text: claim.authorNameString,
+                    username: claim.authorWikimediaUsernameString,
+                    url: claim.authorURL,
+                    wikidataID: claim.mainItem?.id
+                )
+            }
+    }
+    /// usually something like `"<a href=\"//commons.wikimedia.org/wiki/User:SomeUsername\" title=\"User:SomeUsername\">SomeUsername</a>"`, parsed via libsoup before storage
+    /// can be used for display when run first through libsoup as a fallback when structured authors not available.
+    let authorRaw: String?
 
     /// "credit" string parsed from raw wikitext via extMetadata, should be first parsed via libsoup to extra the raw useful string at fetch/DB-insert time
     /// usually comes from API like: <span class=\"int-own-work\">Self-photographed</span>, should be "Self-photographed"
-    var sourceText: String?
-    // TODO: use tagged type here:
-    var sourceWikidataID: String?
+    var sourceTextRaw: String?
 
-    // TODO: use tagged type here:
-    var licenseWikidataID: String?
-    // the other license values come from the imageInfo query:
-    var license: String?
+    var licenseWikidataID: String? {
+        statements.filter(\.isLicense).first?.mainItem?.id
+    }
+    var sourceWikidataID: String? {
+        statements.filter(\.isSource).first?.mainItem?.id
+    }
+
+    // the other license values come from the imageInfo query via extmetadata:
+    var licenseRaw: String?
     var licenseShortName: String?
-    var licenseURL: String?
+    var licenseURL: URL?
 
     var uploadDate: Date
 
@@ -107,32 +198,20 @@ nonisolated
         uploadDate: Date,
         caption: [LanguageString],
         fullDescription: [LanguageString],
-        rawAttribution: String?,
         categories: [String],
         statements: [WikidataClaim],
         mimeType: String?,
         username: String,
-        fetchDate: Date
+        fetchDate: Date,
+        parsedWikitextDateString: String?,
+        authorRaw: String?,
+        sourceTextRaw: String?,
+        licenseRaw: String?,
+        licenseShortName: String?,
+        licenseURL: URL?
     ) {
-        self.name = name
         self.fetchDate = fetchDate
-
-        let nameRef = Reference(Substring.self)
-        //        let fileEndingRef = Reference(Substring.self)
-
-        let titleRegex = Regex {
-            "File:"
-            Capture(as: nameRef) {
-                OneOrMore(.anyNonNewline)
-            }
-        }
-
-        if let titleMatch = name.firstMatch(of: titleRegex) {
-            self.name = String(titleMatch[nameRef])
-        } else {
-            self.name = name
-        }
-
+        self.name = String(name.trimmingPrefix("File:"))
         self.id = id
         self.revid = revid
         self.url = url
@@ -144,11 +223,16 @@ nonisolated
         self.uploadDate = uploadDate
         self.captions = caption
         self.fullDescriptions = fullDescription
-        self.rawAttribution = rawAttribution
         self.categories = categories
         self.statements = statements
         self.mimeType = mimeType
         self.username = username
+        self.parsedWikitextDateString = parsedWikitextDateString
+        self.authorRaw = authorRaw
+        self.licenseRaw = licenseRaw
+        self.licenseShortName = licenseShortName
+        self.licenseURL = licenseURL
+        self.sourceTextRaw = sourceTextRaw
     }
 }
 
@@ -210,6 +294,8 @@ nonisolated extension MediaFile {
         name.fileName()
     }
 
+    // FIXME: flat bake coordinate and heading into file
+    // with both isCoordinatesOfViewPoint and objectLocation
     var coordinate: CLLocationCoordinate2D? {
         if let statement = statements.first(where: \.isCoordinatesOfViewPoint),
             case .globecoordinate(let coordinate) = statement.mainsnak.datavalue
@@ -220,7 +306,8 @@ nonisolated extension MediaFile {
             nil
         }
     }
-
+    // FIXME: flat bake coordinate and heading into file
+    // with both isCoordinatesOfViewPoint and objectLocation
     var heading: Double? {
         if let statement = statements.first(where: \.isCoordinatesOfViewPoint),
             let qualifier = statement.qualifiers?[.heading]?.first,
@@ -232,53 +319,28 @@ nonisolated extension MediaFile {
         }
     }
 
-    var licenses: [WikidataClaim] {
-        statements.filter(\.isLicense)
-    }
 
     var descriptionUrlLicenseSection: URL {
         descriptionURL.appending(component: "#Licensing")
     }
 
-    /// If there are multiple licenses defined, pick the most relevant one for the app to display
-    var primaryLicenseForDisplay: WikidataItemID? {
-        // NOTE: rank does not appear to be properly used here, even though marked in commons web ui?
-        if licenses.count > 1 {
-            for license in licenses {
-                guard let id = license.mainItem else { continue }
-                if WikidataItemID.preferredLicenses.contains(id) {
-                    return id
-                }
-            }
-
-            for license in licenses {
-                guard let id = license.mainItem else { continue }
-                if WikidataItemID.acceptableLicenses.contains(id) {
-                    return id
-                }
-            }
-        }
-
-        return licenses.first?.mainItem
-    }
-
-    var copyrightStatus: WikidataItemID? {
-        if let wikidataItem = statements.first(where: \.isCopyrightStatus)?.mainItem {
-            wikidataItem
-        } else {
-            nil
-        }
-    }
-
-    var inceptionDate: Date? {
-        if let statement = statements.first(where: \.isInception),
-            case .time(let dateValue) = statement.mainsnak.datavalue
-        {
-            dateValue.date
-        } else {
-            nil
-        }
-    }
+    //    var copyrightStatus: WikidataItemID? {
+    //        if let wikidataItem = statements.first(where: \.isCopyrightStatus)?.mainItem {
+    //            wikidataItem
+    //        } else {
+    //            nil
+    //        }
+    //    }
+    //
+    //    var inceptionDate: Date? {
+    //        if let statement = statements.first(where: \.isInception),
+    //            case .time(let dateValue) = statement.mainsnak.datavalue
+    //        {
+    //            dateValue.date
+    //        } else {
+    //            nil
+    //        }
+    //    }
 
     var aspectRatio: Double? {
         if let width, let height {
@@ -311,27 +373,4 @@ nonisolated extension MediaFile {
         }
         return resizedURL
     }
-}
-
-nonisolated extension WikidataItemID {
-    static let preferredLicenses: [WikidataItemID] = [
-        .CC0, .CC_BY_4_0, .CC_BY_SA_4_0, PDM_1_0,
-    ]
-
-    static let acceptableLicenses: [WikidataItemID] = [
-        CC0,
-        PDM_1_0,
-        CC_BY_4_0,
-        CC_BY_3_0,
-        CC_BY_IGO_3_0,
-        CC_BY_2_5,
-        CC_BY_1_0,
-        CC_BY_2_0,
-        CC_BY_SA_4_0,
-        CC_BY_SA_3_0,
-        CC_BY_SA_IGO_3_0,
-        CC_BY_SA_2_5,
-        CC_BY_SA_2_0,
-        CC_BY_SA_1_0,
-    ]
 }

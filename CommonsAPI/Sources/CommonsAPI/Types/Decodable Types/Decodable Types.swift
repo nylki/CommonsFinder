@@ -396,6 +396,8 @@ public struct FileMetadata: Decodable, Sendable, Hashable, Equatable, Identifiab
             public let usageTerms: String?
             public let copyrighted: String?
             public let restrictions: String?
+            // this can be a year an ISO string or an arbitrary string, arrives as html
+            public let dateTimeOriginal: String?
             
             private struct MetadataContainer<T: Decodable>: Decodable {
                 let value: T
@@ -413,13 +415,14 @@ public struct FileMetadata: Decodable, Sendable, Hashable, Equatable, Identifiab
                 case UsageTerms
                 case License
                 case LicenseUrl
+                case DateTimeOriginal
                 
             }
             
             public init(from decoder: any Decoder) throws {
                 do {
                     let container: KeyedDecodingContainer<CodingKeys> = try decoder.container(keyedBy: CodingKeys.self)
-                    
+   
                     self.attribution = try? container.decodeIfPresent(MetadataContainer<String>.self, forKey: .Attribution)?.value
                     self.credit = try? container.decodeIfPresent(MetadataContainer<String>.self, forKey: .Credit)?.value
                     self.artist = try? container.decodeIfPresent(MetadataContainer<String>.self, forKey: .Artist)?.value
@@ -429,6 +432,7 @@ public struct FileMetadata: Decodable, Sendable, Hashable, Equatable, Identifiab
                     self.usageTerms = try? container.decodeIfPresent(MetadataContainer<String>.self, forKey: .UsageTerms)?.value
                     self.copyrighted = try? container.decodeIfPresent(MetadataContainer<String>.self, forKey: .Copyrighted)?.value
                     self.restrictions = try? container.decodeIfPresent(MetadataContainer<String>.self, forKey: .Restrictions)?.value
+                    self.dateTimeOriginal = try? container.decodeIfPresent(MetadataContainer<String>.self, forKey: .DateTimeOriginal)?.value
                     /// key is the two-letter language code (eg. "en") eg: ["en": "a description", "de": "eine Beschreibung"]
                     let localizedDescriptions = try? container.decode(MetadataContainer<[String: String]>.self, forKey: .ImageDescription).value
                     if let localizedDescriptions {
@@ -453,6 +457,7 @@ public struct FileMetadata: Decodable, Sendable, Hashable, Equatable, Identifiab
                     self.usageTerms = nil
                     self.copyrighted = nil
                     self.restrictions = nil
+                    self.dateTimeOriginal = nil
                 } catch {
                     throw error
                 }

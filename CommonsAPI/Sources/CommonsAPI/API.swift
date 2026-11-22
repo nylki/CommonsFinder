@@ -50,7 +50,6 @@ public actor API {
         decoder.dateDecodingStrategy = .iso8601
         return decoder
     }()
-
     
     private func response(for request: URLRequest, requiresAuthentication: Bool = false) async throws -> (Data, URLResponse) {
         try await responseProvider(
@@ -277,9 +276,8 @@ public actor API {
     }
     
     /// fetch file info and  structured data to form a RawFileMetadata
-    public func fetchFullFileMetadata(_ identifiers: FileIdentifierList) async throws -> [RawFileMetadata] {
-        
-        async let pageQueryTask = fetchImageMetadata(identifiers)
+    public func fetchFullFileMetadata(_ identifiers: FileIdentifierList, languageCode: LanguageCode?) async throws -> [RawFileMetadata] {
+        async let pageQueryTask = fetchImageMetadata(identifiers, languageCode: languageCode)
         async let structuredDataTask = fetchMediaFileStructuredData(identifiers)
         
         let (fileMetadataList, structuredDataItems) = try await (pageQueryTask, structuredDataTask)
@@ -312,7 +310,7 @@ public actor API {
     }
     
     // Example: https://commons.wikimedia.org/w/api.php?action=query&format=json&prop=imageinfo&titles=File%3The_Earth_seen_from_Apollo_17.jpg&formatversion=2&iiprop=url%7Cextmetadata&iiurlwidth=500&iiurlheight=500&iiextmetadatamultilang=1
-    internal func fetchImageMetadata(_ identifiers: FileIdentifierList) async throws -> [FileMetadata] {
+    internal func fetchImageMetadata(_ identifiers: FileIdentifierList, languageCode: LanguageCode?) async throws -> [FileMetadata] {
         var query: Parameters = [
             "action": "query",
             "prop": "imageinfo|categories|info",
@@ -322,12 +320,27 @@ public actor API {
             "iilimit": "1",
             "inprop": "protection",
             "iiprop": "url|timestamp|user|dimensions|extmetadata|size",
-            "iiextmetadatafilter": "ImageDescription|Attribution|Artist|Credit|License|LicenseShortName|LicenseUrl",
+            "iiextmetadatafilter": "ImageDescription|Attribution|Artist|Credit|License|LicenseShortName|LicenseUrl|DateTimeOriginal",
             "iiurlwidth": "500",
             "iiurlheight": "500",
             "uselang": "content",
             "format": "json"
         ]
+        
+        if let languageCode {
+            // FIXME: when using iiextmetadatamultilang, the returned value gets yet another layer that has to be parsed
+            // but having the multilang data can be useful for the dates (for before/ca./century etc)
+//            "Credit": {
+//                "value": {
+//                    "fr": "Bibliothèque nationale de France",
+//                    "_type": "lang"
+//                },
+//                "source": "commons-desc-page"
+//            }
+            
+//            query["iiextmetadatamultilang"] = "1"
+//            query["iiextmetadatalanguage"] = languageCode
+        }
         
         let maxCount = 50
         

@@ -19,8 +19,6 @@ public struct WikidataClaim: Codable, Hashable, Equatable, Sendable {
     public let id: String?
     public let rank: Rank
     public let qualifiers: [WikidataProp: [Snak]]?
-    // TODO:
-    // public let qualifiersOrder
     
     public init(mainsnak: Snak, rank: Rank = .normal, qualifiers: [WikidataProp: [Snak]]? = nil) {
         self.mainsnak = mainsnak
@@ -209,28 +207,39 @@ public struct WikidataClaim: Codable, Hashable, Equatable, Sendable {
 
 extension WikidataClaim.Snak.DataValue {
     /// return the raw string value, if the DataValue is of case .string
-    var stringValue: String? {
+    public var stringValue: String? {
         switch self {
         case .string(let string): string
+        default: nil
+        }
+    }
+    
+    public var timeValue: WikiDataValueTime? {
+        switch self {
+        case .time(let value): value
+        default: nil
+        }
+    }
+    
+    public var globecoordinateValue: Coordinate? {
+        switch self {
+        case .globecoordinate(let value): value
         default: nil
         }
     }
 }
 
 // MARK: Time and Date
-
-public struct WikiDataValueTime: Codable, Equatable, Hashable, Sendable {
-    let time: String
-    let timezone: Int
-    let before: Int
-    let after: Int
-    let precision: Int
-    let calendarmodel: URL
-    
-    // TODO: cache Date on init if it is a standard gregorian date?
+public nonisolated struct WikiDataValueTime: Codable, Equatable, Hashable, Sendable {
+   public  let time: String
+   public  let timezone: Int
+   public  let before: Int
+   public  let after: Int
+   public  let precision: Int
+   public  let calendarmodel: URL
 }
 
-extension WikiDataValueTime {
+public nonisolated extension WikiDataValueTime {
     // see: https://www.wikidata.org/wiki/Help:Dates
 //    Quote:
 //    > That is an accurate description of the saved structure; however, much of it is not being used at the moment:
@@ -243,7 +252,7 @@ extension WikiDataValueTime {
     // list of time-of-day for refine-data: http://www.wikidata.org/entity/Wikidata:WikiProject_Calendar_Dates/lists/time_of_the_day
     
     /// the given ISO-Date is not checked, make sure it actually is an ISO date
-    public init(isoDate: String) {
+    init(isoDate: String) {
         self = .init(
             time: isoDate,
             timezone: 0,
@@ -254,31 +263,92 @@ extension WikiDataValueTime {
         )
     }
 
-    public init(date: Date, timezone: TimeZone) {
+    init(date: Date, timezone: TimeZone) {
         self = .init(
             time: date.ISO8601Format(.iso8601Date(timeZone: timezone).time(includingFractionalSeconds: false).timeSeparator(.colon).timeZone(separator: .omitted)),
             timezone: 0,
             before: 0,
             after: 0,
-            precision: 11, // TODO: ok here it gets a complicated, apparently only precision 11 (day) works because of Wikidata limits.
+            precision: 11, // TODO: ok here it gets a complicated, apparently max precision 11 (day) works because of Wikidata limits.
             // would have to use qualifiers for the time and timezone.
             calendarmodel: URL(string: "http://www.wikidata.org/entity/Q1985727")!
         )
     }
     
-    public var dateString: String { time }
+    var dateString: String { time }
     
-    /// **Returns the day only**, the time is not encoded here (see code comments)
-    public var date: Date? {
-        if calendarmodel.lastPathComponent == "Q1985727" {
-            // NOTE: Wikidata is not ISO8601 compliant and adds a "+"-prefix in years between 0-9999
-            // so we normalize them here and strip the "+", to be able to parse the string
-            // with standard Swift Date-methods.
-            guard let normalizedISOString = time.split(separator: "+").first else {
-                return nil
+    var localizedFormattedString: String? {
+        if precision >= 9, let potentiallyImpreciseDate {
+            var formatStyle = Date.FormatStyle(locale: .current, calendar: .init(identifier: .gregorian), timeZone: .current)
+            
+            formatStyle = switch precision {
+                case 11: formatStyle.year().month(.abbreviated).day()
+                case 10: formatStyle.year().month(.wide)
+                case 9: formatStyle.year()
+                default: formatStyle
             }
-            let withoutFractionalSeconds = try? Date(normalizedISOString, strategy: .iso8601.year().month().day().dateSeparator(.dash))
-            return withoutFractionalSeconds
+            return potentiallyImpreciseDate.formatted(formatStyle)
+        } else {
+            // TODO: decades and centuries
+            return nil
+        }
+        
+
+    }
+    
+    /// If precision allows, **Returns the day only**, the time is not encoded here (see code comments)
+    var preciseDate: Date? {
+        if precision >= 11 {
+            potentiallyImpreciseDate
+        } else {
+            nil
+        }
+    }
+    
+    private var potentiallyImpreciseDate: Date? {
+        guard calendarmodel.lastPathComponent == "Q1985727" else {
+            return nil
+        }
+        // NOTE: Wikidata is not ISO8601 compliant and adds a "+"-prefix in years between 0-9999
+        // so we normalize them here and strip the "+", to be able to parse the string
+        // with standard Swift Date-methods.
+        let normalizedISOString = time.trimmingPrefix("+")
+        let withoutFractionalSeconds = try? Date(normalizedISOString, strategy: .iso8601.year().month().day().dateSeparator(.dash))
+        return withoutFractionalSeconds
+    }
+    
+    var datecomponents: DateComponents? {
+        
+        let yearRef = Reference(Substring.self)
+        let MonthRef = Reference(Substring.self)
+        let dayRef = Reference(Substring.self)
+        
+        let dateRegex = Regex {
+            Capture(as: yearRef) {
+                Optionally { One(.anyOf("+-")) }
+                OneOrMore(.digit)
+            }
+            One("-")
+            Capture(as: MonthRef) {
+                OneOrMore(.digit)
+            }
+            One("-")
+            Capture(as: dayRef) {
+                OneOrMore(.digit)
+            }
+            One("T")
+        }
+        
+        if let match = time.firstMatch(of: dateRegex) {
+            let year = Int(match[yearRef])
+            let month = Int(match[MonthRef])
+            let day = Int(match[dayRef])
+            return switch precision {
+            case 11: .init(year: year, month: month, day: day)
+            case 10: .init(year: year, month: month)
+            case 9: .init(year: year)
+            default: nil
+        }
         } else {
             return nil
         }
@@ -461,6 +531,45 @@ public extension [WikidataProp: [WikidataClaim]] {
         } else {
             nil
         }
+    }
+    
+    
+    
+    // FIXME: Take qualifiers into account! like ca/start/end, can be then harmonized with parsed dates from wikitext
+    // that already have a shortform of wikidata qualifiers when fetching in extmetadata
+    var inceptionDate: WikiDataValueTime? {
+        if let match = rankedClaims(.inception).first,
+           case .time(let timeValue) = match.mainsnak.datavalue  {
+            timeValue
+        } else {
+            nil
+        }
+    }
+    
+    var authors: [WikidataClaim] {
+        rankedClaims(.creator)
+    }
+    
+
+}
+
+public extension WikidataClaim {
+    
+    var authorNameString: String? {
+        qualifiers?[.authorNameString]?.first?.datavalue?.stringValue
+    }
+    
+    var authorWikimediaUsernameString: String? {
+        qualifiers?[.wikimediaUsername]?.first? .datavalue?.stringValue
+    }
+    
+    var authorURL: URL? {
+        if let string = qualifiers?[.url]?.first?.datavalue?.stringValue {
+            URL(string: string)
+        } else {
+            nil
+        }
+        
     }
 }
 
@@ -790,7 +899,9 @@ extension WikidataClaim {
     public var mainProp: WikidataProp { mainsnak.property }
     public var isWikimediaCategory: Bool { mainProp == .instanceOf && mainItem == .wikimediaCategory }
     public var isDepicts: Bool { mainProp == .depicts }
+    public var isCreator: Bool { mainProp == .creator }
     public var isLicense: Bool { mainProp == .license }
+    public var isSource: Bool { mainProp == .source }
     public var isCopyrightStatus: Bool { mainProp == .copyrightStatus }
     public var isInception: Bool { mainProp == .inception }
     public var isCoordinatesOfViewPoint: Bool { mainProp == .coordinatesOfViewpoint }

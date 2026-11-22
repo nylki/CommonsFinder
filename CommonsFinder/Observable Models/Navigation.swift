@@ -192,6 +192,10 @@ extension Navigation {
         path[selectedTab]?.append(.wikidataItem(categoryInfo))
     }
 
+    func openUserUploads(username: String) {
+        path[selectedTab]?.append(.userUploads(username: username))
+    }
+
     func showOnMap(category: Category, mapModel: MapModel) {
         do {
             try mapModel.showInCircle(category)

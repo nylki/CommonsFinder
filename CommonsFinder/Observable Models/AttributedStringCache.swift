@@ -33,16 +33,22 @@ import os.log
     subscript(stringOrHtml: String) -> AttributedString? {
         if let entry = cache.value(forKey: stringOrHtml) { return entry }
         unresolvedStrings.insert(stringOrHtml)
-        resolveStrings()
+        resolveStringsLazy()
         return nil
     }
 
-    private func resolveStrings() {
+    func getCachedOrParse(stringOrHtml: String) async -> AttributedString? {
+        if let entry = cache.value(forKey: stringOrHtml) { return entry }
+        let result = AttributedString.parse(htmlOrString: stringOrHtml)
+        cache.setValue(result, forKey: stringOrHtml)
+        return result
+    }
+
+    private func resolveStringsLazy() {
         task?.cancel()
         task = Task<Void, Error> {
             try await Task.sleep(for: .milliseconds(5))
             try Task.checkCancellation()
-
 
             for (string, attributedString) in await generateAttributedStrings(from: unresolvedStrings) {
                 cache.setValue(attributedString, forKey: string)

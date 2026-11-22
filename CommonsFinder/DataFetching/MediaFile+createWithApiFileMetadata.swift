@@ -9,10 +9,8 @@ import CommonsAPI
 import Foundation
 import UniformTypeIdentifiers
 
-nonisolated
-    extension MediaFile
-{
-    init(apiFileMetadata: RawFileMetadata) {
+nonisolated extension MediaFile {
+    static func create(with apiFileMetadata: RawFileMetadata) async -> Self {
         let imageInfo = apiFileMetadata.pageData.imageinfo
         let thumbURL = try? imageInfo.thumburl ?? imageInfo.url.resizedCommonsImageURL(maxWidth: 620)
 
@@ -35,7 +33,14 @@ nonisolated
                 []
             }
 
-        self.init(
+        var parsedWikitextDateString: String?
+        if let rawDate = apiFileMetadata.pageData.imageinfo.extmetadata?.dateTimeOriginal,
+            let attributedString = await AttributedStringCache.shared.getCachedOrParse(stringOrHtml: rawDate)
+        {
+            parsedWikitextDateString = String(attributedString.characters)
+        }
+
+        return .init(
             id: String(apiFileMetadata.pageData.pageid),
             revid: apiFileMetadata.pageData.lastrevid,
             name: apiFileMetadata.pageData.title,
@@ -48,12 +53,29 @@ nonisolated
             uploadDate: imageInfo.timestamp,
             caption: apiFileMetadata.structuredData.labels.map { .init($0.value, languageCode: $0.key) },
             fullDescription: fullDescription,
-            rawAttribution: apiFileMetadata.pageData.imageinfo.extmetadata?.attribution,
             categories: categories,
             statements: statements,
             mimeType: mimeType,
             username: apiFileMetadata.pageData.imageinfo.user,
-            fetchDate: .now
+            fetchDate: .now,
+            
+            
+            
+            
+            
+            // FIXME: parse the hidden wikidata statement returned via extmetadata to show relative dates! (eg between 1901 and 1903)
+            // this can be then also used to render such statements via the statements inception date with qualifiers..
+            // !!!!! BEFORE MERGING TO TESTFLIGHT !!!!!!
+            
+            
+            
+            
+            parsedWikitextDateString: parsedWikitextDateString,
+            authorRaw: apiFileMetadata.pageData.imageinfo.extmetadata?.artist,
+            sourceTextRaw: apiFileMetadata.pageData.imageinfo.extmetadata?.credit,
+            licenseRaw: apiFileMetadata.pageData.imageinfo.extmetadata?.license,
+            licenseShortName: apiFileMetadata.pageData.imageinfo.extmetadata?.licenseShortName,
+            licenseURL: apiFileMetadata.pageData.imageinfo.extmetadata?.licenseUrl
         )
     }
 }

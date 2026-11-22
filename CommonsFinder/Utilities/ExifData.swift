@@ -178,23 +178,6 @@ nonisolated struct ExifData: Codable, Equatable, Hashable {
         return "\(dateComponent)T\(timeComponent)\(timezoneOffset)"
     }
 
-    /// This is an ISO-8601 Date String that only correcly encodes the date component
-    /// all time components are set to 0, the timezone is _incorrectly_ set to UTC (Z).
-    /// Unfortunately this format is required for Wikidata dates.
-    /// eg: +2025-01-19T00:00:00Z instead of +2025-01-19T20:21:22Z
-    /// see: timezoneOffset
-    var dateOnlyWikidataCompatibleISOString: String? {
-        guard let dateTimeOriginal else { return nil }
-        let components = dateTimeOriginal.split(separator: " ")
-        guard let dateComponent = components.first?.replacing(":", with: "-") else {
-            return nil
-        }
-
-        let timezoneOffset = "Z"
-        return "+\(dateComponent)T00:00:00\(timezoneOffset)"
-    }
-
-
     init(data: Data) throws {
         try self.init(cfData: data as CFData)
     }

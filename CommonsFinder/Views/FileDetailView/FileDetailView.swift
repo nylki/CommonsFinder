@@ -57,7 +57,9 @@ struct FileDetailView: View {
             return true
         }
         // perf note: this is fast enough, no need to cache it.
-        return String(fullDescription.characters).trimmingCharacters(in: .whitespaces) != caption
+        let normalizedFullDesc = String(fullDescription.characters).trimmingCharacters(in: .whitespaces).localizedLowercase
+        let normalizedCaption = caption.trimmingCharacters(in: .whitespaces).localizedLowercase
+        return normalizedFullDesc != normalizedCaption
     }
 
     private func saveFileToLastViewed() {
@@ -285,24 +287,22 @@ struct FileDetailView: View {
                 .animation(.easeInOut, value: isDescriptionExpanded)
             }
 
-            if let inceptionDate = mediaFileInfo.mediaFile.inceptionDate {
+            // FIXME: propery parse date!!!!
+            if let inceptionDate = mediaFileInfo.mediaFile.dateTimeWikibase?.preciseDate {
                 Text(inceptionDate, style: .date)
                     .font(.caption)
                     .textSelection(.enabled)
             }
 
             tagSection
+                .padding(.bottom)
+
 
             if let coordinate = mediaFileInfo.mediaFile.coordinate {
                 InlineMap(coordinate: coordinate, item: .mediaFile(mediaFileInfo.mediaFile))
             }
 
-
-            VStack(alignment: .leading, spacing: 20) {
-                licenseAndCopyright
-                uploaderAndUploadDate
-            }
-            .padding(.vertical)
+            AttributionDetailView(mediaFile: mediaFileInfo.mediaFile)
         }
     }
 
@@ -340,99 +340,84 @@ struct FileDetailView: View {
         .modifier(LandscapeOrientationModifier())
     }
 
-    @ViewBuilder
-    private var uploaderAndUploadDate: some View {
-        // TODO: differentiate between creator and uploader if they differ
-        VStack(alignment: .leading) {
-            let userUploads = NavigationStackItem.userUploads(username: mediaFileInfo.mediaFile.username)
-            NavigationLink(value: userUploads) {
-                Label(mediaFileInfo.mediaFile.username, systemImage: "person.fill")
-            }
-            .bold()
-
-            Text("uploaded \(mediaFileInfo.mediaFile.uploadDate, style: .relative) ago")
-                .font(.caption)
-        }
-    }
-
-    @ViewBuilder
-    private var licenseAndCopyright: some View {
-        VStack(alignment: .leading) {
-            Text("License")
-                .bold()
-                .padding(.bottom, 2)
-
-
-            // TODO: add more options when interacting with license, eg.
-            // 1. sheet -> selectable field to copy attribution
-            // 2. simple terms what is allowed (if CC license, otherwise indicate going to page to read license)
-            // 3. optionally go to license website
-            // eg. attribution might be missing from structured data, but its important for re-use
-            // so we may have to use extMetadata "Attribution" which is more complete for legacy wikitext licensing
-            Link(destination: mediaFileInfo.mediaFile.descriptionURL) {
-                if let license = mediaFileInfo.mediaFile.primaryLicenseForDisplay {
-                    Label {
-                        ZStack {
-                            switch license {
-                            case .publicDomainLicense:
-                                Text("Public Domain")
-                            case .PDM_1_0:
-                                Text("Public Domain")
-                            case .CC0:
-                                Text("CC0")
-                            case .CC_BY_4_0, .CC_BY_3_0, .CC_BY_IGO_3_0, .CC_BY_2_5, .CC_BY_2_0, .CC_BY_1_0, .CC_BY_IGO_3_0:
-                                Text("CC BY")
-                            case .CC_BY_SA_4_0, .CC_BY_SA_3_0, .CC_BY_SA_IGO_3_0, .CC_BY_SA_2_5, .CC_BY_SA_2_0, .CC_BY_SA_1_0, .CC_BY_SA_IGO_3_0:
-                                Text("CC BY-SA")
-                            default:
-                                if let rawAttribution = mediaFileInfo.mediaFile.rawAttribution {
-                                    Text(rawAttribution)
-                                        .multilineTextAlignment(.leading)
-                                } else {
-                                    Text("Other License")
-                                }
-
-                            }
-                        }
-                        .font(.callout)
-                    } icon: {
-                        HStack(spacing: -1) {
-                            switch license {
-                            case .CC0:
-                                Image(.zeroSymbol)
-                            case .publicDomainLicense:
-                                EmptyView()
-                            case .PDM_1_0:
-                                Image(.pdSymbol)
-                            case .CC_BY_4_0, .CC_BY_3_0, .CC_BY_IGO_3_0, .CC_BY_2_5, .CC_BY_2_0, .CC_BY_1_0, .CC_BY_IGO_3_0:
-                                Image(.ccSymbol)
-                                Image(.bySymbol)
-                            case .CC_BY_SA_4_0, .CC_BY_SA_3_0, .CC_BY_SA_IGO_3_0, .CC_BY_SA_2_5, .CC_BY_SA_2_0, .CC_BY_SA_1_0, .CC_BY_SA_IGO_3_0:
-                                Image(.ccSymbol)
-                                Image(.bySymbol)
-                                Image(.saSymbol)
-                            default:
-                                EmptyView()
-                            }
-                        }
-                        .font(.system(size: 24))
-                    }
-                    .labelStyle(VerticalLabelStyle())
-                } else if let copyright = mediaFileInfo.mediaFile.copyrightStatus {
-                    switch copyright {
-                    case .publicDomainCopyrightStatus:
-                        Text("public domain")
-                    case .copyrightedDedicatedToThePublicDomainByCopyrightHolder:
-                        Text("copyrighted: dedicated to public domain")
-                    case .copyrighted:
-                        Text("copyrighted")
-                    default:
-                        Text("View License and Copyright Info")
-                    }
-                }
-            }
-        }
-    }
+    //    @ViewBuilder
+    //    private var licenseAndCopyright: some View {
+    //        VStack(alignment: .leading) {
+    //            Text("License")
+    //                .bold()
+    //                .padding(.bottom, 2)
+    //
+    //
+    //            // TODO: add more options when interacting with license, eg.
+    //            // 1. sheet -> selectable field to copy attribution
+    //            // 2. simple terms what is allowed (if CC license, otherwise indicate going to page to read license)
+    //            // 3. optionally go to license website
+    //            // eg. attribution might be missing from structured data, but its important for re-use
+    //            // so we may have to use extMetadata "Attribution" which is more complete for legacy wikitext licensing
+    //            Link(destination: mediaFileInfo.mediaFile.descriptionURL) {
+    //                if let license = mediaFileInfo.mediaFile.primaryLicenseForDisplay {
+    //                    Label {
+    //                        ZStack {
+    //                            switch license {
+    //                            case .publicDomainLicense:
+    //                                Text("Public Domain")
+    //                            case .PDM_1_0:
+    //                                Text("Public Domain")
+    //                            case .CC0:
+    //                                Text("CC0")
+    //                            case .CC_BY_4_0, .CC_BY_3_0, .CC_BY_IGO_3_0, .CC_BY_2_5, .CC_BY_2_0, .CC_BY_1_0, .CC_BY_IGO_3_0:
+    //                                Text("CC BY")
+    //                            case .CC_BY_SA_4_0, .CC_BY_SA_3_0, .CC_BY_SA_IGO_3_0, .CC_BY_SA_2_5, .CC_BY_SA_2_0, .CC_BY_SA_1_0, .CC_BY_SA_IGO_3_0:
+    //                                Text("CC BY-SA")
+    //                            default:
+    //                                if let rawAttribution = mediaFileInfo.mediaFile.rawAttribution {
+    //                                    Text(rawAttribution)
+    //                                        .multilineTextAlignment(.leading)
+    //                                } else {
+    //                                    Text("Other License")
+    //                                }
+    //
+    //                            }
+    //                        }
+    //                        .font(.callout)
+    //                    } icon: {
+    //                        HStack(spacing: -1) {
+    //                            switch license {
+    //                            case .CC0:
+    //                                Image(.zeroSymbol)
+    //                            case .publicDomainLicense:
+    //                                EmptyView()
+    //                            case .PDM_1_0:
+    //                                Image(.pdSymbol)
+    //                            case .CC_BY_4_0, .CC_BY_3_0, .CC_BY_IGO_3_0, .CC_BY_2_5, .CC_BY_2_0, .CC_BY_1_0, .CC_BY_IGO_3_0:
+    //                                Image(.ccSymbol)
+    //                                Image(.bySymbol)
+    //                            case .CC_BY_SA_4_0, .CC_BY_SA_3_0, .CC_BY_SA_IGO_3_0, .CC_BY_SA_2_5, .CC_BY_SA_2_0, .CC_BY_SA_1_0, .CC_BY_SA_IGO_3_0:
+    //                                Image(.ccSymbol)
+    //                                Image(.bySymbol)
+    //                                Image(.saSymbol)
+    //                            default:
+    //                                EmptyView()
+    //                            }
+    //                        }
+    //                        .font(.system(size: 24))
+    //                    }
+    //                    .labelStyle(VerticalLabelStyle())
+    //                } else if let copyright = mediaFileInfo.mediaFile.copyrightStatus {
+    //                    switch copyright {
+    //                    case .publicDomainCopyrightStatus:
+    //                        Text("public domain")
+    //                    case .copyrightedDedicatedToThePublicDomainByCopyrightHolder:
+    //                        Text("copyrighted: dedicated to public domain")
+    //                    case .copyrighted:
+    //                        Text("copyrighted")
+    //                    default:
+    //                        Text("View License and Copyright Info")
+    //                    }
+    //                }
+    //            }
+    //        }
+    //    }
 
     @ViewBuilder
     private var tagSection: some View {

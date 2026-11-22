@@ -22,19 +22,27 @@ nonisolated extension MediaFile {
             width: Int(2000 * (imageType.aspect ?? 1)),
             height: Int(2000 / (imageType.aspect ?? 1)),
             uploadDate: date,
-            caption: [.init("Lorem Ipsum Dolor Sitit in New York City, 1842", languageCode: "en"), .init("German localized paragraph: \(Lorem.paragraph)", languageCode: "de")],
+            caption: [
+                .init("Lorem Ipsum Dolor Sitit in New York City, 1842", languageCode: "en"),
+                .init("German localized paragraph: \(Lorem.paragraph)", languageCode: "de"),
+            ],
             fullDescription: [
                 .init(
                     "Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet, consetetur sadipscing elitr.\n Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua.",
                     languageCode: "en")
             ],
-            rawAttribution: "Some Obscure Archive / Archive Item Numer X.1234.5678 / Some Name / CC-BY 3.0",
             categories: ["Lorem Category", "Long name Category xyz Wiki Commons", "Short tags", "Short", "Location", "Something Else", "Random Things doing things in some city"],
             statements: [.depicts(.earth), .depicts(.universe), .copyrightStatus(.copyrightedDedicatedToThePublicDomainByCopyrightHolder), .license(.CC_BY_SA_2_5)],
             //            license: .draftSelectable.randomElement()!,
             mimeType: UTType(filenameExtension: imageType.rawValue.fileExtension())?.preferredMIMEType,
             username: "Testuser",
-            fetchDate: Date.distantPast
+            fetchDate: Date.distantPast,
+            parsedWikitextDateString: "before 2002",
+            authorRaw: "<a href=\"//commons.wikimedia.org/wiki/User:Arko\" title=\"User:Arko\">Artur Kong</a>",
+            sourceTextRaw: "Own",
+            licenseRaw: "pd",
+            licenseShortName: "Public Domain",
+            licenseURL: URL(string: "http://creativecommons.org/publicdomain/zero/1.0/deed.en")
         )
     }
 }
