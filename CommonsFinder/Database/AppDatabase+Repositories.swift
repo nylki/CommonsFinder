@@ -103,7 +103,7 @@ extension AppDatabase {
 
         } catch {
             logger.error("Failed to populate preview DB \(error)")
-            assertionFailure()
+            assertionFailure(error.localizedDescription)
         }
 
         return repo

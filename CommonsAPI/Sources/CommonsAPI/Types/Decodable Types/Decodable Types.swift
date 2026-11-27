@@ -388,6 +388,7 @@ public struct FileMetadata: Decodable, Sendable, Hashable, Equatable, Identifiab
         public struct ExtMetadata: Sendable, Hashable, Equatable, Decodable {
             public let imageDescription: [LanguageCode: String]
             public let attribution: String?
+            public let attributionRequired: Bool?
             public let credit: String?
             public let artist: String?
             public let license: String?
@@ -407,6 +408,7 @@ public struct FileMetadata: Decodable, Sendable, Hashable, Equatable, Identifiab
             enum CodingKeys: CodingKey {
                 case ImageDescription
                 case Attribution
+                case AttributionRequired
                 case Credit
                 case Artist
                 case LicenseShortName
@@ -422,8 +424,16 @@ public struct FileMetadata: Decodable, Sendable, Hashable, Equatable, Identifiab
             public init(from decoder: any Decoder) throws {
                 do {
                     let container: KeyedDecodingContainer<CodingKeys> = try decoder.container(keyedBy: CodingKeys.self)
-   
+                    
                     self.attribution = try? container.decodeIfPresent(MetadataContainer<String>.self, forKey: .Attribution)?.value
+                    
+                    if let attributionRequiredString = try? container.decodeIfPresent(MetadataContainer<String>.self, forKey: .AttributionRequired)?.value {
+                        // NOTE: MetadataContainer<Bool> doesn't work ^
+                        self.attributionRequired = attributionRequiredString == "true"
+                    } else {
+                        self.attributionRequired = nil
+                    }
+                    
                     self.credit = try? container.decodeIfPresent(MetadataContainer<String>.self, forKey: .Credit)?.value
                     self.artist = try? container.decodeIfPresent(MetadataContainer<String>.self, forKey: .Artist)?.value
                     self.license = try? container.decodeIfPresent(MetadataContainer<String>.self, forKey: .License)?.value
@@ -432,13 +442,22 @@ public struct FileMetadata: Decodable, Sendable, Hashable, Equatable, Identifiab
                     self.usageTerms = try? container.decodeIfPresent(MetadataContainer<String>.self, forKey: .UsageTerms)?.value
                     self.copyrighted = try? container.decodeIfPresent(MetadataContainer<String>.self, forKey: .Copyrighted)?.value
                     self.restrictions = try? container.decodeIfPresent(MetadataContainer<String>.self, forKey: .Restrictions)?.value
-                    self.dateTimeOriginal = try? container.decodeIfPresent(MetadataContainer<String>.self, forKey: .DateTimeOriginal)?.value
+                    
+                    // although datetimeOriginal is delivered translatable if possible, there is only the preferrred language version
+                    let dateTimeOriginal = try? container.decode(MetadataContainer<[String: String]>.self, forKey: .DateTimeOriginal).value
+                    if let dateTimeOriginal, let firstDateTimeOriginalString =  dateTimeOriginal.filter({ $0.key != "_type" }).first?.value {
+                        self.dateTimeOriginal = firstDateTimeOriginalString
+                    } else if let description = try? container.decode(MetadataContainer<String>.self, forKey: .DateTimeOriginal).value {
+                        self.dateTimeOriginal = description
+                    } else {
+                        self.dateTimeOriginal = nil
+                    }
+
                     /// key is the two-letter language code (eg. "en") eg: ["en": "a description", "de": "eine Beschreibung"]
                     let localizedDescriptions = try? container.decode(MetadataContainer<[String: String]>.self, forKey: .ImageDescription).value
                     if let localizedDescriptions {
-                        self.imageDescription = localizedDescriptions
+                        self.imageDescription = localizedDescriptions.filter { $0.key != "_type" }
                     } else if let description = try? container.decode(MetadataContainer<String>.self, forKey: .ImageDescription).value {
-                        Logger().warning("Found non-localized description, assuming \"en\" to be the correct one. May be wrong!")
                         self.imageDescription = ["en": description]
                     } else {
                         self.imageDescription = [:]
@@ -449,6 +468,7 @@ public struct FileMetadata: Decodable, Sendable, Hashable, Equatable, Identifiab
                     // so to handle this type mutation, we catch this case and simply init props with an empty state
                     self.imageDescription = [:]
                     self.attribution = nil
+                    self.attributionRequired = nil
                     self.credit = nil
                     self.artist = nil
                     self.license = nil

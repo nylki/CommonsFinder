@@ -201,6 +201,9 @@
         }
       }
     },
+    "Adapt" : {
+
+    },
     "Add" : {
       "localizations" : {
         "de" : {
@@ -721,6 +724,9 @@
         }
       }
     },
+    "Copied" : {
+
+    },
     "Copy" : {
       "localizations" : {
         "de" : {
@@ -731,6 +737,9 @@
         }
       }
     },
+    "Copy and redistribute the material in any medium or format for any purpose, even commercially." : {
+
+    },
     "Copy Coordinates" : {
       "localizations" : {
         "de" : {
@@ -740,6 +749,9 @@
           }
         }
       }
+    },
+    "Copy credit line" : {
+
     },
     "Copy Filename" : {
       "localizations" : {
@@ -818,6 +830,18 @@
           }
         }
       }
+    },
+    "Credit & License" : {
+
+    },
+    "Credit line" : {
+
+    },
+    "Credit may be required" : {
+
+    },
+    "Credit optional" : {
+
     },
     "Currently checking if you can upload. please wait a short moment..." : {
       "localizations" : {
@@ -1170,6 +1194,9 @@
         }
       }
     },
+    "Format" : {
+
+    },
     "from Files" : {
       "localizations" : {
         "de" : {
@@ -1252,7 +1279,13 @@
         }
       }
     },
+    "HTML" : {
+
+    },
     "I don't know" : {
+
+    },
+    "If you remix, transform, or build upon the material, you must distribute your contributions under the same or compatible license as the original." : {
 
     },
     "If you want to contribute your own photos to Wikimedia Commons, you need an account." : {
@@ -1580,6 +1613,9 @@
     "me" : {
 
     },
+    "more" : {
+
+    },
     "More" : {
       "localizations" : {
         "de" : {
@@ -1716,6 +1752,9 @@
         }
       }
     },
+    "No Copyright" : {
+
+    },
     "No Images" : {
       "localizations" : {
         "de" : {
@@ -1788,6 +1827,9 @@
         }
       }
     },
+    "No known copyright restrictions" : {
+
+    },
     "No location" : {
       "localizations" : {
         "de" : {
@@ -1849,6 +1891,9 @@
           }
         }
       }
+    },
+    "Not required, but naming the author and source is good practice." : {
+
     },
     "not signed in" : {
 
@@ -1933,6 +1978,9 @@
         }
       }
     },
+    "optional" : {
+
+    },
     "original%@" : {
       "localizations" : {
         "de" : {
@@ -1957,14 +2005,10 @@
         }
       }
     },
-    "Own" : {
-
-    },
     "Own work" : {
 
     },
     "Own Work" : {
-      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -1993,6 +2037,9 @@
           }
         }
       }
+    },
+    "plain text" : {
+
     },
     "Please check the filenames in your draft and make sure that each has a different, unique name." : {
       "localizations" : {
@@ -2146,6 +2193,12 @@
         }
       }
     },
+    "Read full license" : {
+
+    },
+    "Read licensing details on Commons" : {
+
+    },
     "Recently Viewed" : {
       "localizations" : {
         "de" : {
@@ -2197,6 +2250,9 @@
           }
         }
       }
+    },
+    "remix, transform, and build upon the material for any purpose, even commercially." : {
+
     },
     "Remove Bookmark" : {
       "localizations" : {
@@ -2412,6 +2468,15 @@
         }
       }
     },
+    "Share & Adapt" : {
+
+    },
+    "Share Alike" : {
+
+    },
+    "Share credit line" : {
+
+    },
     "Share OSM link..." : {
       "localizations" : {
         "de" : {
@@ -2454,9 +2519,6 @@
           }
         }
       }
-    },
-    "Show more uploads by %@" : {
-
     },
     "show more…" : {
       "localizations" : {
@@ -2660,6 +2722,9 @@
         }
       }
     },
+    "Text" : {
+
+    },
     "The app was closed or crashed while uploading." : {
       "localizations" : {
         "de" : {
@@ -2803,6 +2868,9 @@
         }
       }
     },
+    "The person who associated a work with this deed has dedicated the work to the public domain by waiving all of his or her rights to the work worldwide under copyright law, including all related and neighboring rights, to the extent allowed by law. " : {
+
+    },
     "The server appears to be currently down or experiencing maintenance issues, try again later to resume the upload." : {
       "localizations" : {
         "de" : {
@@ -2855,6 +2923,9 @@
           }
         }
       }
+    },
+    "Under the following conditions:" : {
+
     },
     "Unknown" : {
 
@@ -3046,6 +3117,9 @@
         }
       }
     },
+    "View uploads by %@" : {
+
+    },
     "Welcome!" : {
       "localizations" : {
         "de" : {
@@ -3108,6 +3182,9 @@
     "You" : {
 
     },
+    "You can copy, modify, distribute and perform the work, even for commercial purposes, all without asking permission. See Other Information below. " : {
+
+    },
     "You may attempt to retry the upload, edit the draft or delete the draft." : {
       "localizations" : {
         "de" : {
@@ -3157,6 +3234,9 @@
           }
         }
       }
+    },
+    "You must give appropriate credit, provide a link to the license, and indicate if changes were made. You may do so in any reasonable manner, but not in any way that suggests the licensor endorses you or your use." : {
+
     },
     "You reached the end of %lld files!" : {
       "localizations" : {
@@ -3249,6 +3329,9 @@
           }
         }
       }
+    },
+    "Your are free to:" : {
+
     },
     "Zero Public Domain, \"No Rights Reserved\"" : {
       "localizations" : {

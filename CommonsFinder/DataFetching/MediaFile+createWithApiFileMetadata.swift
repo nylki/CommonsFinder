@@ -58,23 +58,11 @@ nonisolated extension MediaFile {
             mimeType: mimeType,
             username: apiFileMetadata.pageData.imageinfo.user,
             fetchDate: .now,
-            
-            
-            
-            
-            
-            // FIXME: parse the hidden wikidata statement returned via extmetadata to show relative dates! (eg between 1901 and 1903)
-            // this can be then also used to render such statements via the statements inception date with qualifiers..
-            // !!!!! BEFORE MERGING TO TESTFLIGHT !!!!!!
-            
-            
-            
-            
             parsedWikitextDateString: parsedWikitextDateString,
             authorRaw: apiFileMetadata.pageData.imageinfo.extmetadata?.artist,
             sourceTextRaw: apiFileMetadata.pageData.imageinfo.extmetadata?.credit,
-            licenseRaw: apiFileMetadata.pageData.imageinfo.extmetadata?.license,
             licenseShortName: apiFileMetadata.pageData.imageinfo.extmetadata?.licenseShortName,
+            usageTerms: apiFileMetadata.pageData.imageinfo.extmetadata?.usageTerms,
             licenseURL: apiFileMetadata.pageData.imageinfo.extmetadata?.licenseUrl
         )
     }

@@ -535,7 +535,7 @@ public extension [WikidataProp: [WikidataClaim]] {
     
     
     
-    // FIXME: Take qualifiers into account! like ca/start/end, can be then harmonized with parsed dates from wikitext
+    // TODO: Take qualifiers into account! like ca/start/end, can be then harmonized with parsed dates from wikitext
     // that already have a shortform of wikidata qualifiers when fetching in extmetadata
     var inceptionDate: WikiDataValueTime? {
         if let match = rankedClaims(.inception).first,
@@ -548,6 +548,10 @@ public extension [WikidataProp: [WikidataClaim]] {
     
     var authors: [WikidataClaim] {
         rankedClaims(.creator)
+    }
+    
+    var license: WikidataItemID? {
+        rankedClaims(.license).first?.mainItem
     }
     
 

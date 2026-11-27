@@ -293,9 +293,11 @@ nonisolated final class AppDatabase: Sendable {
                 t.add(column: "parsedWikitextDateString", .text)
                 t.add(column: "authorRaw", .text)
                 t.add(column: "sourceTextRaw", .text)
-                t.add(column: "licenseRaw", .text)
                 t.add(column: "licenseShortName", .text)
+                t.add(column: "usageTerms", .text)
                 t.add(column: "licenseURL", .text)
+                t.add(column: "attributionRequired", .text)
+                t.add(column: "attribution", .text)
             }
         }
 

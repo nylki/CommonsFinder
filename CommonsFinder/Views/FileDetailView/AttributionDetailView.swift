@@ -73,39 +73,32 @@ struct AttributionDetailView: View {
                     .font(.headline)
 
                 VStack(alignment: .leading) {
+                    let authorLabel = AuthorLineLabel(
+                        url: nil,
+                        name: authorRawString,
+                        isFileCreatedByUploader: isFileCreatedByUploader
+                    )
 
-                    Button {
-                        if isFileCreatedByUploader {
-                            isShowingAuthorUploaderPopover = true
-                        } else {
-                            isShowingDetailsSheet = true
-                        }
-
-                    } label: {
-                        AuthorLineLabel(
-                            url: nil,
-                            name: authorRawString,
-                            isFileCreatedByUploader: isFileCreatedByUploader
-                        )
-                    }
-                    .popover(isPresented: $isShowingAuthorUploaderPopover) {
-                        VStack {
-                            Button("Show attribution details") {
+                    if isFileCreatedByUploader {
+                        Menu {
+                            Button("Show attribution details", systemImage: "info") {
                                 isShowingAuthorUploaderPopover = false
                                 isShowingDetailsSheet = true
                             }
 
-                            Button("Show more uploads by \(mediaFile.username)") {
+                            Button("View uploads by \(mediaFile.username)", systemImage: "photo.stack") {
                                 isShowingAuthorUploaderPopover = false
                                 navigation.openUserUploads(username: mediaFile.username)
                             }
-
-
+                        } label: {
+                            authorLabel
                         }
-                        .buttonBorderShape(.capsule)
-                        .padding()
-                        .presentationCompactAdaptation(.popover)
-
+                    } else {
+                        Button {
+                            isShowingDetailsSheet = true
+                        } label: {
+                            authorLabel
+                        }
                     }
 
                     dateOriginalLine
@@ -143,7 +136,7 @@ struct AttributionDetailView: View {
 
 
         .sheet(isPresented: $isShowingDetailsSheet) {
-            Color.orange
+            AttributionSheet(mediaFile: mediaFile)
         }
 
 
@@ -163,7 +156,7 @@ struct AttributionDetailView: View {
     private var licenseLine: some View {
 
         let licenseIcon = Text("CC").monospaced().font(.callout).fontWeight(.semibold)
-        let licenseText = Text(mediaFile.licenseShortName ?? mediaFile.licenseRaw ?? "Unknown License")
+        let licenseText = Text(mediaFile.licenseShortName ?? "Unknown License")
 
         Button {
             isShowingDetailsSheet = true
@@ -247,7 +240,7 @@ private struct SourceLine: View {
     private var sourceText: Text {
         if isFileCreatedByUploader {
             // TODO: distinguish between self-photographed and own
-            Text("Own")
+            Text("Own Work")
         } else if let sourceTextRaw {
             // TODO: normalize display of known hosts (flickr etc.)
             Text(AttributedStringCache.shared[sourceTextRaw] ?? "")
@@ -263,6 +256,7 @@ private struct SourceLine: View {
             leadingIcon: Image(systemName: "document"),
             trailingIcon: nil,
             mainText: sourceText,
+            mainFontWeight: .regular,
             caption: Text("Source")
         )
 
@@ -321,6 +315,7 @@ struct AttributionRow<Icon: View>: View {
     let leadingIcon: Icon
     let trailingIcon: Image?
     let mainText: Text
+    var mainFontWeight: Font.Weight = .medium
     let caption: Text?
 
     var body: some View {
@@ -334,7 +329,7 @@ struct AttributionRow<Icon: View>: View {
                 mainText
                     .multilineTextAlignment(.leading)
                     .lineLimit(3)
-                    .fontWeight(.semibold)
+                    .fontWeight(mainFontWeight)
 
                 if let caption {
                     caption

@@ -309,7 +309,7 @@ public actor API {
         return identifiers.items.compactMap { result[$0] }
     }
     
-    // Example: https://commons.wikimedia.org/w/api.php?action=query&format=json&prop=imageinfo&titles=File%3The_Earth_seen_from_Apollo_17.jpg&formatversion=2&iiprop=url%7Cextmetadata&iiurlwidth=500&iiurlheight=500&iiextmetadatamultilang=1
+    // Examples with different values (unfiltered extmetadata): https://commons.wikimedia.org/wiki/Special:ApiSandbox#action=query&format=json&prop=imageinfo&titles=File%3AGhost_sign_%22Rasier-Salon%22_in_Lindenstra%C3%9Fe_1%2C_Potsdam%2C_2026-11-05.jpg%7CFile%3AAlexandria%20Codex%20page%207.PNG%7CFile%3ATwo_French_Marines_armed_with_an_HK416_and_FN_Minimi_light_machine_gun_(Mission_Jeanne_d'Arc%2C_2022).jpg%7CFile%3AKarlsschrein%2C_Dachrelief_2%2C_Bildindex_mi00007g07.jpg%7CFile%3ABundesarchiv_Bild_183-52503-0016%2C_Potsdam%2C_Wilhelm-Pieck-Stra%C3%9Fe%2C_Abriss_der_Ruinen.jpg%7CFile%3AThe%20Earth%20seen%20from%20Apollo%2017.jpg&redirects=1&converttitles=1&formatversion=2&iiprop=timestamp%7Cuser%7Cextmetadata&iiextmetadatalanguage=fr&iiextmetadatamultilang=1
     internal func fetchImageMetadata(_ identifiers: FileIdentifierList, languageCode: LanguageCode?) async throws -> [FileMetadata] {
         var query: Parameters = [
             "action": "query",
@@ -320,7 +320,7 @@ public actor API {
             "iilimit": "1",
             "inprop": "protection",
             "iiprop": "url|timestamp|user|dimensions|extmetadata|size",
-            "iiextmetadatafilter": "ImageDescription|Attribution|Artist|Credit|License|LicenseShortName|LicenseUrl|DateTimeOriginal",
+            "iiextmetadatafilter": "ImageDescription|Attribution|AttributionRequired|Artist|Credit|LicenseShortName|UsageTerms|LicenseUrl|DateTimeOriginal",
             "iiurlwidth": "500",
             "iiurlheight": "500",
             "uselang": "content",
@@ -328,18 +328,9 @@ public actor API {
         ]
         
         if let languageCode {
-            // FIXME: when using iiextmetadatamultilang, the returned value gets yet another layer that has to be parsed
-            // but having the multilang data can be useful for the dates (for before/ca./century etc)
-//            "Credit": {
-//                "value": {
-//                    "fr": "Bibliothèque nationale de France",
-//                    "_type": "lang"
-//                },
-//                "source": "commons-desc-page"
-//            }
-            
+            // TODO: decide if fetching all descriptions for display in UI, currently only the localized version (but would be wrong on change of system language currently..)
 //            query["iiextmetadatamultilang"] = "1"
-//            query["iiextmetadatalanguage"] = languageCode
+            query["iiextmetadatalanguage"] = languageCode
         }
         
         let maxCount = 50
