@@ -6,6 +6,7 @@
 //
 
 import Algorithms
+import AsyncAlgorithms
 import CommonsAPI
 import CoreLocation
 import Foundation
@@ -18,6 +19,13 @@ typealias ScoredCategoryInfo = (score: Double, categoryInfo: CategoryInfo)
 /// Provides data access functions to the API or DB
 //  To be refined with more DB-first searches and fetchDate comparisons. (like `fetchCombinedTagsFromDatabaseOrAPI`)
 nonisolated enum DataAccess {
+
+    @concurrent
+    static func fetchMediaFilesFromNetwork(identifiers: FileIdentifierList, languageCode: LanguageCode) async throws -> [MediaFile] {
+        let apiItems = try await Networking.shared.api.fetchFullFileMetadata(identifiers, languageCode: languageCode)
+        let fetchedMediaFiles: [MediaFile] = await Array(apiItems.async.map(MediaFile.create))
+        return fetchedMediaFiles
+    }
 
     static func refreshMediaFileIfNeeded(_ mediaFile: MediaFile, maxAge: TimeInterval = 0, appDatabase: AppDatabase) async {
         let timeIntervalSinceLastFetchDate = Date.now.timeIntervalSince(mediaFile.fetchDate)
@@ -42,14 +50,10 @@ nonisolated enum DataAccess {
 
     static func refreshMediaFileFromNetwork(id: MediaFile.ID, appDatabase: AppDatabase) async {
         do {
-            guard
-                let result = try await Networking.shared.api
-                    .fetchFullFileMetadata(.pageids([id])).first
-            else {
-                return
-            }
+            let languageCode = Locale.current.wikiLanguageCodeIdentifier
+            guard let refreshedMediaFile = try await fetchMediaFilesFromNetwork(identifiers: .pageids([id]), languageCode: languageCode).first
+            else { return }
 
-            let refreshedMediaFile = MediaFile(apiFileMetadata: result)
             // NOTE: upserting here, will propagate the change in the DB observation further down.
             try appDatabase.upsert([refreshedMediaFile])
         } catch {

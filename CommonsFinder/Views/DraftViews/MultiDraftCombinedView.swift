@@ -109,7 +109,7 @@ struct MultiDraftCombinedView: View {
             )
         }
         .sheet(isPresented: $isAttributionSheetShowing) {
-            AttributionDetailView(
+            AttributionEditingDetailView(
                 initialSource: model.multiDraft.source,
                 initialAuthor: model.multiDraft.author,
                 initialLicense: model.multiDraft.license

@@ -119,7 +119,7 @@ struct AttributionFormSection: View {
         }
     }
     .sheet(isPresented: $isSheetShowing) {
-        AttributionDetailView(
+        AttributionEditingDetailView(
             initialSource: draft.source,
             initialAuthor: draft.author,
             initialLicense: draft.license

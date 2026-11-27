@@ -1,5 +1,5 @@
 //
-//  AttributionDetailView.swift
+//  AttributionEditingDetailView.swift
 //  CommonsFinder
 //
 //  Created by Tom on 25.10.26.
@@ -91,7 +91,7 @@ private enum SourceOption {
 }
 
 
-struct AttributionDetailView: View {
+struct AttributionEditingDetailView: View {
     // TODO: let draftable: Draftable for simpler init
     let initialSource: DraftSource?
     let initialAuthor: DraftAuthor?
@@ -292,7 +292,7 @@ struct AttributionDetailView: View {
         }
         .sheet(isPresented: $isPresented) {
 
-            AttributionDetailView(initialSource: source, initialAuthor: author, initialLicense: license) { newSource, newAuthor, newLicense in
+            AttributionEditingDetailView(initialSource: source, initialAuthor: author, initialLicense: license) { newSource, newAuthor, newLicense in
                 source = newSource
                 author = newAuthor
                 license = newLicense

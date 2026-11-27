@@ -388,7 +388,17 @@ public struct FileMetadata: Decodable, Sendable, Hashable, Equatable, Identifiab
         public struct ExtMetadata: Sendable, Hashable, Equatable, Decodable {
             public let imageDescription: [LanguageCode: String]
             public let attribution: String?
-          
+            public let attributionRequired: Bool?
+            public let credit: String?
+            public let artist: String?
+            public let license: String?
+            public let licenseShortName: String?
+            public let licenseUrl: URL?
+            public let usageTerms: String?
+            public let copyrighted: String?
+            public let restrictions: String?
+            // this can be a year an ISO string or an arbitrary string, arrives as html
+            public let dateTimeOriginal: String?
             
             private struct MetadataContainer<T: Decodable>: Decodable {
                 let value: T
@@ -398,32 +408,76 @@ public struct FileMetadata: Decodable, Sendable, Hashable, Equatable, Identifiab
             enum CodingKeys: CodingKey {
                 case ImageDescription
                 case Attribution
+                case AttributionRequired
+                case Credit
+                case Artist
+                case LicenseShortName
+                case Copyrighted
+                case Restrictions
+                case UsageTerms
+                case License
+                case LicenseUrl
+                case DateTimeOriginal
+                
             }
             
             public init(from decoder: any Decoder) throws {
                 do {
                     let container: KeyedDecodingContainer<CodingKeys> = try decoder.container(keyedBy: CodingKeys.self)
                     
-                    self.attribution = try? container.decode(MetadataContainer<String>.self, forKey: .Attribution).value
+                    self.attribution = try? container.decodeIfPresent(MetadataContainer<String>.self, forKey: .Attribution)?.value
                     
+                    if let attributionRequiredString = try? container.decodeIfPresent(MetadataContainer<String>.self, forKey: .AttributionRequired)?.value {
+                        // NOTE: MetadataContainer<Bool> doesn't work ^
+                        self.attributionRequired = attributionRequiredString == "true"
+                    } else {
+                        self.attributionRequired = nil
+                    }
+                    
+                    self.credit = try? container.decodeIfPresent(MetadataContainer<String>.self, forKey: .Credit)?.value
+                    self.artist = try? container.decodeIfPresent(MetadataContainer<String>.self, forKey: .Artist)?.value
+                    self.license = try? container.decodeIfPresent(MetadataContainer<String>.self, forKey: .License)?.value
+                    self.licenseShortName = try? container.decodeIfPresent(MetadataContainer<String>.self, forKey: .LicenseShortName)?.value
+                    self.licenseUrl = try? container.decodeIfPresent(MetadataContainer<URL>.self, forKey: .LicenseUrl)?.value
+                    self.usageTerms = try? container.decodeIfPresent(MetadataContainer<String>.self, forKey: .UsageTerms)?.value
+                    self.copyrighted = try? container.decodeIfPresent(MetadataContainer<String>.self, forKey: .Copyrighted)?.value
+                    self.restrictions = try? container.decodeIfPresent(MetadataContainer<String>.self, forKey: .Restrictions)?.value
+                    
+                    // although datetimeOriginal is delivered translatable if possible, there is only the preferrred language version
+                    let dateTimeOriginal = try? container.decode(MetadataContainer<[String: String]>.self, forKey: .DateTimeOriginal).value
+                    if let dateTimeOriginal, let firstDateTimeOriginalString =  dateTimeOriginal.filter({ $0.key != "_type" }).first?.value {
+                        self.dateTimeOriginal = firstDateTimeOriginalString
+                    } else if let description = try? container.decode(MetadataContainer<String>.self, forKey: .DateTimeOriginal).value {
+                        self.dateTimeOriginal = description
+                    } else {
+                        self.dateTimeOriginal = nil
+                    }
+
                     /// key is the two-letter language code (eg. "en") eg: ["en": "a description", "de": "eine Beschreibung"]
                     let localizedDescriptions = try? container.decode(MetadataContainer<[String: String]>.self, forKey: .ImageDescription).value
                     if let localizedDescriptions {
-                        self.imageDescription = localizedDescriptions
+                        self.imageDescription = localizedDescriptions.filter { $0.key != "_type" }
                     } else if let description = try? container.decode(MetadataContainer<String>.self, forKey: .ImageDescription).value {
-                        Logger().warning("Found non-localized description, assuming \"en\" to be the correct one. May be wrong!")
                         self.imageDescription = ["en": description]
                     } else {
                         self.imageDescription = [:]
                     }
-                    
-                    
                     
                 } catch(DecodingError.typeMismatch) {
                     // NOTE: if extmetadata is empty (eg. because filtering), its a JSON array, not a dictionary anymore
                     // so to handle this type mutation, we catch this case and simply init props with an empty state
                     self.imageDescription = [:]
                     self.attribution = nil
+                    self.attributionRequired = nil
+                    self.credit = nil
+                    self.artist = nil
+                    self.license = nil
+                    self.licenseShortName = nil
+                    self.licenseUrl = nil
+                    self.usageTerms = nil
+                    self.copyrighted = nil
+                    self.restrictions = nil
+                    self.dateTimeOriginal = nil
                 } catch {
                     throw error
                 }

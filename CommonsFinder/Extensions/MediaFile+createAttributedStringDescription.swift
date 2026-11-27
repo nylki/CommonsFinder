@@ -6,6 +6,7 @@
 //
 
 import Foundation
+import RegexBuilder
 import SwiftSoup
 import SwiftUI
 import os.log
@@ -20,6 +21,9 @@ extension AttributedString {
                 .simpleText()
                 .addTags("a", "div", "span", "href")
                 .addAttributes("a", "href")
+                .addAttributes("div", "style")
+                .addCSSProperties("div", "display")
+
 
             guard let clean = try SwiftSoup.clean(htmlOrString, allowList) else {
                 return nil
@@ -35,6 +39,14 @@ extension AttributedString {
                     let part = AttributedString(text)
                     attributedString.append(part)
                 } else if let tag = node as? Element {
+
+
+                    if let attributes = tag.getAttributes(),
+                        attributes.get(key: "style").replacing(.whitespace, with: "").contains("display:none")
+                    {
+                        // dicard elements with "display:none"
+                        continue
+                    }
                     let text = try tag.text()
                     var part = AttributedString(text)
 

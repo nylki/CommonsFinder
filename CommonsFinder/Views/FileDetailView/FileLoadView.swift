@@ -24,10 +24,10 @@ struct FileLoadView: View {
             ProgressView().progressViewStyle(.circular)
                 .task {
                     do {
-                        guard let rawFileMetadata = try await Networking.shared.api.fetchFullFileMetadata(.titles([title])).first else {
+                        let languageCode = Locale.current.wikiLanguageCodeIdentifier
+                        guard let mediaFile = try await DataAccess.fetchMediaFilesFromNetwork(identifiers: .titles([title]), languageCode: languageCode).first else {
                             return
                         }
-                        let mediaFile = MediaFile(apiFileMetadata: rawFileMetadata)
                         mediaFileInfo = .init(mediaFile: mediaFile, itemInteraction: nil)
                     } catch {
                         logger.error("Failed to dynamically load media file with just the title \(error)")

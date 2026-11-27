@@ -54,8 +54,26 @@ nonisolated
 
     /// Unlimited length html description parsed from raw wikitext
     var fullDescriptions: [LanguageString]
-    /// attribution string parsed from raw wikitext via extMetadata
-    var rawAttribution: String?
+
+    var parsedWikitextDateString: String?
+
+    /// usually something like `"<a href=\"//commons.wikimedia.org/wiki/User:SomeUsername\" title=\"User:SomeUsername\">SomeUsername</a>"`, parsed via libsoup before storage
+    /// can be used for display when run first through libsoup as a fallback when structured authors not available.
+    let authorRaw: String?
+
+    /// "credit" string parsed from raw wikitext via extMetadata, should be first parsed via libsoup to extra the raw useful string at fetch/DB-insert time
+    /// usually comes from API like: <span class=\"int-own-work\">Self-photographed</span>, should be "Self-photographed"
+    var sourceTextRaw: String?
+
+    // the other license values come from the imageInfo query via extmetadata:
+
+    /// preferably used if not nil for credit line instead of author
+    var attribution: String?
+
+    var attributionRequired: Bool?
+    var licenseShortName: String?
+    var usageTerms: String?
+    var licenseURL: URL?
 
     var uploadDate: Date
 
@@ -81,32 +99,20 @@ nonisolated
         uploadDate: Date,
         caption: [LanguageString],
         fullDescription: [LanguageString],
-        rawAttribution: String?,
         categories: [String],
         statements: [WikidataClaim],
         mimeType: String?,
         username: String,
-        fetchDate: Date
+        fetchDate: Date,
+        parsedWikitextDateString: String?,
+        authorRaw: String?,
+        sourceTextRaw: String?,
+        licenseShortName: String?,
+        usageTerms: String?,
+        licenseURL: URL?
     ) {
-        self.name = name
         self.fetchDate = fetchDate
-
-        let nameRef = Reference(Substring.self)
-        //        let fileEndingRef = Reference(Substring.self)
-
-        let titleRegex = Regex {
-            "File:"
-            Capture(as: nameRef) {
-                OneOrMore(.anyNonNewline)
-            }
-        }
-
-        if let titleMatch = name.firstMatch(of: titleRegex) {
-            self.name = String(titleMatch[nameRef])
-        } else {
-            self.name = name
-        }
-
+        self.name = String(name.trimmingPrefix("File:"))
         self.id = id
         self.revid = revid
         self.url = url
@@ -118,11 +124,16 @@ nonisolated
         self.uploadDate = uploadDate
         self.captions = caption
         self.fullDescriptions = fullDescription
-        self.rawAttribution = rawAttribution
         self.categories = categories
         self.statements = statements
         self.mimeType = mimeType
         self.username = username
+        self.parsedWikitextDateString = parsedWikitextDateString
+        self.authorRaw = authorRaw
+        self.sourceTextRaw = sourceTextRaw
+        self.licenseShortName = licenseShortName
+        self.usageTerms = usageTerms
+        self.licenseURL = licenseURL
     }
 }
 
@@ -160,152 +171,4 @@ nonisolated extension MediaFile: Codable, FetchableRecord, MutablePersistableRec
         request(for: Self.itemInteraction)
     }
 
-}
-
-// MARK: - Extensions
-
-nonisolated extension MediaFile {
-
-    var pageID: String { id }
-
-    /// The unique name *with* "File:"-prefix as used in the action-API
-    var apiName: String { "File:\(name)" }
-
-    /// The Wikibase entity id for this file (M-prefixed page id).
-    var entityId: String {
-        if id.hasPrefix("M") {
-            assertionFailure("the id (which directly maps to the pageid) is not expected to have the M-prefix.")
-            return id
-        }
-        return "M\(id)"
-    }
-
-    var displayName: String {
-        name.fileName()
-    }
-
-    var coordinate: CLLocationCoordinate2D? {
-        if let statement = statements.first(where: \.isCoordinatesOfViewPoint),
-            case .globecoordinate(let coordinate) = statement.mainsnak.datavalue
-        {
-            // TODO: check for coordinate.globe==earth?
-            .init(latitude: coordinate.latitude, longitude: coordinate.longitude)
-        } else {
-            nil
-        }
-    }
-
-    var heading: Double? {
-        if let statement = statements.first(where: \.isCoordinatesOfViewPoint),
-            let qualifier = statement.qualifiers?[.heading]?.first,
-            case .quantity(let quantityValue) = qualifier.datavalue
-        {
-            quantityValue.amountNumber
-        } else {
-            nil
-        }
-    }
-
-    var licenses: [WikidataClaim] {
-        statements.filter(\.isLicense)
-    }
-
-    var descriptionUrlLicenseSection: URL {
-        descriptionURL.appending(component: "#Licensing")
-    }
-
-    /// If there are multiple licenses defined, pick the most relevant one for the app to display
-    var primaryLicenseForDisplay: WikidataItemID? {
-        // NOTE: rank does not appear to be properly used here, even though marked in commons web ui?
-        if licenses.count > 1 {
-            for license in licenses {
-                guard let id = license.mainItem else { continue }
-                if WikidataItemID.preferredLicenses.contains(id) {
-                    return id
-                }
-            }
-
-            for license in licenses {
-                guard let id = license.mainItem else { continue }
-                if WikidataItemID.acceptableLicenses.contains(id) {
-                    return id
-                }
-            }
-        }
-
-        return licenses.first?.mainItem
-    }
-
-    var copyrightStatus: WikidataItemID? {
-        if let wikidataItem = statements.first(where: \.isCopyrightStatus)?.mainItem {
-            wikidataItem
-        } else {
-            nil
-        }
-    }
-
-    var inceptionDate: Date? {
-        if let statement = statements.first(where: \.isInception),
-            case .time(let dateValue) = statement.mainsnak.datavalue
-        {
-            dateValue.date
-        } else {
-            nil
-        }
-    }
-
-    var aspectRatio: Double? {
-        if let width, let height {
-            (Double(width) / Double(height))
-        } else {
-            nil
-        }
-    }
-
-    func resizedURL(maxWidth: UInt) -> URL? {
-        // from: https://upload.wikimedia.org/wikipedia/commons/2/2c/Image_Title.jpg
-        // to:   https://upload.wikimedia.org/wikipedia/commons/thumb/2/2c/Image_Title.jpg/320px-Image_Title.jpg
-
-
-        guard url.absoluteString.starts(with: "https://upload.wikimedia.org/wikipedia"),
-            url.pathComponents.count >= 5
-        else {
-            return nil
-        }
-        /// either "commons" or "en" or something else.
-        let base = url.pathComponents[2]
-
-        let hashA = url.pathComponents[3]
-        let hashB = url.pathComponents[4]
-        let title = url.pathComponents[5]
-        let hashAndTitle = "\(hashA)/\(hashB)/\(title)"
-
-        guard let resizedURL = URL(string: "https://upload.wikimedia.org/wikipedia/\(base)/thumb/\(hashAndTitle)/\(maxWidth)px-\(title)") else {
-            return nil
-        }
-        return resizedURL
-    }
-}
-
-nonisolated extension WikidataItemID {
-    static let preferredLicenses: [WikidataItemID] = [
-        .CC0, .CC_BY_4_0, .CC_BY_SA_4_0, PDM_1_0,
-    ]
-
-    static let acceptableLicenses: [WikidataItemID] = [
-        CC0,
-        PDM_1_0,
-        CC_BY_4_0,
-        CC_BY_3_0,
-        CC_BY_IGO_3_0,
-        CC_BY_2_5,
-        CC_BY_1_0,
-        CC_BY_2_0,
-        CC_BY_SA_4_0,
-        CC_BY_SA_3_0,
-        CC_BY_SA_IGO_3_0,
-        CC_BY_SA_2_5,
-        CC_BY_SA_2_0,
-        CC_BY_SA_1_0,
-    ]
 }

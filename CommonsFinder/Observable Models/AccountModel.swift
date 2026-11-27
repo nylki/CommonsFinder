@@ -161,15 +161,11 @@ final class AccountModel {
 
         let apiFetchLimit = 50
         let titlesChunked = titles.chunks(ofCount: apiFetchLimit)
+        let languageCode = Locale.current.wikiLanguageCodeIdentifier
 
         for titleChunk in titlesChunked {
-            let mediaFiles = try await Networking.shared.api
-                .fetchFullFileMetadata(.titles(Array(titleChunk)))
-                .map(MediaFile.init)
-
+            let mediaFiles = try await DataAccess.fetchMediaFilesFromNetwork(identifiers: .titles(Array(titleChunk)), languageCode: languageCode)
             _ = try appDatabase.upsert(mediaFiles)
         }
-
-
     }
 }

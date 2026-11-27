@@ -14,6 +14,7 @@
 //
 
 import Algorithms
+import AsyncAlgorithms
 import CommonsAPI
 import Foundation
 import GRDB
@@ -101,12 +102,12 @@ import os.log
             try Task.checkCancellation()
 
             let chunkedIDs = missingIDs.chunks(ofCount: 50)
+            let languageCode = Locale.current.wikiLanguageCodeIdentifier
             // TODO: parallelize with taskGroup?
             // NOTE: limit is 50
             for ids in chunkedIDs {
                 do {
-                    let apiItems = try await Networking.shared.api.fetchFullFileMetadata(.pageids(Array(ids)))
-                    let fetchedMediaFiles: [MediaFile] = apiItems.map(MediaFile.init)
+                    let fetchedMediaFiles = try await DataAccess.fetchMediaFilesFromNetwork(identifiers: .pageids(Array(ids)), languageCode: languageCode)
 
                     for mediaFile in fetchedMediaFiles {
                         dictionary[mediaFile.id] = .init(mediaFile: mediaFile)

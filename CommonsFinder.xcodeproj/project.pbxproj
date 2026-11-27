@@ -32,6 +32,7 @@
 		E2C92DD32ED60D4000EAA248 /* ObservableLRUCache in Frameworks */ = {isa = PBXBuildFile; productRef = E2C92DD22ED60D4000EAA248 /* ObservableLRUCache */; };
 		E2D8C66A2ECF5B8200CEBB37 /* GEOSwiftMapKit in Frameworks */ = {isa = PBXBuildFile; productRef = E2D8C6692ECF5B8200CEBB37 /* GEOSwiftMapKit */; };
 		E2E2BFD52D8718AE00751949 /* Algorithms in Frameworks */ = {isa = PBXBuildFile; productRef = E2E2BFD42D8718AE00751949 /* Algorithms */; };
+		E2F0A62E30B35511008DD9AF /* AsyncAlgorithms in Frameworks */ = {isa = PBXBuildFile; productRef = E2F0A62D30B35511008DD9AF /* AsyncAlgorithms */; };
 		E2F19BC62CA43C6400E19DCD /* SwiftSecurity in Frameworks */ = {isa = PBXBuildFile; productRef = E2F19BC52CA43C6400E19DCD /* SwiftSecurity */; };
 		E2F1B9D52CD006C700410991 /* GRDB in Frameworks */ = {isa = PBXBuildFile; productRef = E2F1B9D42CD006C700410991 /* GRDB */; };
 		E2FF0A2E2D9EAA29008F915C /* GRDB in Frameworks */ = {isa = PBXBuildFile; productRef = E25278722CB03FAF00D00640 /* GRDB */; };
@@ -139,19 +140,19 @@
 				Database/Model/Drafts/Types/DraftAuthor.swift,
 				Database/Model/Drafts/Types/DraftSource.swift,
 				Database/Model/Drafts/Types/LocationHandling.swift,
-				"Database/Model/Extensions/MediaFile+createAttributedStringDescription.swift",
-				"Database/Model/Extensions/MediaFile+InitFromAPI.swift",
-				"Database/Model/Extensions/MediaFile+makeRandomUploaded.swift",
-				"Database/Model/Extensions/MediaFileDraft+DebugDraft.swift",
-				"Database/Model/Extensions/MediaFileInfo+ImageRequest.swift",
-				"Database/Model/Extensions/MediaFileInfo+sortedByLastViewed.swift",
-				"Database/Model/Extensions/MultiDraftInfo+DebugDraft.swift",
-				"Database/Model/Extensions/WikidataItem+InitFromAPI.swift",
-				"Database/Model/Extensions/WikidataItem+Thumbnail.swift",
 				Database/Model/ItemInteraction.swift,
 				Database/Model/MediaFile.swift,
 				Database/Model/MediaFileInfo.swift,
 				DataFetching/DataAccess.swift,
+				"DataFetching/MediaFile+createWithApiFileMetadata.swift",
+				"Extensions/MediaFile+createAttributedStringDescription.swift",
+				"Extensions/MediaFile+makeRandomUploaded.swift",
+				"Extensions/MediaFileDraft+DebugDraft.swift",
+				"Extensions/MediaFileInfo+ImageRequest.swift",
+				"Extensions/MediaFileInfo+sortedByLastViewed.swift",
+				"Extensions/MultiDraftInfo+DebugDraft.swift",
+				"Extensions/WikidataItem+InitFromAPI.swift",
+				"Extensions/WikidataItem+Thumbnail.swift",
 				"Generic Extensions/Array+popFirstN.swift",
 				"Generic Extensions/Array+RawRepresentable.swift",
 				"Generic Extensions/Array+safeIndex.swift",
@@ -168,6 +169,7 @@
 				"Generic Extensions/String+CapitalizedFirstLetter.swift",
 				"Generic Extensions/String+FileExtension.swift",
 				"Generic Extensions/String+truncated.swift",
+				"Generic Extensions/URL+absoluteStringWithoutQueryParams.swift",
 				"Generic Extensions/URL+resizedCommonsImageURL.swift",
 				"Generic Extensions/URL+staticUrls.swift",
 				"Networking/Keychain+Helpers.swift",
@@ -205,15 +207,16 @@
 				Types/FileNameType.swift,
 				Types/FileNameTypeTuple.swift,
 				Types/ImageAnalysisResult.swift,
+				Types/MediaFileLicenseGroup.swift,
 				Types/NameValidationError.swift,
 				Types/NewDraftOptions.swift,
 				Types/RelatedCategoriesType.swift,
 				Types/TagItem.swift,
 				Types/UploadPossibleStatus.swift,
-				Types/WikidataStatement.swift,
 				Types/WikimediaLanguage.swift,
 				Utilities/APIUtils.swift,
 				"Utilities/CLLocation+gpsDictionary.swift",
+				Utilities/DataDetection.swift,
 				Utilities/ExifData.swift,
 				Utilities/FileAnalysisHelpers.swift,
 				Utilities/FilenameUtils.swift,
@@ -233,7 +236,7 @@
 				Views/CategoryView/RelatedCategoryView.swift,
 				Views/ContextMenus/CategoryContextMenu.swift,
 				Views/ContextMenus/MediaFileContextMenu.swift,
-				Views/DraftViews/AttributionViews/AttributionDetailView.swift,
+				Views/DraftViews/AttributionViews/AttributionEditingDetailView.swift,
 				Views/DraftViews/AttributionViews/AttributionFormSection.swift,
 				Views/DraftViews/AttributionViews/LicensePicker.swift,
 				Views/DraftViews/BaseDraftImageView.swift,
@@ -275,6 +278,8 @@
 				"Views/Extensions/PublishingError?+isContinuationPossible.swift",
 				"Views/Extensions/PublishingError+localizedDescription.swift",
 				"Views/Extensions/UserDefaults+accessors.swift",
+				Views/FileDetailView/AttributionDetailView.swift,
+				Views/FileDetailView/AttributionSheet.swift,
 				Views/FileDetailView/FileDetailView.swift,
 				Views/FileDetailView/FileGroupBoxStyle.swift,
 				Views/FileDetailView/FileLoadView.swift,
@@ -445,6 +450,7 @@
 				E2F19BC62CA43C6400E19DCD /* SwiftSecurity in Frameworks */,
 				E2C92DD32ED60D4000EAA248 /* ObservableLRUCache in Frameworks */,
 				E28B17662CB03CBB00D6FEA0 /* GRDBQuery in Frameworks */,
+				E2F0A62E30B35511008DD9AF /* AsyncAlgorithms in Frameworks */,
 				E26AF871302F909600A7F612 /* Nuke in Frameworks */,
 				E24D3BFD2CF3ACDC003484CC /* FrameUp in Frameworks */,
 				E274D66030430F9F00624C95 /* LRUCache in Frameworks */,
@@ -583,6 +589,7 @@
 				E26AF870302F909600A7F612 /* Nuke */,
 				E26AF872302F909600A7F612 /* NukeUI */,
 				E274D65F30430F9F00624C95 /* LRUCache */,
+				E2F0A62D30B35511008DD9AF /* AsyncAlgorithms */,
 			);
 			productName = CommonsFinder;
 			productReference = E2839FE72CA2DD900053C312 /* CommonsFinder.app */;
@@ -658,6 +665,7 @@
 				E26ED9912FFC11680089B9C9 /* XCRemoteSwiftPackageReference "SwiftSoup" */,
 				E26AF86F302F909600A7F612 /* XCRemoteSwiftPackageReference "Nuke" */,
 				E274D65E30430F9F00624C95 /* XCRemoteSwiftPackageReference "LRUCache" */,
+				E2F0A62C30B35510008DD9AF /* XCRemoteSwiftPackageReference "swift-async-algorithms" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = E2839FE82CA2DD900053C312 /* Products */;
@@ -1193,8 +1201,8 @@
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/scinfu/SwiftSoup";
 			requirement = {
-				kind = exactVersion;
-				version = 2.14.3;
+				kind = upToNextMinorVersion;
+				minimumVersion = 2.14.3;
 			};
 		};
 		E274D65E30430F9F00624C95 /* XCRemoteSwiftPackageReference "LRUCache" */ = {
@@ -1243,6 +1251,14 @@
 			requirement = {
 				kind = upToNextMajorVersion;
 				minimumVersion = 5.0.0;
+			};
+		};
+		E2F0A62C30B35510008DD9AF /* XCRemoteSwiftPackageReference "swift-async-algorithms" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/apple/swift-async-algorithms.git";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 1.1.7;
 			};
 		};
 		E2F19BC42CA43C6400E19DCD /* XCRemoteSwiftPackageReference "swift-security" */ = {
@@ -1375,6 +1391,11 @@
 			isa = XCSwiftPackageProductDependency;
 			package = E2549B242CBD68B9005DFE14 /* XCRemoteSwiftPackageReference "swift-algorithms" */;
 			productName = Algorithms;
+		};
+		E2F0A62D30B35511008DD9AF /* AsyncAlgorithms */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = E2F0A62C30B35510008DD9AF /* XCRemoteSwiftPackageReference "swift-async-algorithms" */;
+			productName = AsyncAlgorithms;
 		};
 		E2F19BC52CA43C6400E19DCD /* SwiftSecurity */ = {
 			isa = XCSwiftPackageProductDependency;
